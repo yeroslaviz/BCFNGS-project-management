@@ -223,7 +223,7 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 sudo cp -r /var/shiny-server/sequencing-app /var/shiny-server/sequencing-app_backup_$TIMESTAMP
 
 # Deploy new version
-sudo cp -r ./sequencing-app /var/shiny-server/
+sudo cp -r /home/yeroslaviz/BCFNGS-project-management/sequencing-app /var/shiny-server/
 
 # Set permissions
 sudo chown -R shiny:shiny /var/shiny-server/sequencing-app
@@ -237,6 +237,31 @@ sudo systemctl start shiny-server
 sudo systemctl status shiny-server
 
 ```
+
+# Github repository
+
+In the home folder /home/yeroslaviz/ the github repository is stored. 
+
+```
+$ tree -L 1
+.
+├── BCFNGS-project-management
+├── chemata
+├── miniconda3
+└── scripts
+    └── deploy_shiny_server.sh
+```
+
+inside the Folder we can pull/push the changes we made to the repo from the local computer (AT WORK!!!).
+
+the github repository on the local computer is at `/Documents/GitHub/BCFNGS-project-management`. 
+
+To redeploy the server, one follows the following steps:
+
+1. make the changes on the local computer (AT WORK!!!).
+2. push the changes to the github repo
+3. go to the folder `/home/yeroslaviz/BCFNGS-project-management` on the VM `ngs-testing-vm` and pull the changes. 
+4. Execute the `deploy_shiny_server.sh` script to copy the new changes to the shiny-server folder and restart both apache2 and the shiny-server. 
 
 # Setting Environment variables
 
@@ -270,8 +295,7 @@ I need a method to add specific users as admin
 
 ## Firewall
 
-Also, not sure if active on the current version of the machine.
-As this is only acessible via VPN (or inside the network), not really a priority.
+at the moment is not active, but maybe in the future.
 
 ```{bash}
 
@@ -281,46 +305,11 @@ sudo ufw allow 443
 
 ```
 
-# Monitoring and Logging
-
-```{bash}
-# /etc/logrotate.d/shiny-server
-/var/log/shiny-server/*.log {
-    daily
-    missingok
-    rotate 52
-    compress
-    delaycompress
-    notifempty
-    create 644 shiny shiny
-    postrotate
-        /bin/kill -USR1 `cat /var/run/shiny-server.pid 2>/dev/null` 2>/dev/null || true
-    endscript
-}
-
-```
-
-# Health check script
-
-```{bash}
-
-#!/bin/bash
-# health_check.sh
-response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3838)
-if [ "$response" != "200" ]; then
-    echo "App is down! Restarting..."
-    sudo systemctl restart shiny-server
-fi
-```
 
 # SSL Certificate (for HTTPS)
 
-```{bash}
+a certificate was applied for and is currently in the work. 
 
-# Install Certbot for Let's Encrypt
-sudo apt install -y certbot python3-certbot-nginx
+# LDAP
 
-# Get certificate
-sudo certbot --nginx -d your-domain.com
 
-```
