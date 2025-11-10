@@ -1,0 +1,146 @@
+---
+title: "Server Preparations"
+format: html
+editor: visual
+---
+
+# Server Infrastructure
+
+```{bash}
+
+# Install Shiny Server on Ubuntu
+sudo apt update
+sudo apt install -y r-base nginx
+sudo su - -c "R -e \"install.packages('shiny')\""
+sudo su - -c "R -e \"install.packages('shinyjs')\""
+# ... install all your R packages
+sudo R -e "install.packages(c('shiny', 'shinyjs', 'DBI', 'RSQLite', 'digest', 'DT', 'shinyWidgets', 'mailR'))"
+
+# Download and install Shiny Server
+wget https://download3.rstudio.org/ubuntu-14.04/x86_64/shiny-server-1.5.20.1002-amd64.deb
+sudo gdebi shiny-server-1.5.20.1002-amd64.deb
+
+
+```
+
+# Required Server Setup
+
+/var/shiny-server/ ├── sequencing-app/ │ ├── app.R │ ├── setup_database.R │ ├── sequencing_projects.db │ └── www/ │ ├── logo.png │ └── minerva.png
+
+# Creates a Deployment Script
+
+```{bash}
+
+#| label: deploy.sh
+#| 
+#!/bin/bash
+
+# Stop existing app
+sudo systemctl stop shiny-server
+
+# Backup current version
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+sudo cp -r /var/shiny-server/sequencing-app /var/shiny-server/sequencing-app_backup_$TIMESTAMP
+
+# Deploy new version
+sudo cp -r ./sequencing-app /var/shiny-server/
+
+# Set permissions
+sudo chown -R shiny:shiny /var/shiny-server/sequencing-app
+sudo chmod -R 755 /var/shiny-server/sequencing-app
+
+# Initialize database (if first deployment)
+sudo su - -c "R -e \"source('/var/shiny-server/sequencing-app/setup_database.R')\""
+
+# Restart Shiny Server
+sudo systemctl start shiny-server
+sudo systemctl status shiny-server
+
+```
+
+# Setting Environment variables
+
+```{bash}
+
+# /var/shiny-server/.Renviron
+TZ=Europe/Berlin
+LANG=en_US.UTF-8
+LC_ALL=en_US.UTF-8
+
+```
+
+# Install required system dependencies
+
+```{bash}
+
+sudo apt install -y libssl-dev libxml2-dev libcurl4-openssl-dev libudunits2-dev libgdal-dev
+
+```
+
+# Modify script for data base creation (setup_database.R -\> version 6 was modified here for production environment; app.R -\> version 6 was modified for interactive mode)
+
+# Security
+
+Not sure, if this is all necessary, will consult the IT when it is appropriate
+
+## dedicated User
+
+As we're planning to use the LDAP, I'm not sure, this is necessary.
+I need a method to add specific users as admin
+
+## Firewall
+
+Also, not sure if active on the current version of the machine.
+As this is only acessible via VPN (or inside the network), not really a priority.
+
+```{bash}
+
+sudo ufw allow 3838
+sudo ufw allow 80
+sudo ufw allow 443
+
+```
+
+# Monitoring and Logging
+
+```{bash}
+# /etc/logrotate.d/shiny-server
+/var/log/shiny-server/*.log {
+    daily
+    missingok
+    rotate 52
+    compress
+    delaycompress
+    notifempty
+    create 644 shiny shiny
+    postrotate
+        /bin/kill -USR1 `cat /var/run/shiny-server.pid 2>/dev/null` 2>/dev/null || true
+    endscript
+}
+
+```
+
+# Health check script
+
+```{bash}
+
+#!/bin/bash
+# health_check.sh
+response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3838)
+if [ "$response" != "200" ]; then
+    echo "App is down! Restarting..."
+    sudo systemctl restart shiny-server
+fi
+```
+
+# SSL Certificate (for HTTPS)
+
+```{bash}
+
+# Install Certbot for Let's Encrypt
+sudo apt install -y certbot python3-certbot-nginx
+
+# Get certificate
+sudo certbot --nginx -d your-domain.com
+
+```
