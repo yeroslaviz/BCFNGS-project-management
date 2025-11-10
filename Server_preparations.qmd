@@ -17,15 +17,195 @@ sudo su - -c "R -e \"install.packages('shinyjs')\""
 sudo R -e "install.packages(c('shiny', 'shinyjs', 'DBI', 'RSQLite', 'digest', 'DT', 'shinyWidgets', 'mailR'))"
 
 # Download and install Shiny Server
-wget https://download3.rstudio.org/ubuntu-14.04/x86_64/shiny-server-1.5.20.1002-amd64.deb
-sudo gdebi shiny-server-1.5.20.1002-amd64.deb
-
+wget https://download3.rstudio.org/ubuntu-20.04/x86_64/shiny-server-1.5.23.1030-amd64.deb
+sudo gdebi shiny-server-1.5.23.1030-amd64.deb
 
 ```
 
+# removing the exisiting certifaicate
+
+```{bash}
+
+# Backup your current configuration
+sudo cp /etc/apache2/sites-enabled/01-main.conf /etc/apache2/sites-enabled/01-main.conf.backup
+
+# Remove old SSL certificates (optional - keep for backup)
+sudo mkdir -p /etc/ssl/backup/
+sudo mv /etc/ssl/certs/********.pem /etc/ssl/backup/
+sudo mv /etc/ssl/private/********.pem /etc/ssl/backup/
+sudo mv /etc/apache2/certificate/********.cer /etc/ssl/backup/
+
+```
+
+```
+./
+├── 01-main.conf -> ../sites-available/default-ssl.conf
+├── 01-main.conf.backup
+├── 02-testing.conf -> ../sites-available/02-testing.conf
+└── auth_ldap.conf -> ../sites-available/auth_ldap.conf
+```
+
+# Installing Certbot for Let's encrypt
+
+```{bash}
+
+# Update package list
+sudo apt update
+
+# Install Certbot for Apache
+sudo apt install -y certbot python3-certbot-apache
+
+# Verify installation
+certbot --version
+
+```
+
+```
+certbot 2.9.0
+```
+
+# changing hostname to fit the apache2 config file
+
+```{bash}
+
+# Change the hostname
+sudo hostnamectl set-hostname ngs-testing-vm.biochem.mpg.de
+
+# Verify the change
+hostnamectl status
+
+```
+
+```{bash}
+nslookup ngs-testing-vm.biochem.mpg.de
+ping ngs-testing-vm.biochem.mpg.de
+```
+
+```
+Server:		127.0.0.53
+Address:	127.0.0.53#53
+
+Non-authoritative answer:
+Name:	ngs-testing-vm.biochem.mpg.de
+Address: 10.33.0.60
+
+PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
+64 bytes from ngs-testing-vm.biochem.mpg.de (10.33.0.60): icmp_seq=1 ttl=64 time=0.079 ms
+64 bytes from ngs-testing-vm.biochem.mpg.de (10.33.0.60): icmp_seq=2 ttl=64 time=0.074 ms
+
+```
+
+```{bash}
+
+sudo systemctl restart apache2
+
+```
+
+# Automatic start-up
+
+```{bash}
+
+sudo systemctl enable apache2
+sudo systemctl enable shiny-server
+
+```
+
+#  Monitoring
+
+
+```{bash}
+
+# Monitor Shiny Server logs
+sudo tail -f /var/log/shiny-server/sequencing-app*.log
+
+# Monitor Apache logs
+sudo tail -f /var/log/apache2/sequencing-app-error.log
+
+```
+
+
+# Regular backups
+
+This was not done yet. 
+
+```{bash}
+
+# Create backup script
+sudo tee /usr/local/bin/backup_sequencing_db.sh <<'EOF'
+#!/bin/bash
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="/var/backups/sequencing-app"
+mkdir -p $BACKUP_DIR
+cp /srv/shiny-server/sequencing-app/sequencing_projects.db $BACKUP_DIR/sequencing_projects.db.$TIMESTAMP
+# Keep only last 30 days of backups
+find $BACKUP_DIR -name "sequencing_projects.db.*" -mtime +30 -delete
+EOF
+
+sudo chmod +x /usr/local/bin/backup_sequencing_db.sh
+
+# Add to crontab for daily backups at 2 AM
+sudo crontab -l | { cat; echo "0 2 * * * /usr/local/bin/backup_sequencing_db.sh"; } | sudo crontab -
+
+```
+
+# Create Clean Apache Configuration
+
+```{bash}
+<VirtualHost *:80>
+    ServerName ngs-testing-vm
+    ServerAlias ngs-testing-vm.biochem.mpg.de
+    # Redirect all HTTP traffic to HTTPS
+    Redirect permanent / https://ngs-testing-vm/
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName ngs-testing-vm
+    ServerAlias ngs-testing-vm.biochem.mpg.de
+
+    # SSL Configuration
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/certs/ngs-testing-vm.crt
+    SSLCertificateKeyFile /etc/ssl/private/ngs-testing-vm.key
+
+    # Modern SSL configuration
+    SSLProtocol all -SSLv3 -TLSv1 -TLSv1.1
+    SSLCipherSuite ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384
+    SSLHonorCipherOrder off
+
+    # Reverse proxy for Shiny app
+    ProxyPreserveHost On
+    ProxyRequests Off
+    ProxyPass / http://localhost:3838/sequencing-app/
+    ProxyPassReverse / http://localhost:3838/sequencing-app/
+
+    # WebSocket support
+    RewriteEngine on
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^/(.*) "ws://localhost:3838/sequencing-app/$1" [P,L]
+
+    # Security headers
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options SAMEORIGIN
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    ErrorLog ${APACHE_LOG_DIR}/sequencing-app-ssl-error.log
+    CustomLog ${APACHE_LOG_DIR}/sequencing-app-ssl-access.log combined
+</VirtualHost>
+```
+
+
 # Required Server Setup
 
-/var/shiny-server/ ├── sequencing-app/ │ ├── app.R │ ├── setup_database.R │ ├── sequencing_projects.db │ └── www/ │ ├── logo.png │ └── minerva.png
+/var/shiny-server/ 
+├── sequencing-app/ 
+│ ├── app.R 
+│ ├── setup_database.R 
+│ ├── sequencing_projects.db 
+│ └── www/ 
+  │ ├── logo.png 
+  │ └── minerva.png
 
 # Creates a Deployment Script
 
