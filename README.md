@@ -19,3 +19,12 @@ If you want to use the NGS service for the first time, you have to [register for
 # Login
 
 After registration is complete, you can directly login with your MPIB account to submit your new project(s).
+
+
+# Changes
+
+## 14.11.2026
+
+1. changing admin email address
+2. add editing possibilities to the tables containing costs information.
+3. bi-weekly backup is added, but still commented out. 
