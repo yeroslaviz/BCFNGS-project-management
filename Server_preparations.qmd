@@ -2,7 +2,6 @@
 title: "Server Preparations"
 format: html
 editor: visual
-<<<<<<< HEAD
 execute: 
   eval: false
 ---
@@ -28,11 +27,6 @@ suppressPackageStartupMessages(
 })
 ```
 
-
-=======
----
-
->>>>>>> origin/main
 # Server Infrastructure
 
 ```{bash}
@@ -536,7 +530,7 @@ sudo ln -s /home/yeroslaviz/BCFNGS-project-management/sequencing-app/ /srv/shiny
 <<<<<<< HEAD
 I have changed the `setup_databases.R` script to load the budget holders information from a csv file, stored in the same folder as the script itself. 
 
-We have a csv-formatted table with the information of the groups and their cost centres. This is an easy way to upload the information.
+We have a csv-formatted table with the information of the groups and their cost centers. This is an easy way to upload the information.
 
 ```
 name,surname,email,cost_center

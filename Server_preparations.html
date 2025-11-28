@@ -361,9 +361,7 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow 80</span>
 <span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow 443</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</section>
-<section id="ssl-certificate-for-https" class="level2">
-<h2 class="anchored" data-anchor-id="ssl-certificate-for-https">SSL Certificate (for HTTPS)</h2>
+<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD ## SSL Certificate (for HTTPS)</p>
 <p>the new setting of the certificates. I have three files.</p>
 <p>The private key I created when applying for the certificate. The other two were downloaded, when the emial came from Harica (the certificate provider).</p>
 <p>the <code>PEM</code> is the pem file and the <code>DER (issuer)</code> is the chain file. Both of them are needed.</p>
@@ -383,6 +381,7 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 <section id="ldap" class="level1">
 <h1>LDAP</h1>
 <p>To be followed!!!</p>
+<p>======= &gt;&gt;&gt;&gt;&gt;&gt;&gt; origin/main</p>
 </section>
 <section id="changes-on-14.11.2026" class="level1">
 <h1>Changes on 14.11.2026</h1>
@@ -479,11 +478,8 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 <span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="kw">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>as well as modified the User registration modal</p>
-<p>Now, when a user register, he must choose a group from the given drop-down menu. this group is attached to the budget holder. When the user creates a new project, this budget holder (group) will automatically be assigned to the project (This can be manually changed, when the project is created).</p>
-</section>
-</section>
-<section id="change-connection-to-shiny-server-folder-to-https" class="level1">
-<h1>Change connection to shiny server folder to https</h1>
+<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD Now, when a user register, he must choose a group from the given drop-down menu. this group is attached to the budget holder. When the user creates a new project, this budget holder (group) will automatically be assigned to the project (This can be manually changed, when the project is created).</p>
+<p>======= &gt;&gt;&gt;&gt;&gt;&gt;&gt; origin/main # Change connection to shiny server folder to https</p>
 <p>The shiny app takes information from the config file under <code>/etc/shiny-server/shiny-server.conf</code>. Here we can see where the log files are written into and where the directory of the shiny app are stored.</p>
 <p>As the folder connected to the github repository is in my home directory <code>/home/yeroslaviz/BCFNGS-project-management</code>, I need to create a softlink to the folder used by the app, so that it dsoesn’t need to be copy-pasted each time.</p>
 <div class="cell">
@@ -492,8 +488,8 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mv /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup <span class="co"># move the actual hard-coded folder to a backup (just in case)</span></span>
 <span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /home/yeroslaviz/BCFNGS-project-management/sequencing-app/ /srv/shiny-server/sequencing-app <span class="co"># create a soft-link to the github-connected folder.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>I have changed the <code>setup_databases.R</code> script to load the budget holders information from a csv file, stored in the same folder as the script itself.</p>
-<p>We have a csv-formatted table with the information of the groups and their cost centres. This is an easy way to upload the information.</p>
+<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD I have changed the <code>setup_databases.R</code> script to load the budget holders information from a csv file, stored in the same folder as the script itself.</p>
+<p>We have a csv-formatted table with the information of the groups and their cost centers. This is an easy way to upload the information.</p>
 <pre><code>name,surname,email,cost_center
 Kim,Rin-Ho,rkim@biochem.mpg.de,N.A.
 Administrator,surname,rkim@biochem.mpg.de,N.A.
@@ -514,6 +510,7 @@ Note
 <p>When a user registers, he must select a research group. The user then gets assigned a cost center based on the table of budget holders. If (and this applies only for some of the budget holders), this specific research group has multiple cost centers, it gets assigned the first one found by the app. BUT, manually the user still can change this in the app when applying for a project.</p>
 </div>
 </div>
+</section>
 <section id="control-for-budegt-holder-info-in-the-db" class="level2">
 <h2 class="anchored" data-anchor-id="control-for-budegt-holder-info-in-the-db">control for budegt holder info in the DB</h2>
 <div class="cell">
@@ -635,7 +632,43 @@ Note
 </div>
 <div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on.exit</span>(<span class="fu">dbDisconnect</span>(con))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>=======</p>
 </section>
+</section>
+<section id="ssl-certificate-for-https" class="level1">
+<h1>SSL Certificate (for HTTPS)</h1>
+<p>the new setting of the certificates. I have three files.</p>
+<p>The rpivate key I created when applying for the certificate. The other two were downloaded, when the emial came from Harica (the certificate provider).</p>
+<p>the <code>PEM</code> is the pem file and the <code>DER (issuer)</code> is the chain file. Both of them are needed.</p>
+<p>Setting for the readability of the files:</p>
+<pre><code>cd /etc/apache2/certificate/2026
+-rw------- 1 yeroslaviz b_mcf 3272 Nov 10 15:58 private-key.pem # udo chmod 600 /path/to/private.key  # Readable only by root
+-rw-r--r-- 1 yeroslaviz b_mcf 1545 Nov 14 12:12 NGS_2026_Issuer_ChainFile.cer # sudo chmod 644 /path/to/chain.crt  # Readable by all
+-rw-r--r-- 1 yeroslaviz b_mcf 2796 Nov 14 12:34 NGS_2026_Cert.pem # sudo chmod 644 /path/to/certificate.crt # Readable by all</code></pre>
+<p>All the files are saved under <code>/etc/apache2/certificate/2026</code>.</p>
+<p>Now I created soft links for each of these files.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="ldap-1" class="level1">
+<h1>LDAP</h1>
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<blockquote class="blockquote">
+<p>origin/main</p>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
 </section>
 
 </main>
