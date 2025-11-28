@@ -637,7 +637,7 @@ server <- function(input, output, session) {
       passwordInput("reg_confirm_password", "Confirm Password *", placeholder = "Confirm your password"),
       textInput("reg_phone", "Phone Number", placeholder = "+49 89 8578****"),
       selectInput("reg_group", "Research Group *", 
-                  choices = c("", group_choices),
+                  choices = group_choices, # choices = c("", group_choices), was change to make choosing a group mandatory.
                   selected = ""),
       tags$small("* Required fields")
     ))
@@ -645,7 +645,7 @@ server <- function(input, output, session) {
   
   # Registration logic
   observeEvent(input$register_btn, {
-    req(input$reg_username, input$reg_email, input$reg_password, input$reg_confirm_password)
+    req(input$reg_username, input$reg_email, input$reg_password, input$reg_confirm_password, input$reg_group)
     
     if(input$reg_password != input$reg_confirm_password) {
       showNotification("Passwords do not match", type = "error")
@@ -657,6 +657,12 @@ server <- function(input, output, session) {
       return()
     }
     
+    # Make sure, a group is chosen when registering
+    if(is.null(input$reg_group) || input$reg_group == "") {
+      showNotification("Please select a research group", type = "error")
+      return()
+    }
+
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
     

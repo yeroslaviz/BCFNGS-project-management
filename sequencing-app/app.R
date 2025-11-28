@@ -7,7 +7,13 @@ library(digest)
 library(DT)
 library(shinyWidgets)
 library(mailR)
+library(ldapr)
 
+##########################
+#
+# latest version - 28112025
+#
+##########################
 # UI definition
 ui <- fluidPage(
   useShinyjs(),
@@ -248,7 +254,7 @@ ui <- fluidPage(
           tags$li("Data analysis on collaborative basis")
         ),
         p("If you have any further questions, please do not hesitate to ", 
-          tags$a(href = "mailto:omicsdesk.biochem.mpg.de", "contact us @ omicsdesk"), "!"),
+          tags$a(href = "mailto:ngs.biochem.mpg.de", "contact us @ NGS"), "!"),
         
         h4("Registration", style = "color: #2c3e50; margin-top: 20px;"),
         p("If you want to use the NGS service for the first time, you have to ",
@@ -498,7 +504,7 @@ server <- function(input, output, session) {
     on.exit(dbDisconnect(con))
     
     # Load users
-    admin_data$users <- dbGetQuery(con, "SELECT id, username, email, is_admin FROM users")
+    admin_data$users <- dbGetQuery(con, "SELECT id, username, email, phone, research_group, is_admin FROM users")
     
     # Load all reference data from database
     admin_data$budget_holders <- load_budget_holders()
@@ -612,8 +618,16 @@ server <- function(input, output, session) {
       return(list(success = FALSE, error = e$message))
     })
   }  
+
   # User registration modal
   observeEvent(input$show_register_btn, {
+    # Load budget holders for group dropdown
+    con <- get_db_connection()
+    budget_holders <- dbGetQuery(con, "SELECT DISTINCT name, surname FROM budget_holders ORDER BY name, surname")
+    dbDisconnect(con)
+    
+    group_choices <- paste(budget_holders$name, budget_holders$surname)
+    
     showModal(modalDialog(
       title = "User Registration",
       size = "m",
@@ -626,13 +640,17 @@ server <- function(input, output, session) {
       textInput("reg_email", "Email *", placeholder = "your.email@institute.org"),
       passwordInput("reg_password", "Password *", placeholder = "Choose a password"),
       passwordInput("reg_confirm_password", "Confirm Password *", placeholder = "Confirm your password"),
+      textInput("reg_phone", "Phone Number", placeholder = "+49 89 8578****"),
+      selectInput("reg_group", "Research Group *", 
+                  choices = group_choices, # choices = c("", group_choices), was change to make choosing a group mandatory.
+                  selected = ""),
       tags$small("* Required fields")
     ))
   })
   
   # Registration logic
   observeEvent(input$register_btn, {
-    req(input$reg_username, input$reg_email, input$reg_password, input$reg_confirm_password)
+    req(input$reg_username, input$reg_email, input$reg_password, input$reg_confirm_password, input$reg_group)
     
     if(input$reg_password != input$reg_confirm_password) {
       showNotification("Passwords do not match", type = "error")
@@ -644,6 +662,12 @@ server <- function(input, output, session) {
       return()
     }
     
+    # Make sure, a group is chosen when registering
+    if(is.null(input$reg_group) || input$reg_group == "") {
+      showNotification("Please select a research group", type = "error")
+      return()
+    }
+
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
     
@@ -660,14 +684,16 @@ server <- function(input, output, session) {
     
     # Insert new user
     dbExecute(con, "
-    INSERT INTO users (username, password, email, is_admin)
-    VALUES (?, ?, ?, 0)
-  ", params = list(
-    input$reg_username,
-    digest(input$reg_password),
-    input$reg_email
-  ))
-    
+    INSERT INTO users (username, password, email, phone, research_group, is_admin)
+    VALUES (?, ?, ?, ?, ?, 0)
+    ", params = list(
+      input$reg_username,
+      digest(input$reg_password),
+      input$reg_email,
+      input$reg_phone,
+      input$reg_group
+    ))
+
     removeModal()
     showNotification("Registration successful! You can now login.", type = "message")
   })
@@ -689,6 +715,15 @@ server <- function(input, output, session) {
       user$username <- user_data$username
       user$user_id <- user_data$id
       user$is_admin <- as.logical(user_data$is_admin)
+
+      # Load essential data for all users (not just admins)
+      admin_data$budget_holders <- load_budget_holders()
+      admin_data$service_types <- load_service_types()
+      admin_data$sequencing_depths <- load_sequencing_depths()
+      admin_data$sequencing_cycles <- load_sequencing_cycles()
+      admin_data$types <- load_types()
+      admin_data$sequencing_platforms <- load_sequencing_platforms()
+      admin_data$reference_genomes <- load_reference_genomes()
       
       cat("DEBUG: Before hide/show operations\n")
       
@@ -985,26 +1020,46 @@ server <- function(input, output, session) {
                selectInput("sequencing_platform", "Sequencing Platform *",
                            choices = admin_data$sequencing_platforms$name),
                selectInput("service_type_id", "Service Type *",
-                           choices = setNames(admin_data$service_types$id, 
-                                              paste(admin_data$service_types$service_type, 
-                                                    "- €", admin_data$service_types$costs_per_sample, "/sample"))),
+                           choices = if(!is.null(admin_data$service_types) && nrow(admin_data$service_types) > 0) {
+                             setNames(admin_data$service_types$id, 
+                                      paste(admin_data$service_types$service_type, 
+                                            "- €", admin_data$service_types$costs_per_sample, "/sample"))
+                           } else {
+                             c("No service types available" = "")
+                           }),
                selectInput("type_id", "Project Type *",
-                           choices = setNames(admin_data$types$id, admin_data$types$name))
+                           choices = if(!is.null(admin_data$types) && nrow(admin_data$types) > 0) {
+                             setNames(admin_data$types$id, admin_data$types$name)
+                           } else {
+                             c("No types available" = "")
+                           })
         ),
         column(6,
                selectInput("reference_genome", "Reference Genome *", 
                            choices = admin_data$reference_genomes),
                selectInput("sequencing_depth_id", "Sequencing Depth *",
-                           choices = setNames(admin_data$sequencing_depths$id, 
-                                              admin_data$sequencing_depths$depth_description)),
+                           choices = if(!is.null(admin_data$sequencing_depths) && nrow(admin_data$sequencing_depths) > 0) {
+                             setNames(admin_data$sequencing_depths$id, 
+                                      admin_data$sequencing_depths$depth_description)
+                           } else {
+                             c("No sequencing depths available" = "")
+                           }),
                selectInput("sequencing_cycles_id", "Sequencing Cycles *",
-                           choices = setNames(admin_data$sequencing_cycles$id, 
-                                              admin_data$sequencing_cycles$cycles_description)),
+                           choices = if(!is.null(admin_data$sequencing_cycles) && nrow(admin_data$sequencing_cycles) > 0) {
+                             setNames(admin_data$sequencing_cycles$id, 
+                                      admin_data$sequencing_cycles$cycles_description)
+                           } else {
+                             c("No sequencing cycles available" = "")
+                           }),
                selectInput("budget_id", "Budget Holder *",
-                           choices = setNames(admin_data$budget_holders$id,
-                                              paste(admin_data$budget_holders$name, 
-                                                    admin_data$budget_holders$surname, 
-                                                    "-", admin_data$budget_holders$cost_center))),
+                           choices = if(!is.null(admin_data$budget_holders) && nrow(admin_data$budget_holders) > 0) {
+                             setNames(admin_data$budget_holders$id,
+                                      paste(admin_data$budget_holders$name, 
+                                            admin_data$budget_holders$surname, 
+                                            "-", admin_data$budget_holders$cost_center))
+                           } else {
+                             c("No budget holders available" = "")
+                           }),
                selectInput("responsible_user", "Responsible User *",
                            choices = get_all_usernames(),
                            selected = user$username),
@@ -1032,6 +1087,39 @@ server <- function(input, output, session) {
       ),
       tags$small("* Required fields")
     ))
+    # Get current user's research group
+    con <- get_db_connection()
+    user_group <- dbGetQuery(con, 
+                             "SELECT research_group FROM users WHERE id = ?", 
+                             params = list(user$user_id)
+    )$research_group
+    dbDisconnect(con)
+    
+    # Safely find the budget holder ID that matches the user's group
+    if(!is.null(user_group) && user_group != "" && !is.na(user_group)) {
+      budget_holders <- admin_data$budget_holders
+      
+      # Check if budget_holders exists and has data
+      if(!is.null(budget_holders) && nrow(budget_holders) > 0) {
+        # Create full name for comparison
+        budget_full_names <- paste(budget_holders$name, budget_holders$surname)
+        
+        # Find matching budget holder
+        matching_index <- which(budget_full_names == user_group)
+        
+        if(length(matching_index) > 0) {
+          # Auto-select the matching budget holder
+          updateSelectInput(session, "budget_id", selected = budget_holders$id[matching_index[1]])
+          cat("Auto-selected budget holder:", user_group, "\n")
+        } else {
+          cat("No matching budget holder found for:", user_group, "\n")
+        }
+      } else {
+        cat("Budget holders data is empty or NULL\n")
+      }
+    } else {
+      cat("User group is null, empty, or NA:", user_group, "\n")
+    }
   })
   
   # Dynamic cost calculation
@@ -1130,7 +1218,21 @@ server <- function(input, output, session) {
   output$projects_table <- renderDT({
     req(projects_data())
     
+    cat("DEBUG: Projects data dimensions:", dim(projects_data()), "\n")
+    cat("DEBUG: Projects data columns:", names(projects_data()), "\n")
+    cat("DEBUG: Projects data row count:", nrow(projects_data()), "\n")
+    
     display_data <- projects_data()
+
+    # === ADD THIS CHECK ===
+    if(nrow(display_data) == 0) {
+      return(datatable(
+        data.frame(Message = "No projects found. Click 'Create New Project' to get started."),
+        options = list(dom = 't'),
+        rownames = FALSE,
+        colnames = ""
+      ))
+    }
     
     # Convert project_id to prefixed format (P1, P2, etc.) for display but keep original for sorting
     if("project_id" %in% names(display_data)) {
@@ -1494,12 +1596,18 @@ server <- function(input, output, session) {
   })
   
   output$users_table_admin <- renderDT({
+    # Check which columns actually exist
+    available_cols <- names(admin_data$users)
+    cat("Available user columns:", available_cols, "\n")
+    
+    # Select only columns that exist
+    display_data <- admin_data$users[, available_cols, drop = FALSE]
+    
     datatable(
-      admin_data$users[, c("username", "email", "is_admin")],
+      display_data,
       selection = 'single',
       options = list(pageLength = 10),
-      rownames = FALSE,
-      colnames = c("Username", "Email", "Is Admin")
+      rownames = FALSE
     )
   })
   

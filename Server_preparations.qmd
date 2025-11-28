@@ -2,7 +2,31 @@
 title: "Server Preparations"
 format: html
 editor: visual
+execute: 
+  eval: false
 ---
+
+```{r}
+#| echo: false
+#| eval: true
+
+suppressPackageStartupMessages(
+  {
+  library(DBI)
+  library(RSQLite)
+  library(digest)
+  library(shiny)
+  library(shinyjs)
+  library(DBI)
+  library(RSQLite)
+  library(digest)
+  library(DT)
+  library(shinyWidgets)
+  library(mailR)
+  library(ldapr)
+})
+```
+
 
 # Server Infrastructure
 
@@ -312,6 +336,38 @@ sudo ufw allow 443
 
 ```
 
+## SSL Certificate (for HTTPS)
+
+the new setting of the certificates. I have three files.
+
+The private key I created when applying for the certificate. The other two were downloaded, when the emial came
+from Harica (the certificate provider).
+
+the `PEM`  is the pem file and the `DER (issuer)` is the chain file. Both of them are needed.
+
+Setting for the readability of the files:
+```
+cd /etc/apache2/certificate/2026
+-rw------- 1 yeroslaviz b_mcf 3272 Nov 10 15:58 private-key.pem # udo chmod 600 /path/to/private.key  # Readable only by root
+-rw-r--r-- 1 yeroslaviz b_mcf 1545 Nov 14 12:12 NGS_2026_Issuer_ChainFile.cer # sudo chmod 644 /path/to/chain.crt  # Readable by all
+-rw-r--r-- 1 yeroslaviz b_mcf 2796 Nov 14 12:34 NGS_2026_Cert.pem # sudo chmod 644 /path/to/certificate.crt # Readable by all
+```
+
+All the files are saved under `/etc/apache2/certificate/2026`.
+
+Now I created soft links for each of these files.
+
+```{bash}
+sudo ln -s /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem
+sudo ln -s /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem
+
+```
+
+
+# LDAP
+
+To be followed!!! 
+
 
 # Changes on 14.11.2026
 
@@ -449,6 +505,9 @@ VALUES (?, ?, ?, ?, ?, 0)
 as well as modified the User registration modal
 
 
+Now,  when a user register, he must choose a group from the given drop-down menu. this group is attached to the budget holder. When the user creates a new project, this budget holder (group) will automatically be assigned to the project (This can be manually changed, when the project is created).
+
+
 # Change connection to shiny server folder to https
 
 The shiny app takes information from the config file under `/etc/shiny-server/shiny-server.conf`. Here we can see where the log files are written into and where the directory of the shiny app are stored. 
@@ -464,34 +523,41 @@ sudo ln -s /home/yeroslaviz/BCFNGS-project-management/sequencing-app/ /srv/shiny
 ```
 
 
-# SSL Certificate (for HTTPS)
 
-the new setting of the certificates. I have three files.
+# Changes on 28.11.2025
 
-The rpivate key I created when applying for the certificate. The other two were downloaded, when the emial came
-from Harica (the certificate provider).
+I have changed the `setup_databases.R` script to load the budget holders information from a csv file, stored in the same folder as the script itself. 
 
-the `PEM`  is the pem file and the `DER (issuer)` is the chain file. Both of them are needed.
-
-Setting for the readability of the files:
-```
-cd /etc/apache2/certificate/2026
--rw------- 1 yeroslaviz b_mcf 3272 Nov 10 15:58 private-key.pem # udo chmod 600 /path/to/private.key  # Readable only by root
--rw-r--r-- 1 yeroslaviz b_mcf 1545 Nov 14 12:12 NGS_2026_Issuer_ChainFile.cer # sudo chmod 644 /path/to/chain.crt  # Readable by all
--rw-r--r-- 1 yeroslaviz b_mcf 2796 Nov 14 12:34 NGS_2026_Cert.pem # sudo chmod 644 /path/to/certificate.crt # Readable by all
-```
-
-All the files are saved under `/etc/apache2/certificate/2026`.
-
-Now I created soft links for each of these files.
-
-```{bash}
-sudo ln -s /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem
-sudo ln -s /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem
+We have a csv-formatted table with the information of the groups and their cost centres. This is an easy way to upload the information.
 
 ```
+name,surname,email,cost_center
+Kim,Rin-Ho,rkim@biochem.mpg.de,N.A.
+Administrator,surname,rkim@biochem.mpg.de,N.A.
+Baier,Herwig,herwig.baier@bi.mpg.de,P350
+Baldwin,Maude,Maude.Baldwin@bi.mpg.de,P550
+```
+
+The registration process was change to make choosing a research group mandatory. The chosen research group is then set to also assign the cost center to the user. 
+
+::: {.callout-note}
+Some of the research groups have multiple cost centers. 
+
+When a user registers, he must select a research group. The user then gets assigned a cost center based on the table of budget holders. If (and this applies only for some of the budget holders), this specific research group has multiple cost centers, it gets assigned the first one found by the app. BUT, manually the user still can change this in the app when applying for a project.
+ 
+:::
 
 
-# LDAP
+## control for budegt holder info in the DB
+
+```{r}
+#| eval: true
+con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
+budget_holders <- dbGetQuery(con, "SELECT * FROM budget_holders")
+# Print the data
+print(budget_holders[1:3,])
+#dbGetQuery(con, "SELECT * FROM budget_holders")
+on.exit(dbDisconnect(con))
+```
 
 
