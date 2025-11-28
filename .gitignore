@@ -5,6 +5,9 @@
 .Rhistory
 .Rapp.history
 
+# backup files and folders
+.backup
+
 # Session Data files
 .RData
 .RDataTmp
