@@ -272,9 +272,36 @@ sudo systemctl status shiny-server
 
 # Github repository
 
-In the home folder /home/yeroslaviz/ the github repository is stored. 
+## create Key gen for giyhub connection
 
+```{bash}
+
+ssh-keygen -t ed25519 -f ngs-testing-vm.id_rsa -C "yeroslaviz@biochem.mpg.de"
+### 1qazXSW@3edc
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/ngs-testing-vm.id_rsa
+
+cat ~/.ssh/ngs-testing-vm.id_rsa.pub # copy this to the github repo
+PAT - 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
 ```
+
+
+## Add the key to GitHub
+-Go to GitHub.com
+- Click your profile picture → Settings
+- Go to SSH and GPG keys
+- Click New SSH key
+- Paste the public key you copied
+- Give it a name like "VM access"
+- In the home folder /home/yeroslaviz/ the github repository is stored. 
+
+
+## check the connection 
+
+```{bash}
+ssh -T git@github.com
+```
+
 $ tree -L 1
 .
 ├── BCFNGS-project-management
