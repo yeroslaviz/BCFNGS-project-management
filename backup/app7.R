@@ -7,33 +7,16 @@ library(digest)
 library(DT)
 library(shinyWidgets)
 library(mailR)
-<<<<<<< HEAD
-library(ldapr)
-=======
->>>>>>> origin/main
 
 # UI definition
 ui <- fluidPage(
   useShinyjs(),
   tags$head(
 #    tags$link(rel = "stylesheet", type = "text/css", href = "styles.css"),
-  tags$style("
-  /* Reset colors and ensure visibility */
-  body {
-    color: #333333 !important;
-    background-color: #ffffff !important;
-  }
-  
-  .app-header {
-    background-color: #2c3e50 !important;
-    color: white !important;
-    padding: 10px 0;
-  }
-  
+    tags$style("
   .login-info {
     font-size: 0.9em;
     line-height: 1.5;
-    color: #333333 !important;
   }
   .login-info ul {
     margin: 10px 0;
@@ -41,7 +24,6 @@ ui <- fluidPage(
   }
   .login-info li {
     margin-bottom: 5px;
-    color: #333333 !important;
   }
   .login-info a {
     color: #3498db;
@@ -51,178 +33,157 @@ ui <- fluidPage(
     text-decoration: underline;
   }
   .modal-body .form-group {
-    margin-bottom: 15px;
-  }
-  .shiny-input-container {
-    width: 100% !important;
-  }
-  .action-buttons {
-    margin: 20px 0;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .projects-table {
-    margin-top: 20px;
-  }
-  .admin-management-table {
-    margin: 15px 0;
-  }
-  .dataTables_wrapper {
-    overflow-x: auto;
-  }
-  .status-application-received { background-color: #fff3cd !important; color: #333333 !important; }
-  .status-under-review { background-color: #cce7ff !important; color: #333333 !important; }
-  .status-approved { background-color: #d4edda !important; color: #333333 !important; }
-  .status-rejected { background-color: #f8d7da !important; color: #333333 !important; }
-  .status-sequencing-in-progress { background-color: #e2e3e5 !important; color: #333333 !important; }
-  .status-data-delivered { background-color: #d1ecf1 !important; color: #333333 !important; }
-  .status-project-completed { background-color: #d4edda !important; color: #333333 !important; }
-  .home-page {
-    text-align: center;
-    padding: 40px 20px;
-    color: #333333 !important;
-  }
-  .home-title {
-    color: #2c3e50 !important;
-    margin-bottom: 30px;
-    font-size: 2.5em;
-  }
-  .home-subtitle {
-    color: #34495e !important;
-    font-size: 1.3em;
-    margin-bottom: 40px;
-    line-height: 1.6;
-  }
-  .home-features {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    margin-top: 40px;
-    flex-wrap: wrap;
-  }
-  .feature-card {
-    background: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    width: 300px;
-    text-align: center;
-    color: #333333 !important;
-  }
-  .feature-icon {
-    font-size: 3em;
-    color: #3498db;
-    margin-bottom: 20px;
-  }
-  .feature-title {
-    font-size: 1.5em;
-    color: #2c3e50 !important;
-    margin-bottom: 15px;
-  }
-  .feature-description {
-    color: #7f8c8d !important;
-    line-height: 1.5;
-  }
-  .header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding: 0 20px;
-  }
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-  }
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-  }
-  .header-logo {
-    height: 50px;
-    width: auto;
-  }
-  .institute-name {
-    color: white !important;
-    font-size: 1.2em;
-    font-weight: bold;
-    margin: 0;
-  }
-  .app-title {
-    color: white !important;
-    font-size: 1.5em;
-    font-weight: bold;
-    margin: 0;
-    text-align: center;
-    flex-grow: 1;
-  }
-  .user-info-panel {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    color: white !important;
-  }
-  .user-info-panel .shiny-text-output {
-    color: white !important;
-  }
-  .instructions-panel {
-    background-color: #f8f9fa;
-    border-left: 4px solid #3498db;
-    padding: 20px;
-    margin: 20px 0;
-    border-radius: 4px;
-    color: #333333 !important;
-  }
-  .instructions-title {
-    color: #2c3e50 !important;
-    font-size: 1.3em;
-    margin-bottom: 15px;
-    font-weight: bold;
-  }
-  .instructions-list {
-    color: #34495e !important;
-    line-height: 1.6;
-    margin: 0;
-    padding-left: 20px;
-  }
-  .instructions-list li {
-    margin-bottom: 8px;
-    color: #34495e !important;
-  }
-  .cost-calculation {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 5px;
-    padding: 15px;
-    margin-top: 20px;
-    color: #333333 !important;
-  }
-  .cost-total {
-    font-size: 1.2em;
-    font-weight: bold;
-    color: #2c3e50 !important;
-  }
-  .cost-warning {
-    color: #e74c3c !important;
-    font-style: italic;
-  }
-  
-/*   Ensure all text is visible */
- /* * {                         */
- /*   color: #333333 !important;*/
- /* }                           */
-  
-  h1, h2, h3, h4, h5, h6 {
-    color: #2c3e50 !important;
-  }
-  
-  p, span, div {
-    color: #333333 !important;
-  }
-  "),
+        margin-bottom: 15px;
+      }
+      .shiny-input-container {
+        width: 100% !important;
+      }
+      .action-buttons {
+        margin: 20px 0;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .projects-table {
+        margin-top: 20px;
+      }
+      .admin-management-table {
+        margin: 15px 0;
+      }
+      .dataTables_wrapper {
+        overflow-x: auto;
+      }
+      .status-application-received { background-color: #fff3cd !important; }
+      .status-under-review { background-color: #cce7ff !important; }
+      .status-approved { background-color: #d4edda !important; }
+      .status-rejected { background-color: #f8d7da !important; }
+      .status-sequencing-in-progress { background-color: #e2e3e5 !important; }
+      .status-data-delivered { background-color: #d1ecf1 !important; }
+      .status-project-completed { background-color: #d4edda !important; }
+      .home-page {
+        text-align: center;
+        padding: 40px 20px;
+      }
+      .home-title {
+        color: #2c3e50;
+        margin-bottom: 30px;
+        font-size: 2.5em;
+      }
+      .home-subtitle {
+        color: #34495e;
+        font-size: 1.3em;
+        margin-bottom: 40px;
+        line-height: 1.6;
+      }
+      .home-features {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-top: 40px;
+        flex-wrap: wrap;
+      }
+      .feature-card {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        width: 300px;
+        text-align: center;
+      }
+      .feature-icon {
+        font-size: 3em;
+        color: #3498db;
+        margin-bottom: 20px;
+      }
+      .feature-title {
+        font-size: 1.5em;
+        color: #2c3e50;
+        margin-bottom: 15px;
+      }
+      .feature-description {
+        color: #7f8c8d;
+        line-height: 1.5;
+      }
+      .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding: 0 20px;
+      }
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .header-logo {
+        height: 50px;
+        width: auto;
+      }
+      .institute-name {
+        color: white;
+        font-size: 1.2em;
+        font-weight: bold;
+        margin: 0;
+      }
+      .app-title {
+        color: white;
+        font-size: 1.5em;
+        font-weight: bold;
+        margin: 0;
+        text-align: center;
+        flex-grow: 1;
+      }
+      .user-info-panel {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        color: white;
+      }
+      .instructions-panel {
+        background-color: #f8f9fa;
+        border-left: 4px solid #3498db;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 4px;
+      }
+      .instructions-title {
+        color: #2c3e50;
+        font-size: 1.3em;
+        margin-bottom: 15px;
+        font-weight: bold;
+      }
+      .instructions-list {
+        color: #34495e;
+        line-height: 1.6;
+        margin: 0;
+        padding-left: 20px;
+      }
+      .instructions-list li {
+        margin-bottom: 8px;
+      }
+      .cost-calculation {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 15px;
+        margin-top: 20px;
+      }
+      .cost-total {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #2c3e50;
+      }
+      .cost-warning {
+        color: #e74c3c;
+        font-style: italic;
+      }
+    "),
     tags$script("
       $(document).ready(function() {
         $(document).on('keyup', '#login_username, #login_password', function(e) {
@@ -252,11 +213,7 @@ ui <- fluidPage(
           tags$li("Data analysis on collaborative basis")
         ),
         p("If you have any further questions, please do not hesitate to ", 
-<<<<<<< HEAD
-          tags$a(href = "mailto:ngs.biochem.mpg.de", "contact us @ NGS"), "!"),
-=======
           tags$a(href = "mailto:omicsdesk.biochem.mpg.de", "contact us @ omicsdesk"), "!"),
->>>>>>> origin/main
         
         h4("Registration", style = "color: #2c3e50; margin-top: 20px;"),
         p("If you want to use the NGS service for the first time, you have to ",
@@ -506,11 +463,7 @@ server <- function(input, output, session) {
     on.exit(dbDisconnect(con))
     
     # Load users
-<<<<<<< HEAD
-    admin_data$users <- dbGetQuery(con, "SELECT id, username, email, phone, research_group, is_admin FROM users")
-=======
     admin_data$users <- dbGetQuery(con, "SELECT id, username, email, is_admin FROM users")
->>>>>>> origin/main
     
     # Load all reference data from database
     admin_data$budget_holders <- load_budget_holders()
@@ -556,15 +509,14 @@ server <- function(input, output, session) {
   # Send email notification
   send_project_creation_email <- function(project_data, budget_holder, user_email) {
     tryCatch({
-      # Create ONE connection for the entire function
-      con <- get_db_connection()
-      on.exit(dbDisconnect(con))
-      
       cat("DEBUG: Starting email function\n")
-      cat("DEBUG: From: ngs@biochem.mpg.de\n")
+      cat("DEBUG: From: yeroslaviz@biochem.mpg.de\n")
+      cat("DEBUG: To:", paste(c(budget_holder$email, user_email), collapse = ", "), "\n")
       
-      # Get email template (using the same connection)
+      # Get email template
+      con <- get_db_connection()
       template <- dbGetQuery(con, "SELECT subject, body_template FROM email_templates WHERE template_name = 'project_creation' AND is_active = 1")
+      dbDisconnect(con)
       
       if(nrow(template) == 0) {
         cat("DEBUG: Template not found\n")
@@ -573,10 +525,15 @@ server <- function(input, output, session) {
       
       cat("DEBUG: Template found, preparing content\n")
       
-      # Get admin emails (using the SAME connection)
-      admin_emails <- dbGetQuery(con, "SELECT email FROM users WHERE is_admin = 1")$email
+      # Get email template from database
+      con <- get_db_connection()
+      template <- dbGetQuery(con, "SELECT subject, body_template FROM email_templates WHERE template_name = 'project_creation' AND is_active = 1")
+      dbDisconnect(con)
       
-      cat("DEBUG: To:", paste(c(budget_holder$email, user_email, admin_emails), collapse = ", "), "\n")
+      if(nrow(template) == 0) {
+        showNotification("Email template not found", type = "warning")
+        return(list(success = FALSE, error = "Email template not found"))
+      }
       
       # Prepare cost warning
       sequencing_depth <- admin_data$sequencing_depths[admin_data$sequencing_depths$id == project_data$sequencing_depth_id, ]
@@ -597,21 +554,29 @@ server <- function(input, output, session) {
       email_body <- gsub("\\{total_cost\\}", sprintf("%.2f", project_data$total_cost), email_body)
       email_body <- gsub("\\{cost_warning\\}", cost_warning, email_body)
       
+      # Test with simple content first
+      test_subject <- "Test from Shiny App"
+      test_body <- "This is a test email from the Shiny application."
+      
       cat("DEBUG: Attempting to send email...\n")
       
-      # Send email
+      # Try the exact same call that works in command line
       send.mail(
-        from = "ngs@biochem.mpg.de",
-        to = c(budget_holder$email, user_email, admin_emails),
+        from = "yeroslaviz@biochem.mpg.de",
+        to = c(budget_holder$email, user_email),
+        #        to = "yeroslaviz@biochem.mpg.de",  # Send to myself for testing
+        #        html = TRUE,  # Send as HTML
         encoding = "utf-8",
         subject = template$subject,
         body = email_body,
+        #        subject = test_subject,
+        #        body = test_body,
         smtp = list(
           host.name = "msx.biochem.mpg.de",
           port = 25,
           ssl = FALSE,
           tls = FALSE,
-          authenticate = FALSE
+          authenticate = FALSE  # Try without auth first
         ),
         send = TRUE
       )
@@ -623,22 +588,10 @@ server <- function(input, output, session) {
       cat("DEBUG: Error occurred:", e$message, "\n")
       return(list(success = FALSE, error = e$message))
     })
-  }  
-<<<<<<< HEAD
-
+  }
+  
   # User registration modal
   observeEvent(input$show_register_btn, {
-    # Load budget holders for group dropdown
-    con <- get_db_connection()
-    budget_holders <- dbGetQuery(con, "SELECT DISTINCT name, surname FROM budget_holders ORDER BY name, surname")
-    dbDisconnect(con)
-    
-    group_choices <- paste(budget_holders$name, budget_holders$surname)
-    
-=======
-  # User registration modal
-  observeEvent(input$show_register_btn, {
->>>>>>> origin/main
     showModal(modalDialog(
       title = "User Registration",
       size = "m",
@@ -651,25 +604,13 @@ server <- function(input, output, session) {
       textInput("reg_email", "Email *", placeholder = "your.email@institute.org"),
       passwordInput("reg_password", "Password *", placeholder = "Choose a password"),
       passwordInput("reg_confirm_password", "Confirm Password *", placeholder = "Confirm your password"),
-<<<<<<< HEAD
-      textInput("reg_phone", "Phone Number", placeholder = "+49 89 8578****"),
-      selectInput("reg_group", "Research Group *", 
-                  # This makes choosing a research group compulsory!
-                  choices = c("Select your research group" = "", group_choices), # c("", group_choices), 
-                  selected = ""),
-=======
->>>>>>> origin/main
       tags$small("* Required fields")
     ))
   })
   
   # Registration logic
   observeEvent(input$register_btn, {
-<<<<<<< HEAD
-    req(input$reg_username, input$reg_email, input$reg_password, input$reg_confirm_password, input$reg_group)
-=======
     req(input$reg_username, input$reg_email, input$reg_password, input$reg_confirm_password)
->>>>>>> origin/main
     
     if(input$reg_password != input$reg_confirm_password) {
       showNotification("Passwords do not match", type = "error")
@@ -681,14 +622,6 @@ server <- function(input, output, session) {
       return()
     }
     
-<<<<<<< HEAD
-    if(is.null(input$reg_group) || input$reg_group == "") {
-      showNotification("Please select a research group", type = "error")
-      return()
-    }
-    
-=======
->>>>>>> origin/main
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
     
@@ -705,18 +638,6 @@ server <- function(input, output, session) {
     
     # Insert new user
     dbExecute(con, "
-<<<<<<< HEAD
-    INSERT INTO users (username, password, email, phone, research_group, is_admin)
-    VALUES (?, ?, ?, ?, ?, 0)
-    ", params = list(
-      input$reg_username,
-      digest(input$reg_password),
-      input$reg_email,
-      input$reg_phone,
-      input$reg_group
-    ))
-
-=======
     INSERT INTO users (username, password, email, is_admin)
     VALUES (?, ?, ?, 0)
   ", params = list(
@@ -725,7 +646,6 @@ server <- function(input, output, session) {
     input$reg_email
   ))
     
->>>>>>> origin/main
     removeModal()
     showNotification("Registration successful! You can now login.", type = "message")
   })
@@ -747,29 +667,9 @@ server <- function(input, output, session) {
       user$username <- user_data$username
       user$user_id <- user_data$id
       user$is_admin <- as.logical(user_data$is_admin)
-<<<<<<< HEAD
-
-      # Load essential data for all users (not just admins)
-      admin_data$budget_holders <- load_budget_holders()
-      admin_data$service_types <- load_service_types()
-      admin_data$sequencing_depths <- load_sequencing_depths()
-      admin_data$sequencing_cycles <- load_sequencing_cycles()
-      admin_data$types <- load_types()
-      admin_data$sequencing_platforms <- load_sequencing_platforms()
-      admin_data$reference_genomes <- load_reference_genomes()
-=======
->>>>>>> origin/main
       
-      cat("DEBUG: Before hide/show operations\n")
-      
-      # Force show main_app and hide login
-      shinyjs::hide("login_screen", anim = FALSE)
-      shinyjs::show("main_app", anim = FALSE)
-      
-      cat("DEBUG: After hide/show operations\n")
-
-#      hide("login_screen")
-#      show("main_app")
+      hide("login_screen")
+      show("main_app")
       
       # Load admin data if user is admin
       if(user$is_admin) {
@@ -884,7 +784,7 @@ server <- function(input, output, session) {
       )
     }
   })
-
+  
   # Load projects data
   load_projects <- function() {
     con <- get_db_connection()
@@ -1055,56 +955,16 @@ server <- function(input, output, session) {
                selectInput("sequencing_platform", "Sequencing Platform *",
                            choices = admin_data$sequencing_platforms$name),
                selectInput("service_type_id", "Service Type *",
-<<<<<<< HEAD
-                           choices = if(!is.null(admin_data$service_types) && nrow(admin_data$service_types) > 0) {
-                             setNames(admin_data$service_types$id, 
-                                      paste(admin_data$service_types$service_type, 
-                                            "- €", admin_data$service_types$costs_per_sample, "/sample"))
-                           } else {
-                             c("No service types available" = "")
-                           }),
-               selectInput("type_id", "Project Type *",
-                           choices = if(!is.null(admin_data$types) && nrow(admin_data$types) > 0) {
-                             setNames(admin_data$types$id, admin_data$types$name)
-                           } else {
-                             c("No types available" = "")
-                           })
-=======
                            choices = setNames(admin_data$service_types$id, 
                                               paste(admin_data$service_types$service_type, 
                                                     "- €", admin_data$service_types$costs_per_sample, "/sample"))),
                selectInput("type_id", "Project Type *",
                            choices = setNames(admin_data$types$id, admin_data$types$name))
->>>>>>> origin/main
         ),
         column(6,
                selectInput("reference_genome", "Reference Genome *", 
                            choices = admin_data$reference_genomes),
                selectInput("sequencing_depth_id", "Sequencing Depth *",
-<<<<<<< HEAD
-                           choices = if(!is.null(admin_data$sequencing_depths) && nrow(admin_data$sequencing_depths) > 0) {
-                             setNames(admin_data$sequencing_depths$id, 
-                                      admin_data$sequencing_depths$depth_description)
-                           } else {
-                             c("No sequencing depths available" = "")
-                           }),
-               selectInput("sequencing_cycles_id", "Sequencing Cycles *",
-                           choices = if(!is.null(admin_data$sequencing_cycles) && nrow(admin_data$sequencing_cycles) > 0) {
-                             setNames(admin_data$sequencing_cycles$id, 
-                                      admin_data$sequencing_cycles$cycles_description)
-                           } else {
-                             c("No sequencing cycles available" = "")
-                           }),
-               selectInput("budget_id", "Budget Holder *",
-                           choices = if(!is.null(admin_data$budget_holders) && nrow(admin_data$budget_holders) > 0) {
-                             setNames(admin_data$budget_holders$id,
-                                      paste(admin_data$budget_holders$name, 
-                                            admin_data$budget_holders$surname, 
-                                            "-", admin_data$budget_holders$cost_center))
-                           } else {
-                             c("No budget holders available" = "")
-                           }),
-=======
                            choices = setNames(admin_data$sequencing_depths$id, 
                                               admin_data$sequencing_depths$depth_description)),
                selectInput("sequencing_cycles_id", "Sequencing Cycles *",
@@ -1115,7 +975,6 @@ server <- function(input, output, session) {
                                               paste(admin_data$budget_holders$name, 
                                                     admin_data$budget_holders$surname, 
                                                     "-", admin_data$budget_holders$cost_center))),
->>>>>>> origin/main
                selectInput("responsible_user", "Responsible User *",
                            choices = get_all_usernames(),
                            selected = user$username),
@@ -1143,42 +1002,6 @@ server <- function(input, output, session) {
       ),
       tags$small("* Required fields")
     ))
-<<<<<<< HEAD
-    # Get current user's research group
-    con <- get_db_connection()
-    user_group <- dbGetQuery(con, 
-                             "SELECT research_group FROM users WHERE id = ?", 
-                             params = list(user$user_id)
-    )$research_group
-    dbDisconnect(con)
-    
-    # Safely find the budget holder ID that matches the user's group
-    if(!is.null(user_group) && user_group != "" && !is.na(user_group)) {
-      budget_holders <- admin_data$budget_holders
-      
-      # Check if budget_holders exists and has data
-      if(!is.null(budget_holders) && nrow(budget_holders) > 0) {
-        # Create full name for comparison
-        budget_full_names <- paste(budget_holders$name, budget_holders$surname)
-        
-        # Find matching budget holder
-        matching_index <- which(budget_full_names == user_group)
-        
-        if(length(matching_index) > 0) {
-          # Auto-select the matching budget holder
-          updateSelectInput(session, "budget_id", selected = budget_holders$id[matching_index[1]])
-          cat("Auto-selected budget holder:", user_group, "\n")
-        } else {
-          cat("No matching budget holder found for:", user_group, "\n")
-        }
-      } else {
-        cat("Budget holders data is empty or NULL\n")
-      }
-    } else {
-      cat("User group is null, empty, or NA:", user_group, "\n")
-    }
-=======
->>>>>>> origin/main
   })
   
   # Dynamic cost calculation
@@ -1277,25 +1100,7 @@ server <- function(input, output, session) {
   output$projects_table <- renderDT({
     req(projects_data())
     
-<<<<<<< HEAD
-    cat("DEBUG: Projects data dimensions:", dim(projects_data()), "\n")
-    cat("DEBUG: Projects data columns:", names(projects_data()), "\n")
-    cat("DEBUG: Projects data row count:", nrow(projects_data()), "\n")
-    
     display_data <- projects_data()
-
-    # === ADD THIS CHECK ===
-    if(nrow(display_data) == 0) {
-      return(datatable(
-        data.frame(Message = "No projects found. Click 'Create New Project' to get started."),
-        options = list(dom = 't'),
-        rownames = FALSE,
-        colnames = ""
-      ))
-    }
-=======
-    display_data <- projects_data()
->>>>>>> origin/main
     
     # Convert project_id to prefixed format (P1, P2, etc.) for display but keep original for sorting
     if("project_id" %in% names(display_data)) {
@@ -1439,12 +1244,8 @@ server <- function(input, output, session) {
       hr(),
       h4("Current Service Types"),
       DTOutput("service_types_table_admin"),
-      div(  # ADD Adding the edit button to the table
-        actionButton("edit_service_type_btn", "Edit Selected", class = "btn-warning"),
-        actionButton("delete_service_type_btn", "Delete Selected Service Type", class = "btn-danger")
-        )
-      )
-    )
+      actionButton("delete_service_type_btn", "Delete Selected Service Type", class = "btn-danger")
+    ))
   })
   
   # Sequencing Depths Management Modal
@@ -1473,12 +1274,8 @@ server <- function(input, output, session) {
       hr(),
       h4("Current Sequencing Depths"),
       DTOutput("sequencing_depths_table_admin"),
-      div(  # ADD Adding the edit button to the table
-        actionButton("edit_sequencing_depth_btn", "Edit Selected", class = "btn-warning"),
-        actionButton("delete_sequencing_depth_btn", "Delete Selected Depth", class = "btn-danger")
-        )
-      ) 
-    )
+      actionButton("delete_sequencing_depth_btn", "Delete Selected Depth", class = "btn-danger")
+    ))
   })
   
   # Sequencing Cycles Management Modal
@@ -1645,41 +1442,22 @@ server <- function(input, output, session) {
   })
   
   output$sequencing_cycles_table_admin <- renderDT({
-    cycles_df <- admin_data$sequencing_cycles
-    if(nrow(cycles_df) > 0) {
-      cycles_df <- cycles_df[, c("id", "cycles_description"), drop = FALSE]  # KEEP AS DATA FRAME
-    }
     datatable(
-      cycles_df,
+      admin_data$sequencing_cycles[, c("cycles_description")],
       selection = 'single',
       options = list(pageLength = 10),
       rownames = FALSE,
-      colnames = c("ID", "Cycles Description")  # UPDATE COLUMN NAMES
+      colnames = c("Cycles Description")
     )
   })
   
   output$users_table_admin <- renderDT({
-<<<<<<< HEAD
-    # Check which columns actually exist
-    available_cols <- names(admin_data$users)
-    cat("Available user columns:", available_cols, "\n")
-    
-    # Select only columns that exist
-    display_data <- admin_data$users[, available_cols, drop = FALSE]
-    
-    datatable(
-      display_data,
-      selection = 'single',
-      options = list(pageLength = 10),
-      rownames = FALSE
-=======
     datatable(
       admin_data$users[, c("username", "email", "is_admin")],
       selection = 'single',
       options = list(pageLength = 10),
       rownames = FALSE,
       colnames = c("Username", "Email", "Is Admin")
->>>>>>> origin/main
     )
   })
   
@@ -1802,53 +1580,6 @@ server <- function(input, output, session) {
     showNotification("Service type added successfully!", type = "message")
   })
   
-  # Edit Service Type
-  observeEvent(input$edit_service_type_btn, {
-    selected_row <- input$service_types_table_admin_rows_selected
-    if(length(selected_row) == 0) {
-      showNotification("Please select a service type to edit", type = "warning")
-      return()
-    }
-    
-    service_to_edit <- admin_data$service_types[selected_row, ]
-    
-    showModal(modalDialog(
-      title = "Edit Service Type",
-      size = "m",
-      footer = tagList(
-        modalButton("Cancel"),
-        actionButton("update_service_type_btn", "Update Service Type", class = "btn-primary")
-      ),
-      
-      textInput("edit_service_type", "Service Type", value = service_to_edit$service_type),
-      textInput("edit_service_kit", "Kit", value = service_to_edit$kit),
-      numericInput("edit_service_cost", "Cost per Sample", value = service_to_edit$costs_per_sample, min = 0)
-    ))
-  })
-  
-  # Update Service Type
-  observeEvent(input$update_service_type_btn, {
-    selected_row <- input$service_types_table_admin_rows_selected
-    service_to_edit <- admin_data$service_types[selected_row, ]
-    
-    con <- get_db_connection()
-    on.exit(dbDisconnect(con))
-    
-    dbExecute(con, "
-    UPDATE service_types 
-    SET service_type = ?, kit = ?, costs_per_sample = ?
-    WHERE id = ?
-  ", params = list(
-    input$edit_service_type,
-    input$edit_service_kit,
-    input$edit_service_cost,
-    service_to_edit$id
-  ))
-    
-    removeModal()
-    admin_data$service_types <- load_service_types()
-    showNotification("Service type updated successfully!", type = "message")
-  })
   # Add new sequencing depth
   observeEvent(input$add_sequencing_depth_btn, {
     req(input$new_depth_description)
@@ -1880,54 +1611,6 @@ server <- function(input, output, session) {
     updateNumericInput(session, "new_depth_cost_150", value = 0)
     updateNumericInput(session, "new_depth_cost_300", value = 0)
     showNotification("Sequencing depth added successfully!", type = "message")
-  })
-  
-  # Edit Sequencing Depth
-  observeEvent(input$edit_sequencing_depth_btn, {
-    selected_row <- input$sequencing_depths_table_admin_rows_selected
-    if(length(selected_row) == 0) {
-      showNotification("Please select a sequencing depth to edit", type = "warning")
-      return()
-    }
-    
-    depth_to_edit <- admin_data$sequencing_depths[selected_row, ]
-    
-    showModal(modalDialog(
-      title = "Edit Sequencing Depth",
-      size = "m",
-      footer = tagList(
-        modalButton("Cancel"),
-        actionButton("update_sequencing_depth_btn", "Update Depth", class = "btn-primary")
-      ),
-      
-      textInput("edit_depth_description", "Depth Description", value = depth_to_edit$depth_description),
-      numericInput("edit_depth_cost_150", "Cost up to 150 cycles", value = depth_to_edit$cost_upto_150_cycles, min = 0),
-      numericInput("edit_depth_cost_300", "Cost up to 300 cycles", value = depth_to_edit$cost_upto_300_cycles, min = 0)
-    ))
-  })
-  
-  # Update Sequencing Depth
-  observeEvent(input$update_sequencing_depth_btn, {
-    selected_row <- input$sequencing_depths_table_admin_rows_selected
-    depth_to_edit <- admin_data$sequencing_depths[selected_row, ]
-    
-    con <- get_db_connection()
-    on.exit(dbDisconnect(con))
-    
-    dbExecute(con, "
-    UPDATE sequencing_depths 
-    SET depth_description = ?, cost_upto_150_cycles = ?, cost_upto_300_cycles = ?
-    WHERE id = ?
-  ", params = list(
-    input$edit_depth_description,
-    ifelse(is.na(input$edit_depth_cost_150), NULL, input$edit_depth_cost_150),
-    ifelse(is.na(input$edit_depth_cost_300), NULL, input$edit_depth_cost_300),
-    depth_to_edit$id
-  ))
-    
-    removeModal()
-    admin_data$sequencing_depths <- load_sequencing_depths()
-    showNotification("Sequencing depth updated successfully!", type = "message")
   })
   
   # Add new sequencing cycles
@@ -2761,7 +2444,7 @@ server <- function(input, output, session) {
   #   # Check if backup needed (every 14 days)
   #   invalidateLater(14 * 24 * 60 * 60 * 1000) # 14 days in milliseconds
   #   
-  #   backup_dir <- "ngs_project_management_sql_backups"
+  #   backup_dir <- "auto_backups"
   #   if (!dir.exists(backup_dir)) dir.create(backup_dir)
   #   
   #   # Create backup filename with bi-weekly indicator

@@ -3,6 +3,7 @@ library(DBI)
 library(RSQLite)
 library(digest)
 
+<<<<<<< HEAD
 ##########################
 #
 # latest version - 14112026
@@ -10,6 +11,8 @@ library(digest)
 ##########################
 
 
+=======
+>>>>>>> origin/main
 setup_complete_database <- function() {
   
   # Delete old database if it exists
@@ -28,8 +31,11 @@ setup_complete_database <- function() {
       username TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
       email TEXT NOT NULL,
+<<<<<<< HEAD
       phone TEXT,
       research_group TEXT,
+=======
+>>>>>>> origin/main
       is_admin INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
@@ -199,6 +205,7 @@ setup_complete_database <- function() {
   # here we can change the admin password if needed. 
   default_password <- digest::digest("admin123")
   dbExecute(con, "
+<<<<<<< HEAD
   INSERT OR IGNORE INTO users (username, password, email, is_admin, research_group) 
   VALUES ('admin', ?, 'ngs@biochem.mpg.de', 1, 'Kim')
 ", params = list(default_password))
@@ -209,17 +216,32 @@ setup_complete_database <- function() {
 ", params = list(digest::digest("yeroslaviz123")))
   
   # Insert sample users with phone and research_group
+=======
+    INSERT OR IGNORE INTO users (username, password, email, is_admin) 
+    VALUES ('admin', ?, 'ngs@biochem.mpg.de', 1)
+  ", params = list(default_password))
+  dbExecute(con, "
+  INSERT OR IGNORE INTO users (username, password, email, is_admin) 
+  VALUES ('admin2', ?, 'yeroslaviz@biochem.mpg.de', 1)
+", params = list(digest::digest("yeroslaviz123")))
+  
+  # Insert some sample users
+>>>>>>> origin/main
   sample_users <- data.frame(
     username = c('user1', 'user2'),
     password = c(digest('user1123'), digest('user2123')),
     email = c('user1@institute.org', 'user2@institute.org'),
+<<<<<<< HEAD
     phone = c("+49 89 12345678", "+49 89 87654321"),
     research_group = c("Cox", "Baier"),
+=======
+>>>>>>> origin/main
     is_admin = c(0, 0)
   )
   
   for(i in 1:nrow(sample_users)) {
     dbExecute(con, "
+<<<<<<< HEAD
     INSERT OR IGNORE INTO users (username, password, email, phone, research_group, is_admin) 
     VALUES (?, ?, ?, ?, ?, ?)
   ", params = list(
@@ -270,6 +292,38 @@ setup_complete_database <- function() {
   }
   
   message("✅ Budget holders loaded from ", budget_holders_file, " (", nrow(budget_holders_df), " entries)")
+=======
+      INSERT OR IGNORE INTO users (username, password, email, is_admin) 
+      VALUES (?, ?, ?, ?)
+    ", params = list(
+      sample_users$username[i],
+      sample_users$password[i],
+      sample_users$email[i],
+      sample_users$is_admin[i]
+    ))
+  }
+  
+  # Insert budget holders
+  budget_holders <- data.frame(
+    name = c('Cox', 'Baier', 'Baldwin', 'Baumeister', 'Borst'),
+    surname = c('Juergen', 'Gilles', 'James', 'Wolfgang', 'Alexander'),
+    cost_center = c('K435', 'P350', 'P550', 'K190', 'P300'),
+    email = c('yeroslaviz@biochem.mpg.de', 'baier@institute.org', 'baldwin@institute.org', 
+              'baumeister@institute.org', 'borst@institute.org')
+  )
+  
+  for(i in 1:nrow(budget_holders)) {
+    dbExecute(con, "
+      INSERT OR IGNORE INTO budget_holders (name, surname, cost_center, email) 
+      VALUES (?, ?, ?, ?)
+    ", params = list(
+      budget_holders$name[i],
+      budget_holders$surname[i],
+      budget_holders$cost_center[i],
+      budget_holders$email[i]
+    ))
+  }
+>>>>>>> origin/main
   
   # Insert service types
   service_types <- data.frame(

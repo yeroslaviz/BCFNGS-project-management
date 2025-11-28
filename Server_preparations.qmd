@@ -2,6 +2,7 @@
 title: "Server Preparations"
 format: html
 editor: visual
+<<<<<<< HEAD
 execute: 
   eval: false
 ---
@@ -28,6 +29,10 @@ suppressPackageStartupMessages(
 ```
 
 
+=======
+---
+
+>>>>>>> origin/main
 # Server Infrastructure
 
 ```{bash}
@@ -336,6 +341,7 @@ sudo ufw allow 443
 
 ```
 
+<<<<<<< HEAD
 ## SSL Certificate (for HTTPS)
 
 the new setting of the certificates. I have three files.
@@ -368,6 +374,8 @@ sudo ln -s /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_N
 
 To be followed!!! 
 
+=======
+>>>>>>> origin/main
 
 # Changes on 14.11.2026
 
@@ -505,9 +513,12 @@ VALUES (?, ?, ?, ?, ?, 0)
 as well as modified the User registration modal
 
 
+<<<<<<< HEAD
 Now,  when a user register, he must choose a group from the given drop-down menu. this group is attached to the budget holder. When the user creates a new project, this budget holder (group) will automatically be assigned to the project (This can be manually changed, when the project is created).
 
 
+=======
+>>>>>>> origin/main
 # Change connection to shiny server folder to https
 
 The shiny app takes information from the config file under `/etc/shiny-server/shiny-server.conf`. Here we can see where the log files are written into and where the directory of the shiny app are stored. 
@@ -522,6 +533,7 @@ sudo ln -s /home/yeroslaviz/BCFNGS-project-management/sequencing-app/ /srv/shiny
 
 ```
 
+<<<<<<< HEAD
 I have changed the `setup_databases.R` script to load the budget holders information from a csv file, stored in the same folder as the script itself. 
 
 We have a csv-formatted table with the information of the groups and their cost centres. This is an easy way to upload the information.
@@ -558,3 +570,37 @@ on.exit(dbDisconnect(con))
 ```
 
 
+=======
+
+# SSL Certificate (for HTTPS)
+
+the new setting of the certificates. I have three files.
+
+The rpivate key I created when applying for the certificate. The other two were downloaded, when the emial came
+from Harica (the certificate provider).
+
+the `PEM`  is the pem file and the `DER (issuer)` is the chain file. Both of them are needed.
+
+Setting for the readability of the files:
+```
+cd /etc/apache2/certificate/2026
+-rw------- 1 yeroslaviz b_mcf 3272 Nov 10 15:58 private-key.pem # udo chmod 600 /path/to/private.key  # Readable only by root
+-rw-r--r-- 1 yeroslaviz b_mcf 1545 Nov 14 12:12 NGS_2026_Issuer_ChainFile.cer # sudo chmod 644 /path/to/chain.crt  # Readable by all
+-rw-r--r-- 1 yeroslaviz b_mcf 2796 Nov 14 12:34 NGS_2026_Cert.pem # sudo chmod 644 /path/to/certificate.crt # Readable by all
+```
+
+All the files are saved under `/etc/apache2/certificate/2026`.
+
+Now I created soft links for each of these files.
+
+```{bash}
+sudo ln -s /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem
+sudo ln -s /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem
+
+```
+
+
+# LDAP
+
+
+>>>>>>> origin/main

@@ -5,9 +5,12 @@
 .Rhistory
 .Rapp.history
 
+<<<<<<< HEAD
 # backup files and folders
 .backup
 
+=======
+>>>>>>> origin/main
 # Session Data files
 .RData
 .RDataTmp
