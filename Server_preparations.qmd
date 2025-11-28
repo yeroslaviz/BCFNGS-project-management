@@ -228,6 +228,7 @@ sudo crontab -l | { cat; echo "0 2 * * * /usr/local/bin/backup_sequencing_db.sh"
 
 # Required Server Setup
 
+```
 /var/shiny-server/ 
 ├── sequencing-app/ 
 │ ├── app.R 
@@ -236,6 +237,7 @@ sudo crontab -l | { cat; echo "0 2 * * * /usr/local/bin/backup_sequencing_db.sh"
 │ └── www/ 
   │ ├── logo.png 
   │ └── minerva.png
+```
 
 # Creates a Deployment Script
 
@@ -312,7 +314,6 @@ sudo apt install -y libssl-dev libxml2-dev libcurl4-openssl-dev libudunits2-dev 
 
 ```
 
-# Modify script for data base creation (setup_database.R -\> version 6 was modified here for production environment; app.R -\> version 6 was modified for interactive mode)
 
 # Security
 
@@ -335,7 +336,6 @@ sudo ufw allow 443
 
 ```
 
-<<<<<<< HEAD
 ## SSL Certificate (for HTTPS)
 
 the new setting of the certificates. I have three files.
@@ -363,13 +363,25 @@ sudo ln -s /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_N
 
 ```
 
+# Change connection to shiny server folder to https
+
+The shiny app takes information from the config file under `/etc/shiny-server/shiny-server.conf`. Here we can see where the log files are written into and where the directory of the shiny app are stored. 
+
+As the folder connected to the github repository is in my home directory `/home/yeroslaviz/BCFNGS-project-management`, I need to create a softlink to the folder used by the app, so that it dsoesn't need to be copy-pasted each time.
+
+```{bash}
+sudo usermod -a -G shiny $USER # add user yeroslaviz to group shiny
+sudo chown -R $USER:shiny sequencing-app/ # make group shiny able to execute the scripts in the folder
+sudo mv /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup # move the actual hard-coded folder to a backup (just in case)
+sudo ln -s /home/yeroslaviz/BCFNGS-project-management/sequencing-app/ /srv/shiny-server/sequencing-app # create a soft-link to the github-connected folder.
+
+```
+
 
 # LDAP
 
 To be followed!!! 
 
-=======
->>>>>>> origin/main
 
 # Changes on 14.11.2026
 
@@ -507,27 +519,9 @@ VALUES (?, ?, ?, ?, ?, 0)
 as well as modified the User registration modal
 
 
-<<<<<<< HEAD
 Now,  when a user register, he must choose a group from the given drop-down menu. this group is attached to the budget holder. When the user creates a new project, this budget holder (group) will automatically be assigned to the project (This can be manually changed, when the project is created).
 
 
-=======
->>>>>>> origin/main
-# Change connection to shiny server folder to https
-
-The shiny app takes information from the config file under `/etc/shiny-server/shiny-server.conf`. Here we can see where the log files are written into and where the directory of the shiny app are stored. 
-
-As the folder connected to the github repository is in my home directory `/home/yeroslaviz/BCFNGS-project-management`, I need to create a softlink to the folder used by the app, so that it dsoesn't need to be copy-pasted each time.
-
-```{bash}
-sudo usermod -a -G shiny $USER # add user yeroslaviz to group shiny
-sudo chown -R $USER:shiny sequencing-app/ # make group shiny able to execute the scripts in the folder
-sudo mv /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup # move the actual hard-coded folder to a backup (just in case)
-sudo ln -s /home/yeroslaviz/BCFNGS-project-management/sequencing-app/ /srv/shiny-server/sequencing-app # create a soft-link to the github-connected folder.
-
-```
-
-<<<<<<< HEAD
 I have changed the `setup_databases.R` script to load the budget holders information from a csv file, stored in the same folder as the script itself. 
 
 We have a csv-formatted table with the information of the groups and their cost centers. This is an easy way to upload the information.
@@ -563,8 +557,6 @@ dbGetQuery(con, "SELECT * FROM users")
 on.exit(dbDisconnect(con))
 ```
 
-
-=======
 
 # SSL Certificate (for HTTPS)
 

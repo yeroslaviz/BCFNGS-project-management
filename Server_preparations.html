@@ -273,36 +273,43 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 </section>
 <section id="required-server-setup" class="level1">
 <h1>Required Server Setup</h1>
-<p>/var/shiny-server/ ├── sequencing-app/ │ ├── app.R │ ├── setup_database.R │ ├── sequencing_projects.db │ └── www/ │ ├── logo.png │ └── minerva.png</p>
+<pre><code>/var/shiny-server/ 
+├── sequencing-app/ 
+│ ├── app.R 
+│ ├── setup_database.R 
+│ ├── sequencing_projects.db 
+│ └── www/ 
+  │ ├── logo.png 
+  │ └── minerva.png</code></pre>
 </section>
 <section id="creates-a-deployment-script" class="level1">
 <h1>Creates a Deployment Script</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: deploy.sh</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co">#| </span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Stop existing app</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Backup current version</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="va">TIMESTAMP</span><span class="op">=</span><span class="va">$(</span><span class="fu">date</span> +%Y%m%d_%H%M%S<span class="va">)</span></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp <span class="at">-r</span> /var/shiny-server/sequencing-app /var/shiny-server/sequencing-app_backup_<span class="va">$TIMESTAMP</span></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Deploy new version</span></span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp <span class="at">-r</span> /home/yeroslaviz/BCFNGS-project-management/sequencing-app /var/shiny-server/</span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Set permissions</span></span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> shiny:shiny /var/shiny-server/sequencing-app</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chmod <span class="at">-R</span> 755 /var/shiny-server/sequencing-app</span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize database (if first deployment)</span></span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> su <span class="at">-</span> <span class="at">-c</span> <span class="st">"R -e </span><span class="dt">\"</span><span class="st">source('/var/shiny-server/sequencing-app/setup_database.R')</span><span class="dt">\"</span><span class="st">"</span></span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Restart Shiny Server</span></span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl status shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: deploy.sh</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co">#| </span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Stop existing app</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Backup current version</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="va">TIMESTAMP</span><span class="op">=</span><span class="va">$(</span><span class="fu">date</span> +%Y%m%d_%H%M%S<span class="va">)</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp <span class="at">-r</span> /var/shiny-server/sequencing-app /var/shiny-server/sequencing-app_backup_<span class="va">$TIMESTAMP</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Deploy new version</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp <span class="at">-r</span> /home/yeroslaviz/BCFNGS-project-management/sequencing-app /var/shiny-server/</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Set permissions</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> shiny:shiny /var/shiny-server/sequencing-app</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chmod <span class="at">-R</span> 755 /var/shiny-server/sequencing-app</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize database (if first deployment)</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> su <span class="at">-</span> <span class="at">-c</span> <span class="st">"R -e </span><span class="dt">\"</span><span class="st">source('/var/shiny-server/sequencing-app/setup_database.R')</span><span class="dt">\"</span><span class="st">"</span></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Restart Shiny Server</span></span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl status shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="github-repository" class="level1">
@@ -328,22 +335,19 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 <section id="setting-environment-variables" class="level1">
 <h1>Setting Environment variables</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># /var/shiny-server/.Renviron</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="va">TZ</span><span class="op">=</span>Europe/Berlin</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="va">LANG</span><span class="op">=</span>en_US.UTF-8</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="va">LC_ALL</span><span class="op">=</span>en_US.UTF-8</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co"># /var/shiny-server/.Renviron</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="va">TZ</span><span class="op">=</span>Europe/Berlin</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="va">LANG</span><span class="op">=</span>en_US.UTF-8</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="va">LC_ALL</span><span class="op">=</span>en_US.UTF-8</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="install-required-system-dependencies" class="level1">
 <h1>Install required system dependencies</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> libssl-dev libxml2-dev libcurl4-openssl-dev libudunits2-dev libgdal-dev</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> libssl-dev libxml2-dev libcurl4-openssl-dev libudunits2-dev libgdal-dev</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</section>
-<section id="modify-script-for-data-base-creation-setup_database.r---version-6-was-modified-here-for-production-environment-app.r---version-6-was-modified-for-interactive-mode" class="level1">
-<h1>Modify script for data base creation (setup_database.R -&gt; version 6 was modified here for production environment; app.R -&gt; version 6 was modified for interactive mode)</h1>
 </section>
 <section id="security" class="level1">
 <h1>Security</h1>
@@ -356,12 +360,14 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 <h2 class="anchored" data-anchor-id="firewall">Firewall</h2>
 <p>at the moment is not active, but maybe in the future.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow 3838</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow 80</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow 443</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow 3838</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow 80</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow 443</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD ## SSL Certificate (for HTTPS)</p>
+</section>
+<section id="ssl-certificate-for-https" class="level2">
+<h2 class="anchored" data-anchor-id="ssl-certificate-for-https">SSL Certificate (for HTTPS)</h2>
 <p>the new setting of the certificates. I have three files.</p>
 <p>The private key I created when applying for the certificate. The other two were downloaded, when the emial came from Harica (the certificate provider).</p>
 <p>the <code>PEM</code> is the pem file and the <code>DER (issuer)</code> is the chain file. Both of them are needed.</p>
@@ -373,15 +379,25 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 <p>All the files are saved under <code>/etc/apache2/certificate/2026</code>.</p>
 <p>Now I created soft links for each of these files.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
+</section>
+<section id="change-connection-to-shiny-server-folder-to-https" class="level1">
+<h1>Change connection to shiny server folder to https</h1>
+<p>The shiny app takes information from the config file under <code>/etc/shiny-server/shiny-server.conf</code>. Here we can see where the log files are written into and where the directory of the shiny app are stored.</p>
+<p>As the folder connected to the github repository is in my home directory <code>/home/yeroslaviz/BCFNGS-project-management</code>, I need to create a softlink to the folder used by the app, so that it dsoesn’t need to be copy-pasted each time.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> usermod <span class="at">-a</span> <span class="at">-G</span> shiny <span class="va">$USER</span> <span class="co"># add user yeroslaviz to group shiny</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> <span class="va">$USER</span>:shiny sequencing-app/ <span class="co"># make group shiny able to execute the scripts in the folder</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mv /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup <span class="co"># move the actual hard-coded folder to a backup (just in case)</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /home/yeroslaviz/BCFNGS-project-management/sequencing-app/ /srv/shiny-server/sequencing-app <span class="co"># create a soft-link to the github-connected folder.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section>
 <section id="ldap" class="level1">
 <h1>LDAP</h1>
 <p>To be followed!!!</p>
-<p>======= &gt;&gt;&gt;&gt;&gt;&gt;&gt; origin/main</p>
 </section>
 <section id="changes-on-14.11.2026" class="level1">
 <h1>Changes on 14.11.2026</h1>
@@ -390,12 +406,12 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 </ol>
 <p>The admin apssword is set here:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert default admin user</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="ex">default_password</span> <span class="op">&lt;</span>- digest::digest<span class="er">(</span><span class="st">"admin123"</span><span class="kw">)</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="ex">dbExecute</span><span class="er">(</span><span class="ex">con,</span> <span class="st">"</span></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="st">  INSERT OR IGNORE INTO users (username, password, email, is_admin) </span></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="st">  VALUES ('admin', ?, 'yeroslaviz@biochem.mpg.de', 1)</span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>, params = list<span class="er">(</span><span class="ex">default_password</span><span class="kw">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert default admin user</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="ex">default_password</span> <span class="op">&lt;</span>- digest::digest<span class="er">(</span><span class="st">"admin123"</span><span class="kw">)</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="ex">dbExecute</span><span class="er">(</span><span class="ex">con,</span> <span class="st">"</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="st">  INSERT OR IGNORE INTO users (username, password, email, is_admin) </span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="st">  VALUES ('admin', ?, 'yeroslaviz@biochem.mpg.de', 1)</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>, params = list<span class="er">(</span><span class="ex">default_password</span><span class="kw">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>1.2 Can this be changed without recreating the whole databank or restart the app? 1.3 How do I change the admin email address without recreating the db?</p>
 <p>This can be changed without recreating the database, using two options:</p>
@@ -404,25 +420,25 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 </ul>
 <p>Run this SQL command on your database:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="kw">UPDATE</span> users <span class="kw">SET</span> email <span class="op">=</span> <span class="st">'newadmin@institute.org'</span> <span class="kw">WHERE</span> username <span class="op">=</span> <span class="st">'admin'</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="kw">UPDATE</span> users <span class="kw">SET</span> email <span class="op">=</span> <span class="st">'newadmin@institute.org'</span> <span class="kw">WHERE</span> username <span class="op">=</span> <span class="st">'admin'</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>To execute this, we can either log in directly to the database via the command line</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>and execute</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="ex">UPDATE</span> users SET email = <span class="st">'newadmin@institute.org'</span> WHERE username = <span class="st">'admin'</span><span class="kw">;</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.exit</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ex">UPDATE</span> users SET email = <span class="st">'newadmin@institute.org'</span> WHERE username = <span class="st">'admin'</span><span class="kw">;</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.exit</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>or via the R pormpt:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RSQLite)</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"sequencing_projects.db"</span>)</span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(con, <span class="st">"UPDATE users SET email = 'newadmin@institute.org' WHERE username = 'admin'"</span>)</span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(con)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RSQLite)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"sequencing_projects.db"</span>)</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(con, <span class="st">"UPDATE users SET email = 'newadmin@institute.org' WHERE username = 'admin'"</span>)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(con)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><strong>Don’t forget to modify the <code>setup_database_*.R</code> script afterwards, so these information will be also kept, if the database is recreated!</strong></p>
 <ul>
@@ -443,12 +459,12 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 <p>At the moment the tables <code>Service types</code> and <code>Sequencing depths</code> are not editable. If prices change, the easiet option is to delete the row and recreate it using the new value. This way, the older projects will use the previous costs, while the new one will get the new costs.</p>
 <p>One can also directly use the SQL commands to apply these chages, similar to above</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>and execute</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="ex">UPDATE</span> service_types SET costs_per_sample = 55 WHERE service_type = <span class="st">'single cell/low mRNAseq'</span><span class="kw">;</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.exit</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="ex">UPDATE</span> service_types SET costs_per_sample = 55 WHERE service_type = <span class="st">'single cell/low mRNAseq'</span><span class="kw">;</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.exit</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ol start="4" type="1">
 <li>something is wrong with the Sequencing Cycles Management table. When I run the app, go to the Admin projects Tab and click the Sequencing Cycles - Manage Cycles, I see this message: “Error: An error has occurred. Check your logs or contact the app author for clarification.” 4.1 which log files can I consult?</li>
@@ -461,34 +477,25 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 <section id="modify-registration-page" class="level2">
 <h2 class="anchored" data-anchor-id="modify-registration-page">modify registration page</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>we add information to the registration page, so the user must choose a group. This way we know which is the budget holder for this user.</p>
 <p>After ward we added the information to the Registration Server Logic</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="ex">dbExecute</span><span class="er">(</span><span class="ex">con,</span> <span class="st">"</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="st">INSERT INTO users (username, password, email, phone, research_group, is_admin)</span></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="st">VALUES (?, ?, ?, ?, ?, 0)</span></span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>, params = list<span class="er">(</span></span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_username</span><span class="ex">,</span></span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>  <span class="ex">digest</span><span class="er">(</span><span class="ex">input</span><span class="va">$reg_password</span><span class="kw">)</span><span class="ex">,</span></span>
-<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_email</span><span class="ex">,</span></span>
-<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_phone</span><span class="ex">,</span></span>
-<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_group</span></span>
-<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="kw">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="ex">dbExecute</span><span class="er">(</span><span class="ex">con,</span> <span class="st">"</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="st">INSERT INTO users (username, password, email, phone, research_group, is_admin)</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="st">VALUES (?, ?, ?, ?, ?, 0)</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>, params = list<span class="er">(</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_username</span><span class="ex">,</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  <span class="ex">digest</span><span class="er">(</span><span class="ex">input</span><span class="va">$reg_password</span><span class="kw">)</span><span class="ex">,</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_email</span><span class="ex">,</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_phone</span><span class="ex">,</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_group</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="kw">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>as well as modified the User registration modal</p>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD Now, when a user register, he must choose a group from the given drop-down menu. this group is attached to the budget holder. When the user creates a new project, this budget holder (group) will automatically be assigned to the project (This can be manually changed, when the project is created).</p>
-<p>======= &gt;&gt;&gt;&gt;&gt;&gt;&gt; origin/main # Change connection to shiny server folder to https</p>
-<p>The shiny app takes information from the config file under <code>/etc/shiny-server/shiny-server.conf</code>. Here we can see where the log files are written into and where the directory of the shiny app are stored.</p>
-<p>As the folder connected to the github repository is in my home directory <code>/home/yeroslaviz/BCFNGS-project-management</code>, I need to create a softlink to the folder used by the app, so that it dsoesn’t need to be copy-pasted each time.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> usermod <span class="at">-a</span> <span class="at">-G</span> shiny <span class="va">$USER</span> <span class="co"># add user yeroslaviz to group shiny</span></span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> <span class="va">$USER</span>:shiny sequencing-app/ <span class="co"># make group shiny able to execute the scripts in the folder</span></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mv /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup <span class="co"># move the actual hard-coded folder to a backup (just in case)</span></span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /home/yeroslaviz/BCFNGS-project-management/sequencing-app/ /srv/shiny-server/sequencing-app <span class="co"># create a soft-link to the github-connected folder.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD I have changed the <code>setup_databases.R</code> script to load the budget holders information from a csv file, stored in the same folder as the script itself.</p>
+<p>Now, when a user register, he must choose a group from the given drop-down menu. this group is attached to the budget holder. When the user creates a new project, this budget holder (group) will automatically be assigned to the project (This can be manually changed, when the project is created).</p>
+<p>I have changed the <code>setup_databases.R</code> script to load the budget holders information from a csv file, stored in the same folder as the script itself.</p>
 <p>We have a csv-formatted table with the information of the groups and their cost centers. This is an easy way to upload the information.</p>
 <pre><code>name,surname,email,cost_center
 Kim,Rin-Ho,rkim@biochem.mpg.de,N.A.
@@ -514,21 +521,21 @@ Note
 <section id="control-for-budegt-holder-info-in-the-db" class="level2">
 <h2 class="anchored" data-anchor-id="control-for-budegt-holder-info-in-the-db">control for budegt holder info in the DB</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"sequencing_projects.db"</span>)</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>budget_holders <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM budget_holders"</span>)</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the data</span></span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(budget_holders[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>,])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"sequencing_projects.db"</span>)</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>budget_holders <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM budget_holders"</span>)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the data</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(budget_holders[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>,])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  id          name surname cost_center                  email
 1  1           Kim  Rin-Ho        N.A.    rkim@biochem.mpg.de
 2  2 Administrator surname        N.A.    rkim@biochem.mpg.de
 3  3         Baier  Herwig        P350 herwig.baier@bi.mpg.de
            created_at
-1 2025-11-28 15:42:33
-2 2025-11-28 15:42:33
-3 2025-11-28 15:42:33</code></pre>
+1 2025-11-28 16:12:05
+2 2025-11-28 16:12:05
+3 2025-11-28 16:12:05</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM budget_holders"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM budget_holders"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   id          name      surname     cost_center
 1   1           Kim       Rin-Ho            N.A.
@@ -574,50 +581,50 @@ Note
 41 41     Zachariae     Wolfgang            N.A.
 42 42       unknown         user            N.A.
                                email          created_at
-1                rkim@biochem.mpg.de 2025-11-28 15:42:33
-2                rkim@biochem.mpg.de 2025-11-28 15:42:33
-3             herwig.baier@bi.mpg.de 2025-11-28 15:42:33
-4            Maude.Baldwin@bi.mpg.de 2025-11-28 15:42:33
-5            baumeist@biochem.mpg.de 2025-11-28 15:42:33
-6              borner@biochem.mpg.de 2025-11-28 15:42:33
-7          alexander.borst@bi.mpg.de 2025-11-28 15:42:33
-8               conti@biochem.mpg.de 2025-11-28 15:42:33
-9          yeroslaviz@biochem.mpg.de 2025-11-28 15:42:33
-10         yeroslaviz@biochem.mpg.de 2025-11-28 15:42:33
-11         duderstadt@biochem.mpg.de 2025-11-28 15:42:33
-12               lisa.fenk@bi.mpg.de 2025-11-28 15:42:33
-13             uhartl@biochem.mpg.de 2025-11-28 15:42:33
-14             uhartl@biochem.mpg.de 2025-11-28 15:42:33
-15           faessler@biochem.mpg.de 2025-11-28 15:42:33
-16            gerisch@biochem.mpg.de 2025-11-28 15:42:33
-17       angelika.harbauer@bi.mpg.de 2025-11-28 15:42:33
-18       angelika.harbauer@bi.mpg.de 2025-11-28 15:42:33
-19           jungmann@biochem.mpg.de 2025-11-28 15:42:33
-20          ruediger.klein@bi.mpg.de 2025-11-28 15:42:33
-21         clemens.kuepper@bi.mpg.de 2025-11-28 15:42:33
-22             mhartl@biochem.mpg.de 2025-11-28 15:42:33
-23            msteger@biochem.mpg.de 2025-11-28 15:42:33
-24         christian.mayer@bi.mpg.de 2025-11-28 15:42:33
-25         christian.mayer@bi.mpg.de 2025-11-28 15:42:33
-26         christian.mayer@bi.mpg.de 2025-11-28 15:42:33
-27           meissner@biochem.mpg.de 2025-11-28 15:42:33
-28             murray@biochem.mpg.de 2025-11-28 15:42:33
-29             murray@biochem.mpg.de 2025-11-28 15:42:33
-30           muellerj@biochem.mpg.de 2025-11-28 15:42:33
-31         nedialkova@biochem.mpg.de 2025-11-28 15:42:33
-32         nedialkova@biochem.mpg.de 2025-11-28 15:42:33
-33               rkim@biochem.mpg.de 2025-11-28 15:42:33
-34           bpfander@biochem.mpg.de 2025-11-28 15:42:33
-35           schulman@biochem.mpg.de 2025-11-28 15:42:33
-36 victor.sourjik@mpi-marburg.mpg.de 2025-11-28 15:42:33
-37           joachim.spatz@mr.mpg.de 2025-11-28 15:42:33
-38           schwille@biochem.mpg.de 2025-11-28 15:42:33
-39          tachibana@biochem.mpg.de 2025-11-28 15:42:33
-40          tachibana@biochem.mpg.de 2025-11-28 15:42:33
-41             zachar@biochem.mpg.de 2025-11-28 15:42:33
-42               rkim@biochem.mpg.de 2025-11-28 15:42:33</code></pre>
+1                rkim@biochem.mpg.de 2025-11-28 16:12:05
+2                rkim@biochem.mpg.de 2025-11-28 16:12:05
+3             herwig.baier@bi.mpg.de 2025-11-28 16:12:05
+4            Maude.Baldwin@bi.mpg.de 2025-11-28 16:12:05
+5            baumeist@biochem.mpg.de 2025-11-28 16:12:05
+6              borner@biochem.mpg.de 2025-11-28 16:12:05
+7          alexander.borst@bi.mpg.de 2025-11-28 16:12:05
+8               conti@biochem.mpg.de 2025-11-28 16:12:05
+9          yeroslaviz@biochem.mpg.de 2025-11-28 16:12:05
+10         yeroslaviz@biochem.mpg.de 2025-11-28 16:12:05
+11         duderstadt@biochem.mpg.de 2025-11-28 16:12:05
+12               lisa.fenk@bi.mpg.de 2025-11-28 16:12:05
+13             uhartl@biochem.mpg.de 2025-11-28 16:12:05
+14             uhartl@biochem.mpg.de 2025-11-28 16:12:05
+15           faessler@biochem.mpg.de 2025-11-28 16:12:05
+16            gerisch@biochem.mpg.de 2025-11-28 16:12:05
+17       angelika.harbauer@bi.mpg.de 2025-11-28 16:12:05
+18       angelika.harbauer@bi.mpg.de 2025-11-28 16:12:05
+19           jungmann@biochem.mpg.de 2025-11-28 16:12:05
+20          ruediger.klein@bi.mpg.de 2025-11-28 16:12:05
+21         clemens.kuepper@bi.mpg.de 2025-11-28 16:12:05
+22             mhartl@biochem.mpg.de 2025-11-28 16:12:05
+23            msteger@biochem.mpg.de 2025-11-28 16:12:05
+24         christian.mayer@bi.mpg.de 2025-11-28 16:12:05
+25         christian.mayer@bi.mpg.de 2025-11-28 16:12:05
+26         christian.mayer@bi.mpg.de 2025-11-28 16:12:05
+27           meissner@biochem.mpg.de 2025-11-28 16:12:05
+28             murray@biochem.mpg.de 2025-11-28 16:12:05
+29             murray@biochem.mpg.de 2025-11-28 16:12:05
+30           muellerj@biochem.mpg.de 2025-11-28 16:12:05
+31         nedialkova@biochem.mpg.de 2025-11-28 16:12:05
+32         nedialkova@biochem.mpg.de 2025-11-28 16:12:05
+33               rkim@biochem.mpg.de 2025-11-28 16:12:05
+34           bpfander@biochem.mpg.de 2025-11-28 16:12:05
+35           schulman@biochem.mpg.de 2025-11-28 16:12:05
+36 victor.sourjik@mpi-marburg.mpg.de 2025-11-28 16:12:05
+37           joachim.spatz@mr.mpg.de 2025-11-28 16:12:05
+38           schwille@biochem.mpg.de 2025-11-28 16:12:05
+39          tachibana@biochem.mpg.de 2025-11-28 16:12:05
+40          tachibana@biochem.mpg.de 2025-11-28 16:12:05
+41             zachar@biochem.mpg.de 2025-11-28 16:12:05
+42               rkim@biochem.mpg.de 2025-11-28 16:12:05</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM users"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM users"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  id username                         password                     email
 1  1    admin dc43507128bef0083ad8d45d7ba36c8c        ngs@biochem.mpg.de
@@ -625,17 +632,16 @@ Note
 3  3    user1 181cca7dbd1ce97d37943fe985ee1686       user1@institute.org
 4  4    user2 c98c2ee24533f8f615c33a3c7f0d17ba       user2@institute.org
             phone research_group is_admin          created_at
-1            &lt;NA&gt;            Kim        1 2025-11-28 15:42:33
-2            &lt;NA&gt;            Cox        1 2025-11-28 15:42:33
-3 +49 89 12345678            Cox        0 2025-11-28 15:42:33
-4 +49 89 87654321          Baier        0 2025-11-28 15:42:33</code></pre>
+1            &lt;NA&gt;            Kim        1 2025-11-28 16:12:05
+2            &lt;NA&gt;            Cox        1 2025-11-28 16:12:05
+3 +49 89 12345678            Cox        0 2025-11-28 16:12:05
+4 +49 89 87654321          Baier        0 2025-11-28 16:12:05</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on.exit</span>(<span class="fu">dbDisconnect</span>(con))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on.exit</span>(<span class="fu">dbDisconnect</span>(con))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>=======</p>
 </section>
 </section>
-<section id="ssl-certificate-for-https" class="level1">
+<section id="ssl-certificate-for-https-1" class="level1">
 <h1>SSL Certificate (for HTTPS)</h1>
 <p>the new setting of the certificates. I have three files.</p>
 <p>The rpivate key I created when applying for the certificate. The other two were downloaded, when the emial came from Harica (the certificate provider).</p>
@@ -648,8 +654,8 @@ Note
 <p>All the files are saved under <code>/etc/apache2/certificate/2026</code>.</p>
 <p>Now I created soft links for each of these files.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem</span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="ldap-1" class="level1">
