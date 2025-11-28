@@ -9,11 +9,6 @@ library(shinyWidgets)
 library(mailR)
 library(ldapr)
 
-##########################
-#
-# latest version - 28112025
-#
-##########################
 # UI definition
 ui <- fluidPage(
   useShinyjs(),
@@ -642,7 +637,8 @@ server <- function(input, output, session) {
       passwordInput("reg_confirm_password", "Confirm Password *", placeholder = "Confirm your password"),
       textInput("reg_phone", "Phone Number", placeholder = "+49 89 8578****"),
       selectInput("reg_group", "Research Group *", 
-                  choices = group_choices, # choices = c("", group_choices), was change to make choosing a group mandatory.
+                  # This makes choosing a research group compulsory!
+                  choices = c("Select your research group" = "", group_choices), # c("", group_choices), 
                   selected = ""),
       tags$small("* Required fields")
     ))
@@ -662,12 +658,11 @@ server <- function(input, output, session) {
       return()
     }
     
-    # Make sure, a group is chosen when registering
     if(is.null(input$reg_group) || input$reg_group == "") {
       showNotification("Please select a research group", type = "error")
       return()
     }
-
+    
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
     

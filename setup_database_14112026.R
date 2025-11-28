@@ -28,7 +28,7 @@ setup_complete_database <- function() {
       username TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
       email TEXT NOT NULL,
-      phone TEXT,  
+      phone TEXT,
       research_group TEXT,
       is_admin INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -199,71 +199,67 @@ setup_complete_database <- function() {
   # here we can change the admin password if needed. 
   default_password <- digest::digest("admin123")
   dbExecute(con, "
-    INSERT OR IGNORE INTO users (username, password, email, is_admin) 
-    VALUES ('admin', ?, 'ngs@biochem.mpg.de', 1)
-  ", params = list(default_password))
+  INSERT OR IGNORE INTO users (username, password, email, is_admin, research_group) 
+  VALUES ('admin', ?, 'ngs@biochem.mpg.de', 1, 'Kim')
+", params = list(default_password))
+  
   dbExecute(con, "
-  INSERT OR IGNORE INTO users (username, password, email, is_admin) 
-  VALUES ('admin2', ?, 'yeroslaviz@biochem.mpg.de', 1)
+  INSERT OR IGNORE INTO users (username, password, email, is_admin, research_group) 
+  VALUES ('admin2', ?, 'yeroslaviz@biochem.mpg.de', 1, 'Cox')
 ", params = list(digest::digest("yeroslaviz123")))
   
-  # Insert some sample users
+  # Insert sample users with phone and research_group
   sample_users <- data.frame(
     username = c('user1', 'user2'),
     password = c(digest('user1123'), digest('user2123')),
     email = c('user1@institute.org', 'user2@institute.org'),
-    phone = c("+49 89 12345678", "+49 89 87654321"),  
+    phone = c("+49 89 12345678", "+49 89 87654321"),
     research_group = c("Cox", "Baier"),
     is_admin = c(0, 0)
   )
   
   for(i in 1:nrow(sample_users)) {
     dbExecute(con, "
-      INSERT OR IGNORE INTO users (username, password, email, is_admin) 
-      VALUES (?, ?, ?, ?)
-    ", params = list(
-      sample_users$username[i],
-      sample_users$password[i],
-      sample_users$email[i],
-      sample_users$is_admin[i]
-    ))
+    INSERT OR IGNORE INTO users (username, password, email, phone, research_group, is_admin) 
+    VALUES (?, ?, ?, ?, ?, ?)
+  ", params = list(
+    sample_users$username[i],
+    sample_users$password[i],
+    sample_users$email[i],
+    sample_users$phone[i],
+    sample_users$research_group[i],
+    sample_users$is_admin[i]
+  ))
   }
   
-  # Insert budget holders - read from file
+  # Insert budget holders
   budget_holders_file <- "budget_holders.csv"
-  # check for file existance
+  
   if (!file.exists(budget_holders_file)) {
     stop("❌ Budget holders file not found: ", budget_holders_file, 
          "\nPlease create a file named 'budget_holders.csv' in the project directory.")
   }
+  
   # Read CSV
   budget_holders_df <- read.csv(budget_holders_file, stringsAsFactors = FALSE)
   
   # Validate required columns
   required_cols <- c("name", "surname", "email", "cost_center")
-  
   missing_cols <- setdiff(required_cols, names(budget_holders_df))
   if (length(missing_cols) > 0) {
     stop("❌ Missing required columns in budget_holders.csv: ", paste(missing_cols, collapse = ", "))
   }
-
-  # Clean up whitespace
+  
+  # Clean whitespace
   budget_holders_df$name <- trimws(budget_holders_df$name)
   budget_holders_df$surname <- trimws(budget_holders_df$surname)
   budget_holders_df$email <- trimws(budget_holders_df$email)
   budget_holders_df$cost_center <- trimws(budget_holders_df$cost_center)
-
-#  budget_holders <- data.frame(
-#    name = c('Cox', 'Baier', 'Baldwin', 'Baumeister', 'Borst'),
-#    surname = c('Juergen', 'Gilles', 'James', 'Wolfgang', 'Alexander'),
-#    cost_center = c('K435', 'P350', 'P550', 'K190', 'P300'),
-#    email = c('yeroslaviz@biochem.mpg.de', 'baier@institute.org', 'baldwin@institute.org', 
-#              'baumeister@institute.org', 'borst@institute.org')
-#  )
   
-  for(i in 1:nrow(budget_holders_df)) {
+  # Insert into database
+  for (i in 1:nrow(budget_holders_df)) {
     dbExecute(con, "
-      INSERT OR IGNORE INTO budget_holders (name, surname, cost_center, email) 
+      INSERT OR IGNORE INTO budget_holders (name, surname, cost_center, email)
       VALUES (?, ?, ?, ?)
     ", params = list(
       budget_holders_df$name[i],
@@ -272,8 +268,9 @@ setup_complete_database <- function() {
       budget_holders_df$email[i]
     ))
   }
-  message("Budget holders loaded from ", budget_holders_file, " (", nrow(budget_holders_df), " entries)")
-
+  
+  message("✅ Budget holders loaded from ", budget_holders_file, " (", nrow(budget_holders_df), " entries)")
+  
   # Insert service types
   service_types <- data.frame(
     service_type = c('single cell/low mRNAseq', 
@@ -436,7 +433,6 @@ setup_complete_database <- function() {
   message("Sequencing depth table with cost calculations")
   message("Email templates table for notifications")
   message("Index type and read lengths tables removed")
-  message("Budegt holder information is read from an external csv file")
 }
 
 # Run the setup
