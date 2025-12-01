@@ -52,7 +52,7 @@ sudo gdebi shiny-server-1.5.23.1030-amd64.deb
 
 ```
 
-# removing the exisiting certifaicate
+# removing the exisiting certificate
 
 ```{bash}
 
@@ -302,6 +302,7 @@ PAT - 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
 ssh -T git@github.com
 ```
 
+```
 $ tree -L 1
 .
 ├── BCFNGS-project-management
@@ -321,6 +322,16 @@ To redeploy the server, one follows the following steps:
 2. push the changes to the github repo
 3. go to the folder `/home/yeroslaviz/BCFNGS-project-management` on the VM `ngs-testing-vm` and pull the changes. 
 4. Execute the `deploy_shiny_server.sh` script to copy the new changes to the shiny-server folder and restart both apache2 and the shiny-server. 
+## git pull 
+
+```{bash}
+ git pull origin main
+# Username for 'https://github.com': yeroslaviz
+# Password for 'https://yeroslaviz@github.com':  HERE WE MUST INPUT THE PAT from above!!!
+ ...
+```
+
+
 
 # Setting Environment variables
 
@@ -373,6 +384,7 @@ from Harica (the certificate provider).
 the `PEM`  is the pem file and the `DER (issuer)` is the chain file. Both of them are needed.
 
 Setting for the readability of the files:
+
 ```
 cd /etc/apache2/certificate/2026
 -rw------- 1 yeroslaviz b_mcf 3272 Nov 10 15:58 private-key.pem # udo chmod 600 /path/to/private.key  # Readable only by root
@@ -400,14 +412,17 @@ As the folder connected to the github repository is in my home directory `/home/
 sudo usermod -a -G shiny $USER # add user yeroslaviz to group shiny
 sudo chown -R $USER:shiny sequencing-app/ # make group shiny able to execute the scripts in the folder
 sudo mv /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup # move the actual hard-coded folder to a backup (just in case)
-sudo ln -s /home/yeroslaviz/BCFNGS-project-management/sequencing-app/ /srv/shiny-server/sequencing-app # create a soft-link to the github-connected folder.
-
 ```
 
+The sequencing-app folder must be copied to the correct place after each modification was done and the new files were pulled to the VM. 
 
-# LDAP
+For that I have created a script called `deploy.sh`. The script copy the files from the github repo folder `/home/yeroslaviz/BCFNGS-project-management/sequencing-app/*` to were the shiny app needs them to be - `/srv/shiny-server/sequencing-app/`
 
-To be followed!!! 
+The deploy script must be activated when loded
+
+```{bash}
+chmod +x deploy.sh
+```
 
 
 # Changes on 14.11.2026
@@ -584,12 +599,14 @@ dbGetQuery(con, "SELECT * FROM users")
 on.exit(dbDisconnect(con))
 ```
 
+## Budget holders can be read from an Excel sheet
+
 
 # SSL Certificate (for HTTPS)
 
 the new setting of the certificates. I have three files.
 
-The rpivate key I created when applying for the certificate. The other two were downloaded, when the emial came
+The private key I created when applying for the certificate. The other two were downloaded, when the emial came
 from Harica (the certificate provider).
 
 the `PEM`  is the pem file and the `DER (issuer)` is the chain file. Both of them are needed.
@@ -615,5 +632,4 @@ sudo ln -s /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_N
 
 # LDAP
 
-
->>>>>>> origin/main
+To be followed!!! 

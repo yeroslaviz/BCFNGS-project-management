@@ -28,3 +28,4 @@ After registration is complete, you can directly login with your MPIB account to
 1. changing admin email address
 2. add editing possibilities to the tables containing costs information.
 3. bi-weekly backup is added, but still commented out. 
+4. list of group leaders can now be read from an Excel sheet (must be in the same folder)
