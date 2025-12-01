@@ -52,49 +52,9 @@ sudo gdebi shiny-server-1.5.23.1030-amd64.deb
 
 ```
 
-# removing the exisiting certificate
 
-```{bash}
 
-# Backup your current configuration
-sudo cp /etc/apache2/sites-enabled/01-main.conf /etc/apache2/sites-enabled/01-main.conf.backup
-
-# Remove old SSL certificates (optional - keep for backup)
-sudo mkdir -p /etc/ssl/backup/
-sudo mv /etc/ssl/certs/********.pem /etc/ssl/backup/
-sudo mv /etc/ssl/private/********.pem /etc/ssl/backup/
-sudo mv /etc/apache2/certificate/********.cer /etc/ssl/backup/
-
-```
-
-```
-./
-├── 01-main.conf -> ../sites-available/default-ssl.conf
-├── 01-main.conf.backup
-├── 02-testing.conf -> ../sites-available/02-testing.conf
-└── auth_ldap.conf -> ../sites-available/auth_ldap.conf
-```
-
-# Installing Certbot for Let's encrypt
-
-```{bash}
-
-# Update package list
-sudo apt update
-
-# Install Certbot for Apache
-sudo apt install -y certbot python3-certbot-apache
-
-# Verify installation
-certbot --version
-
-```
-
-```
-certbot 2.9.0
-```
-
-# changing hostname to fit the apache2 config file
+## changing hostname to fit the apache2 config file
 
 ```{bash}
 
@@ -131,7 +91,7 @@ sudo systemctl restart apache2
 
 ```
 
-# Automatic start-up
+## Automatic start-up
 
 ```{bash}
 
@@ -141,6 +101,8 @@ sudo systemctl enable shiny-server
 ```
 
 #  Monitoring
+
+The shiny app server writes log files specific with date and time in the `/var/log/shiny-server` folder.
 
 
 ```{bash}
@@ -153,10 +115,14 @@ sudo tail -f /var/log/apache2/sequencing-app-error.log
 
 ```
 
-
 # Regular backups
 
-This was not done yet. 
+The VM is regularly back-up every night. The SQL database backup setting are in the script, but for now commented out, as we're not in productive version.
+
+
+## cron job for data base backup
+
+If needed, we can also set up a cron job to backup the data base 
 
 ```{bash}
 
@@ -194,8 +160,9 @@ sudo crontab -l | { cat; echo "0 2 * * * /usr/local/bin/backup_sequencing_db.sh"
 
     # SSL Configuration
     SSLEngine on
-    SSLCertificateFile /etc/ssl/certs/ngs-testing-vm.crt
-    SSLCertificateKeyFile /etc/ssl/private/ngs-testing-vm.key
+    SSLCertificateFile /etc/ssl/certs/2026_NGS_Cert.pem
+    SSLCertificateKeyFile /etc/ssl/private/2026_private-key.pem
+    SSLCertificateChainFile /etc/apache2/certificate/2026/NGS_2026_Issuer_ChainFile.cer
 
     # Modern SSL configuration
     SSLProtocol all -SSLv3 -TLSv1 -TLSv1.1
@@ -239,40 +206,9 @@ sudo crontab -l | { cat; echo "0 2 * * * /usr/local/bin/backup_sequencing_db.sh"
   │ └── minerva.png
 ```
 
-# Creates a Deployment Script
-
-```{bash}
-
-#| label: deploy.sh
-#| 
-#!/bin/bash
-
-# Stop existing app
-sudo systemctl stop shiny-server
-
-# Backup current version
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-sudo cp -r /var/shiny-server/sequencing-app /var/shiny-server/sequencing-app_backup_$TIMESTAMP
-
-# Deploy new version
-sudo cp -r /home/yeroslaviz/BCFNGS-project-management/sequencing-app /var/shiny-server/
-
-# Set permissions
-sudo chown -R shiny:shiny /var/shiny-server/sequencing-app
-sudo chmod -R 755 /var/shiny-server/sequencing-app
-
-# Initialize database (if first deployment)
-sudo su - -c "R -e \"source('/var/shiny-server/sequencing-app/setup_database.R')\""
-
-# Restart Shiny Server
-sudo systemctl start shiny-server
-sudo systemctl status shiny-server
-
-```
-
 # Github repository
 
-## create Key gen for giyhub connection
+## create Key gen for github connection
 
 ```{bash}
 
@@ -319,7 +255,7 @@ the github repository on the local computer is at `/Documents/GitHub/BCFNGS-proj
 To redeploy the server, one follows the following steps:
 
 1. make the changes on the local computer (AT WORK!!!).
-2. push the changes to the github repo
+2. **commit** and **push** the changes to the github repo
 3. go to the folder `/home/yeroslaviz/BCFNGS-project-management` on the VM `ngs-testing-vm` and pull the changes. 
 4. Execute the `deploy_shiny_server.sh` script to copy the new changes to the shiny-server folder and restart both apache2 and the shiny-server. 
 ## git pull 
@@ -604,7 +540,32 @@ on.exit(dbDisconnect(con))
 
 # SSL Certificate (for HTTPS)
 
-the new setting of the certificates. I have three files.
+## Backup older settings
+
+```{bash}
+
+# Backup your current configuration
+sudo cp /etc/apache2/sites-enabled/01-main.conf /etc/apache2/sites-enabled/01-main.conf.backup
+
+# Remove old SSL certificates (optional - keep for backup)
+sudo mkdir -p /etc/ssl/backup/
+sudo mv /etc/ssl/certs/********.pem /etc/ssl/backup/
+sudo mv /etc/ssl/private/********.pem /etc/ssl/backup/
+sudo mv /etc/apache2/certificate/********.cer /etc/ssl/backup/
+
+```
+
+```
+./
+├── 01-main.conf -> ../sites-available/default-ssl.conf
+├── 01-main.conf.backup
+├── 02-testing.conf -> ../sites-available/02-testing.conf
+└── auth_ldap.conf -> ../sites-available/auth_ldap.conf
+```
+
+## Applying for a new certificate from MPI/MPG
+
+The new setting of the certificates. I have three files.
 
 The private key I created when applying for the certificate. The other two were downloaded, when the emial came
 from Harica (the certificate provider).
