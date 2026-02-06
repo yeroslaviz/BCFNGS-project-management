@@ -206,6 +206,17 @@ ui <- fluidPage(
     color: #e74c3c !important;
     font-style: italic;
   }
+
+  .dev-mode-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: white !important;
+  }
+  .dev-mode-ldap { background-color: #17a2b8 !important; }
+  .dev-mode-local { background-color: #f39c12 !important; }
   
 /*   Ensure all text is visible */
  /* * {                         */
@@ -267,6 +278,8 @@ ui <- fluidPage(
         actionLink("show_register_btn", "New user? Register here"),
         style = "text-align: center; margin-top: 1rem;"
       ),
+      uiOutput("dev_tools_ui"),
+      uiOutput("dev_login_ui"),
       div(id = "login_error", class = "error-message")
     )
   ),
@@ -296,6 +309,7 @@ ui <- fluidPage(
             div(
               class = "user-info-panel",
               textOutput("welcome_user"),
+              uiOutput("dev_mode_badge"),
               actionButton("logout_btn", "Logout", class = "btn-logout")
             )
           )
@@ -412,7 +426,577 @@ server <- function(input, output, session) {
     sequencing_cycles = data.frame(),
     sequencing_platforms = data.frame()
   )
-  
+
+  ##################################################################
+  # AUTH / LDAP HELPERS
+  ##################################################################
+
+  initial_auth_mode <- tolower(Sys.getenv("AUTH_MODE", "local"))
+  if (!initial_auth_mode %in% c("ldap", "local")) {
+    initial_auth_mode <- "local"
+  }
+  auth_mode_val <- reactiveVal(initial_auth_mode)
+  get_auth_mode <- function() auth_mode_val()
+
+  dev_mode <- tolower(Sys.getenv("APP_ENV", "")) == "dev" || Sys.getenv("SHOW_DEV_TOOLS", "") == "1"
+
+  ldap_warned <- reactiveVal(FALSE)
+  ldap_bind_warned <- reactiveVal(FALSE)
+  ldap_login_blocked <- reactiveVal(FALSE)
+  dev_auth_user <- reactiveVal(Sys.getenv("DEV_REMOTE_USER", ""))
+
+  pending_profile <- reactiveValues(
+    active = FALSE,
+    username = NULL,
+    attrs = list(),
+    is_new = FALSE
+  )
+
+  `%||%` <- function(x, y) {
+    if (!is.null(x) && !is.na(x) && x != "") x else y
+  }
+
+  get_auth_username <- function(session) {
+    if (get_auth_mode() != "ldap") return(NULL)
+    header_user <- session$request$HTTP_X_REMOTE_USER
+    if (!is.null(header_user) && header_user != "") {
+      if (ldap_login_blocked()) return(NULL)
+      return(header_user)
+    }
+    dev_user <- dev_auth_user()
+    if (!is.null(dev_user) && dev_user != "") return(dev_user)
+    return(NULL)
+  }
+
+  parse_ldap_uris <- function(uri_string) {
+    if (is.null(uri_string) || uri_string == "") return(list())
+    uris <- trimws(unlist(strsplit(uri_string, ",")))
+    uris <- uris[uris != ""]
+    lapply(uris, function(uri) {
+      scheme <- ifelse(grepl("^ldaps://", uri, ignore.case = TRUE), "ldaps", "ldap")
+      host_port <- sub("^ldaps?://", "", uri, ignore.case = TRUE)
+      host_port <- sub("/.*$", "", host_port)
+      host <- host_port
+      port <- NA_integer_
+      if (grepl(":", host_port, fixed = TRUE)) {
+        parts <- unlist(strsplit(host_port, ":", fixed = TRUE))
+        host <- parts[1]
+        port <- suppressWarnings(as.integer(parts[2]))
+      }
+      if (is.na(port)) {
+        port <- if (scheme == "ldaps") 636L else 389L
+      }
+      list(host = host, port = port, use_ssl = (scheme == "ldaps"))
+    })
+  }
+
+  extract_ldap_attr <- function(result, attr) {
+    if (is.null(result) || is.null(attr) || attr == "") return(NULL)
+    value <- NULL
+    if (is.data.frame(result) && attr %in% names(result)) {
+      value <- result[[attr]][1]
+    } else if (is.list(result)) {
+      if (!is.null(result[[attr]])) {
+        value <- result[[attr]][1]
+      } else if (length(result) > 0 && is.list(result[[1]]) && !is.null(result[[1]][[attr]])) {
+        value <- result[[1]][[attr]][1]
+      }
+    }
+    if (is.null(value) || length(value) == 0 || is.na(value)) return(NULL)
+    as.character(value)
+  }
+
+  ldap_lookup_user <- function(username) {
+    attrs <- list(email = NULL, phone = NULL, ou = NULL, bind_ok = NA)
+    if (is.null(username) || username == "") return(attrs)
+
+    default_uri <- paste(
+      "ldaps://ldapserv1.biochem.mpg.de",
+      "ldaps://ldapserv2.biochem.mpg.de",
+      "ldaps://ldapserv3.biochem.mpg.de",
+      sep = ","
+    )
+    ldap_uri <- Sys.getenv("LDAP_URI", default_uri)
+    ldap_base_dn <- Sys.getenv("LDAP_BASE_DN", "dc=biochem,dc=mpg,dc=de")
+    attr_uid <- Sys.getenv("LDAP_ATTR_UID", "uid")
+    attr_mail <- Sys.getenv("LDAP_ATTR_MAIL", "mail")
+    attr_phone <- Sys.getenv("LDAP_ATTR_PHONE", "telephoneNumber")
+    attr_ou <- Sys.getenv("LDAP_ATTR_OU", "ou")
+    bind_dn <- Sys.getenv("LDAP_BIND_DN", "")
+    bind_pw <- Sys.getenv("LDAP_BIND_PW", "")
+
+    bind_base_dn <- ""
+    if (bind_dn != "" && grepl(",", bind_dn, fixed = TRUE)) {
+      bind_base_dn <- sub("^[^,]+,", "", bind_dn)
+    }
+
+    ldap_targets <- parse_ldap_uris(ldap_uri)
+    if (length(ldap_targets) == 0) return(attrs)
+
+    filter <- sprintf("(&(%s=%s)(objectClass=posixAccount))", attr_uid, username)
+
+    ldap_try_bind <- function(conn, bind_dn, bind_pw) {
+      if (bind_dn != "" && bind_pw != "") {
+        rdn <- unlist(strsplit(bind_dn, ",", fixed = TRUE))[1]
+        parts <- unlist(strsplit(rdn, "=", fixed = TRUE))
+        if (length(parts) == 2) {
+          attr <- tolower(trimws(parts[1]))
+          user <- trimws(parts[2])
+          if (attr %in% c("cn", "uid")) {
+            ok <- tryCatch({
+              conn$bind(user = user, pw = bind_pw, type = attr)
+              TRUE
+            }, error = function(e) FALSE)
+            if (ok) return(TRUE)
+          }
+        }
+
+        if (!grepl("=", bind_dn, fixed = TRUE)) {
+          return(tryCatch({
+            conn$bind(user = bind_dn, pw = bind_pw, type = "uid")
+            TRUE
+          }, error = function(e) FALSE))
+        }
+
+        return(FALSE)
+      }
+
+      tryCatch({
+        conn$bind()
+        TRUE
+      }, error = function(e) {
+        tryCatch({
+          conn$bind(user = "", pw = "", type = "uid")
+          TRUE
+        }, error = function(e2) FALSE)
+      })
+    }
+
+    ldap_search <- function(conn, base_dn, filter, attrs) {
+      tryCatch({
+        conn$search(base = base_dn, filter = filter, attrs = attrs)
+      }, error = function(e1) {
+        tryCatch({
+          conn$search(base = base_dn, filter = filter, attributes = attrs)
+        }, error = function(e2) {
+          tryCatch({
+            conn$search(base = base_dn, filter = filter)
+          }, error = function(e3) {
+            tryCatch({
+              conn$search(filter = filter)
+            }, error = function(e4) NULL)
+          })
+        })
+      })
+    }
+
+    ldapsearch_lookup <- function(uri, base_dn, filter, attrs, bind_dn, bind_pw) {
+      ldapsearch_cmd <- Sys.getenv("LDAPSEARCH_PATH", "ldapsearch")
+      args <- c("-LLL", "-x", "-H", uri)
+
+      pw_file <- NULL
+      if (!is.null(bind_dn) && bind_dn != "" && !is.null(bind_pw) && bind_pw != "") {
+        pw_file <- tempfile("ldap_pw_")
+        writeLines(bind_pw, pw_file)
+        Sys.chmod(pw_file, "600")
+        args <- c(args, "-D", bind_dn, "-y", pw_file)
+      }
+
+      args <- c(args, "-b", base_dn, filter, attrs)
+
+      output <- tryCatch({
+        quoted_args <- vapply(args, shQuote, character(1))
+        cmd <- paste(shQuote(ldapsearch_cmd), paste(quoted_args, collapse = " "))
+        cmd_with_err <- paste(cmd, "2>&1")
+        out <- system(cmd_with_err, intern = TRUE)
+        attr(out, "cmd") <- cmd
+        out
+      }, error = function(e) NULL)
+
+      if (!is.null(pw_file) && file.exists(pw_file)) {
+        unlink(pw_file)
+      }
+
+      if (dev_mode && Sys.getenv("LDAP_DEBUG", "") == "1") {
+        cmd_preview <- attr(output, "cmd")
+        if (is.null(cmd_preview)) {
+          cmd_preview <- paste(shQuote(ldapsearch_cmd), paste(vapply(args, shQuote, character(1)), collapse = " "))
+        }
+        cat("LDAPSEARCH CMD:\n", cmd_preview, "\n")
+        cat("LDAPSEARCH STATUS:\n", attr(output, "status"), "\n")
+        if (is.null(output) || length(output) == 0) {
+          cat("LDAPSEARCH OUTPUT: (empty)\n")
+        }
+      }
+
+      if (is.null(output)) return(list())
+      status <- attr(output, "status")
+      if (!is.null(status) && status != 0) return(list())
+      output
+    }
+
+    normalize_ldap_lines <- function(lines) {
+      if (is.null(lines) || length(lines) == 0) return(character(0))
+      lines <- gsub("\r", "", lines, fixed = TRUE)
+      out <- character(0)
+      for (line in lines) {
+        if (grepl("^[ \t]", line)) {
+          if (length(out) > 0) {
+            out[length(out)] <- paste0(out[length(out)], sub("^[ \t]+", "", line))
+          }
+        } else {
+          out <- c(out, line)
+        }
+      }
+      out
+    }
+
+    parse_ldapsearch_output <- function(lines, key) {
+      if (is.null(lines) || length(lines) == 0) return(NULL)
+      lines <- normalize_ldap_lines(lines)
+      safe_key <- gsub("([\\^\\$\\.|\\?\\*\\+\\(\\)\\[\\]\\{\\}\\\\])", "\\\\\\1", key)
+      pattern <- paste0("^", safe_key, "(;[^:]*)?::?[[:space:]]*(.*)$")
+      matches <- regexec(pattern, lines, ignore.case = TRUE)
+      match_list <- regmatches(lines, matches)
+      values <- vapply(match_list, function(m) {
+        if (length(m) > 2) m[3] else NA_character_
+      }, character(1))
+      values <- values[!is.na(values) & values != ""]
+      if (length(values) > 0) values[1] else NULL
+    }
+
+    for (target in ldap_targets) {
+      l <- tryCatch({
+        if (isTRUE(target$use_ssl)) {
+          try(assignInNamespace(
+            x = "ldap_string",
+            value = function(host, port) paste0("ldaps://", host, ":", port),
+            ns = "ldapr"
+          ), silent = TRUE)
+        }
+        base_for_bind <- if (bind_base_dn != "") bind_base_dn else ldap_base_dn
+        tryCatch({
+          ldapr::ldap$new(host = target$host, base_dn = base_for_bind, port = target$port)
+        }, error = function(e) {
+          ldapr::ldap$new(host = target$host, base_dn = base_for_bind)
+        })
+      }, error = function(e) NULL)
+
+      if (is.null(l)) next
+
+      bind_ok <- ldap_try_bind(l, bind_dn, bind_pw)
+      attrs$bind_ok <- bind_ok
+
+      result <- NULL
+      if (isTRUE(bind_ok)) {
+        result <- ldap_search(l, ldap_base_dn, filter, c(attr_mail, attr_phone, attr_ou))
+      }
+
+      if (!is.null(result)) {
+        attrs$email <- extract_ldap_attr(result, attr_mail)
+        attrs$phone <- extract_ldap_attr(result, attr_phone)
+        attrs$ou <- extract_ldap_attr(result, attr_ou)
+      }
+
+      needs_lookup <- is.null(attrs$email) || is.null(attrs$phone) || is.null(attrs$ou)
+      if (needs_lookup) {
+        ldapsearch_lines <- ldapsearch_lookup(
+          uri = if (isTRUE(target$use_ssl)) paste0("ldaps://", target$host, ":", target$port) else paste0("ldap://", target$host, ":", target$port),
+          base_dn = ldap_base_dn,
+          filter = filter,
+          attrs = c(attr_mail, attr_phone, attr_ou),
+          bind_dn = bind_dn,
+          bind_pw = bind_pw
+        )
+        if (dev_mode && Sys.getenv("LDAP_DEBUG", "") == "1") {
+          cat("LDAPSEARCH OUTPUT:\n", paste(ldapsearch_lines, collapse = "\n"), "\n")
+        }
+        if (is.null(attrs$email)) {
+          attrs$email <- parse_ldapsearch_output(ldapsearch_lines, attr_mail)
+        }
+        if (is.null(attrs$phone)) {
+          attrs$phone <- parse_ldapsearch_output(ldapsearch_lines, attr_phone)
+        }
+        if (is.null(attrs$ou)) {
+          attrs$ou <- parse_ldapsearch_output(ldapsearch_lines, attr_ou)
+        }
+        if (dev_mode && Sys.getenv("LDAP_DEBUG", "") == "1") {
+          cat("LDAP ATTRS PARSED: ", "email=", attrs$email %||% "NULL",
+              " phone=", attrs$phone %||% "NULL",
+              " ou=", attrs$ou %||% "NULL", "\n")
+        }
+      }
+
+      return(attrs)
+    }
+
+    attrs
+  }
+
+  normalize_group_key <- function(value) {
+    if (is.null(value)) return("")
+    tolower(trimws(value))
+  }
+
+  extract_group_key_from_ou <- function(ou_value) {
+    if (is.null(ou_value) || ou_value == "") return("")
+    # Prefer text inside parentheses, e.g. "(Cox)"
+    m <- regexec("\\(([^\\)]+)\\)", ou_value)
+    matches <- regmatches(ou_value, m)
+    if (length(matches) > 0 && length(matches[[1]]) > 1) {
+      return(trimws(matches[[1]][2]))
+    }
+    ou_value
+  }
+
+  map_group_from_ldap_ou <- function(ou_value, con) {
+    if (is.null(ou_value) || ou_value == "") return(NULL)
+
+    group_key <- extract_group_key_from_ou(ou_value)
+    if (group_key == "") return(NULL)
+
+    holders <- tryCatch({
+      dbGetQuery(con, "SELECT id, name, surname, cost_center FROM budget_holders")
+    }, error = function(e) NULL)
+
+    if (is.null(holders) || nrow(holders) == 0) return(NULL)
+
+    full_names <- paste(holders$name, holders$surname)
+
+    key_norm <- normalize_group_key(group_key)
+    name_norm <- normalize_group_key(holders$name)
+    surname_norm <- normalize_group_key(holders$surname)
+    full_norm <- normalize_group_key(full_names)
+
+    idx <- which(full_norm == key_norm)
+    if (length(idx) == 0) idx <- which(name_norm == key_norm)
+    if (length(idx) == 0) idx <- which(surname_norm == key_norm)
+    if (length(idx) == 0) idx <- which(grepl(key_norm, full_norm, fixed = TRUE))
+
+    if (length(idx) == 0) return(NULL)
+    full_names[idx[1]]
+  }
+
+  budget_holder_notice_ui <- function(selected_id) {
+    if (is.null(selected_id) || selected_id == "" || is.null(admin_data$budget_holders)) return(NULL)
+    if (selected_id == "other") return(NULL)
+
+    holders <- admin_data$budget_holders
+    if (nrow(holders) == 0) return(NULL)
+
+    sel_id <- suppressWarnings(as.numeric(selected_id))
+    sel_row <- holders[holders$id == sel_id, ]
+    if (nrow(sel_row) == 0) return(NULL)
+
+    group_key <- paste(sel_row$name[1], sel_row$surname[1])
+    group_rows <- holders[paste(holders$name, holders$surname) == group_key, ]
+
+    cc_values <- unique(trimws(group_rows$cost_center))
+    cc_values <- cc_values[!is.na(cc_values) & cc_values != ""]
+    has_multiple <- length(cc_values) > 1
+
+    sel_cc <- trimws(sel_row$cost_center[1])
+    sel_cc_norm <- toupper(gsub("[^A-Z0-9]", "", sel_cc))
+    missing_cc <- is.na(sel_cc) || sel_cc == "" || sel_cc_norm == "NA"
+
+    notices <- list()
+    if (has_multiple) {
+      notices <- c(notices, list(
+        div(class = "alert alert-info",
+            "Note: This group has multiple cost centers. Please verify the correct selection.")
+      ))
+    }
+    if (missing_cc) {
+      notices <- c(notices, list(
+        div(class = "alert alert-warning",
+            "No cost center is set for this group. Please notify the core facility.")
+      ))
+    }
+
+    if (length(notices) == 0) return(NULL)
+    tagList(notices)
+  }
+
+  budget_holder_other_fields_ui <- function(prefix = "") {
+    name_id <- paste0(prefix, "other_bh_name")
+    surname_id <- paste0(prefix, "other_bh_surname")
+    cost_id <- paste0(prefix, "other_bh_cost_center")
+    email_id <- paste0(prefix, "other_bh_email")
+
+    tagList(
+      h4("New Budget Holder"),
+      textInput(name_id, "PI Name *", placeholder = "Enter PI first name"),
+      textInput(surname_id, "PI Surname *", placeholder = "Enter PI surname"),
+      textInput(cost_id, "Cost Center (optional)", placeholder = "Enter cost center if known"),
+      textInput(email_id, "PI Email (optional)", placeholder = "Enter PI email if known"),
+      tags$small("* Required fields")
+    )
+  }
+
+  budget_holder_other_notice_ui <- function(cost_center_value) {
+    cc <- trimws(cost_center_value %||% "")
+    cc_norm <- toupper(gsub("[^A-Z0-9]", "", cc))
+    if (cc == "" || cc_norm == "NA") {
+      return(div(class = "alert alert-warning",
+                 "No cost center is set for this group. Please notify the core facility."))
+    }
+    NULL
+  }
+
+  complete_login <- function(user_data) {
+    user$logged_in <- TRUE
+    user$username <- user_data$username
+    user$user_id <- user_data$id
+    user$is_admin <- as.logical(user_data$is_admin)
+
+    admin_data$budget_holders <- load_budget_holders()
+    admin_data$service_types <- load_service_types()
+    admin_data$sequencing_depths <- load_sequencing_depths()
+    admin_data$sequencing_cycles <- load_sequencing_cycles()
+    admin_data$types <- load_types()
+    admin_data$sequencing_platforms <- load_sequencing_platforms()
+    admin_data$reference_genomes <- load_reference_genomes()
+
+    shinyjs::hide("login_screen", anim = FALSE)
+    shinyjs::show("main_app", anim = FALSE)
+
+    if (user$is_admin) {
+      load_admin_data()
+    }
+  }
+
+  show_profile_modal <- function(username, attrs, is_new) {
+    pending_profile$active <- TRUE
+    pending_profile$username <- username
+    pending_profile$attrs <- attrs
+    pending_profile$is_new <- is_new
+
+    showModal(modalDialog(
+      title = "Complete Your Profile",
+      size = "m",
+      footer = tagList(
+        actionButton("ldap_profile_cancel_btn", "Cancel", class = "btn-secondary"),
+        actionButton("ldap_profile_save_btn", "Save", class = "btn-primary")
+      ),
+      textInput("ldap_profile_email", "Email *", value = attrs$email %||% ""),
+      textInput("ldap_profile_phone", "Phone", value = attrs$phone %||% ""),
+      textInput("ldap_profile_group", "Research Group *", value = attrs$ou %||% ""),
+      tags$small("* Required fields")
+    ))
+  }
+
+  maybe_prompt_profile_update <- function(user_row, attrs) {
+    if (pending_profile$active) return()
+    missing_email <- is.null(user_row$email) || is.na(user_row$email) || user_row$email == ""
+    missing_group <- is.null(user_row$research_group) || is.na(user_row$research_group) || user_row$research_group == ""
+
+    if (missing_email || missing_group) {
+      show_profile_modal(user_row$username, list(
+        email = user_row$email %||% attrs$email,
+        phone = user_row$phone %||% attrs$phone,
+        ou = user_row$research_group %||% attrs$ou
+      ), is_new = FALSE)
+    }
+  }
+
+  handle_ldap_login <- function(username) {
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+
+    user_data <- dbGetQuery(con,
+                            "SELECT * FROM users WHERE username = ?",
+                            params = list(username))
+    attrs <- ldap_lookup_user(username)
+    mapped_group <- map_group_from_ldap_ou(attrs$ou, con)
+    if (!is.null(mapped_group) && mapped_group != "") {
+      attrs$ou <- mapped_group
+    }
+
+    if (dev_mode && isFALSE(attrs$bind_ok) && !ldap_bind_warned() &&
+        is.null(attrs$email) && is.null(attrs$phone) && is.null(attrs$ou)) {
+      showNotification(
+        "LDAP bind failed. Attribute lookup is disabled until LDAP_BIND_DN/PW are set.",
+        type = "warning",
+        duration = 10
+      )
+      ldap_bind_warned(TRUE)
+    }
+
+    if (nrow(user_data) == 0) {
+      if (is.null(attrs$email) || attrs$email == "") {
+        show_profile_modal(username, attrs, is_new = TRUE)
+        return()
+      }
+
+      placeholder_pw <- digest::digest(paste0("ldap-", username))
+      dbExecute(con, "
+        INSERT INTO users (username, password, email, phone, research_group, is_admin)
+        VALUES (?, ?, ?, ?, ?, 0)
+      ", params = list(
+        username,
+        placeholder_pw,
+        attrs$email,
+        attrs$phone %||% "",
+        attrs$ou %||% ""
+      ))
+
+      user_data <- dbGetQuery(con,
+                              "SELECT * FROM users WHERE username = ?",
+                              params = list(username))
+    } else {
+      # Normalize existing group value if it doesn't match budget holder names
+      if (!is.null(user_data$research_group) && user_data$research_group[1] != "") {
+        normalized_group <- map_group_from_ldap_ou(user_data$research_group[1], con)
+        if (!is.null(normalized_group) && normalized_group != "" &&
+            normalized_group != user_data$research_group[1]) {
+          dbExecute(con, "
+            UPDATE users SET research_group = ?
+            WHERE username = ?
+          ", params = list(normalized_group, username))
+          user_data <- dbGetQuery(con,
+                                  "SELECT * FROM users WHERE username = ?",
+                                  params = list(username))
+        }
+      }
+
+      updates <- list()
+      if ((is.null(user_data$email) || is.na(user_data$email) || user_data$email == "") && !is.null(attrs$email) && attrs$email != "") {
+        updates$email <- attrs$email
+      }
+      if ((is.null(user_data$phone) || is.na(user_data$phone) || user_data$phone == "") && !is.null(attrs$phone) && attrs$phone != "") {
+        updates$phone <- attrs$phone
+      }
+      if ((is.null(user_data$research_group) || is.na(user_data$research_group) || user_data$research_group == "") && !is.null(attrs$ou) && attrs$ou != "") {
+        updates$research_group <- attrs$ou
+      }
+
+      if (length(updates) > 0) {
+        dbExecute(con, "
+          UPDATE users SET email = ?, phone = ?, research_group = ?
+          WHERE username = ?
+        ", params = list(
+          updates$email %||% user_data$email,
+          updates$phone %||% user_data$phone,
+          updates$research_group %||% user_data$research_group,
+          username
+        ))
+
+        user_data <- dbGetQuery(con,
+                                "SELECT * FROM users WHERE username = ?",
+                                params = list(username))
+      }
+    }
+
+    if (nrow(user_data) == 1) {
+      complete_login(user_data)
+      maybe_prompt_profile_update(user_data[1, ], attrs)
+    }
+  }
+
+  ##################################################################
+  # END AUTH / LDAP HELPERS
+  ##################################################################
+
   # Define status options
   status_options <- c(
     "Created",
@@ -692,9 +1276,220 @@ server <- function(input, output, session) {
     removeModal()
     showNotification("Registration successful! You can now login.", type = "message")
   })
+
+  ##################################################################
+  # LDAP AUTO-LOGIN + PROFILE COMPLETION
+  ##################################################################
+
+  observe({
+    if (get_auth_mode() == "ldap") {
+      header_user <- session$request$HTTP_X_REMOTE_USER
+      if (user$logged_in) {
+        shinyjs::hide("login_screen", anim = FALSE)
+      } else if (!is.null(header_user) && header_user != "" && !ldap_login_blocked()) {
+        shinyjs::hide("login_screen", anim = FALSE)
+      } else if (!is.null(dev_auth_user()) && dev_auth_user() != "") {
+        shinyjs::hide("login_screen", anim = FALSE)
+      } else {
+        shinyjs::show("login_screen", anim = FALSE)
+      }
+    }
+  })
+
+  observe({
+    if (get_auth_mode() != "ldap") return()
+    if (ldap_login_blocked()) return()
+    if (user$logged_in || pending_profile$active) return()
+
+    username <- get_auth_username(session)
+    if (is.null(username) || username == "") {
+      if (!ldap_warned()) {
+        showNotification(
+          "LDAP mode enabled but no authenticated user found. For local dev, set DEV_REMOTE_USER.",
+          type = "warning",
+          duration = 10
+        )
+        ldap_warned(TRUE)
+      }
+      return()
+    }
+
+    handle_ldap_login(username)
+  })
+
+  output$dev_tools_ui <- renderUI({
+    if (!dev_mode) return(NULL)
+
+    tagList(
+      div(style = "margin-top: 1rem; padding: 0.75rem; border: 1px dashed #adb5bd; border-radius: 6px;",
+          h4("Dev Tools"),
+          radioButtons("dev_auth_mode", "Auth Mode",
+                       choices = c("LDAP" = "ldap", "Local" = "local"),
+                       selected = get_auth_mode(),
+                       inline = TRUE)
+      )
+    )
+  })
+
+  observeEvent(input$dev_auth_mode, {
+    req(input$dev_auth_mode)
+    mode <- tolower(input$dev_auth_mode)
+    if (!mode %in% c("ldap", "local")) mode <- "local"
+
+    auth_mode_val(mode)
+    Sys.setenv(AUTH_MODE = mode)
+
+    user$logged_in <- FALSE
+    user$username <- NULL
+    user$user_id <- NULL
+    user$is_admin <- FALSE
+
+    if (mode == "local") {
+      ldap_login_blocked(FALSE)
+      dev_auth_user("")
+      Sys.unsetenv("DEV_REMOTE_USER")
+      show("login_screen")
+      hide("main_app")
+      updateTextInput(session, "login_username", value = "")
+      updateTextInput(session, "login_password", value = "")
+      hide("login_error")
+    } else {
+      show("login_screen")
+      hide("main_app")
+    }
+  })
+
+  output$dev_login_ui <- renderUI({
+    if (!dev_mode) return(NULL)
+    if (get_auth_mode() != "ldap") return(NULL)
+    header_user <- session$request$HTTP_X_REMOTE_USER
+    if (!is.null(header_user) && header_user != "") return(NULL)
+    if (user$logged_in) return(NULL)
+
+    tagList(
+      div(style = "margin-top: 1rem; padding: 0.75rem; border: 1px solid #dee2e6; border-radius: 6px;",
+          h4("Dev LDAP Simulation"),
+          p("Local login is disabled in LDAP mode. Enter a username to simulate LDAP."),
+          textInput("dev_login_username", "Dev Username", value = dev_auth_user()),
+          actionButton("dev_login_btn", "Login as Dev User", class = "btn-primary")
+      )
+    )
+  })
+
+  output$dev_mode_badge <- renderUI({
+    if (!dev_mode) return(NULL)
+    mode_label <- toupper(get_auth_mode())
+    badge_class <- if (get_auth_mode() == "ldap") "dev-mode-badge dev-mode-ldap" else "dev-mode-badge dev-mode-local"
+    tags$span(paste("DEV ·", mode_label), class = badge_class)
+  })
+
+  output$budget_holder_notice <- renderUI({
+    budget_holder_notice_ui(input$budget_id)
+  })
+
+  output$budget_holder_other_fields <- renderUI({
+    if (input$budget_id != "other") return(NULL)
+    tagList(
+      budget_holder_other_fields_ui(),
+      budget_holder_other_notice_ui(input$other_bh_cost_center)
+    )
+  })
+
+  output$edit_budget_holder_notice <- renderUI({
+    budget_holder_notice_ui(input$edit_budget_id)
+  })
+
+  output$edit_budget_holder_other_fields <- renderUI({
+    if (input$edit_budget_id != "other") return(NULL)
+    tagList(
+      budget_holder_other_fields_ui(prefix = "edit_"),
+      budget_holder_other_notice_ui(input$edit_other_bh_cost_center)
+    )
+  })
+
+  observeEvent(input$dev_login_btn, {
+    if (!dev_mode) return()
+    req(input$dev_login_username)
+    dev_auth_user(input$dev_login_username)
+    Sys.setenv(DEV_REMOTE_USER = input$dev_login_username)
+    handle_ldap_login(input$dev_login_username)
+  })
+
+  observeEvent(input$ldap_profile_save_btn, {
+    req(pending_profile$active)
+
+    if (is.null(input$ldap_profile_email) || input$ldap_profile_email == "") {
+      showNotification("Email is required.", type = "error")
+      return()
+    }
+
+    username <- pending_profile$username
+    attrs <- pending_profile$attrs
+
+    email <- input$ldap_profile_email
+    phone <- input$ldap_profile_phone %||% attrs$phone %||% ""
+    group <- input$ldap_profile_group %||% attrs$ou %||% ""
+
+    if (is.null(group) || group == "") {
+      showNotification("Research group is required.", type = "error")
+      return()
+    }
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+
+    if (isTRUE(pending_profile$is_new)) {
+      placeholder_pw <- digest::digest(paste0("ldap-", username))
+      dbExecute(con, "
+        INSERT INTO users (username, password, email, phone, research_group, is_admin)
+        VALUES (?, ?, ?, ?, ?, 0)
+      ", params = list(username, placeholder_pw, email, phone, group))
+    } else {
+      dbExecute(con, "
+        UPDATE users SET email = ?, phone = ?, research_group = ?
+        WHERE username = ?
+      ", params = list(email, phone, group, username))
+    }
+
+    pending_profile$active <- FALSE
+    pending_profile$username <- NULL
+    pending_profile$attrs <- list()
+    pending_profile$is_new <- FALSE
+    removeModal()
+
+    user_data <- dbGetQuery(con,
+                            "SELECT * FROM users WHERE username = ?",
+                            params = list(username))
+    if (nrow(user_data) == 1) {
+      complete_login(user_data)
+    }
+  })
+
+  observeEvent(input$ldap_profile_cancel_btn, {
+    pending_profile$active <- FALSE
+    pending_profile$username <- NULL
+    pending_profile$attrs <- list()
+    pending_profile$is_new <- FALSE
+    removeModal()
+    showNotification("Profile completion canceled. Reload the page to try again.", type = "warning")
+  })
+
+  observeEvent(input$ldap_relogin_btn, {
+    ldap_login_blocked(FALSE)
+    removeModal()
+  })
+
+  ##################################################################
+  # END LDAP AUTO-LOGIN + PROFILE COMPLETION
+  ##################################################################
   
   # Login functionality
   observeEvent(input$login_btn, {
+    if (get_auth_mode() == "ldap") {
+      showNotification("Local login is disabled in LDAP mode.", type = "warning")
+      return()
+    }
+
     req(input$login_username, input$login_password)
     
     con <- get_db_connection()
@@ -706,35 +1501,7 @@ server <- function(input, output, session) {
     )
     
     if(nrow(user_data) == 1 && user_data$password == digest(input$login_password)) {
-      user$logged_in <- TRUE
-      user$username <- user_data$username
-      user$user_id <- user_data$id
-      user$is_admin <- as.logical(user_data$is_admin)
-
-      # Load essential data for all users (not just admins)
-      admin_data$budget_holders <- load_budget_holders()
-      admin_data$service_types <- load_service_types()
-      admin_data$sequencing_depths <- load_sequencing_depths()
-      admin_data$sequencing_cycles <- load_sequencing_cycles()
-      admin_data$types <- load_types()
-      admin_data$sequencing_platforms <- load_sequencing_platforms()
-      admin_data$reference_genomes <- load_reference_genomes()
-      
-      cat("DEBUG: Before hide/show operations\n")
-      
-      # Force show main_app and hide login
-      shinyjs::hide("login_screen", anim = FALSE)
-      shinyjs::show("main_app", anim = FALSE)
-      
-      cat("DEBUG: After hide/show operations\n")
-
-#      hide("login_screen")
-#      show("main_app")
-      
-      # Load admin data if user is admin
-      if(user$is_admin) {
-        load_admin_data()
-      }
+      complete_login(user_data)
     } else {
       show("login_error")
       output$login_error <- renderText("Invalid username or password")
@@ -747,12 +1514,38 @@ server <- function(input, output, session) {
     user$username <- NULL
     user$user_id <- NULL
     user$is_admin <- FALSE
-    
-    show("login_screen")
-    hide("main_app")
-    updateTextInput(session, "login_username", value = "")
-    updateTextInput(session, "login_password", value = "")
-    hide("login_error")
+
+    if (get_auth_mode() == "ldap") {
+      header_user <- session$request$HTTP_X_REMOTE_USER
+      hide("main_app")
+      show("login_screen")
+
+      if (!is.null(header_user) && header_user != "") {
+        ldap_login_blocked(TRUE)
+        showModal(modalDialog(
+          title = "Logged Out",
+          tagList(
+            p("LDAP authentication is managed by the web server."),
+            p("To log in again, click \"Re-login\" below."),
+            p("To switch users, close the browser or use a private window and log in with different credentials.")
+          ),
+          footer = actionButton("ldap_relogin_btn", "Re-login", class = "btn-primary"),
+          easyClose = FALSE
+        ))
+      } else {
+        ldap_login_blocked(FALSE)
+        dev_auth_user("")
+        Sys.unsetenv("DEV_REMOTE_USER")
+        hide("login_error")
+        showNotification("Logged out. Enter a different dev username to log in again.", type = "message")
+      }
+    } else {
+      show("login_screen")
+      hide("main_app")
+      updateTextInput(session, "login_username", value = "")
+      updateTextInput(session, "login_password", value = "")
+      hide("login_error")
+    }
   })
   
   # Welcome message
@@ -1048,13 +1841,18 @@ server <- function(input, output, session) {
                            }),
                selectInput("budget_id", "Budget Holder *",
                            choices = if(!is.null(admin_data$budget_holders) && nrow(admin_data$budget_holders) > 0) {
-                             setNames(admin_data$budget_holders$id,
-                                      paste(admin_data$budget_holders$name, 
-                                            admin_data$budget_holders$surname, 
-                                            "-", admin_data$budget_holders$cost_center))
+                             c(
+                               setNames(as.character(admin_data$budget_holders$id),
+                                        paste(admin_data$budget_holders$name,
+                                              admin_data$budget_holders$surname,
+                                              "-", admin_data$budget_holders$cost_center)),
+                               "Other / not listed" = "other"
+                             )
                            } else {
-                             c("No budget holders available" = "")
+                             c("Other / not listed" = "other")
                            }),
+               uiOutput("budget_holder_notice"),
+               uiOutput("budget_holder_other_fields"),
                selectInput("responsible_user", "Responsible User *",
                            choices = get_all_usernames(),
                            selected = user$username),
@@ -1101,6 +1899,10 @@ server <- function(input, output, session) {
         
         # Find matching budget holder
         matching_index <- which(budget_full_names == user_group)
+        if (length(matching_index) == 0) {
+          # Fallback: partial match (e.g., "Cox" -> "Cox Juergen")
+          matching_index <- which(grepl(user_group, budget_full_names, ignore.case = TRUE))
+        }
         
         if(length(matching_index) > 0) {
           # Auto-select the matching budget holder
@@ -1138,6 +1940,29 @@ server <- function(input, output, session) {
     )
   })
   
+  get_or_create_budget_holder <- function(con, name, surname, cost_center, email) {
+    name <- trimws(name)
+    surname <- trimws(surname)
+    cost_center <- trimws(cost_center)
+    email <- trimws(email)
+
+    existing <- dbGetQuery(con,
+                           "SELECT id FROM budget_holders WHERE name = ? AND surname = ? AND cost_center = ?",
+                           params = list(name, surname, cost_center))
+    if (nrow(existing) > 0) {
+      return(existing$id[1])
+    }
+
+    dbExecute(con, "
+      INSERT INTO budget_holders (name, surname, cost_center, email)
+      VALUES (?, ?, ?, ?)
+    ", params = list(name, surname, cost_center, email))
+
+    dbGetQuery(con,
+               "SELECT id FROM budget_holders WHERE name = ? AND surname = ? AND cost_center = ?",
+               params = list(name, surname, cost_center))$id[1]
+  }
+
   # Create project with email notification
   observeEvent(input$create_project_btn, {
     # Validate required fields
@@ -1154,6 +1979,14 @@ server <- function(input, output, session) {
       showNotification("Please fill in all required fields", type = "error")
       return()
     }
+
+    if (input$budget_id == "other") {
+      if (is.null(input$other_bh_name) || input$other_bh_name == "" ||
+          is.null(input$other_bh_surname) || input$other_bh_surname == "") {
+        showNotification("Please enter PI name and surname for the new budget holder.", type = "error")
+        return()
+      }
+    }
     
     # Calculate total cost
     total_cost <- calculate_total_cost(input$num_samples, input$service_type_id, 
@@ -1162,6 +1995,23 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
     
+    # Resolve budget holder
+    budget_id_value <- input$budget_id
+    if (budget_id_value == "other") {
+      bh_cost_center <- trimws(input$other_bh_cost_center %||% "")
+      if (bh_cost_center == "") bh_cost_center <- "N.A."
+      bh_email <- trimws(input$other_bh_email %||% "")
+      if (bh_email == "") bh_email <- "ngs@biochem.mpg.de"
+
+      budget_id_value <- get_or_create_budget_holder(
+        con,
+        input$other_bh_name,
+        input$other_bh_surname,
+        bh_cost_center,
+        bh_email
+      )
+    }
+
     # Insert project
     dbExecute(con, "
     INSERT INTO projects 
@@ -1175,7 +2025,7 @@ server <- function(input, output, session) {
     input$responsible_user,
     input$reference_genome,
     as.numeric(input$service_type_id),
-    as.numeric(input$budget_id),
+    as.numeric(budget_id_value),
     input$project_description,
     input$num_samples,
     input$sequencing_platform,
@@ -1197,7 +2047,7 @@ server <- function(input, output, session) {
     )
     
     # Get budget holder and user email
-    budget_holder <- admin_data$budget_holders[admin_data$budget_holders$id == as.numeric(input$budget_id), ]
+    budget_holder <- dbGetQuery(con, "SELECT * FROM budget_holders WHERE id = ?", params = list(as.numeric(budget_id_value)))
     user_email <- dbGetQuery(con, "SELECT email FROM users WHERE id = ?", params = list(user$user_id))$email
     
     removeModal()
@@ -2336,11 +3186,16 @@ server <- function(input, output, session) {
                                               admin_data$sequencing_cycles$cycles_description),
                            selected = project$sequencing_cycles_id),
                selectInput("edit_budget_id", "Budget Holder *",
-                           choices = setNames(admin_data$budget_holders$id,
-                                              paste(admin_data$budget_holders$name, 
-                                                    admin_data$budget_holders$surname, 
-                                                    "-", admin_data$budget_holders$cost_center)),
-                           selected = project$budget_id),
+                           choices = c(
+                             setNames(as.character(admin_data$budget_holders$id),
+                                      paste(admin_data$budget_holders$name,
+                                            admin_data$budget_holders$surname,
+                                            "-", admin_data$budget_holders$cost_center)),
+                             "Other / not listed" = "other"
+                           ),
+                           selected = as.character(project$budget_id)),
+               uiOutput("edit_budget_holder_notice"),
+               uiOutput("edit_budget_holder_other_fields"),
                selectInput("edit_responsible_user", "Responsible User *",
                            choices = get_all_usernames(),
                            selected = project$responsible_user),
@@ -2412,12 +3267,36 @@ server <- function(input, output, session) {
       return()
     }
     
+    if (input$edit_budget_id == "other") {
+      if (is.null(input$edit_other_bh_name) || input$edit_other_bh_name == "" ||
+          is.null(input$edit_other_bh_surname) || input$edit_other_bh_surname == "") {
+        showNotification("Please enter PI name and surname for the new budget holder.", type = "error")
+        return()
+      }
+    }
+
     # Calculate total cost
     total_cost <- calculate_total_cost(input$edit_num_samples, input$edit_service_type_id, 
                                        input$edit_sequencing_depth_id, input$edit_sequencing_cycles_id)
     
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
+
+    budget_id_value <- input$edit_budget_id
+    if (budget_id_value == "other") {
+      bh_cost_center <- trimws(input$edit_other_bh_cost_center %||% "")
+      if (bh_cost_center == "") bh_cost_center <- "N.A."
+      bh_email <- trimws(input$edit_other_bh_email %||% "")
+      if (bh_email == "") bh_email <- "ngs@biochem.mpg.de"
+
+      budget_id_value <- get_or_create_budget_holder(
+        con,
+        input$edit_other_bh_name,
+        input$edit_other_bh_surname,
+        bh_cost_center,
+        bh_email
+      )
+    }
     
     if(user$is_admin) {
       dbExecute(con, "
@@ -2432,7 +3311,7 @@ server <- function(input, output, session) {
         input$edit_project_name,
         input$edit_reference_genome,
         as.numeric(input$edit_service_type_id),
-        as.numeric(input$edit_budget_id),
+        as.numeric(budget_id_value),
         input$edit_responsible_user,
         input$edit_project_description,
         input$edit_num_samples,
@@ -2458,7 +3337,7 @@ server <- function(input, output, session) {
         input$edit_project_name,
         input$edit_reference_genome,
         as.numeric(input$edit_service_type_id),
-        as.numeric(input$edit_budget_id),
+        as.numeric(budget_id_value),
         input$edit_responsible_user,
         input$edit_project_description,
         input$edit_num_samples,

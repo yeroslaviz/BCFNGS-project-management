@@ -5,12 +5,16 @@
 .Rhistory
 .Rapp.history
 
-<<<<<<< HEAD
 # backup files and folders
-.backup
+.backup/
+backup/
 
-=======
->>>>>>> origin/main
+# SQLite / database files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal
+*.sqlite3
 # Session Data files
 .RData
 .RDataTmp

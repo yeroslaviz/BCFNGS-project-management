@@ -1,9 +1,48 @@
 ---
 title: "Server Preparations"
-format: html
-editor: visual
-execute: 
+execute:
   eval: false
+  echo: true
+  warning: false
+engine: knitr
+author:
+  - name: Assa Yeroslaviz
+    orcid: 0000-0001-9638-4026
+    corresponding: true
+    email: yeroslaviz@biochem.mpg.de
+    roles:
+      - Investigation
+      - Visualization
+    affiliations:
+      - Max-Planck-Institute for Biochemistry
+keywords:
+  - RNA-Seq
+  - transcriptomics
+  - P405
+  - Marion
+  - Peter
+  - AG Murray
+abstract: |
+   t.b.d.
+plain-language-summary: |
+  s.a.
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
+number-sections: true
+format:
+  html:
+    code-fold: true
+    toc: true
+    toc-depth: 4
+    toc-expand: false
+    number-sections: true
+    number-depth: 4
+qknitr:
+  opts_chunk:
+    comment: "#>"
+    collapse: true
+bibliography: /Users/yeroslaviz/ownCloud/ownCloud_projects/citations.bib
+editor_options:
+  chunk_output_type: inline
 ---
 
 ```{r}
@@ -29,6 +68,27 @@ suppressPackageStartupMessages(
 
 # Server Infrastructure
 
+## Install required system dependencies
+
+```{bash}
+
+sudo apt install -y libssl-dev libxml2-dev libcurl4-openssl-dev libudunits2-dev libgdal-dev
+
+```
+
+## Setting Environment variables
+
+```{bash}
+
+# /var/shiny-server/.Renviron
+TZ=Europe/Berlin
+LANG=en_US.UTF-8
+LC_ALL=en_US.UTF-8
+
+```
+
+## Install shiny app
+
 ```{bash}
 
 # Install Shiny Server on Ubuntu
@@ -52,9 +112,7 @@ sudo gdebi shiny-server-1.5.23.1030-amd64.deb
 
 ```
 
-
-
-## changing hostname to fit the apache2 config file
+## Changing hostname to fit the apache2 config file
 
 ```{bash}
 
@@ -72,17 +130,16 @@ ping ngs-testing-vm.biochem.mpg.de
 ```
 
 ```
-Server:		127.0.0.53
-Address:	127.0.0.53#53
+Server:     127.0.0.53
+Address:    127.0.0.53#53
 
 Non-authoritative answer:
-Name:	ngs-testing-vm.biochem.mpg.de
+Name:   ngs-testing-vm.biochem.mpg.de
 Address: 10.33.0.60
 
 PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 64 bytes from ngs-testing-vm.biochem.mpg.de (10.33.0.60): icmp_seq=1 ttl=64 time=0.079 ms
 64 bytes from ngs-testing-vm.biochem.mpg.de (10.33.0.60): icmp_seq=2 ttl=64 time=0.074 ms
-
 ```
 
 ```{bash}
@@ -100,10 +157,9 @@ sudo systemctl enable shiny-server
 
 ```
 
-#  Monitoring
+# Monitoring
 
 The shiny app server writes log files specific with date and time in the `/var/log/shiny-server` folder.
-
 
 ```{bash}
 
@@ -119,10 +175,9 @@ sudo tail -f /var/log/apache2/sequencing-app-error.log
 
 The VM is regularly back-up every night. The SQL database backup setting are in the script, but for now commented out, as we're not in productive version.
 
-
 ## cron job for data base backup
 
-If needed, we can also set up a cron job to backup the data base 
+If needed, we can also set up a cron job to backup the data base
 
 ```{bash}
 
@@ -192,51 +247,90 @@ sudo crontab -l | { cat; echo "0 2 * * * /usr/local/bin/backup_sequencing_db.sh"
 </VirtualHost>
 ```
 
-
 # Required Server Setup
 
 ```
-/var/shiny-server/ 
-├── sequencing-app/ 
-│ ├── app.R 
-│ ├── setup_database.R 
-│ ├── sequencing_projects.db 
-│ └── www/ 
-  │ ├── logo.png 
+/var/shiny-server/
+├── sequencing-app/
+│ ├── app.R
+│ ├── setup_database.R
+│ ├── sequencing_projects.db
+│ └── www/
+  │ ├── logo.png
   │ └── minerva.png
 ```
 
 # Github repository
 
-## create Key gen for github connection
+## Step 1: Generate SSH keys
 
 ```{bash}
 
-ssh-keygen -t ed25519 -f ngs-testing-vm.id_rsa -C "yeroslaviz@biochem.mpg.de"
-### 1qazXSW@3edc
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/ngs-testing-vm.id_rsa
+# on the local machine (mac mini at work!!!)
+cd ~/.ssh/
+ssh-keygen -t ed25519 -C "yeroslaviz@biochem.mpg.de" -f ngs-testing-vm.id_macMini_rsa
 
-cat ~/.ssh/ngs-testing-vm.id_rsa.pub # copy this to the github repo
-PAT - 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
+# on the VM
+cd ~/.ssh/
+ssh-keygen -t ed25519 -C "yeroslaviz@biochem.mpg.de" -f ngs-testing-vm.id_rsa
 ```
 
+If agent needs to be activated
 
-## Add the key to GitHub
--Go to GitHub.com
-- Click your profile picture → Settings
-- Go to SSH and GPG keys
-- Click New SSH key
-- Paste the public key you copied
-- Give it a name like "VM access"
-- In the home folder /home/yeroslaviz/ the github repository is stored. 
+```{bash}
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/ngs-testing-vm.id_rsa # or the name of the local key
+```
 
+## Add both keys to the github repository
 
-## check the connection 
+Copy for each of the two keys the `*pub` version and add it under `Settings → SSH and GPG keys → New SSH key`.
+
+## Make sure we clone using ssh (not html)
+
+First test if the connection exists already.
+
+```{bash}
+git remote -v
+```
+
+If the result is
+
+```
+origin  https://github.com/username/repository.git (fetch)
+origin  https://github.com/username/repository.git (push)
+```
+
+it must be changed to ssh
+
+```{bash}
+git remote set-url origin git@github.com:username/repository.git
+```
+
+If we see
+
+```
+origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (fetch)
+origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)
+```
+
+then we already use ssh.
+
+## Test and check the connection
 
 ```{bash}
 ssh -T git@github.com
 ```
+
+this should return something like
+
+```
+Hi yeroslaviz! You've successfully authenticated, but GitHub does not provide shell access.
+```
+
+## Pulling/Pushing
+
+the repository can be managed from the path `/home/yeroslaviz/BCFNGS-project-management` (the VM path is mentioned here).
 
 ```
 $ tree -L 1
@@ -250,15 +344,14 @@ $ tree -L 1
 
 inside the Folder we can pull/push the changes we made to the repo from the local computer (AT WORK!!!).
 
-the github repository on the local computer is at `/Documents/GitHub/BCFNGS-project-management`. 
+the github repository on the local computer is at `/Documents/GitHub/BCFNGS-project-management`.
 
 To redeploy the server, one follows the following steps:
 
-1. make the changes on the local computer (AT WORK!!!).
-2. **commit** and **push** the changes to the github repo
-3. go to the folder `/home/yeroslaviz/BCFNGS-project-management` on the VM `ngs-testing-vm` and pull the changes. 
-4. Execute the `deploy_shiny_server.sh` script to copy the new changes to the shiny-server folder and restart both apache2 and the shiny-server. 
-## git pull 
+1.  make the changes on the local computer (AT WORK!!!).
+2.  **commit** and **push** the changes to the github repo
+3.  go to the folder `/home/yeroslaviz/BCFNGS-project-management` on the VM `ngs-testing-vm` and pull the changes.
+4.  Execute the `deploy_shiny_server.sh` script to copy the new changes to the shiny-server folder and restart both apache2 and the shiny-server. \## git pull
 
 ```{bash}
  git pull origin main
@@ -267,278 +360,9 @@ To redeploy the server, one follows the following steps:
  ...
 ```
 
-
-
-# Setting Environment variables
-
-```{bash}
-
-# /var/shiny-server/.Renviron
-TZ=Europe/Berlin
-LANG=en_US.UTF-8
-LC_ALL=en_US.UTF-8
-
-```
-
-# Install required system dependencies
-
-```{bash}
-
-sudo apt install -y libssl-dev libxml2-dev libcurl4-openssl-dev libudunits2-dev libgdal-dev
-
-```
-
-
 # Security
 
 Not sure, if this is all necessary, will consult the IT when it is appropriate
-
-## dedicated User
-
-As we're planning to use the LDAP, I'm not sure, this is necessary.
-I need a method to add specific users as admin
-
-## Firewall
-
-at the moment is not active, but maybe in the future.
-
-```{bash}
-
-sudo ufw allow 3838
-sudo ufw allow 80
-sudo ufw allow 443
-
-```
-
-## SSL Certificate (for HTTPS)
-
-the new setting of the certificates. I have three files.
-
-The private key I created when applying for the certificate. The other two were downloaded, when the emial came
-from Harica (the certificate provider).
-
-the `PEM`  is the pem file and the `DER (issuer)` is the chain file. Both of them are needed.
-
-Setting for the readability of the files:
-
-```
-cd /etc/apache2/certificate/2026
--rw------- 1 yeroslaviz b_mcf 3272 Nov 10 15:58 private-key.pem # udo chmod 600 /path/to/private.key  # Readable only by root
--rw-r--r-- 1 yeroslaviz b_mcf 1545 Nov 14 12:12 NGS_2026_Issuer_ChainFile.cer # sudo chmod 644 /path/to/chain.crt  # Readable by all
--rw-r--r-- 1 yeroslaviz b_mcf 2796 Nov 14 12:34 NGS_2026_Cert.pem # sudo chmod 644 /path/to/certificate.crt # Readable by all
-```
-
-All the files are saved under `/etc/apache2/certificate/2026`.
-
-Now I created soft links for each of these files.
-
-```{bash}
-sudo ln -s /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem
-sudo ln -s /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem
-
-```
-
-# Change connection to shiny server folder to https
-
-The shiny app takes information from the config file under `/etc/shiny-server/shiny-server.conf`. Here we can see where the log files are written into and where the directory of the shiny app are stored. 
-
-As the folder connected to the github repository is in my home directory `/home/yeroslaviz/BCFNGS-project-management`, I need to create a softlink to the folder used by the app, so that it dsoesn't need to be copy-pasted each time.
-
-```{bash}
-sudo usermod -a -G shiny $USER # add user yeroslaviz to group shiny
-sudo chown -R $USER:shiny sequencing-app/ # make group shiny able to execute the scripts in the folder
-sudo mv /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup # move the actual hard-coded folder to a backup (just in case)
-```
-
-The sequencing-app folder must be copied to the correct place after each modification was done and the new files were pulled to the VM. 
-
-For that I have created a script called `deploy.sh`. The script copy the files from the github repo folder `/home/yeroslaviz/BCFNGS-project-management/sequencing-app/*` to were the shiny app needs them to be - `/srv/shiny-server/sequencing-app/`
-
-The deploy script must be activated when loded
-
-```{bash}
-chmod +x deploy.sh
-```
-
-
-# Changes on 14.11.2026
-
-1. I would Like you to show me where the admin email address can be changed, if I want to have a different user as admin.
-1.1 Please show me the parts of the script where this can be changed. 
-
-The admin apssword is set here:
-
-```{bash}
-# Insert default admin user
-default_password <- digest::digest("admin123")
-dbExecute(con, "
-  INSERT OR IGNORE INTO users (username, password, email, is_admin) 
-  VALUES ('admin', ?, 'yeroslaviz@biochem.mpg.de', 1)
-", params = list(default_password))
-```
-
-1.2 Can this be changed without recreating the whole databank or restart the app?
-1.3 How do I change the admin email address without recreating the db?
-
-This can be changed without recreating the database, using two options:
-
-* Option 1: Direct database update
-
-Run this SQL command on your database:
-
-```{sql}
-
-UPDATE users SET email = 'newadmin@institute.org' WHERE username = 'admin';
-
-```
-
-To execute this, we can either log in directly to the database via the command line 
-
-```{bash}
-sqlite3 sequencing_projects.db
-```
-and execute
-
-```{bash}
-UPDATE users SET email = 'newadmin@institute.org' WHERE username = 'admin';
-.exit
-```
-
-or via the R pormpt:
-
-```{r}
-library(DBI)
-library(RSQLite)
-con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
-dbExecute(con, "UPDATE users SET email = 'newadmin@institute.org' WHERE username = 'admin'")
-dbDisconnect(con)
-```
-
-**Don't forget to modify the `setup_database_*.R` script afterwards, so these information will be also kept, if the database is recreated!**
-
-* Option 2: Through the app's user management (as admin)
-
-In the  "Administer Projects" tab, one can click "Manage Users" and change (or add) the admin user and edit their email.
-
-1.4 How can I turn on/off sending the notification mail to the admin, if not needed?
-
-The admin notification email is sent in the `send_project_creation_email` function in the app file. 
-
-
-2. When creating a new project, an email is being sent.
-2.1 can you please tell me to whome this email is being sent?
-2.2 Can you show me the part of the script where it is set up?
-2.3 Now, the Email should be sent to budget holder and to user, who created the project, as well as to the admin. Can this be changed easily, if needed?
-
-This was done also in point 1. The function `send_project_creation_email` set the users who gets an email, when a project is created. 
-the row 
-
-```
-        to = c(budget_holder$email, user_email, admin_emails),
-```
-
-set the recipient of the mail. we can remove one of the elements, or even just add a specific mail address to the `to =` row. 
-
-
-3. How do I make changes to the cost estimations w.o. Recreating the db?
-3.1 Is it possible to modify existing columns, in case prices are changing? Or would deleting and making a new element would be easier?
-3.2 If I change anything in these tables, Would it also change it in the SQL data base?
-
-At the moment the tables `Service types` and ` Sequencing depths` are not editable. If prices change, the easiet option is to delete the row and recreate it using the new value. This way, the older projects will use the previous costs, while the new one will get the new costs. 
-
-One can also directly use the SQL commands to apply these chages, similar to above
-
-```{bash}
-sqlite3 sequencing_projects.db
-```
-and execute
-
-```{bash}
-UPDATE service_types SET costs_per_sample = 55 WHERE service_type = 'single cell/low mRNAseq';
-.exit
-```
-
-
-4. something is wrong with the Sequencing Cycles Management table. When I run the app, go to the Admin projects Tab and click the Sequencing Cycles - Manage Cycles, I see this message: 
-"Error: An error has occurred. Check your logs or contact the app author for clarification."
-4.1 which log files can I consult?
-
-When working on the server, the best place to look for problems are the log files of either the `apache2` (`/var/log/apache2/`) or the `shiny-server` (`/var/log/shiny-server/`).
-
-
-5. Do I have a weekly backup of the SQL db? 
-
-there is an app for a bi-weekly automaic backup. The function is for now commented out, so not working. 
-
-## modify registration page
-
-
-```{bash}
-sqlite3 sequencing_projects.db
-```
-
-we add information to the registration page, so the user must choose a group. This way we know which is the budget holder for this user.
-
-After ward we added the information to the Registration Server Logic
-
-```{bash}
-dbExecute(con, "
-INSERT INTO users (username, password, email, phone, research_group, is_admin)
-VALUES (?, ?, ?, ?, ?, 0)
-", params = list(
-  input$reg_username,
-  digest(input$reg_password),
-  input$reg_email,
-  input$reg_phone,
-  input$reg_group
-))
-```
-
-as well as modified the User registration modal
-
-
-Now,  when a user register, he must choose a group from the given drop-down menu. this group is attached to the budget holder. When the user creates a new project, this budget holder (group) will automatically be assigned to the project (This can be manually changed, when the project is created).
-
-
-I have changed the `setup_databases.R` script to load the budget holders information from a csv file, stored in the same folder as the script itself. 
-
-We have a csv-formatted table with the information of the groups and their cost centers. This is an easy way to upload the information.
-
-```
-name,surname,email,cost_center
-Kim,Rin-Ho,rkim@biochem.mpg.de,N.A.
-Administrator,surname,rkim@biochem.mpg.de,N.A.
-Baier,Herwig,herwig.baier@bi.mpg.de,P350
-Baldwin,Maude,Maude.Baldwin@bi.mpg.de,P550
-```
-
-The registration process was change to make choosing a research group mandatory. The chosen research group is then set to also assign the cost center to the user. 
-
-::: {.callout-note}
-Some of the research groups have multiple cost centers. 
-
-When a user registers, he must select a research group. The user then gets assigned a cost center based on the table of budget holders. If (and this applies only for some of the budget holders), this specific research group has multiple cost centers, it gets assigned the first one found by the app. BUT, manually the user still can change this in the app when applying for a project.
- 
-:::
-
-
-## control for budegt holder info in the DB
-
-```{r}
-#| eval: true
-con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
-budget_holders <- dbGetQuery(con, "SELECT * FROM budget_holders")
-# Print the data
-print(budget_holders[1:3,])
-dbGetQuery(con, "SELECT * FROM budget_holders")
-dbGetQuery(con, "SELECT * FROM users")
-on.exit(dbDisconnect(con))
-```
-
-## Budget holders can be read from an Excel sheet
-
-
-# SSL Certificate (for HTTPS)
 
 ## Backup older settings
 
@@ -567,12 +391,12 @@ sudo mv /etc/apache2/certificate/********.cer /etc/ssl/backup/
 
 The new setting of the certificates. I have three files.
 
-The private key I created when applying for the certificate. The other two were downloaded, when the emial came
-from Harica (the certificate provider).
+The private key I created when applying for the certificate. The other two were downloaded, when the emial came from Harica (the certificate provider).
 
-the `PEM`  is the pem file and the `DER (issuer)` is the chain file. Both of them are needed.
+the `PEM` is the pem file and the `DER (issuer)` is the chain file. Both of them are needed.
 
 Setting for the readability of the files:
+
 ```
 cd /etc/apache2/certificate/2026
 -rw------- 1 yeroslaviz b_mcf 3272 Nov 10 15:58 private-key.pem # udo chmod 600 /path/to/private.key  # Readable only by root
@@ -590,7 +414,392 @@ sudo ln -s /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_N
 
 ```
 
+## dedicated User
+
+As we're planning to use the LDAP, I'm not sure, this is necessary. I need a method to add specific users as admin
+
+## Firewall
+
+at the moment is not active, but maybe in the future.
+
+```{bash}
+
+sudo ufw allow 3838
+sudo ufw allow 80
+sudo ufw allow 443
+
+```
+
+# Change connection to shiny server folder to https
+
+The shiny app takes information from the config file under `/etc/shiny-server/shiny-server.conf`. Here we can see where the log files are written into and where the directory of the shiny app are stored.
+
+```{bash}
+sudo usermod -a -G shiny $USER # add user yeroslaviz to group shiny
+sudo chown -R $USER:shiny sequencing-app/ # make group shiny able to execute the scripts in the folder
+sudo mv /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup # move the actual hard-coded folder to a backup (just in case)
+```
+
+The sequencing-app folder must be copied to the correct place after each modification was done and the new files were pulled to the VM.
+
+For that I have created a script called `deploy.sh`. The script synchronizes the files from the github repo folder `/home/yeroslaviz/BCFNGS-project-management/sequencing-app/` to where the Shiny app needs them to be: `/srv/shiny-server/sequencing-app/`.
+
+The deploy script must be activated when loaded
+
+```{bash}
+chmod +x deploy.sh
+```
+
+The deploy.sh script uses `rsync` and **excludes** `sequencing_projects.db` so the production database is not overwritten during deploys.
+
+If `rsync` is not installed on the VM:
+
+```{bash}
+sudo apt install -y rsync
+```
+
+It then resets permissions for all files (the DB file remains in place and keeps its permissions).
+
+When this is done, it restart the shiny server.
+
+**This script must be run each time the files inside the sequencing-app folder were changed**, but not if other changed were made in the repo.
+
+# Changes on 06.02.2026
+
+1.  Added LDAP login flow in the Shiny app (auto‑login via `X-Remote-User`, local dev simulation, and optional attribute lookup).
+2.  LDAP attribute lookup now works with anonymous bind; uses `ldapsearch` fallback for older `ldapr` versions.
+3.  Added dev tools toggle (dev only) to switch between LDAP and local auth while testing.
+4.  Mapped LDAP `ou` values to budget holders, auto‑selecting the correct PI in the project form (with partial match fallback).
+5.  Added budget holder notices for multiple cost centers and missing cost center values.
+6.  Added “Other / not listed” budget holder option so users can enter a new PI (name/surname required; cost center optional with a warning).
+7.  Updated `deploy.sh` to use `rsync` and exclude `sequencing_projects.db`.
+8.  Updated Apache LDAP configuration template and added local dev testing instructions + env var cleanup.
+9.  I do **not** track SQLite DB files in git because they change constantly, are environment‑specific (local vs VM), and can contain sensitive data. I ignore `*.db`/`*.sqlite` and keep only the schema/seed files in git.
+
+# Changes on 14.11.2026
+
+1.  I would Like you to show me where the admin email address can be changed, if I want to have a different user as admin. 1.1 Please show me the parts of the script where this can be changed.
+
+The admin password is set here:
+
+```{bash}
+# Insert default admin user
+default_password <- digest::digest("admin123")
+dbExecute(con, "
+  INSERT OR IGNORE INTO users (username, password, email, is_admin)
+  VALUES ('admin', ?, 'yeroslaviz@biochem.mpg.de', 1)
+", params = list(default_password))
+```
+
+1.2 Can this be changed without recreating the whole databank or restart the app? 1.3 How do I change the admin email address without recreating the db?
+
+This can be changed without recreating the database, using two options:
+
+-   Option 1: Direct database update
+
+Run this SQL command on your database:
+
+```{sql}
+
+UPDATE users SET email = 'newadmin@institute.org' WHERE username = 'admin';
+
+```
+
+To execute this, we can either log in directly to the database via the command line
+
+```{bash}
+sqlite3 sequencing_projects.db
+```
+
+and execute
+
+```{bash}
+UPDATE users SET email = 'newadmin@institute.org' WHERE username = 'admin';
+.exit
+```
+
+or via the R pormpt:
+
+```{r}
+library(DBI)
+library(RSQLite)
+con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
+dbExecute(con, "UPDATE users SET email = 'newadmin@institute.org' WHERE username = 'admin'")
+dbDisconnect(con)
+```
+
+**Don't forget to modify the `setup_database_*.R` script afterwards, so these information will be also kept, if the database is recreated!**
+
+-   Option 2: Through the app's user management (as admin)
+
+In the "Administer Projects" tab, one can click "Manage Users" and change (or add) the admin user and edit their email.
+
+1.4 How can I turn on/off sending the notification mail to the admin, if not needed?
+
+The admin notification email is sent in the `send_project_creation_email` function in the app file.
+
+2.  When creating a new project, an email is being sent. 2.1 can you please tell me to whome this email is being sent? 2.2 Can you show me the part of the script where it is set up? 2.3 Now, the Email should be sent to budget holder and to user, who created the project, as well as to the admin. Can this be changed easily, if needed?
+
+This was done also in point 1. The function `send_project_creation_email` set the users who gets an email, when a project is created. the row
+
+```
+        to = c(budget_holder$email, user_email, admin_emails),
+```
+
+set the recipient of the mail. we can remove one of the elements, or even just add a specific mail address to the `to =` row.
+
+3.  How do I make changes to the cost estimations w.o. Recreating the db? 3.1 Is it possible to modify existing columns, in case prices are changing? Or would deleting and making a new element would be easier? 3.2 If I change anything in these tables, Would it also change it in the SQL data base?
+
+At the moment the tables `Service types` and `Sequencing depths` are not editable. If prices change, the easiet option is to delete the row and recreate it using the new value. This way, the older projects will use the previous costs, while the new one will get the new costs.
+
+One can also directly use the SQL commands to apply these chages, similar to above
+
+```{bash}
+sqlite3 sequencing_projects.db
+```
+
+and execute
+
+```{bash}
+UPDATE service_types SET costs_per_sample = 55 WHERE service_type = 'single cell/low mRNAseq';
+.exit
+```
+
+4.  something is wrong with the Sequencing Cycles Management table. When I run the app, go to the Admin projects Tab and click the Sequencing Cycles - Manage Cycles, I see this message: "Error: An error has occurred. Check your logs or contact the app author for clarification." 4.1 which log files can I consult?
+
+When working on the server, the best place to look for problems are the log files of either the `apache2` (`/var/log/apache2/`) or the `shiny-server` (`/var/log/shiny-server/`).
+
+5.  Do I have a weekly backup of the SQL db? 
+
+there is an app for a bi-weekly automaic backup. The function is for now commented out, so not working.
+
+## modify registration page
+
+```{bash}
+sqlite3 sequencing_projects.db
+```
+
+we add information to the registration page, so the user must choose a group. This way we know which is the budget holder for this user.
+
+After ward we added the information to the Registration Server Logic
+
+```{bash}
+dbExecute(con, "
+INSERT INTO users (username, password, email, phone, research_group, is_admin)
+VALUES (?, ?, ?, ?, ?, 0)
+", params = list(
+  input$reg_username,
+  digest(input$reg_password),
+  input$reg_email,
+  input$reg_phone,
+  input$reg_group
+))
+```
+
+as well as modified the User registration modal
+
+Now, when a user register, he must choose a group from the given drop-down menu. this group is attached to the budget holder. When the user creates a new project, this budget holder (group) will automatically be assigned to the project (This can be manually changed, when the project is created).
+
+I have changed the `setup_databases.R` script to load the budget holders information from a csv file, stored in the same folder as the script itself.
+
+We have a csv-formatted table with the information of the groups and their cost centers. This is an easy way to upload the information.
+
+```
+name,surname,email,cost_center
+Kim,Rin-Ho,rkim@biochem.mpg.de,N.A.
+Administrator,surname,rkim@biochem.mpg.de,N.A.
+Baier,Herwig,herwig.baier@bi.mpg.de,P350
+Baldwin,Maude,Maude.Baldwin@bi.mpg.de,P550
+```
+
+The registration process was change to make choosing a research group mandatory. The chosen research group is then set to also assign the cost center to the user.
+
+::: callout-note
+Some of the research groups have multiple cost centers.
+
+When a user registers, he must select a research group. The user then gets assigned a cost center based on the table of budget holders. If (and this applies only for some of the budget holders), this specific research group has multiple cost centers, it gets assigned the first one found by the app. BUT, manually the user still can change this in the app when applying for a project.
+:::
+
+## control for budegt holder info in the DB
+
+```{r}
+#| eval: true
+con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
+budget_holders <- dbGetQuery(con, "SELECT * FROM budget_holders")
+# Print the data
+print(budget_holders[1:3,])
+dbGetQuery(con, "SELECT * FROM budget_holders")
+dbGetQuery(con, "SELECT * FROM users")
+on.exit(dbDisconnect(con))
+```
+
+## Budget holders can be read from an Excel sheet
+
+# SSL Certificate (for HTTPS)
+
+the new setting of the certificates. I have three files.
+
+The private key I created when applying for the certificate. The other two were downloaded, when the emial came from Harica (the certificate provider).
+
+the `PEM` is the pem file and the `DER (issuer)` is the chain file. Both of them are needed.
+
+Setting for the readability of the files:
+
+```
+cd /etc/apache2/certificate/2026
+-rw------- 1 yeroslaviz b_mcf 3272 Nov 10 15:58 private-key.pem # udo chmod 600 /path/to/private.key  # Readable only by root
+-rw-r--r-- 1 yeroslaviz b_mcf 1545 Nov 14 12:12 NGS_2026_Issuer_ChainFile.cer # sudo chmod 644 /path/to/chain.crt  # Readable by all
+-rw-r--r-- 1 yeroslaviz b_mcf 2796 Nov 14 12:34 NGS_2026_Cert.pem # sudo chmod 644 /path/to/certificate.crt # Readable by all
+```
+
+All the files are saved under `/etc/apache2/certificate/2026`.
+
+Now I created soft links for each of these files.
+
+```{bash}
+sudo ln -s /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem
+sudo ln -s /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem
+
+```
 
 # LDAP
 
-To be followed!!! 
+The app uses Apache LDAP authentication in front of Shiny. The Apache config template is in `01-main.conf`.
+
+Enable required Apache modules:
+
+```{bash}
+sudo a2enmod ldap authnz_ldap headers
+sudo systemctl reload apache2
+```
+
+Test whether anonymous LDAP search works:
+
+```{bash}
+ldapsearch -x -H ldaps://ldapserv1.biochem.mpg.de -b "dc=biochem,dc=mpg,dc=de" "(uid=YOURUSER)"
+```
+
+If anonymous search fails, use bind credentials from IT and add them to the Apache config:
+
+``` apache
+AuthLDAPBindDN "cn=binduser,dc=biochem,dc=mpg,dc=de"
+AuthLDAPBindPassword "REDACTED"
+```
+
+::: callout-warning
+For production, **do not use a personal account** for LDAP binding. Ask IT for a dedicated **service bind account** with read‑only permissions and store those credentials securely.
+:::
+
+Set app environment variables for Shiny Server (systemd override recommended):
+
+```{bash}
+sudo systemctl edit shiny-server
+```
+
+``` ini
+[Service]
+Environment=AUTH_MODE=ldap
+Environment=LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
+Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
+# If you want to restrict search to the user OU:
+# Environment=LDAP_BASE_DN=ou=People,dc=biochem,dc=mpg,dc=de
+# Optional bind credentials (only if anonymous LDAP search is blocked):
+# Environment=LDAP_BIND_DN=cn=binduser,dc=biochem,dc=mpg,dc=de
+# Environment=LDAP_BIND_PW=REDACTED
+```
+
+Restart services after config changes:
+
+```{bash}
+sudo systemctl restart apache2
+sudo systemctl restart shiny-server
+```
+
+## Local dev testing (LDAP mode)
+
+To test LDAP integration on your local machine without affecting production, run the app in dev mode and simulate the authenticated user. If LDAP attribute lookup is needed, provide a bind DN/password (personal credentials are OK for **local testing only**).
+
+``` r
+Sys.setenv(
+  APP_ENV = "dev",
+  AUTH_MODE = "ldap",
+  DEV_REMOTE_USER = "your_username",
+  LDAP_BIND_DN = "uid=your_username,ou=YourGroup,ou=Research Group,ou=People,dc=biochem,dc=mpg,dc=de",
+  LDAP_BIND_PW = "YOUR_PASSWORD"
+)
+shiny::runApp("sequencing-app")
+```
+
+After login, verify the user record in SQLite:
+
+``` r
+con <- DBI::dbConnect(RSQLite::SQLite(), "sequencing-app/sequencing_projects.db")
+DBI::dbGetQuery(con, "SELECT username, email, phone, research_group FROM users WHERE username='your_username'")
+DBI::dbDisconnect(con)
+```
+
+To switch back to normal local login (no LDAP), run:
+
+``` r
+Sys.setenv(APP_ENV = "dev", AUTH_MODE = "local")
+shiny::runApp("sequencing-app")
+```
+
+To fully clear the LDAP/testing variables in your R session:
+
+``` r
+Sys.unsetenv(c(
+  "APP_ENV", "AUTH_MODE", "DEV_REMOTE_USER",
+  "LDAP_BIND_DN", "LDAP_BIND_PW",
+  "LDAP_URI", "LDAP_BASE_DN", "LDAP_DEBUG"
+))
+```
+
+## How I run the app locally (my notes)
+
+When I want the **normal local login**, I run:
+
+```r
+Sys.setenv(APP_ENV = "dev", AUTH_MODE = "local")
+shiny::runApp("sequencing-app")
+```
+
+When I want to **simulate production LDAP login**, I run:
+
+```r
+Sys.setenv(
+  APP_ENV = "dev",
+  AUTH_MODE = "ldap",
+  DEV_REMOTE_USER = "my_username",
+  LDAP_URI = "ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636",
+  LDAP_BASE_DN = "dc=biochem,dc=mpg,dc=de"
+)
+shiny::runApp("sequencing-app")
+```
+
+If I want to fully reset the session, I clear the env vars:
+
+```r
+Sys.unsetenv(c(
+  "APP_ENV", "AUTH_MODE", "DEV_REMOTE_USER",
+  "LDAP_BIND_DN", "LDAP_BIND_PW",
+  "LDAP_URI", "LDAP_BASE_DN", "LDAP_DEBUG"
+))
+```
+
+**Local vs LDAP mode (practical difference for me):**
+
+- Local mode uses the SQLite users/passwords and shows the normal login screen.
+- LDAP mode auto‑logs in with the LDAP user, pulls email/phone/OU, and hides the local login UI.
+- LDAP mode needs network access to the institute LDAP servers.
+
+**Dev badge:**
+In dev mode, I see a small badge in the app header that shows `DEV · LDAP` or `DEV · LOCAL`, so I always know which mode I’m running.
+
+## Budget holder auto-assignment (first login)
+
+On first LDAP login, the app attempts to map the user to a budget holder based on the LDAP `ou` value.\
+If the `ou` contains a group key in parentheses (e.g., `(... Cox)`), the app matches that key against `budget_holders` and stores the **full PI name** (e.g., `Cox Juergen`) in `users.research_group`.
+
+When a new project is created, this `research_group` value is used to auto‑select the budget holder (and thus the cost center).\
+If multiple cost centers exist for the same PI, the first match is selected by default and can be adjusted during project creation.

@@ -6,6 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Assa Yeroslaviz">
+<meta name="dcterms.date" content="2026-02-06">
+<meta name="keywords" content="RNA-Seq, transcriptomics, P405, Marion, Peter, AG Murray">
 
 <title>Server Preparations</title>
 <style>
@@ -71,10 +74,62 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </head>
 
-<body class="fullcontent">
+<body>
 
 <div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="-1">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#server-infrastructure" id="toc-server-infrastructure" class="nav-link active" data-scroll-target="#server-infrastructure"><span class="header-section-number">1</span> Server Infrastructure</a>
+  <ul>
+  <li><a href="#install-required-system-dependencies" id="toc-install-required-system-dependencies" class="nav-link" data-scroll-target="#install-required-system-dependencies"><span class="header-section-number">1.1</span> Install required system dependencies</a></li>
+  <li><a href="#setting-environment-variables" id="toc-setting-environment-variables" class="nav-link" data-scroll-target="#setting-environment-variables"><span class="header-section-number">1.2</span> Setting Environment variables</a></li>
+  <li><a href="#install-shiny-app" id="toc-install-shiny-app" class="nav-link" data-scroll-target="#install-shiny-app"><span class="header-section-number">1.3</span> Install shiny app</a></li>
+  <li><a href="#changing-hostname-to-fit-the-apache2-config-file" id="toc-changing-hostname-to-fit-the-apache2-config-file" class="nav-link" data-scroll-target="#changing-hostname-to-fit-the-apache2-config-file"><span class="header-section-number">1.4</span> Changing hostname to fit the apache2 config file</a></li>
+  <li><a href="#automatic-start-up" id="toc-automatic-start-up" class="nav-link" data-scroll-target="#automatic-start-up"><span class="header-section-number">1.5</span> Automatic start-up</a></li>
+  </ul></li>
+  <li><a href="#monitoring" id="toc-monitoring" class="nav-link" data-scroll-target="#monitoring"><span class="header-section-number">2</span> Monitoring</a></li>
+  <li><a href="#regular-backups" id="toc-regular-backups" class="nav-link" data-scroll-target="#regular-backups"><span class="header-section-number">3</span> Regular backups</a>
+  <ul>
+  <li><a href="#cron-job-for-data-base-backup" id="toc-cron-job-for-data-base-backup" class="nav-link" data-scroll-target="#cron-job-for-data-base-backup"><span class="header-section-number">3.1</span> cron job for data base backup</a></li>
+  </ul></li>
+  <li><a href="#create-clean-apache-configuration" id="toc-create-clean-apache-configuration" class="nav-link" data-scroll-target="#create-clean-apache-configuration"><span class="header-section-number">4</span> Create Clean Apache Configuration</a></li>
+  <li><a href="#required-server-setup" id="toc-required-server-setup" class="nav-link" data-scroll-target="#required-server-setup"><span class="header-section-number">5</span> Required Server Setup</a></li>
+  <li><a href="#github-repository" id="toc-github-repository" class="nav-link" data-scroll-target="#github-repository"><span class="header-section-number">6</span> Github repository</a>
+  <ul>
+  <li><a href="#step-1-generate-ssh-keys" id="toc-step-1-generate-ssh-keys" class="nav-link" data-scroll-target="#step-1-generate-ssh-keys"><span class="header-section-number">6.1</span> Step 1: Generate SSH keys</a></li>
+  <li><a href="#add-both-keys-to-the-github-repository" id="toc-add-both-keys-to-the-github-repository" class="nav-link" data-scroll-target="#add-both-keys-to-the-github-repository"><span class="header-section-number">6.2</span> Add both keys to the github repository</a></li>
+  <li><a href="#make-sure-we-clone-using-ssh-not-html" id="toc-make-sure-we-clone-using-ssh-not-html" class="nav-link" data-scroll-target="#make-sure-we-clone-using-ssh-not-html"><span class="header-section-number">6.3</span> Make sure we clone using ssh (not html)</a></li>
+  <li><a href="#test-and-check-the-connection" id="toc-test-and-check-the-connection" class="nav-link" data-scroll-target="#test-and-check-the-connection"><span class="header-section-number">6.4</span> Test and check the connection</a></li>
+  <li><a href="#pullingpushing" id="toc-pullingpushing" class="nav-link" data-scroll-target="#pullingpushing"><span class="header-section-number">6.5</span> Pulling/Pushing</a></li>
+  </ul></li>
+  <li><a href="#security" id="toc-security" class="nav-link" data-scroll-target="#security"><span class="header-section-number">7</span> Security</a>
+  <ul>
+  <li><a href="#backup-older-settings" id="toc-backup-older-settings" class="nav-link" data-scroll-target="#backup-older-settings"><span class="header-section-number">7.1</span> Backup older settings</a></li>
+  <li><a href="#applying-for-a-new-certificate-from-mpimpg" id="toc-applying-for-a-new-certificate-from-mpimpg" class="nav-link" data-scroll-target="#applying-for-a-new-certificate-from-mpimpg"><span class="header-section-number">7.2</span> Applying for a new certificate from MPI/MPG</a></li>
+  <li><a href="#dedicated-user" id="toc-dedicated-user" class="nav-link" data-scroll-target="#dedicated-user"><span class="header-section-number">7.3</span> dedicated User</a></li>
+  <li><a href="#firewall" id="toc-firewall" class="nav-link" data-scroll-target="#firewall"><span class="header-section-number">7.4</span> Firewall</a></li>
+  </ul></li>
+  <li><a href="#change-connection-to-shiny-server-folder-to-https" id="toc-change-connection-to-shiny-server-folder-to-https" class="nav-link" data-scroll-target="#change-connection-to-shiny-server-folder-to-https"><span class="header-section-number">8</span> Change connection to shiny server folder to https</a></li>
+  <li><a href="#changes-on-06.02.2026" id="toc-changes-on-06.02.2026" class="nav-link" data-scroll-target="#changes-on-06.02.2026"><span class="header-section-number">9</span> Changes on 06.02.2026</a></li>
+  <li><a href="#changes-on-14.11.2026" id="toc-changes-on-14.11.2026" class="nav-link" data-scroll-target="#changes-on-14.11.2026"><span class="header-section-number">10</span> Changes on 14.11.2026</a>
+  <ul>
+  <li><a href="#modify-registration-page" id="toc-modify-registration-page" class="nav-link" data-scroll-target="#modify-registration-page"><span class="header-section-number">10.1</span> modify registration page</a></li>
+  <li><a href="#control-for-budegt-holder-info-in-the-db" id="toc-control-for-budegt-holder-info-in-the-db" class="nav-link" data-scroll-target="#control-for-budegt-holder-info-in-the-db"><span class="header-section-number">10.2</span> control for budegt holder info in the DB</a></li>
+  <li><a href="#budget-holders-can-be-read-from-an-excel-sheet" id="toc-budget-holders-can-be-read-from-an-excel-sheet" class="nav-link" data-scroll-target="#budget-holders-can-be-read-from-an-excel-sheet"><span class="header-section-number">10.3</span> Budget holders can be read from an Excel sheet</a></li>
+  </ul></li>
+  <li><a href="#ssl-certificate-for-https" id="toc-ssl-certificate-for-https" class="nav-link" data-scroll-target="#ssl-certificate-for-https"><span class="header-section-number">11</span> SSL Certificate (for HTTPS)</a></li>
+  <li><a href="#ldap" id="toc-ldap" class="nav-link" data-scroll-target="#ldap"><span class="header-section-number">12</span> LDAP</a>
+  <ul>
+  <li><a href="#local-dev-testing-ldap-mode" id="toc-local-dev-testing-ldap-mode" class="nav-link" data-scroll-target="#local-dev-testing-ldap-mode"><span class="header-section-number">12.1</span> Local dev testing (LDAP mode)</a></li>
+  <li><a href="#how-i-run-the-app-locally-my-notes" id="toc-how-i-run-the-app-locally-my-notes" class="nav-link" data-scroll-target="#how-i-run-the-app-locally-my-notes"><span class="header-section-number">12.2</span> How I run the app locally (my notes)</a></li>
+  <li><a href="#budget-holder-auto-assignment-first-login" id="toc-budget-holder-auto-assignment-first-login" class="nav-link" data-scroll-target="#budget-holder-auto-assignment-first-login"><span class="header-section-number">12.3</span> Budget holder auto-assignment (first login)</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
@@ -83,89 +138,120 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 
 
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Assa Yeroslaviz <a href="mailto:yeroslaviz@biochem.mpg.de" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> <a href="https://orcid.org/0000-0001-9638-4026" class="quarto-title-author-orcid"> <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2ZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDo1N0NEMjA4MDI1MjA2ODExOTk0QzkzNTEzRjZEQTg1NyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDozM0NDOEJGNEZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDozM0NDOEJGM0ZGNTcxMUUxODdBOEVCODg2RjdCQ0QwOSIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1IE1hY2ludG9zaCI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkZDN0YxMTc0MDcyMDY4MTE5NUZFRDc5MUM2MUUwNEREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjU3Q0QyMDgwMjUyMDY4MTE5OTRDOTM1MTNGNkRBODU3Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+84NovQAAAR1JREFUeNpiZEADy85ZJgCpeCB2QJM6AMQLo4yOL0AWZETSqACk1gOxAQN+cAGIA4EGPQBxmJA0nwdpjjQ8xqArmczw5tMHXAaALDgP1QMxAGqzAAPxQACqh4ER6uf5MBlkm0X4EGayMfMw/Pr7Bd2gRBZogMFBrv01hisv5jLsv9nLAPIOMnjy8RDDyYctyAbFM2EJbRQw+aAWw/LzVgx7b+cwCHKqMhjJFCBLOzAR6+lXX84xnHjYyqAo5IUizkRCwIENQQckGSDGY4TVgAPEaraQr2a4/24bSuoExcJCfAEJihXkWDj3ZAKy9EJGaEo8T0QSxkjSwORsCAuDQCD+QILmD1A9kECEZgxDaEZhICIzGcIyEyOl2RkgwAAhkmC+eAm0TAAAAABJRU5ErkJggg=="></a></p>
+  </div>
+    <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Max-Planck-Institute for Biochemistry
+          </p>
+      </div>
+    </div>
 
 <div class="quarto-title-meta">
 
-    
+      
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">February 6, 2026</p>
+    </div>
+  </div>
   
     
   </div>
   
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>t.b.d.</p>
+  </div>
+</div>
 
+<div>
+  <div class="keywords">
+    <div class="block-title">Keywords</div>
+    <p>RNA-Seq, transcriptomics, P405, Marion, Peter, AG Murray</p>
+  </div>
+</div>
 
 </header>
 
-<section id="server-infrastructure" class="level1">
-<h1>Server Infrastructure</h1>
+<section id="server-infrastructure" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Server Infrastructure</h1>
+<section id="install-required-system-dependencies" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="install-required-system-dependencies"><span class="header-section-number">1.1</span> Install required system dependencies</h2>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Install Shiny Server on Ubuntu</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt update</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> r-base nginx</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> libfontconfig1-dev libfreetype6-dev libpng-dev libtiff5-dev <span class="dt">\</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    libjpeg-dev build-essential pkg-config libharfbuzz-dev libfribidi-dev</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> libldap2-dev libsasl2-dev</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> su <span class="at">-</span> <span class="at">-c</span> <span class="st">"R -e </span><span class="dt">\"</span><span class="st">install.packages('shiny')</span><span class="dt">\"</span><span class="st">"</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> su <span class="at">-</span> <span class="at">-c</span> <span class="st">"R -e </span><span class="dt">\"</span><span class="st">install.packages('shinyjs')</span><span class="dt">\"</span><span class="st">"</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ... install all your R packages</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> R <span class="at">-e</span> <span class="st">"install.packages(c('shiny', 'shinyjs', 'DBI', 'RSQLite', 'digest', 'DT', 'shinyWidgets', 'mailR'))"</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># these two packages were added later on for the connection of the app to the LDAP server</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> R <span class="at">-e</span> <span class="st">"install.packages(c('devtools'))"</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> R <span class="at">-e</span> <span class="st">"devtools::install_github('liamgilbey/ldapr')"</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Download and install Shiny Server</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">wget</span> https://download3.rstudio.org/ubuntu-20.04/x86_64/shiny-server-1.5.23.1030-amd64.deb</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> gdebi shiny-server-1.5.23.1030-amd64.deb</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> libssl-dev libxml2-dev libcurl4-openssl-dev libudunits2-dev libgdal-dev</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section>
-<section id="removing-the-exisiting-certifaicate" class="level1">
-<h1>removing the exisiting certifaicate</h1>
+<section id="setting-environment-variables" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="setting-environment-variables"><span class="header-section-number">1.2</span> Setting Environment variables</h2>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Backup your current configuration</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /etc/apache2/sites-enabled/01-main.conf /etc/apache2/sites-enabled/01-main.conf.backup</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove old SSL certificates (optional - keep for backup)</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /etc/ssl/backup/</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mv /etc/ssl/certs/<span class="pp">********</span>.pem /etc/ssl/backup/</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mv /etc/ssl/private/<span class="pp">********</span>.pem /etc/ssl/backup/</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mv /etc/apache2/certificate/<span class="pp">********</span>.cer /etc/ssl/backup/</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># /var/shiny-server/.Renviron</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="va">TZ</span><span class="op">=</span>Europe/Berlin</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="va">LANG</span><span class="op">=</span>en_US.UTF-8</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="va">LC_ALL</span><span class="op">=</span>en_US.UTF-8</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
-<pre><code>./
-├── 01-main.conf -&gt; ../sites-available/default-ssl.conf
-├── 01-main.conf.backup
-├── 02-testing.conf -&gt; ../sites-available/02-testing.conf
-└── auth_ldap.conf -&gt; ../sites-available/auth_ldap.conf</code></pre>
 </section>
-<section id="installing-certbot-for-lets-encrypt" class="level1">
-<h1>Installing Certbot for Let’s encrypt</h1>
+<section id="install-shiny-app" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="install-shiny-app"><span class="header-section-number">1.3</span> Install shiny app</h2>
 <div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Install Shiny Server on Ubuntu</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt update</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> r-base nginx</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> libfontconfig1-dev libfreetype6-dev libpng-dev libtiff5-dev <span class="dt">\</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    libjpeg-dev build-essential pkg-config libharfbuzz-dev libfribidi-dev</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> libldap2-dev libsasl2-dev</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> su <span class="at">-</span> <span class="at">-c</span> <span class="st">"R -e </span><span class="dt">\"</span><span class="st">install.packages('shiny')</span><span class="dt">\"</span><span class="st">"</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> su <span class="at">-</span> <span class="at">-c</span> <span class="st">"R -e </span><span class="dt">\"</span><span class="st">install.packages('shinyjs')</span><span class="dt">\"</span><span class="st">"</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ... install all your R packages</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> R <span class="at">-e</span> <span class="st">"install.packages(c('shiny', 'shinyjs', 'DBI', 'RSQLite', 'digest', 'DT', 'shinyWidgets', 'mailR'))"</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co"># these two packages were added later on for the connection of the app to the LDAP server</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> R <span class="at">-e</span> <span class="st">"install.packages(c('devtools'))"</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> R <span class="at">-e</span> <span class="st">"devtools::install_github('liamgilbey/ldapr')"</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Download and install Shiny Server</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="fu">wget</span> https://download3.rstudio.org/ubuntu-20.04/x86_64/shiny-server-1.5.23.1030-amd64.deb</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> gdebi shiny-server-1.5.23.1030-amd64.deb</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="changing-hostname-to-fit-the-apache2-config-file" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="changing-hostname-to-fit-the-apache2-config-file"><span class="header-section-number">1.4</span> Changing hostname to fit the apache2 config file</h2>
+<div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Update package list</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt update</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Change the hostname</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> hostnamectl set-hostname ngs-testing-vm.biochem.mpg.de</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Install Certbot for Apache</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> certbot python3-certbot-apache</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify installation</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="ex">certbot</span> <span class="at">--version</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<pre><code>certbot 2.9.0</code></pre>
-</section>
-<section id="changing-hostname-to-fit-the-apache2-config-file" class="level1">
-<h1>changing hostname to fit the apache2 config file</h1>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Change the hostname</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> hostnamectl set-hostname ngs-testing-vm.biochem.mpg.de</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify the change</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="ex">hostnamectl</span> status</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify the change</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="ex">hostnamectl</span> status</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">nslookup</span> ngs-testing-vm.biochem.mpg.de</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> ngs-testing-vm.biochem.mpg.de</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">nslookup</span> ngs-testing-vm.biochem.mpg.de</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> ngs-testing-vm.biochem.mpg.de</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <pre><code>Server:     127.0.0.53
 Address:    127.0.0.53#53
@@ -176,145 +262,201 @@ Address: 10.33.0.60
 
 PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 64 bytes from ngs-testing-vm.biochem.mpg.de (10.33.0.60): icmp_seq=1 ttl=64 time=0.079 ms
-64 bytes from ngs-testing-vm.biochem.mpg.de (10.33.0.60): icmp_seq=2 ttl=64 time=0.074 ms
-</code></pre>
+64 bytes from ngs-testing-vm.biochem.mpg.de (10.33.0.60): icmp_seq=2 ttl=64 time=0.074 ms</code></pre>
 <div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="automatic-start-up" class="level2" data-number="1.5">
+<h2 data-number="1.5" class="anchored" data-anchor-id="automatic-start-up"><span class="header-section-number">1.5</span> Automatic start-up</h2>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl enable apache2</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl enable shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+</section>
+<section id="monitoring" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Monitoring</h1>
+<p>The shiny app server writes log files specific with date and time in the <code>/var/log/shiny-server</code> folder.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Monitor Shiny Server logs</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-f</span> /var/log/shiny-server/sequencing-app<span class="pp">*</span>.log</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Monitor Apache logs</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-f</span> /var/log/apache2/sequencing-app-error.log</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section>
-<section id="automatic-start-up" class="level1">
-<h1>Automatic start-up</h1>
+<section id="regular-backups" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Regular backups</h1>
+<p>The VM is regularly back-up every night. The SQL database backup setting are in the script, but for now commented out, as we’re not in productive version.</p>
+<section id="cron-job-for-data-base-backup" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="cron-job-for-data-base-backup"><span class="header-section-number">3.1</span> cron job for data base backup</h2>
+<p>If needed, we can also set up a cron job to backup the data base</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl enable apache2</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl enable shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Create backup script</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tee /usr/local/bin/backup_sequencing_db.sh <span class="op">&lt;&lt;'EOF'</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="st">#!/bin/bash</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="st">TIMESTAMP=$(date +%Y%m%d_%H%M%S)</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="st">BACKUP_DIR="/var/backups/sequencing-app"</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="st">mkdir -p $BACKUP_DIR</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="st">cp /srv/shiny-server/sequencing-app/sequencing_projects.db $BACKUP_DIR/sequencing_projects.db.$TIMESTAMP</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="st"># Keep only last 30 days of backups</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="st">find $BACKUP_DIR -name "sequencing_projects.db.*" -mtime +30 -delete</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chmod +x /usr/local/bin/backup_sequencing_db.sh</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Add to crontab for daily backups at 2 AM</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> crontab <span class="at">-l</span> <span class="kw">|</span> <span class="kw">{</span> <span class="fu">cat</span><span class="kw">;</span> <span class="bu">echo</span> <span class="st">"0 2 * * * /usr/local/bin/backup_sequencing_db.sh"</span><span class="kw">;</span> <span class="kw">}</span> <span class="kw">|</span> <span class="fu">sudo</span> crontab <span class="at">-</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section>
-<section id="monitoring" class="level1">
-<h1>Monitoring</h1>
+</section>
+<section id="create-clean-apache-configuration" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Create Clean Apache Configuration</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Monitor Shiny Server logs</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-f</span> /var/log/shiny-server/sequencing-app<span class="pp">*</span>.log</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Monitor Apache logs</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-f</span> /var/log/apache2/sequencing-app-error.log</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;</span>VirtualHost <span class="ex">*:80</span><span class="op">&gt;</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ServerName</span> ngs-testing-vm</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ServerAlias</span> ngs-testing-vm.biochem.mpg.de</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Redirect all HTTP traffic to HTTPS</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">Redirect</span> permanent / https://ngs-testing-vm/</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;</span>/VirtualHost<span class="op">&gt;</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;</span>VirtualHost <span class="ex">*:443</span><span class="op">&gt;</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ServerName</span> ngs-testing-vm</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ServerAlias</span> ngs-testing-vm.biochem.mpg.de</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># SSL Configuration</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLEngine</span> on</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLCertificateFile</span> /etc/ssl/certs/2026_NGS_Cert.pem</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLCertificateKeyFile</span> /etc/ssl/private/2026_private-key.pem</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLCertificateChainFile</span> /etc/apache2/certificate/2026/NGS_2026_Issuer_ChainFile.cer</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Modern SSL configuration</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLProtocol</span> all <span class="at">-SSLv3</span> <span class="at">-TLSv1</span> <span class="at">-TLSv1.1</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLCipherSuite</span> ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLHonorCipherOrder</span> off</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Reverse proxy for Shiny app</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ProxyPreserveHost</span> On</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ProxyRequests</span> Off</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ProxyPass</span> / http://localhost:3838/sequencing-app/</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ProxyPassReverse</span> / http://localhost:3838/sequencing-app/</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>    <span class="co"># WebSocket support</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>    <span class="ex">RewriteEngine</span> on</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>    <span class="ex">RewriteCond</span> %{HTTP:Upgrade} websocket <span class="pp">[</span><span class="ss">NC</span><span class="pp">]</span></span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>    <span class="ex">RewriteCond</span> %{HTTP:Connection} upgrade <span class="pp">[</span><span class="ss">NC</span><span class="pp">]</span></span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>    <span class="ex">RewriteRule</span> ^/<span class="er">(</span><span class="bu">.</span><span class="pp">*</span><span class="kw">)</span> <span class="st">"ws://localhost:3838/sequencing-app/</span><span class="va">$1</span><span class="st">"</span> <span class="pp">[</span><span class="ss">P,L</span><span class="pp">]</span></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Security headers</span></span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>    <span class="ex">Header</span> always set Strict-Transport-Security <span class="st">"max-age=63072000; includeSubDomains"</span></span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>    <span class="ex">Header</span> always set X-Content-Type-Options nosniff</span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>    <span class="ex">Header</span> always set X-Frame-Options SAMEORIGIN</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>    <span class="ex">Header</span> always set Referrer-Policy <span class="st">"strict-origin-when-cross-origin"</span></span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ErrorLog</span> <span class="va">${APACHE_LOG_DIR}</span>/sequencing-app-ssl-error.log</span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>    <span class="ex">CustomLog</span> <span class="va">${APACHE_LOG_DIR}</span>/sequencing-app-ssl-access.log combined</span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;</span>/VirtualHost<span class="op">&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section>
-<section id="regular-backups" class="level1">
-<h1>Regular backups</h1>
-<p>This was not done yet.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Create backup script</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tee /usr/local/bin/backup_sequencing_db.sh <span class="op">&lt;&lt;'EOF'</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="st">#!/bin/bash</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="st">TIMESTAMP=$(date +%Y%m%d_%H%M%S)</span></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="st">BACKUP_DIR="/var/backups/sequencing-app"</span></span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="st">mkdir -p $BACKUP_DIR</span></span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="st">cp /srv/shiny-server/sequencing-app/sequencing_projects.db $BACKUP_DIR/sequencing_projects.db.$TIMESTAMP</span></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="st"># Keep only last 30 days of backups</span></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="st">find $BACKUP_DIR -name "sequencing_projects.db.*" -mtime +30 -delete</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chmod +x /usr/local/bin/backup_sequencing_db.sh</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Add to crontab for daily backups at 2 AM</span></span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> crontab <span class="at">-l</span> <span class="kw">|</span> <span class="kw">{</span> <span class="fu">cat</span><span class="kw">;</span> <span class="bu">echo</span> <span class="st">"0 2 * * * /usr/local/bin/backup_sequencing_db.sh"</span><span class="kw">;</span> <span class="kw">}</span> <span class="kw">|</span> <span class="fu">sudo</span> crontab <span class="at">-</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</section>
-<section id="create-clean-apache-configuration" class="level1">
-<h1>Create Clean Apache Configuration</h1>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;</span>VirtualHost <span class="ex">*:80</span><span class="op">&gt;</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ServerName</span> ngs-testing-vm</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ServerAlias</span> ngs-testing-vm.biochem.mpg.de</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Redirect all HTTP traffic to HTTPS</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">Redirect</span> permanent / https://ngs-testing-vm/</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;</span>/VirtualHost<span class="op">&gt;</span></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;</span>VirtualHost <span class="ex">*:443</span><span class="op">&gt;</span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ServerName</span> ngs-testing-vm</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ServerAlias</span> ngs-testing-vm.biochem.mpg.de</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># SSL Configuration</span></span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLEngine</span> on</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLCertificateFile</span> /etc/ssl/certs/ngs-testing-vm.crt</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLCertificateKeyFile</span> /etc/ssl/private/ngs-testing-vm.key</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Modern SSL configuration</span></span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLProtocol</span> all <span class="at">-SSLv3</span> <span class="at">-TLSv1</span> <span class="at">-TLSv1.1</span></span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLCipherSuite</span> ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLHonorCipherOrder</span> off</span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Reverse proxy for Shiny app</span></span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ProxyPreserveHost</span> On</span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ProxyRequests</span> Off</span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ProxyPass</span> / http://localhost:3838/sequencing-app/</span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ProxyPassReverse</span> / http://localhost:3838/sequencing-app/</span>
-<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># WebSocket support</span></span>
-<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>    <span class="ex">RewriteEngine</span> on</span>
-<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>    <span class="ex">RewriteCond</span> %{HTTP:Upgrade} websocket <span class="pp">[</span><span class="ss">NC</span><span class="pp">]</span></span>
-<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>    <span class="ex">RewriteCond</span> %{HTTP:Connection} upgrade <span class="pp">[</span><span class="ss">NC</span><span class="pp">]</span></span>
-<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>    <span class="ex">RewriteRule</span> ^/<span class="er">(</span><span class="bu">.</span><span class="pp">*</span><span class="kw">)</span> <span class="st">"ws://localhost:3838/sequencing-app/</span><span class="va">$1</span><span class="st">"</span> <span class="pp">[</span><span class="ss">P,L</span><span class="pp">]</span></span>
-<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Security headers</span></span>
-<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>    <span class="ex">Header</span> always set Strict-Transport-Security <span class="st">"max-age=63072000; includeSubDomains"</span></span>
-<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>    <span class="ex">Header</span> always set X-Content-Type-Options nosniff</span>
-<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>    <span class="ex">Header</span> always set X-Frame-Options SAMEORIGIN</span>
-<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>    <span class="ex">Header</span> always set Referrer-Policy <span class="st">"strict-origin-when-cross-origin"</span></span>
-<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ErrorLog</span> <span class="va">${APACHE_LOG_DIR}</span>/sequencing-app-ssl-error.log</span>
-<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>    <span class="ex">CustomLog</span> <span class="va">${APACHE_LOG_DIR}</span>/sequencing-app-ssl-access.log combined</span>
-<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;</span>/VirtualHost<span class="op">&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</section>
-<section id="required-server-setup" class="level1">
-<h1>Required Server Setup</h1>
-<pre><code>/var/shiny-server/ 
-├── sequencing-app/ 
-│ ├── app.R 
-│ ├── setup_database.R 
-│ ├── sequencing_projects.db 
-│ └── www/ 
-  │ ├── logo.png 
+<section id="required-server-setup" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Required Server Setup</h1>
+<pre><code>/var/shiny-server/
+├── sequencing-app/
+│ ├── app.R
+│ ├── setup_database.R
+│ ├── sequencing_projects.db
+│ └── www/
+  │ ├── logo.png
   │ └── minerva.png</code></pre>
 </section>
-<section id="creates-a-deployment-script" class="level1">
-<h1>Creates a Deployment Script</h1>
+<section id="github-repository" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Github repository</h1>
+<section id="step-1-generate-ssh-keys" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="step-1-generate-ssh-keys"><span class="header-section-number">6.1</span> Step 1: Generate SSH keys</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: deploy.sh</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co">#| </span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Stop existing app</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Backup current version</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="va">TIMESTAMP</span><span class="op">=</span><span class="va">$(</span><span class="fu">date</span> +%Y%m%d_%H%M%S<span class="va">)</span></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp <span class="at">-r</span> /var/shiny-server/sequencing-app /var/shiny-server/sequencing-app_backup_<span class="va">$TIMESTAMP</span></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Deploy new version</span></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp <span class="at">-r</span> /home/yeroslaviz/BCFNGS-project-management/sequencing-app /var/shiny-server/</span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Set permissions</span></span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> shiny:shiny /var/shiny-server/sequencing-app</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chmod <span class="at">-R</span> 755 /var/shiny-server/sequencing-app</span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize database (if first deployment)</span></span>
-<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> su <span class="at">-</span> <span class="at">-c</span> <span class="st">"R -e </span><span class="dt">\"</span><span class="st">source('/var/shiny-server/sequencing-app/setup_database.R')</span><span class="dt">\"</span><span class="st">"</span></span>
-<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Restart Shiny Server</span></span>
-<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span>
-<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl status shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># on the local machine (mac mini at work!!!)</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/.ssh/</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh-keygen</span> <span class="at">-t</span> ed25519 <span class="at">-C</span> <span class="st">"yeroslaviz@biochem.mpg.de"</span> <span class="at">-f</span> ngs-testing-vm.id_macMini_rsa</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co"># on the VM</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/.ssh/</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh-keygen</span> <span class="at">-t</span> ed25519 <span class="at">-C</span> <span class="st">"yeroslaviz@biochem.mpg.de"</span> <span class="at">-f</span> ngs-testing-vm.id_rsa</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>If agent needs to be activated</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="bu">eval</span> <span class="st">"</span><span class="va">$(</span><span class="fu">ssh-agent</span> <span class="at">-s</span><span class="va">)</span><span class="st">"</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh-add</span> ~/.ssh/ngs-testing-vm.id_rsa <span class="co"># or the name of the local key</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section>
-<section id="github-repository" class="level1">
-<h1>Github repository</h1>
-<p>In the home folder /home/yeroslaviz/ the github repository is stored.</p>
+<section id="add-both-keys-to-the-github-repository" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="add-both-keys-to-the-github-repository"><span class="header-section-number">6.2</span> Add both keys to the github repository</h2>
+<p>Copy for each of the two keys the <code>*pub</code> version and add it under <code>Settings → SSH and GPG keys → New SSH key</code>.</p>
+</section>
+<section id="make-sure-we-clone-using-ssh-not-html" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="make-sure-we-clone-using-ssh-not-html"><span class="header-section-number">6.3</span> Make sure we clone using ssh (not html)</h2>
+<p>First test if the connection exists already.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> remote <span class="at">-v</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>If the result is</p>
+<pre><code>origin  https://github.com/username/repository.git (fetch)
+origin  https://github.com/username/repository.git (push)</code></pre>
+<p>it must be changed to ssh</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> remote set-url origin git@github.com:username/repository.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>If we see</p>
+<pre><code>origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (fetch)
+origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></pre>
+<p>then we already use ssh.</p>
+</section>
+<section id="test-and-check-the-connection" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="test-and-check-the-connection"><span class="header-section-number">6.4</span> Test and check the connection</h2>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> <span class="at">-T</span> git@github.com</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>this should return something like</p>
+<pre><code>Hi yeroslaviz! You've successfully authenticated, but GitHub does not provide shell access.</code></pre>
+</section>
+<section id="pullingpushing" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="pullingpushing"><span class="header-section-number">6.5</span> Pulling/Pushing</h2>
+<p>the repository can be managed from the path <code>/home/yeroslaviz/BCFNGS-project-management</code> (the VM path is mentioned here).</p>
 <pre><code>$ tree -L 1
 .
 ├── BCFNGS-project-management
@@ -327,48 +469,49 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 <p>To redeploy the server, one follows the following steps:</p>
 <ol type="1">
 <li>make the changes on the local computer (AT WORK!!!).</li>
-<li>push the changes to the github repo</li>
+<li><strong>commit</strong> and <strong>push</strong> the changes to the github repo</li>
 <li>go to the folder <code>/home/yeroslaviz/BCFNGS-project-management</code> on the VM <code>ngs-testing-vm</code> and pull the changes.</li>
-<li>Execute the <code>deploy_shiny_server.sh</code> script to copy the new changes to the shiny-server folder and restart both apache2 and the shiny-server.</li>
+<li>Execute the <code>deploy_shiny_server.sh</code> script to copy the new changes to the shiny-server folder and restart both apache2 and the shiny-server. ## git pull</li>
 </ol>
-</section>
-<section id="setting-environment-variables" class="level1">
-<h1>Setting Environment variables</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co"># /var/shiny-server/.Renviron</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="va">TZ</span><span class="op">=</span>Europe/Berlin</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="va">LANG</span><span class="op">=</span>en_US.UTF-8</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="va">LC_ALL</span><span class="op">=</span>en_US.UTF-8</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a> <span class="fu">git</span> pull origin main</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Username for 'https://github.com': yeroslaviz</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Password for 'https://yeroslaviz@github.com':  HERE WE MUST INPUT THE PAT from above!!!</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a> <span class="ex">...</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section>
-<section id="install-required-system-dependencies" class="level1">
-<h1>Install required system dependencies</h1>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> libssl-dev libxml2-dev libcurl4-openssl-dev libudunits2-dev libgdal-dev</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
 </section>
-<section id="security" class="level1">
-<h1>Security</h1>
+<section id="security" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Security</h1>
 <p>Not sure, if this is all necessary, will consult the IT when it is appropriate</p>
-<section id="dedicated-user" class="level2">
-<h2 class="anchored" data-anchor-id="dedicated-user">dedicated User</h2>
-<p>As we’re planning to use the LDAP, I’m not sure, this is necessary. I need a method to add specific users as admin</p>
-</section>
-<section id="firewall" class="level2">
-<h2 class="anchored" data-anchor-id="firewall">Firewall</h2>
-<p>at the moment is not active, but maybe in the future.</p>
+<section id="backup-older-settings" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="backup-older-settings"><span class="header-section-number">7.1</span> Backup older settings</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow 3838</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow 80</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow 443</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Backup your current configuration</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /etc/apache2/sites-enabled/01-main.conf /etc/apache2/sites-enabled/01-main.conf.backup</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove old SSL certificates (optional - keep for backup)</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /etc/ssl/backup/</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mv /etc/ssl/certs/<span class="pp">********</span>.pem /etc/ssl/backup/</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mv /etc/ssl/private/<span class="pp">********</span>.pem /etc/ssl/backup/</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mv /etc/apache2/certificate/<span class="pp">********</span>.cer /etc/ssl/backup/</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
+<pre><code>./
+├── 01-main.conf -&gt; ../sites-available/default-ssl.conf
+├── 01-main.conf.backup
+├── 02-testing.conf -&gt; ../sites-available/02-testing.conf
+└── auth_ldap.conf -&gt; ../sites-available/auth_ldap.conf</code></pre>
 </section>
-<section id="ssl-certificate-for-https" class="level2">
-<h2 class="anchored" data-anchor-id="ssl-certificate-for-https">SSL Certificate (for HTTPS)</h2>
-<p>the new setting of the certificates. I have three files.</p>
+<section id="applying-for-a-new-certificate-from-mpimpg" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="applying-for-a-new-certificate-from-mpimpg"><span class="header-section-number">7.2</span> Applying for a new certificate from MPI/MPG</h2>
+<p>The new setting of the certificates. I have three files.</p>
 <p>The private key I created when applying for the certificate. The other two were downloaded, when the emial came from Harica (the certificate provider).</p>
 <p>the <code>PEM</code> is the pem file and the <code>DER (issuer)</code> is the chain file. Both of them are needed.</p>
 <p>Setting for the readability of the files:</p>
@@ -379,39 +522,93 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 <p>All the files are saved under <code>/etc/apache2/certificate/2026</code>.</p>
 <p>Now I created soft links for each of these files.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section>
+<section id="dedicated-user" class="level2" data-number="7.3">
+<h2 data-number="7.3" class="anchored" data-anchor-id="dedicated-user"><span class="header-section-number">7.3</span> dedicated User</h2>
+<p>As we’re planning to use the LDAP, I’m not sure, this is necessary. I need a method to add specific users as admin</p>
 </section>
-<section id="change-connection-to-shiny-server-folder-to-https" class="level1">
-<h1>Change connection to shiny server folder to https</h1>
-<p>The shiny app takes information from the config file under <code>/etc/shiny-server/shiny-server.conf</code>. Here we can see where the log files are written into and where the directory of the shiny app are stored.</p>
-<p>As the folder connected to the github repository is in my home directory <code>/home/yeroslaviz/BCFNGS-project-management</code>, I need to create a softlink to the folder used by the app, so that it dsoesn’t need to be copy-pasted each time.</p>
+<section id="firewall" class="level2" data-number="7.4">
+<h2 data-number="7.4" class="anchored" data-anchor-id="firewall"><span class="header-section-number">7.4</span> Firewall</h2>
+<p>at the moment is not active, but maybe in the future.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> usermod <span class="at">-a</span> <span class="at">-G</span> shiny <span class="va">$USER</span> <span class="co"># add user yeroslaviz to group shiny</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> <span class="va">$USER</span>:shiny sequencing-app/ <span class="co"># make group shiny able to execute the scripts in the folder</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mv /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup <span class="co"># move the actual hard-coded folder to a backup (just in case)</span></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /home/yeroslaviz/BCFNGS-project-management/sequencing-app/ /srv/shiny-server/sequencing-app <span class="co"># create a soft-link to the github-connected folder.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow 3838</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow 80</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ufw allow 443</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section>
-<section id="ldap" class="level1">
-<h1>LDAP</h1>
-<p>To be followed!!!</p>
 </section>
-<section id="changes-on-14.11.2026" class="level1">
-<h1>Changes on 14.11.2026</h1>
+<section id="change-connection-to-shiny-server-folder-to-https" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Change connection to shiny server folder to https</h1>
+<p>The shiny app takes information from the config file under <code>/etc/shiny-server/shiny-server.conf</code>. Here we can see where the log files are written into and where the directory of the shiny app are stored.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> usermod <span class="at">-a</span> <span class="at">-G</span> shiny <span class="va">$USER</span> <span class="co"># add user yeroslaviz to group shiny</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> <span class="va">$USER</span>:shiny sequencing-app/ <span class="co"># make group shiny able to execute the scripts in the folder</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mv /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup <span class="co"># move the actual hard-coded folder to a backup (just in case)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>The sequencing-app folder must be copied to the correct place after each modification was done and the new files were pulled to the VM.</p>
+<p>For that I have created a script called <code>deploy.sh</code>. The script synchronizes the files from the github repo folder <code>/home/yeroslaviz/BCFNGS-project-management/sequencing-app/</code> to where the Shiny app needs them to be: <code>/srv/shiny-server/sequencing-app/</code>.</p>
+<p>The deploy script must be activated when loaded</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chmod</span> +x deploy.sh</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>The deploy.sh script uses <code>rsync</code> and <strong>excludes</strong> <code>sequencing_projects.db</code> so the production database is not overwritten during deploys.</p>
+<p>If <code>rsync</code> is not installed on the VM:</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> rsync</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>It then resets permissions for all files (the DB file remains in place and keeps its permissions).</p>
+<p>When this is done, it restart the shiny server.</p>
+<p><strong>This script must be run each time the files inside the sequencing-app folder were changed</strong>, but not if other changed were made in the repo.</p>
+</section>
+<section id="changes-on-06.02.2026" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Changes on 06.02.2026</h1>
+<ol type="1">
+<li>Added LDAP login flow in the Shiny app (auto‑login via <code>X-Remote-User</code>, local dev simulation, and optional attribute lookup).</li>
+<li>LDAP attribute lookup now works with anonymous bind; uses <code>ldapsearch</code> fallback for older <code>ldapr</code> versions.</li>
+<li>Added dev tools toggle (dev only) to switch between LDAP and local auth while testing.</li>
+<li>Mapped LDAP <code>ou</code> values to budget holders, auto‑selecting the correct PI in the project form (with partial match fallback).</li>
+<li>Added budget holder notices for multiple cost centers and missing cost center values.</li>
+<li>Added “Other / not listed” budget holder option so users can enter a new PI (name/surname required; cost center optional with a warning).</li>
+<li>Updated <code>deploy.sh</code> to use <code>rsync</code> and exclude <code>sequencing_projects.db</code>.</li>
+<li>Updated Apache LDAP configuration template and added local dev testing instructions + env var cleanup.</li>
+<li>I do <strong>not</strong> track SQLite DB files in git because they change constantly, are environment‑specific (local vs VM), and can contain sensitive data. I ignore <code>*.db</code>/<code>*.sqlite</code> and keep only the schema/seed files in git.</li>
+</ol>
+</section>
+<section id="changes-on-14.11.2026" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> Changes on 14.11.2026</h1>
 <ol type="1">
 <li>I would Like you to show me where the admin email address can be changed, if I want to have a different user as admin. 1.1 Please show me the parts of the script where this can be changed.</li>
 </ol>
-<p>The admin apssword is set here:</p>
+<p>The admin password is set here:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert default admin user</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="ex">default_password</span> <span class="op">&lt;</span>- digest::digest<span class="er">(</span><span class="st">"admin123"</span><span class="kw">)</span></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="ex">dbExecute</span><span class="er">(</span><span class="ex">con,</span> <span class="st">"</span></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="st">  INSERT OR IGNORE INTO users (username, password, email, is_admin) </span></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="st">  VALUES ('admin', ?, 'yeroslaviz@biochem.mpg.de', 1)</span></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>, params = list<span class="er">(</span><span class="ex">default_password</span><span class="kw">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert default admin user</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="ex">default_password</span> <span class="op">&lt;</span>- digest::digest<span class="er">(</span><span class="st">"admin123"</span><span class="kw">)</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="ex">dbExecute</span><span class="er">(</span><span class="ex">con,</span> <span class="st">"</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="st">  INSERT OR IGNORE INTO users (username, password, email, is_admin)</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="st">  VALUES ('admin', ?, 'yeroslaviz@biochem.mpg.de', 1)</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>, params = list<span class="er">(</span><span class="ex">default_password</span><span class="kw">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>1.2 Can this be changed without recreating the whole databank or restart the app? 1.3 How do I change the admin email address without recreating the db?</p>
 <p>This can be changed without recreating the database, using two options:</p>
@@ -420,25 +617,37 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 </ul>
 <p>Run this SQL command on your database:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="kw">UPDATE</span> users <span class="kw">SET</span> email <span class="op">=</span> <span class="st">'newadmin@institute.org'</span> <span class="kw">WHERE</span> username <span class="op">=</span> <span class="st">'admin'</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="kw">UPDATE</span> users <span class="kw">SET</span> email <span class="op">=</span> <span class="st">'newadmin@institute.org'</span> <span class="kw">WHERE</span> username <span class="op">=</span> <span class="st">'admin'</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>To execute this, we can either log in directly to the database via the command line</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>and execute</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ex">UPDATE</span> users SET email = <span class="st">'newadmin@institute.org'</span> WHERE username = <span class="st">'admin'</span><span class="kw">;</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.exit</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="ex">UPDATE</span> users SET email = <span class="st">'newadmin@institute.org'</span> WHERE username = <span class="st">'admin'</span><span class="kw">;</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.exit</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>or via the R pormpt:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RSQLite)</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"sequencing_projects.db"</span>)</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(con, <span class="st">"UPDATE users SET email = 'newadmin@institute.org' WHERE username = 'admin'"</span>)</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(con)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RSQLite)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"sequencing_projects.db"</span>)</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(con, <span class="st">"UPDATE users SET email = 'newadmin@institute.org' WHERE username = 'admin'"</span>)</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(con)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p><strong>Don’t forget to modify the <code>setup_database_*.R</code> script afterwards, so these information will be also kept, if the database is recreated!</strong></p>
 <ul>
@@ -459,12 +668,18 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 <p>At the moment the tables <code>Service types</code> and <code>Sequencing depths</code> are not editable. If prices change, the easiet option is to delete the row and recreate it using the new value. This way, the older projects will use the previous costs, while the new one will get the new costs.</p>
 <p>One can also directly use the SQL commands to apply these chages, similar to above</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>and execute</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="ex">UPDATE</span> service_types SET costs_per_sample = 55 WHERE service_type = <span class="st">'single cell/low mRNAseq'</span><span class="kw">;</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.exit</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="ex">UPDATE</span> service_types SET costs_per_sample = 55 WHERE service_type = <span class="st">'single cell/low mRNAseq'</span><span class="kw">;</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.exit</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <ol start="4" type="1">
 <li>something is wrong with the Sequencing Cycles Management table. When I run the app, go to the Admin projects Tab and click the Sequencing Cycles - Manage Cycles, I see this message: “Error: An error has occurred. Check your logs or contact the app author for clarification.” 4.1 which log files can I consult?</li>
@@ -474,24 +689,30 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 <li>Do I have a weekly&nbsp;backup of the SQL db?&nbsp;</li>
 </ol>
 <p>there is an app for a bi-weekly automaic backup. The function is for now commented out, so not working.</p>
-<section id="modify-registration-page" class="level2">
-<h2 class="anchored" data-anchor-id="modify-registration-page">modify registration page</h2>
+<section id="modify-registration-page" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="modify-registration-page"><span class="header-section-number">10.1</span> modify registration page</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>we add information to the registration page, so the user must choose a group. This way we know which is the budget holder for this user.</p>
 <p>After ward we added the information to the Registration Server Logic</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="ex">dbExecute</span><span class="er">(</span><span class="ex">con,</span> <span class="st">"</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="st">INSERT INTO users (username, password, email, phone, research_group, is_admin)</span></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="st">VALUES (?, ?, ?, ?, ?, 0)</span></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>, params = list<span class="er">(</span></span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_username</span><span class="ex">,</span></span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  <span class="ex">digest</span><span class="er">(</span><span class="ex">input</span><span class="va">$reg_password</span><span class="kw">)</span><span class="ex">,</span></span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_email</span><span class="ex">,</span></span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_phone</span><span class="ex">,</span></span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_group</span></span>
-<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="kw">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="ex">dbExecute</span><span class="er">(</span><span class="ex">con,</span> <span class="st">"</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="st">INSERT INTO users (username, password, email, phone, research_group, is_admin)</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="st">VALUES (?, ?, ?, ?, ?, 0)</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>, params = list<span class="er">(</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_username</span><span class="ex">,</span></span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>  <span class="ex">digest</span><span class="er">(</span><span class="ex">input</span><span class="va">$reg_password</span><span class="kw">)</span><span class="ex">,</span></span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_email</span><span class="ex">,</span></span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_phone</span><span class="ex">,</span></span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_group</span></span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a><span class="kw">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>as well as modified the User registration modal</p>
 <p>Now, when a user register, he must choose a group from the given drop-down menu. this group is attached to the budget holder. When the user creates a new project, this budget holder (group) will automatically be assigned to the project (This can be manually changed, when the project is created).</p>
@@ -518,13 +739,16 @@ Note
 </div>
 </div>
 </section>
-<section id="control-for-budegt-holder-info-in-the-db" class="level2">
-<h2 class="anchored" data-anchor-id="control-for-budegt-holder-info-in-the-db">control for budegt holder info in the DB</h2>
+<section id="control-for-budegt-holder-info-in-the-db" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="control-for-budegt-holder-info-in-the-db"><span class="header-section-number">10.2</span> control for budegt holder info in the DB</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"sequencing_projects.db"</span>)</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>budget_holders <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM budget_holders"</span>)</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the data</span></span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(budget_holders[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>,])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"sequencing_projects.db"</span>)</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>budget_holders <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM budget_holders"</span>)</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the data</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(budget_holders[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>,])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>  id          name surname cost_center                  email
 1  1           Kim  Rin-Ho        N.A.    rkim@biochem.mpg.de
@@ -535,7 +759,10 @@ Note
 2 2025-11-28 16:12:05
 3 2025-11-28 16:12:05</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM budget_holders"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM budget_holders"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>   id          name      surname     cost_center
 1   1           Kim       Rin-Ho            N.A.
@@ -624,7 +851,10 @@ Note
 41             zachar@biochem.mpg.de 2025-11-28 16:12:05
 42               rkim@biochem.mpg.de 2025-11-28 16:12:05</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM users"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM users"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>  id username                         password                     email
 1  1    admin dc43507128bef0083ad8d45d7ba36c8c        ngs@biochem.mpg.de
@@ -637,14 +867,20 @@ Note
 3 +49 89 12345678            Cox        0 2025-11-28 16:12:05
 4 +49 89 87654321          Baier        0 2025-11-28 16:12:05</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on.exit</span>(<span class="fu">dbDisconnect</span>(con))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on.exit</span>(<span class="fu">dbDisconnect</span>(con))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section>
+<section id="budget-holders-can-be-read-from-an-excel-sheet" class="level2" data-number="10.3">
+<h2 data-number="10.3" class="anchored" data-anchor-id="budget-holders-can-be-read-from-an-excel-sheet"><span class="header-section-number">10.3</span> Budget holders can be read from an Excel sheet</h2>
 </section>
-<section id="ssl-certificate-for-https-1" class="level1">
-<h1>SSL Certificate (for HTTPS)</h1>
+</section>
+<section id="ssl-certificate-for-https" class="level1" data-number="11">
+<h1 data-number="11"><span class="header-section-number">11</span> SSL Certificate (for HTTPS)</h1>
 <p>the new setting of the certificates. I have three files.</p>
-<p>The rpivate key I created when applying for the certificate. The other two were downloaded, when the emial came from Harica (the certificate provider).</p>
+<p>The private key I created when applying for the certificate. The other two were downloaded, when the emial came from Harica (the certificate provider).</p>
 <p>the <code>PEM</code> is the pem file and the <code>DER (issuer)</code> is the chain file. Both of them are needed.</p>
 <p>Setting for the readability of the files:</p>
 <pre><code>cd /etc/apache2/certificate/2026
@@ -654,27 +890,131 @@ Note
 <p>All the files are saved under <code>/etc/apache2/certificate/2026</code>.</p>
 <p>Now I created soft links for each of these files.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem</span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section>
-<section id="ldap-1" class="level1">
-<h1>LDAP</h1>
-<blockquote class="blockquote">
-<blockquote class="blockquote">
-<blockquote class="blockquote">
-<blockquote class="blockquote">
-<blockquote class="blockquote">
-<blockquote class="blockquote">
-<blockquote class="blockquote">
-<p>origin/main</p>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
-</blockquote>
+<section id="ldap" class="level1" data-number="12">
+<h1 data-number="12"><span class="header-section-number">12</span> LDAP</h1>
+<p>The app uses Apache LDAP authentication in front of Shiny. The Apache config template is in <code>01-main.conf</code>.</p>
+<p>Enable required Apache modules:</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod ldap authnz_ldap headers</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl reload apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Test whether anonymous LDAP search works:</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ldapsearch</span> <span class="at">-x</span> <span class="at">-H</span> ldaps://ldapserv1.biochem.mpg.de <span class="at">-b</span> <span class="st">"dc=biochem,dc=mpg,dc=de"</span> <span class="st">"(uid=YOURUSER)"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>If anonymous search fails, use bind credentials from IT and add them to the Apache config:</p>
+<div class="sourceCode" id="cb53"><pre class="sourceCode apache code-with-copy"><code class="sourceCode apache"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>AuthLDAPBindDN<span class="st"> "cn=binduser,dc=biochem,dc=mpg,dc=de"</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>AuthLDAPBindPassword<span class="st"> "REDACTED"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>For production, <strong>do not use a personal account</strong> for LDAP binding. Ask IT for a dedicated <strong>service bind account</strong> with read‑only permissions and store those credentials securely.</p>
+</div>
+</div>
+<p>Set app environment variables for Shiny Server (systemd override recommended):</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl edit shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="sourceCode" id="cb55"><pre class="sourceCode ini code-with-copy"><code class="sourceCode ini"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[Service]</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">AUTH_MODE=ldap</span></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636</span></span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de</span></span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a><span class="co"># If you want to restrict search to the user OU:</span></span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Environment=LDAP_BASE_DN=ou=People,dc=biochem,dc=mpg,dc=de</span></span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional bind credentials (only if anonymous LDAP search is blocked):</span></span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Environment=LDAP_BIND_DN=cn=binduser,dc=biochem,dc=mpg,dc=de</span></span>
+<span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Environment=LDAP_BIND_PW=REDACTED</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Restart services after config changes:</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="local-dev-testing-ldap-mode" class="level2" data-number="12.1">
+<h2 data-number="12.1" class="anchored" data-anchor-id="local-dev-testing-ldap-mode"><span class="header-section-number">12.1</span> Local dev testing (LDAP mode)</h2>
+<p>To test LDAP integration on your local machine without affecting production, run the app in dev mode and simulate the authenticated user. If LDAP attribute lookup is needed, provide a bind DN/password (personal credentials are OK for <strong>local testing only</strong>).</p>
+<div class="sourceCode" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">APP_ENV =</span> <span class="st">"dev"</span>,</span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">AUTH_MODE =</span> <span class="st">"ldap"</span>,</span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">DEV_REMOTE_USER =</span> <span class="st">"your_username"</span>,</span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">LDAP_BIND_DN =</span> <span class="st">"uid=your_username,ou=YourGroup,ou=Research Group,ou=People,dc=biochem,dc=mpg,dc=de"</span>,</span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">LDAP_BIND_PW =</span> <span class="st">"YOUR_PASSWORD"</span></span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>After login, verify the user record in SQLite:</p>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"sequencing-app/sequencing_projects.db"</span>)</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT username, email, phone, research_group FROM users WHERE username='your_username'"</span>)</span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>To switch back to normal local login (no LDAP), run:</p>
+<div class="sourceCode" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">APP_ENV =</span> <span class="st">"dev"</span>, <span class="at">AUTH_MODE =</span> <span class="st">"local"</span>)</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>To fully clear the LDAP/testing variables in your R session:</p>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.unsetenv</span>(<span class="fu">c</span>(</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"APP_ENV"</span>, <span class="st">"AUTH_MODE"</span>, <span class="st">"DEV_REMOTE_USER"</span>,</span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_BIND_DN"</span>, <span class="st">"LDAP_BIND_PW"</span>,</span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_URI"</span>, <span class="st">"LDAP_BASE_DN"</span>, <span class="st">"LDAP_DEBUG"</span></span>
+<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="how-i-run-the-app-locally-my-notes" class="level2" data-number="12.2">
+<h2 data-number="12.2" class="anchored" data-anchor-id="how-i-run-the-app-locally-my-notes"><span class="header-section-number">12.2</span> How I run the app locally (my notes)</h2>
+<p>When I want the <strong>normal local login</strong>, I run:</p>
+<div class="sourceCode" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">APP_ENV =</span> <span class="st">"dev"</span>, <span class="at">AUTH_MODE =</span> <span class="st">"local"</span>)</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>When I want to <strong>simulate production LDAP login</strong>, I run:</p>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">APP_ENV =</span> <span class="st">"dev"</span>,</span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">AUTH_MODE =</span> <span class="st">"ldap"</span>,</span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">DEV_REMOTE_USER =</span> <span class="st">"my_username"</span>,</span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">LDAP_URI =</span> <span class="st">"ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636"</span>,</span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">LDAP_BASE_DN =</span> <span class="st">"dc=biochem,dc=mpg,dc=de"</span></span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>If I want to fully reset the session, I clear the env vars:</p>
+<div class="sourceCode" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.unsetenv</span>(<span class="fu">c</span>(</span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"APP_ENV"</span>, <span class="st">"AUTH_MODE"</span>, <span class="st">"DEV_REMOTE_USER"</span>,</span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_BIND_DN"</span>, <span class="st">"LDAP_BIND_PW"</span>,</span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_URI"</span>, <span class="st">"LDAP_BASE_DN"</span>, <span class="st">"LDAP_DEBUG"</span></span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><strong>Local vs LDAP mode (practical difference for me):</strong></p>
+<ul>
+<li>Local mode uses the SQLite users/passwords and shows the normal login screen.</li>
+<li>LDAP mode auto‑logs in with the LDAP user, pulls email/phone/OU, and hides the local login UI.</li>
+<li>LDAP mode needs network access to the institute LDAP servers.</li>
+</ul>
+<p><strong>Dev badge:</strong> In dev mode, I see a small badge in the app header that shows <code>DEV · LDAP</code> or <code>DEV · LOCAL</code>, so I always know which mode I’m running.</p>
+</section>
+<section id="budget-holder-auto-assignment-first-login" class="level2" data-number="12.3">
+<h2 data-number="12.3" class="anchored" data-anchor-id="budget-holder-auto-assignment-first-login"><span class="header-section-number">12.3</span> Budget holder auto-assignment (first login)</h2>
+<p>On first LDAP login, the app attempts to map the user to a budget holder based on the LDAP <code>ou</code> value.<br>
+If the <code>ou</code> contains a group key in parentheses (e.g., <code>(... Cox)</code>), the app matches that key against <code>budget_holders</code> and stores the <strong>full PI name</strong> (e.g., <code>Cox Juergen</code>) in <code>users.research_group</code>.</p>
+<p>When a new project is created, this <code>research_group</code> value is used to auto‑select the budget holder (and thus the cost center).<br>
+If multiple cost centers exist for the same PI, the first match is selected by default and can be adjusted during project creation.</p>
+</section>
 </section>
 
 </main>
