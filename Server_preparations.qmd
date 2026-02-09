@@ -360,6 +360,93 @@ To redeploy the server, one follows the following steps:
  ...
 ```
 
+## VM rollout HOW‑TO (Git + deploy + safety)
+
+This is the repeatable checklist I use when rolling out to a VM (first `ngs-testing-vm`, then `ngs-vm`).
+
+### 1) Make sure GitHub access works on the VM
+
+Check which remote is set:
+
+```{bash}
+git -C /home/yeroslaviz/BCFNGS-project-management remote -v
+```
+
+If the remote is SSH (`git@github.com:...`), verify SSH access:
+
+```{bash}
+ssh -T git@github.com
+```
+
+If SSH works but `git pull` still says **Permission denied (publickey)**, the VM key is **not added** to the repo. The fix is to add the VM public key as a **Deploy Key**:
+
+```{bash}
+cat ~/.ssh/id_ed25519.pub
+```
+
+Then add that key in GitHub:
+`Repo → Settings → Deploy keys → Add deploy key` (read‑only is enough for pull).
+
+### 2) Pull latest code
+
+```{bash}
+cd /home/yeroslaviz/BCFNGS-project-management
+git pull origin main
+```
+
+If Git says **divergent branches**, I set merge as the default and pull again:
+
+```{bash}
+git config pull.rebase false
+git pull origin main
+```
+
+If Git refuses because of the local SQLite DB file, I stop tracking the DB on the VM:
+
+```{bash}
+git rm --cached sequencing-app/sequencing_projects.db
+git commit -m "Stop tracking local SQLite DB on VM"
+git pull origin main
+```
+
+This does **not** delete the local DB file. It just removes it from Git so future pulls work.
+
+### 3) Production safety backups (fast rollback)
+
+```{bash}
+sudo rsync -av /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup_$(date +%Y%m%d_%H%M)/
+cp /srv/shiny-server/sequencing-app/sequencing_projects.db \
+  /srv/shiny-server/sequencing-app/sequencing_projects.db.backup_$(date +%Y%m%d_%H%M)
+sudo cp /etc/apache2/sites-enabled/01-main.conf \
+  /etc/apache2/sites-enabled/01-main.conf.backup_$(date +%Y%m%d_%H%M)
+```
+
+### 4) Deploy
+
+```{bash}
+./deploy.sh
+```
+
+### 5) Restart and smoke‑test
+
+```{bash}
+sudo systemctl restart shiny-server
+sudo systemctl restart apache2
+```
+
+Then open the app URL and verify:
+- LDAP prompt appears
+- login works
+- app loads
+
+### 6) Rollback (if needed)
+
+```{bash}
+sudo rsync -av --delete /srv/shiny-server/sequencing-app.backup_YYYYMMDD_HHMM/ /srv/shiny-server/sequencing-app/
+sudo systemctl restart shiny-server
+sudo systemctl restart apache2
+```
+
 # Security
 
 Not sure, if this is all necessary, will consult the IT when it is appropriate
@@ -463,6 +550,12 @@ It then resets permissions for all files (the DB file remains in place and keeps
 When this is done, it restart the shiny server.
 
 **This script must be run each time the files inside the sequencing-app folder were changed**, but not if other changed were made in the repo.
+
+# Changes on 09.02.2026
+
+1.  Added a VM rollout HOW‑TO (GitHub SSH/deploy keys, divergent branches, DB tracking fix, backups, deploy, restart, rollback).
+2.  Documented production safeguards (app folder backup, DB backup, Apache config backup).
+3.  Updated `deploy.sh` to restart Shiny only if `rsync` succeeds (prevents restarts on failed deploys).
 
 # Changes on 06.02.2026
 
