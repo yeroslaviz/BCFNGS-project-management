@@ -360,6 +360,57 @@ To redeploy the server, one follows the following steps:
  ...
 ```
 
+## Production rollout checklist (quick reference)
+
+This is the short checklist I use on production. Details for each step are below in the VM rollout HOW‑TO section.
+
+1.  Confirm GitHub access and pull latest code.
+
+```{bash}
+ssh -T git@github.com
+cd /home/yeroslaviz/BCFNGS-project-management
+git pull origin main
+```
+
+2.  Take backups (app folder, SQLite DB, Apache config).
+
+```{bash}
+sudo rsync -av /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup_$(date +%Y%m%d_%H%M)/
+cp /srv/shiny-server/sequencing-app/sequencing_projects.db \
+  /srv/shiny-server/sequencing_projects.db.backup_$(date +%Y%m%d_%H%M)
+sudo cp /etc/apache2/sites-enabled/01-main.conf \
+  /etc/apache2/sites-enabled/01-main.conf.backup_$(date +%Y%m%d_%H%M)
+```
+
+3.  Deploy.
+
+```{bash}
+./deploy.sh
+```
+
+4.  Restart services.
+
+```{bash}
+sudo systemctl restart shiny-server
+sudo systemctl restart apache2
+```
+
+5.  Smoke‑test login and app behavior.
+
+```{bash}
+curl -Ik https://ngs-testing-vm.biochem.mpg.de/
+curl -Ik -u USER https://ngs-testing-vm.biochem.mpg.de/
+curl -Ik -u USER https://ngs-testing-vm.biochem.mpg.de/sequencing-app/
+```
+
+6.  Roll back from backups if needed.
+
+```{bash}
+sudo rsync -av --delete /srv/shiny-server/sequencing-app.backup_YYYYMMDD_HHMM/ /srv/shiny-server/sequencing-app/
+sudo systemctl restart shiny-server
+sudo systemctl restart apache2
+```
+
 ## VM rollout HOW‑TO (Git + deploy + safety)
 
 This is the repeatable checklist I use when rolling out to a VM (first `ngs-testing-vm`, then `ngs-vm`).
