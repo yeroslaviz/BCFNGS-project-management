@@ -122,20 +122,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#firewall" id="toc-firewall" class="nav-link" data-scroll-target="#firewall"><span class="header-section-number">7.4</span> Firewall</a></li>
   </ul></li>
   <li><a href="#change-connection-to-shiny-server-folder-to-https" id="toc-change-connection-to-shiny-server-folder-to-https" class="nav-link" data-scroll-target="#change-connection-to-shiny-server-folder-to-https"><span class="header-section-number">8</span> Change connection to shiny server folder to https</a></li>
-  <li><a href="#changes-on-09.02.2026" id="toc-changes-on-09.02.2026" class="nav-link" data-scroll-target="#changes-on-09.02.2026"><span class="header-section-number">9</span> Changes on 09.02.2026</a></li>
-  <li><a href="#changes-on-06.02.2026" id="toc-changes-on-06.02.2026" class="nav-link" data-scroll-target="#changes-on-06.02.2026"><span class="header-section-number">10</span> Changes on 06.02.2026</a></li>
-  <li><a href="#changes-on-14.11.2026" id="toc-changes-on-14.11.2026" class="nav-link" data-scroll-target="#changes-on-14.11.2026"><span class="header-section-number">11</span> Changes on 14.11.2026</a>
+  <li><a href="#changes-on-09.02.2026" id="toc-changes-on-09.02.2026" class="nav-link" data-scroll-target="#changes-on-09.02.2026"><span class="header-section-number">9</span> Changes on 09.02.2026</a>
   <ul>
-  <li><a href="#modify-registration-page" id="toc-modify-registration-page" class="nav-link" data-scroll-target="#modify-registration-page"><span class="header-section-number">11.1</span> modify registration page</a></li>
-  <li><a href="#control-for-budegt-holder-info-in-the-db" id="toc-control-for-budegt-holder-info-in-the-db" class="nav-link" data-scroll-target="#control-for-budegt-holder-info-in-the-db"><span class="header-section-number">11.2</span> control for budegt holder info in the DB</a></li>
-  <li><a href="#budget-holders-can-be-read-from-an-excel-sheet" id="toc-budget-holders-can-be-read-from-an-excel-sheet" class="nav-link" data-scroll-target="#budget-holders-can-be-read-from-an-excel-sheet"><span class="header-section-number">11.3</span> Budget holders can be read from an Excel sheet</a></li>
+  <li><a href="#vm-rollout-validation-what-i-tested-and-confirmed" id="toc-vm-rollout-validation-what-i-tested-and-confirmed" class="nav-link" data-scroll-target="#vm-rollout-validation-what-i-tested-and-confirmed"><span class="header-section-number">9.1</span> VM rollout validation (what I tested and confirmed)</a></li>
   </ul></li>
-  <li><a href="#ssl-certificate-for-https" id="toc-ssl-certificate-for-https" class="nav-link" data-scroll-target="#ssl-certificate-for-https"><span class="header-section-number">12</span> SSL Certificate (for HTTPS)</a></li>
-  <li><a href="#ldap" id="toc-ldap" class="nav-link" data-scroll-target="#ldap"><span class="header-section-number">13</span> LDAP</a>
+  <li><a href="#possible-errors-and-fixes-vm-ldap-rollout" id="toc-possible-errors-and-fixes-vm-ldap-rollout" class="nav-link" data-scroll-target="#possible-errors-and-fixes-vm-ldap-rollout"><span class="header-section-number">10</span> Possible errors and fixes (VM LDAP rollout)</a>
   <ul>
-  <li><a href="#local-dev-testing-ldap-mode" id="toc-local-dev-testing-ldap-mode" class="nav-link" data-scroll-target="#local-dev-testing-ldap-mode"><span class="header-section-number">13.1</span> Local dev testing (LDAP mode)</a></li>
-  <li><a href="#how-i-run-the-app-locally-my-notes" id="toc-how-i-run-the-app-locally-my-notes" class="nav-link" data-scroll-target="#how-i-run-the-app-locally-my-notes"><span class="header-section-number">13.2</span> How I run the app locally (my notes)</a></li>
-  <li><a href="#budget-holder-auto-assignment-first-login" id="toc-budget-holder-auto-assignment-first-login" class="nav-link" data-scroll-target="#budget-holder-auto-assignment-first-login"><span class="header-section-number">13.3</span> Budget holder auto-assignment (first login)</a></li>
+  <li><a href="#apache-wont-restart-after-ldap-change" id="toc-apache-wont-restart-after-ldap-change" class="nav-link" data-scroll-target="#apache-wont-restart-after-ldap-change"><span class="header-section-number">10.1</span> 1) Apache won’t restart after LDAP change</a></li>
+  <li><a href="#ldaptls_cacertdir-breaks-apache" id="toc-ldaptls_cacertdir-breaks-apache" class="nav-link" data-scroll-target="#ldaptls_cacertdir-breaks-apache"><span class="header-section-number">10.2</span> 2) <code>LDAPTLS_CACERTDIR</code> breaks Apache</a></li>
+  <li><a href="#ldap-login-shows-500-internal-server-error" id="toc-ldap-login-shows-500-internal-server-error" class="nav-link" data-scroll-target="#ldap-login-shows-500-internal-server-error"><span class="header-section-number">10.3</span> 3) LDAP login shows 500 Internal Server Error</a></li>
+  <li><a href="#shiny-app-runs-locally-but-crashes-via-apache" id="toc-shiny-app-runs-locally-but-crashes-via-apache" class="nav-link" data-scroll-target="#shiny-app-runs-locally-but-crashes-via-apache"><span class="header-section-number">10.4</span> 4) Shiny app runs locally but crashes via Apache</a></li>
+  <li><a href="#ldap-works-but-sequencing-app-returns-404" id="toc-ldap-works-but-sequencing-app-returns-404" class="nav-link" data-scroll-target="#ldap-works-but-sequencing-app-returns-404"><span class="header-section-number">10.5</span> 5) LDAP works, but <code>/sequencing-app/</code> returns 404</a></li>
+  <li><a href="#debug-logging-too-noisy-apache-or-shiny" id="toc-debug-logging-too-noisy-apache-or-shiny" class="nav-link" data-scroll-target="#debug-logging-too-noisy-apache-or-shiny"><span class="header-section-number">10.6</span> 6) Debug logging too noisy (Apache or Shiny)</a></li>
+  <li><a href="#comprehensive-errorchecking-checklist-vm-ldap-shiny" id="toc-comprehensive-errorchecking-checklist-vm-ldap-shiny" class="nav-link" data-scroll-target="#comprehensive-errorchecking-checklist-vm-ldap-shiny"><span class="header-section-number">10.7</span> Comprehensive error‑checking checklist (VM LDAP + Shiny)</a></li>
+  </ul></li>
+  <li><a href="#changes-on-06.02.2026" id="toc-changes-on-06.02.2026" class="nav-link" data-scroll-target="#changes-on-06.02.2026"><span class="header-section-number">11</span> Changes on 06.02.2026</a></li>
+  <li><a href="#changes-on-14.11.2026" id="toc-changes-on-14.11.2026" class="nav-link" data-scroll-target="#changes-on-14.11.2026"><span class="header-section-number">12</span> Changes on 14.11.2026</a>
+  <ul>
+  <li><a href="#modify-registration-page" id="toc-modify-registration-page" class="nav-link" data-scroll-target="#modify-registration-page"><span class="header-section-number">12.1</span> modify registration page</a></li>
+  <li><a href="#control-for-budegt-holder-info-in-the-db" id="toc-control-for-budegt-holder-info-in-the-db" class="nav-link" data-scroll-target="#control-for-budegt-holder-info-in-the-db"><span class="header-section-number">12.2</span> control for budegt holder info in the DB</a></li>
+  <li><a href="#budget-holders-can-be-read-from-an-excel-sheet" id="toc-budget-holders-can-be-read-from-an-excel-sheet" class="nav-link" data-scroll-target="#budget-holders-can-be-read-from-an-excel-sheet"><span class="header-section-number">12.3</span> Budget holders can be read from an Excel sheet</a></li>
+  </ul></li>
+  <li><a href="#ssl-certificate-for-https" id="toc-ssl-certificate-for-https" class="nav-link" data-scroll-target="#ssl-certificate-for-https"><span class="header-section-number">13</span> SSL Certificate (for HTTPS)</a></li>
+  <li><a href="#ldap" id="toc-ldap" class="nav-link" data-scroll-target="#ldap"><span class="header-section-number">14</span> LDAP</a>
+  <ul>
+  <li><a href="#local-dev-testing-ldap-mode" id="toc-local-dev-testing-ldap-mode" class="nav-link" data-scroll-target="#local-dev-testing-ldap-mode"><span class="header-section-number">14.1</span> Local dev testing (LDAP mode)</a></li>
+  <li><a href="#how-i-run-the-app-locally-my-notes" id="toc-how-i-run-the-app-locally-my-notes" class="nav-link" data-scroll-target="#how-i-run-the-app-locally-my-notes"><span class="header-section-number">14.2</span> How I run the app locally (my notes)</a></li>
+  <li><a href="#budget-holder-auto-assignment-first-login" id="toc-budget-holder-auto-assignment-first-login" class="nav-link" data-scroll-target="#budget-holder-auto-assignment-first-login"><span class="header-section-number">14.3</span> Budget holder auto-assignment (first login)</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -696,10 +709,197 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></p
 <li>Added a VM rollout HOW‑TO (GitHub SSH/deploy keys, divergent branches, DB tracking fix, backups, deploy, restart, rollback).</li>
 <li>Documented production safeguards (app folder backup, DB backup, Apache config backup).</li>
 <li>Updated <code>deploy.sh</code> to restart Shiny only if <code>rsync</code> succeeds (prevents restarts on failed deploys).</li>
+<li>Cleaned up Apache LDAP logging (default to quiet logs; debug only when explicitly enabled).</li>
+<li>Made LDAP debug output in the Shiny app conditional on <strong>both</strong> <code>APP_ENV=dev</code> and <code>LDAP_DEBUG=1</code> to avoid production log noise.</li>
+<li>Documented the VM LDAP validation test (real user + service group user, and email routing behavior).</li>
 </ol>
+<section id="vm-rollout-validation-what-i-tested-and-confirmed" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="vm-rollout-validation-what-i-tested-and-confirmed"><span class="header-section-number">9.1</span> VM rollout validation (what I tested and confirmed)</h2>
+<p>I verified end‑to‑end behavior on the VM after fixing the Apache proxy path:</p>
+<ul>
+<li><strong>LDAP login works</strong>: the browser prompts for username/password and redirects to <code>/sequencing-app/?auth_user=&lt;user&gt;</code>.</li>
+<li><strong>User mapping works</strong>: <code>yeroslaviz</code> (OU contains Cox) is mapped to the <strong>Cox</strong> group and the correct PI.</li>
+<li><strong>User mapping works</strong>: <code>yeroslaviz-test</code> (OU = <strong>NGS Facility</strong>) is treated as a service‑group user (no PI match).</li>
+<li><strong>Email routing works</strong>: research group users trigger mail to the PI <strong>and</strong> NGS.</li>
+<li><strong>Email routing works</strong>: service group users (no PI match) trigger mail to the <strong>administrator</strong>.</li>
+</ul>
+<p>If all three happen, the LDAP→app→email flow is working as intended.</p>
 </section>
-<section id="changes-on-06.02.2026" class="level1" data-number="10">
-<h1 data-number="10"><span class="header-section-number">10</span> Changes on 06.02.2026</h1>
+</section>
+<section id="possible-errors-and-fixes-vm-ldap-rollout" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> Possible errors and fixes (VM LDAP rollout)</h1>
+<p>This section captures the real errors I hit during the VM rollout and the fixes that worked. It is meant as a troubleshooting reference.</p>
+<section id="apache-wont-restart-after-ldap-change" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="apache-wont-restart-after-ldap-change"><span class="header-section-number">10.1</span> 1) Apache won’t restart after LDAP change</h2>
+<p><strong>Symptom</strong></p>
+<pre><code>AH00526: Syntax error ... Bad LDAP URL while parsing.</code></pre>
+<p><strong>Cause</strong></p>
+<p>Apache’s <code>AuthLDAPURL</code> is very strict. Each URL must be complete (host + base DN + query), and some Apache builds don’t accept multiple URLs in a single directive.</p>
+<p><strong>Fix</strong></p>
+<p>Use a single server (most stable on my VM):</p>
+<pre><code>AuthLDAPURL "ldaps://ldapserv1.biochem.mpg.de:636/dc=biochem,dc=mpg,dc=de?uid?sub?(objectClass=posixAccount)"</code></pre>
+<p>If the multi‑server line fails, I keep one server and fall back manually if needed.</p>
+</section>
+<section id="ldaptls_cacertdir-breaks-apache" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="ldaptls_cacertdir-breaks-apache"><span class="header-section-number">10.2</span> 2) <code>LDAPTLS_CACERTDIR</code> breaks Apache</h2>
+<p><strong>Symptom</strong></p>
+<pre><code>Invalid command 'LDAPTLS_CACERTDIR'</code></pre>
+<p><strong>Cause</strong></p>
+<p><code>LDAPTLS_CACERTDIR</code> is <strong>not</strong> an Apache directive. It belongs to the OpenLDAP client config.</p>
+<p><strong>Fix</strong></p>
+<p>Remove it from Apache. If I need TLS trust, I configure it in <code>/etc/ldap/ldap.conf</code> instead.</p>
+</section>
+<section id="ldap-login-shows-500-internal-server-error" class="level2" data-number="10.3">
+<h2 data-number="10.3" class="anchored" data-anchor-id="ldap-login-shows-500-internal-server-error"><span class="header-section-number">10.3</span> 3) LDAP login shows 500 Internal Server Error</h2>
+<p><strong>Symptom</strong></p>
+<ul>
+<li>Browser shows <code>Internal Server Error</code></li>
+<li>Apache log shows:</li>
+</ul>
+<pre><code>ldap_simple_bind() failed][Can't contact LDAP server]</code></pre>
+<p><strong>Cause</strong></p>
+<p>LDAP TLS handshake fails (certificate trust not configured).</p>
+<p><strong>Fix</strong></p>
+<ol type="1">
+<li>Confirm port reachability:</li>
+</ol>
+<pre><code>nc -vz ldapserv1.biochem.mpg.de 636</code></pre>
+<ol start="2" type="1">
+<li>Test LDAP with <strong>TLS bypass</strong> to confirm trust problem:</li>
+</ol>
+<pre><code>LDAPTLS_REQCERT=never ldapsearch -x -H ldaps://ldapserv1.biochem.mpg.de:636 \
+  -b "dc=biochem,dc=mpg,dc=de" "(uid=USER)" mail</code></pre>
+<ol start="3" type="1">
+<li>Fix trust in <code>/etc/ldap/ldap.conf</code>:</li>
+</ol>
+<pre><code>TLS_CACERTDIR /etc/ssl/certs</code></pre>
+<p><strong>Important:</strong> I had a typo (<code>TLS_CACERETDIR</code>) which prevented TLS trust from loading. Fixing the spelling made LDAP work.</p>
+<ol start="4" type="1">
+<li>Verify normal LDAP now works:</li>
+</ol>
+<pre><code>ldapsearch -x -H ldaps://ldapserv1.biochem.mpg.de:636 \
+  -b "dc=biochem,dc=mpg,dc=de" "(uid=USER)" mail</code></pre>
+<p>Then restart Apache:</p>
+<pre><code>sudo systemctl restart apache2</code></pre>
+</section>
+<section id="shiny-app-runs-locally-but-crashes-via-apache" class="level2" data-number="10.4">
+<h2 data-number="10.4" class="anchored" data-anchor-id="shiny-app-runs-locally-but-crashes-via-apache"><span class="header-section-number">10.4</span> 4) Shiny app runs locally but crashes via Apache</h2>
+<p><strong>Symptom</strong></p>
+<ul>
+<li>App works with <code>shiny::runApp()</code></li>
+<li>But Apache shows 500 and Shiny worker terminates</li>
+</ul>
+<p><strong>Cause</strong></p>
+<p>LDAP authentication failure in Apache (not an app crash).</p>
+<p><strong>Fix</strong></p>
+<p>Check Apache log for <code>authnz_ldap</code> errors and fix TLS trust as above.</p>
+</section>
+<section id="ldap-works-but-sequencing-app-returns-404" class="level2" data-number="10.5">
+<h2 data-number="10.5" class="anchored" data-anchor-id="ldap-works-but-sequencing-app-returns-404"><span class="header-section-number">10.5</span> 5) LDAP works, but <code>/sequencing-app/</code> returns 404</h2>
+<p><strong>Symptom</strong></p>
+<ul>
+<li><code>curl -Ik -u USER https://host/sequencing-app/</code> returns <strong>404</strong></li>
+<li><code>curl -I http://localhost:3838/sequencing-app/</code> returns <strong>200</strong></li>
+</ul>
+<p><strong>Cause</strong></p>
+<p>Apache is proxying the wrong path (often due to an older <code>ProxyPass /</code> rule or a backup file in <code>sites-enabled</code>).</p>
+<p><strong>Fix</strong></p>
+<ol type="1">
+<li>Ensure <strong>only</strong> these lines exist in the active config:</li>
+</ol>
+<pre><code>ProxyPass /sequencing-app/ http://localhost:3838/sequencing-app/
+ProxyPassReverse /sequencing-app/ http://localhost:3838/sequencing-app/</code></pre>
+<ol start="2" type="1">
+<li>Remove or move any backup config files out of <code>/etc/apache2/sites-enabled</code> (Apache can accidentally parse them).</li>
+<li>Restart Apache:</li>
+</ol>
+<pre><code>sudo apache2ctl -t
+sudo systemctl restart apache2</code></pre>
+</section>
+<section id="debug-logging-too-noisy-apache-or-shiny" class="level2" data-number="10.6">
+<h2 data-number="10.6" class="anchored" data-anchor-id="debug-logging-too-noisy-apache-or-shiny"><span class="header-section-number">10.6</span> 6) Debug logging too noisy (Apache or Shiny)</h2>
+<p><strong>Symptom</strong></p>
+<p>Lots of LDAP debug output in logs during normal use.</p>
+<p><strong>Fix (Apache)</strong></p>
+<p>In <code>01-main.conf</code>, use normal logging:</p>
+<pre><code>LogLevel warn
+# LogLevel authnz_ldap:debug ldap:debug   # enable only when debugging</code></pre>
+<p><strong>Fix (Shiny app)</strong></p>
+<p>The app only prints LDAP debug logs when <strong>both</strong> are set:</p>
+<ul>
+<li><code>APP_ENV=dev</code></li>
+<li><code>LDAP_DEBUG=1</code></li>
+</ul>
+<p>So for production:</p>
+<ul>
+<li>Remove <code>LDAP_DEBUG=1</code> from <code>/home/shiny/.Renviron</code> (or set it to <code>0</code>).</li>
+<li>Restart Shiny:</li>
+</ul>
+<pre><code>sudo systemctl restart shiny-server</code></pre>
+<p>If I need debugging later, I can temporarily set:</p>
+<pre><code>APP_ENV=dev
+LDAP_DEBUG=1</code></pre>
+<p>and restart the service again.</p>
+</section>
+<section id="comprehensive-errorchecking-checklist-vm-ldap-shiny" class="level2" data-number="10.7">
+<h2 data-number="10.7" class="anchored" data-anchor-id="comprehensive-errorchecking-checklist-vm-ldap-shiny"><span class="header-section-number">10.7</span> Comprehensive error‑checking checklist (VM LDAP + Shiny)</h2>
+<p>When something breaks, I run through this list in order:</p>
+<ol type="1">
+<li><strong>Apache syntax</strong></li>
+</ol>
+<pre><code>sudo apache2ctl -t</code></pre>
+<ol start="2" type="1">
+<li><strong>Which vhost is active</strong></li>
+</ol>
+<pre><code>sudo apache2ctl -S</code></pre>
+<ol start="3" type="1">
+<li><strong>Proxy path</strong></li>
+</ol>
+<pre><code>sudo grep -n "ProxyPass" -R /etc/apache2/sites-enabled /etc/apache2/conf-enabled</code></pre>
+<ol start="4" type="1">
+<li><strong>LDAP connectivity + TLS</strong></li>
+</ol>
+<pre><code>nc -vz ldapserv1.biochem.mpg.de 636
+ldapsearch -x -H ldaps://ldapserv1.biochem.mpg.de:636 \
+  -b "dc=biochem,dc=mpg,dc=de" "(uid=USER)" mail</code></pre>
+<p>If that fails, verify <code>/etc/ldap/ldap.conf</code> has:</p>
+<pre><code>TLS_CACERTDIR /etc/ssl/certs</code></pre>
+<ol start="5" type="1">
+<li><strong>LDAP auth prompt vs app redirect</strong></li>
+</ol>
+<pre><code>curl -Ik https://HOST/
+curl -Ik -u USER https://HOST/</code></pre>
+<p>Expected: 401 without user, 302 to <code>/sequencing-app/?auth_user=USER</code> with user.</p>
+<ol start="6" type="1">
+<li><strong>Shiny backend is reachable</strong></li>
+</ol>
+<pre><code>curl -I http://localhost:3838/sequencing-app/</code></pre>
+<ol start="7" type="1">
+<li><strong>Apache app path</strong></li>
+</ol>
+<pre><code>curl -Ik -u USER https://HOST/sequencing-app/</code></pre>
+<ol start="8" type="1">
+<li><strong>Shiny logs</strong></li>
+</ol>
+<pre><code>sudo ls -t /var/log/shiny-server/ | head -n 1
+sudo tail -n 200 /var/log/shiny-server/FILE.log</code></pre>
+<ol start="9" type="1">
+<li><strong>Shiny environment variables</strong></li>
+</ol>
+<pre><code>sudo systemctl show shiny-server --property=Environment</code></pre>
+<ol start="10" type="1">
+<li><strong>Database permissions</strong></li>
+</ol>
+<pre><code>ls -l /srv/shiny-server/sequencing-app/sequencing_projects.db</code></pre>
+<ol start="11" type="1">
+<li><strong>Reload after config change</strong></li>
+</ol>
+<pre><code>sudo systemctl restart apache2
+sudo systemctl restart shiny-server</code></pre>
+</section>
+</section>
+<section id="changes-on-06.02.2026" class="level1" data-number="11">
+<h1 data-number="11"><span class="header-section-number">11</span> Changes on 06.02.2026</h1>
 <ol type="1">
 <li>Added LDAP login flow in the Shiny app (auto‑login via <code>X-Remote-User</code>, local dev simulation, and optional attribute lookup).</li>
 <li>LDAP attribute lookup now works with anonymous bind; uses <code>ldapsearch</code> fallback for older <code>ldapr</code> versions.</li>
@@ -712,8 +912,8 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></p
 <li>I do <strong>not</strong> track SQLite DB files in git because they change constantly, are environment‑specific (local vs VM), and can contain sensitive data. I ignore <code>*.db</code>/<code>*.sqlite</code> and keep only the schema/seed files in git.</li>
 </ol>
 </section>
-<section id="changes-on-14.11.2026" class="level1" data-number="11">
-<h1 data-number="11"><span class="header-section-number">11</span> Changes on 14.11.2026</h1>
+<section id="changes-on-14.11.2026" class="level1" data-number="12">
+<h1 data-number="12"><span class="header-section-number">12</span> Changes on 14.11.2026</h1>
 <ol type="1">
 <li>I would Like you to show me where the admin email address can be changed, if I want to have a different user as admin. 1.1 Please show me the parts of the script where this can be changed.</li>
 </ol>
@@ -721,12 +921,12 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></p
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert default admin user</span></span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="ex">default_password</span> <span class="op">&lt;</span>- digest::digest<span class="er">(</span><span class="st">"admin123"</span><span class="kw">)</span></span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="ex">dbExecute</span><span class="er">(</span><span class="ex">con,</span> <span class="st">"</span></span>
-<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="st">  INSERT OR IGNORE INTO users (username, password, email, is_admin)</span></span>
-<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="st">  VALUES ('admin', ?, 'yeroslaviz@biochem.mpg.de', 1)</span></span>
-<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>, params = list<span class="er">(</span><span class="ex">default_password</span><span class="kw">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Insert default admin user</span></span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a><span class="ex">default_password</span> <span class="op">&lt;</span>- digest::digest<span class="er">(</span><span class="st">"admin123"</span><span class="kw">)</span></span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a><span class="ex">dbExecute</span><span class="er">(</span><span class="ex">con,</span> <span class="st">"</span></span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a><span class="st">  INSERT OR IGNORE INTO users (username, password, email, is_admin)</span></span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a><span class="st">  VALUES ('admin', ?, 'yeroslaviz@biochem.mpg.de', 1)</span></span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>, params = list<span class="er">(</span><span class="ex">default_password</span><span class="kw">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>1.2 Can this be changed without recreating the whole databank or restart the app? 1.3 How do I change the admin email address without recreating the db?</p>
@@ -738,34 +938,34 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></p
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="kw">UPDATE</span> users <span class="kw">SET</span> email <span class="op">=</span> <span class="st">'newadmin@institute.org'</span> <span class="kw">WHERE</span> username <span class="op">=</span> <span class="st">'admin'</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a><span class="kw">UPDATE</span> users <span class="kw">SET</span> email <span class="op">=</span> <span class="st">'newadmin@institute.org'</span> <span class="kw">WHERE</span> username <span class="op">=</span> <span class="st">'admin'</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>To execute this, we can either log in directly to the database via the command line</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>and execute</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="ex">UPDATE</span> users SET email = <span class="st">'newadmin@institute.org'</span> WHERE username = <span class="st">'admin'</span><span class="kw">;</span></span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.exit</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="ex">UPDATE</span> users SET email = <span class="st">'newadmin@institute.org'</span> WHERE username = <span class="st">'admin'</span><span class="kw">;</span></span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.exit</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>or via the R pormpt:</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RSQLite)</span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"sequencing_projects.db"</span>)</span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(con, <span class="st">"UPDATE users SET email = 'newadmin@institute.org' WHERE username = 'admin'"</span>)</span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(con)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RSQLite)</span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"sequencing_projects.db"</span>)</span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dbExecute</span>(con, <span class="st">"UPDATE users SET email = 'newadmin@institute.org' WHERE username = 'admin'"</span>)</span>
+<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(con)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p><strong>Don’t forget to modify the <code>setup_database_*.R</code> script afterwards, so these information will be also kept, if the database is recreated!</strong></p>
@@ -789,15 +989,15 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></p
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>and execute</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="ex">UPDATE</span> service_types SET costs_per_sample = 55 WHERE service_type = <span class="st">'single cell/low mRNAseq'</span><span class="kw">;</span></span>
-<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.exit</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="ex">UPDATE</span> service_types SET costs_per_sample = 55 WHERE service_type = <span class="st">'single cell/low mRNAseq'</span><span class="kw">;</span></span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.exit</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <ol start="4" type="1">
@@ -808,12 +1008,12 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></p
 <li>Do I have a weekly&nbsp;backup of the SQL db?&nbsp;</li>
 </ol>
 <p>there is an app for a bi-weekly automaic backup. The function is for now commented out, so not working.</p>
-<section id="modify-registration-page" class="level2" data-number="11.1">
-<h2 data-number="11.1" class="anchored" data-anchor-id="modify-registration-page"><span class="header-section-number">11.1</span> modify registration page</h2>
+<section id="modify-registration-page" class="level2" data-number="12.1">
+<h2 data-number="12.1" class="anchored" data-anchor-id="modify-registration-page"><span class="header-section-number">12.1</span> modify registration page</h2>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sqlite3</span> sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>we add information to the registration page, so the user must choose a group. This way we know which is the budget holder for this user.</p>
@@ -821,16 +1021,16 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></p
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="ex">dbExecute</span><span class="er">(</span><span class="ex">con,</span> <span class="st">"</span></span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="st">INSERT INTO users (username, password, email, phone, research_group, is_admin)</span></span>
-<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a><span class="st">VALUES (?, ?, ?, ?, ?, 0)</span></span>
-<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>, params = list<span class="er">(</span></span>
-<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_username</span><span class="ex">,</span></span>
-<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>  <span class="ex">digest</span><span class="er">(</span><span class="ex">input</span><span class="va">$reg_password</span><span class="kw">)</span><span class="ex">,</span></span>
-<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_email</span><span class="ex">,</span></span>
-<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_phone</span><span class="ex">,</span></span>
-<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_group</span></span>
-<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a><span class="kw">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="ex">dbExecute</span><span class="er">(</span><span class="ex">con,</span> <span class="st">"</span></span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a><span class="st">INSERT INTO users (username, password, email, phone, research_group, is_admin)</span></span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a><span class="st">VALUES (?, ?, ?, ?, ?, 0)</span></span>
+<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a><span class="st">"</span>, params = list<span class="er">(</span></span>
+<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_username</span><span class="ex">,</span></span>
+<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a>  <span class="ex">digest</span><span class="er">(</span><span class="ex">input</span><span class="va">$reg_password</span><span class="kw">)</span><span class="ex">,</span></span>
+<span id="cb76-7"><a href="#cb76-7" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_email</span><span class="ex">,</span></span>
+<span id="cb76-8"><a href="#cb76-8" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_phone</span><span class="ex">,</span></span>
+<span id="cb76-9"><a href="#cb76-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input</span><span class="va">$reg_group</span></span>
+<span id="cb76-10"><a href="#cb76-10" aria-hidden="true" tabindex="-1"></a><span class="kw">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>as well as modified the User registration modal</p>
@@ -858,15 +1058,15 @@ Note
 </div>
 </div>
 </section>
-<section id="control-for-budegt-holder-info-in-the-db" class="level2" data-number="11.2">
-<h2 data-number="11.2" class="anchored" data-anchor-id="control-for-budegt-holder-info-in-the-db"><span class="header-section-number">11.2</span> control for budegt holder info in the DB</h2>
+<section id="control-for-budegt-holder-info-in-the-db" class="level2" data-number="12.2">
+<h2 data-number="12.2" class="anchored" data-anchor-id="control-for-budegt-holder-info-in-the-db"><span class="header-section-number">12.2</span> control for budegt holder info in the DB</h2>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"sequencing_projects.db"</span>)</span>
-<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>budget_holders <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM budget_holders"</span>)</span>
-<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the data</span></span>
-<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(budget_holders[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>,])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"sequencing_projects.db"</span>)</span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a>budget_holders <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM budget_holders"</span>)</span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the data</span></span>
+<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(budget_holders[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>,])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>  id          name surname cost_center                  email
@@ -880,7 +1080,7 @@ Note
 </div>
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM budget_holders"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM budget_holders"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>   id          name      surname     cost_center
@@ -972,7 +1172,7 @@ Note
 </div>
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM users"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT * FROM users"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>  id username                         password                     email
@@ -988,16 +1188,16 @@ Note
 </div>
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on.exit</span>(<span class="fu">dbDisconnect</span>(con))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="fu">on.exit</span>(<span class="fu">dbDisconnect</span>(con))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
-<section id="budget-holders-can-be-read-from-an-excel-sheet" class="level2" data-number="11.3">
-<h2 data-number="11.3" class="anchored" data-anchor-id="budget-holders-can-be-read-from-an-excel-sheet"><span class="header-section-number">11.3</span> Budget holders can be read from an Excel sheet</h2>
+<section id="budget-holders-can-be-read-from-an-excel-sheet" class="level2" data-number="12.3">
+<h2 data-number="12.3" class="anchored" data-anchor-id="budget-holders-can-be-read-from-an-excel-sheet"><span class="header-section-number">12.3</span> Budget holders can be read from an Excel sheet</h2>
 </section>
 </section>
-<section id="ssl-certificate-for-https" class="level1" data-number="12">
-<h1 data-number="12"><span class="header-section-number">12</span> SSL Certificate (for HTTPS)</h1>
+<section id="ssl-certificate-for-https" class="level1" data-number="13">
+<h1 data-number="13"><span class="header-section-number">13</span> SSL Certificate (for HTTPS)</h1>
 <p>the new setting of the certificates. I have three files.</p>
 <p>The private key I created when applying for the certificate. The other two were downloaded, when the emial came from Harica (the certificate provider).</p>
 <p>the <code>PEM</code> is the pem file and the <code>DER (issuer)</code> is the chain file. Both of them are needed.</p>
@@ -1011,32 +1211,32 @@ Note
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem</span>
-<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb86"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem</span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-s</span> /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
-<section id="ldap" class="level1" data-number="13">
-<h1 data-number="13"><span class="header-section-number">13</span> LDAP</h1>
+<section id="ldap" class="level1" data-number="14">
+<h1 data-number="14"><span class="header-section-number">14</span> LDAP</h1>
 <p>The app uses Apache LDAP authentication in front of Shiny. The Apache config template is in <code>01-main.conf</code>.</p>
 <p>Enable required Apache modules:</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod ldap authnz_ldap headers</span>
-<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl reload apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb87"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod ldap authnz_ldap headers</span>
+<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl reload apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>Test whether anonymous LDAP search works:</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ldapsearch</span> <span class="at">-x</span> <span class="at">-H</span> ldaps://ldapserv1.biochem.mpg.de <span class="at">-b</span> <span class="st">"dc=biochem,dc=mpg,dc=de"</span> <span class="st">"(uid=YOURUSER)"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb88"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ldapsearch</span> <span class="at">-x</span> <span class="at">-H</span> ldaps://ldapserv1.biochem.mpg.de <span class="at">-b</span> <span class="st">"dc=biochem,dc=mpg,dc=de"</span> <span class="st">"(uid=YOURUSER)"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>If anonymous search fails, use bind credentials from IT and add them to the Apache config:</p>
-<div class="sourceCode" id="cb63"><pre class="sourceCode apache code-with-copy"><code class="sourceCode apache"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>AuthLDAPBindDN<span class="st"> "cn=binduser,dc=biochem,dc=mpg,dc=de"</span></span>
-<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>AuthLDAPBindPassword<span class="st"> "REDACTED"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb89"><pre class="sourceCode apache code-with-copy"><code class="sourceCode apache"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a>AuthLDAPBindDN<span class="st"> "cn=binduser,dc=biochem,dc=mpg,dc=de"</span></span>
+<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a>AuthLDAPBindPassword<span class="st"> "REDACTED"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="callout callout-style-default callout-warning callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -1054,71 +1254,71 @@ Warning
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl edit shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb90"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl edit shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div class="sourceCode" id="cb65"><pre class="sourceCode ini code-with-copy"><code class="sourceCode ini"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[Service]</span></span>
-<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">AUTH_MODE=ldap</span></span>
-<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636</span></span>
-<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de</span></span>
-<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a><span class="co"># If you want to restrict search to the user OU:</span></span>
-<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Environment=LDAP_BASE_DN=ou=People,dc=biochem,dc=mpg,dc=de</span></span>
-<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional bind credentials (only if anonymous LDAP search is blocked):</span></span>
-<span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Environment=LDAP_BIND_DN=cn=binduser,dc=biochem,dc=mpg,dc=de</span></span>
-<span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Environment=LDAP_BIND_PW=REDACTED</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb91"><pre class="sourceCode ini code-with-copy"><code class="sourceCode ini"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[Service]</span></span>
+<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">AUTH_MODE=ldap</span></span>
+<span id="cb91-3"><a href="#cb91-3" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636</span></span>
+<span id="cb91-4"><a href="#cb91-4" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de</span></span>
+<span id="cb91-5"><a href="#cb91-5" aria-hidden="true" tabindex="-1"></a><span class="co"># If you want to restrict search to the user OU:</span></span>
+<span id="cb91-6"><a href="#cb91-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Environment=LDAP_BASE_DN=ou=People,dc=biochem,dc=mpg,dc=de</span></span>
+<span id="cb91-7"><a href="#cb91-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional bind credentials (only if anonymous LDAP search is blocked):</span></span>
+<span id="cb91-8"><a href="#cb91-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Environment=LDAP_BIND_DN=cn=binduser,dc=biochem,dc=mpg,dc=de</span></span>
+<span id="cb91-9"><a href="#cb91-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Environment=LDAP_BIND_PW=REDACTED</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Restart services after config changes:</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span>
-<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb92"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span>
+<span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<section id="local-dev-testing-ldap-mode" class="level2" data-number="13.1">
-<h2 data-number="13.1" class="anchored" data-anchor-id="local-dev-testing-ldap-mode"><span class="header-section-number">13.1</span> Local dev testing (LDAP mode)</h2>
+<section id="local-dev-testing-ldap-mode" class="level2" data-number="14.1">
+<h2 data-number="14.1" class="anchored" data-anchor-id="local-dev-testing-ldap-mode"><span class="header-section-number">14.1</span> Local dev testing (LDAP mode)</h2>
 <p>To test LDAP integration on your local machine without affecting production, run the app in dev mode and simulate the authenticated user. If LDAP attribute lookup is needed, provide a bind DN/password (personal credentials are OK for <strong>local testing only</strong>).</p>
-<div class="sourceCode" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(</span>
-<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">APP_ENV =</span> <span class="st">"dev"</span>,</span>
-<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">AUTH_MODE =</span> <span class="st">"ldap"</span>,</span>
-<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">DEV_REMOTE_USER =</span> <span class="st">"your_username"</span>,</span>
-<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">LDAP_BIND_DN =</span> <span class="st">"uid=your_username,ou=YourGroup,ou=Research Group,ou=People,dc=biochem,dc=mpg,dc=de"</span>,</span>
-<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">LDAP_BIND_PW =</span> <span class="st">"YOUR_PASSWORD"</span></span>
-<span id="cb67-7"><a href="#cb67-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb67-8"><a href="#cb67-8" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb93"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(</span>
+<span id="cb93-2"><a href="#cb93-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">APP_ENV =</span> <span class="st">"dev"</span>,</span>
+<span id="cb93-3"><a href="#cb93-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">AUTH_MODE =</span> <span class="st">"ldap"</span>,</span>
+<span id="cb93-4"><a href="#cb93-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">DEV_REMOTE_USER =</span> <span class="st">"your_username"</span>,</span>
+<span id="cb93-5"><a href="#cb93-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">LDAP_BIND_DN =</span> <span class="st">"uid=your_username,ou=YourGroup,ou=Research Group,ou=People,dc=biochem,dc=mpg,dc=de"</span>,</span>
+<span id="cb93-6"><a href="#cb93-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">LDAP_BIND_PW =</span> <span class="st">"YOUR_PASSWORD"</span></span>
+<span id="cb93-7"><a href="#cb93-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb93-8"><a href="#cb93-8" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>After login, verify the user record in SQLite:</p>
-<div class="sourceCode" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"sequencing-app/sequencing_projects.db"</span>)</span>
-<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT username, email, phone, research_group FROM users WHERE username='your_username'"</span>)</span>
-<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb94"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> DBI<span class="sc">::</span><span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">"sequencing-app/sequencing_projects.db"</span>)</span>
+<span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbGetQuery</span>(con, <span class="st">"SELECT username, email, phone, research_group FROM users WHERE username='your_username'"</span>)</span>
+<span id="cb94-3"><a href="#cb94-3" aria-hidden="true" tabindex="-1"></a>DBI<span class="sc">::</span><span class="fu">dbDisconnect</span>(con)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>To switch back to normal local login (no LDAP), run:</p>
-<div class="sourceCode" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">APP_ENV =</span> <span class="st">"dev"</span>, <span class="at">AUTH_MODE =</span> <span class="st">"local"</span>)</span>
-<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb95"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb95-1"><a href="#cb95-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">APP_ENV =</span> <span class="st">"dev"</span>, <span class="at">AUTH_MODE =</span> <span class="st">"local"</span>)</span>
+<span id="cb95-2"><a href="#cb95-2" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>To fully clear the LDAP/testing variables in your R session:</p>
-<div class="sourceCode" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.unsetenv</span>(<span class="fu">c</span>(</span>
-<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"APP_ENV"</span>, <span class="st">"AUTH_MODE"</span>, <span class="st">"DEV_REMOTE_USER"</span>,</span>
-<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_BIND_DN"</span>, <span class="st">"LDAP_BIND_PW"</span>,</span>
-<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_URI"</span>, <span class="st">"LDAP_BASE_DN"</span>, <span class="st">"LDAP_DEBUG"</span></span>
-<span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb96"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.unsetenv</span>(<span class="fu">c</span>(</span>
+<span id="cb96-2"><a href="#cb96-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"APP_ENV"</span>, <span class="st">"AUTH_MODE"</span>, <span class="st">"DEV_REMOTE_USER"</span>,</span>
+<span id="cb96-3"><a href="#cb96-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_BIND_DN"</span>, <span class="st">"LDAP_BIND_PW"</span>,</span>
+<span id="cb96-4"><a href="#cb96-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_URI"</span>, <span class="st">"LDAP_BASE_DN"</span>, <span class="st">"LDAP_DEBUG"</span></span>
+<span id="cb96-5"><a href="#cb96-5" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="how-i-run-the-app-locally-my-notes" class="level2" data-number="13.2">
-<h2 data-number="13.2" class="anchored" data-anchor-id="how-i-run-the-app-locally-my-notes"><span class="header-section-number">13.2</span> How I run the app locally (my notes)</h2>
+<section id="how-i-run-the-app-locally-my-notes" class="level2" data-number="14.2">
+<h2 data-number="14.2" class="anchored" data-anchor-id="how-i-run-the-app-locally-my-notes"><span class="header-section-number">14.2</span> How I run the app locally (my notes)</h2>
 <p>When I want the <strong>normal local login</strong>, I run:</p>
-<div class="sourceCode" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">APP_ENV =</span> <span class="st">"dev"</span>, <span class="at">AUTH_MODE =</span> <span class="st">"local"</span>)</span>
-<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb97"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">APP_ENV =</span> <span class="st">"dev"</span>, <span class="at">AUTH_MODE =</span> <span class="st">"local"</span>)</span>
+<span id="cb97-2"><a href="#cb97-2" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>When I want to <strong>simulate production LDAP login</strong>, I run:</p>
-<div class="sourceCode" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(</span>
-<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">APP_ENV =</span> <span class="st">"dev"</span>,</span>
-<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">AUTH_MODE =</span> <span class="st">"ldap"</span>,</span>
-<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">DEV_REMOTE_USER =</span> <span class="st">"my_username"</span>,</span>
-<span id="cb72-5"><a href="#cb72-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">LDAP_URI =</span> <span class="st">"ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636"</span>,</span>
-<span id="cb72-6"><a href="#cb72-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">LDAP_BASE_DN =</span> <span class="st">"dc=biochem,dc=mpg,dc=de"</span></span>
-<span id="cb72-7"><a href="#cb72-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb72-8"><a href="#cb72-8" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb98"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(</span>
+<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">APP_ENV =</span> <span class="st">"dev"</span>,</span>
+<span id="cb98-3"><a href="#cb98-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">AUTH_MODE =</span> <span class="st">"ldap"</span>,</span>
+<span id="cb98-4"><a href="#cb98-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">DEV_REMOTE_USER =</span> <span class="st">"my_username"</span>,</span>
+<span id="cb98-5"><a href="#cb98-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">LDAP_URI =</span> <span class="st">"ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636"</span>,</span>
+<span id="cb98-6"><a href="#cb98-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">LDAP_BASE_DN =</span> <span class="st">"dc=biochem,dc=mpg,dc=de"</span></span>
+<span id="cb98-7"><a href="#cb98-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb98-8"><a href="#cb98-8" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>If I want to fully reset the session, I clear the env vars:</p>
-<div class="sourceCode" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.unsetenv</span>(<span class="fu">c</span>(</span>
-<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"APP_ENV"</span>, <span class="st">"AUTH_MODE"</span>, <span class="st">"DEV_REMOTE_USER"</span>,</span>
-<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_BIND_DN"</span>, <span class="st">"LDAP_BIND_PW"</span>,</span>
-<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_URI"</span>, <span class="st">"LDAP_BASE_DN"</span>, <span class="st">"LDAP_DEBUG"</span></span>
-<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb99"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.unsetenv</span>(<span class="fu">c</span>(</span>
+<span id="cb99-2"><a href="#cb99-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"APP_ENV"</span>, <span class="st">"AUTH_MODE"</span>, <span class="st">"DEV_REMOTE_USER"</span>,</span>
+<span id="cb99-3"><a href="#cb99-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_BIND_DN"</span>, <span class="st">"LDAP_BIND_PW"</span>,</span>
+<span id="cb99-4"><a href="#cb99-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_URI"</span>, <span class="st">"LDAP_BASE_DN"</span>, <span class="st">"LDAP_DEBUG"</span></span>
+<span id="cb99-5"><a href="#cb99-5" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong>Local vs LDAP mode (practical difference for me):</strong></p>
 <ul>
 <li>Local mode uses the SQLite users/passwords and shows the normal login screen.</li>
@@ -1127,8 +1327,8 @@ Warning
 </ul>
 <p><strong>Dev badge:</strong> In dev mode, I see a small badge in the app header that shows <code>DEV · LDAP</code> or <code>DEV · LOCAL</code>, so I always know which mode I’m running.</p>
 </section>
-<section id="budget-holder-auto-assignment-first-login" class="level2" data-number="13.3">
-<h2 data-number="13.3" class="anchored" data-anchor-id="budget-holder-auto-assignment-first-login"><span class="header-section-number">13.3</span> Budget holder auto-assignment (first login)</h2>
+<section id="budget-holder-auto-assignment-first-login" class="level2" data-number="14.3">
+<h2 data-number="14.3" class="anchored" data-anchor-id="budget-holder-auto-assignment-first-login"><span class="header-section-number">14.3</span> Budget holder auto-assignment (first login)</h2>
 <p>On first LDAP login, the app attempts to map the user to a budget holder based on the LDAP <code>ou</code> value.<br>
 If the <code>ou</code> contains a group key in parentheses (e.g., <code>(... Cox)</code>), the app matches that key against <code>budget_holders</code> and stores the <strong>full PI name</strong> (e.g., <code>Cox Juergen</code>) in <code>users.research_group</code>.</p>
 <p>When a new project is created, this <code>research_group</code> value is used to auto‑select the budget holder (and thus the cost center).<br>

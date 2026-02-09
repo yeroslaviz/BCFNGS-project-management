@@ -324,7 +324,7 @@ ui <- fluidPage(
 
 # Server logic
 server <- function(input, output, session) {
-  if (Sys.getenv("LDAP_DEBUG", "") == "1") {
+  if (Sys.getenv("LDAP_DEBUG", "") == "1" && Sys.getenv("APP_ENV", "") == "dev") {
     session$onFlushed(function() {
       req <- session$request
       keys <- names(req)
@@ -1367,7 +1367,7 @@ server <- function(input, output, session) {
         )
         ldap_warned(TRUE)
       }
-      if (Sys.getenv("LDAP_DEBUG", "") == "1") {
+      if (Sys.getenv("LDAP_DEBUG", "") == "1" && Sys.getenv("APP_ENV", "") == "dev") {
         req <- session$request
         header_keys <- names(req)
         header_keys <- header_keys[grepl("^HTTP_|REMOTE_USER$", header_keys)]
