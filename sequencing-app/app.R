@@ -329,15 +329,16 @@ server <- function(input, output, session) {
       req <- session$request
       keys <- names(req)
       keys <- keys[grepl("^HTTP_|REMOTE_USER$", keys)]
-      cat("LDAP DEBUG: session headers snapshot\n")
+      cat("LDAP DEBUG: session headers snapshot\n", file = stderr())
       if (length(keys) == 0) {
-        cat("  (no HTTP_* or REMOTE_USER headers found)\n")
+        cat("  (no HTTP_* or REMOTE_USER headers found)\n", file = stderr())
       } else {
         for (k in keys) {
           val <- req[[k]]
-          cat("  ", k, "=", ifelse(is.null(val) || val == "", "<empty>", val), "\n")
+          cat("  ", k, "=", ifelse(is.null(val) || val == "", "<empty>", val), "\n", file = stderr())
         }
       }
+      flush.console()
     }, once = TRUE)
   }
   
@@ -1341,15 +1342,16 @@ server <- function(input, output, session) {
         req <- session$request
         header_keys <- names(req)
         header_keys <- header_keys[grepl("^HTTP_|REMOTE_USER$", header_keys)]
+        cat("LDAP DEBUG: headers when auth user missing\n", file = stderr())
         if (length(header_keys) == 0) {
-          cat("LDAP DEBUG: no HTTP_*/REMOTE_USER headers found in request.\n")
+          cat("  (no HTTP_* or REMOTE_USER headers found)\n", file = stderr())
         } else {
-          cat("LDAP DEBUG: headers received:\n")
           for (k in header_keys) {
             val <- req[[k]]
-            cat("  ", k, "=", ifelse(is.null(val) || val == "", "<empty>", val), "\n")
+            cat("  ", k, "=", ifelse(is.null(val) || val == "", "<empty>", val), "\n", file = stderr())
           }
         }
+        flush.console()
       }
       return()
     }
