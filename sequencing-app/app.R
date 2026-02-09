@@ -458,7 +458,17 @@ server <- function(input, output, session) {
 
   get_auth_username <- function(session) {
     if (get_auth_mode() != "ldap") return(NULL)
-    header_user <- session$request$HTTP_X_REMOTE_USER
+
+    candidates <- c(
+      session$request$HTTP_X_REMOTE_USER,
+      session$request$HTTP_REMOTE_USER,
+      session$request$REMOTE_USER,
+      session$request$HTTP_X_FORWARDED_USER,
+      session$request$HTTP_X_FORWARDED_EMAIL
+    )
+    candidates <- candidates[!is.na(candidates) & candidates != ""]
+    header_user <- if (length(candidates) > 0) candidates[1] else NULL
+
     if (!is.null(header_user) && header_user != "") {
       if (ldap_login_blocked()) return(NULL)
       return(header_user)
