@@ -490,6 +490,21 @@ server <- function(input, output, session) {
       if (ldap_login_blocked()) return(NULL)
       return(header_user)
     }
+
+    # Fallback: read auth_user from query string if headers are not passed through
+    qs <- session$clientData$url_search
+    if (!is.null(qs) && qs != "") {
+      parsed <- shiny::parseQueryString(qs)
+      if (!is.null(parsed$auth_user) && parsed$auth_user != "") {
+        # If multiple auth_user values exist, take the last (Apache rewrite appends)
+        auth_vals <- parsed$auth_user
+        if (length(auth_vals) > 1) {
+          auth_vals <- auth_vals[length(auth_vals)]
+        }
+        if (!is.null(auth_vals) && auth_vals != "") return(auth_vals)
+      }
+    }
+
     dev_user <- dev_auth_user()
     if (!is.null(dev_user) && dev_user != "") return(dev_user)
     return(NULL)
