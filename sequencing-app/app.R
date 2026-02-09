@@ -491,6 +491,20 @@ server <- function(input, output, session) {
       return(header_user)
     }
 
+    # Fallback: read auth_user from cookie (set by Apache after LDAP auth)
+    cookie_header <- session$request$HTTP_COOKIE
+    if (!is.null(cookie_header) && cookie_header != "") {
+      cookies <- unlist(strsplit(cookie_header, ";"))
+      cookies <- trimws(cookies)
+      auth_kv <- cookies[grepl("^auth_user=", cookies)]
+      if (length(auth_kv) > 0) {
+        auth_val <- sub("^auth_user=", "", auth_kv[1])
+        if (!is.null(auth_val) && auth_val != "") {
+          return(utils::URLdecode(auth_val))
+        }
+      }
+    }
+
     # Fallback: read auth_user from query string if headers are not passed through
     qs <- session$clientData$url_search
     if (!is.null(qs) && qs != "") {
