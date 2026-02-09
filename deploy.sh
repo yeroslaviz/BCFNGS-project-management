@@ -29,7 +29,11 @@ if sudo rsync -av --delete --exclude 'sequencing_projects.db' \
   /srv/shiny-server/sequencing-app/
 then
   sudo chown -R shiny:shiny /srv/shiny-server/sequencing-app
-  sudo chmod 666 /srv/shiny-server/sequencing_projects.db
+if [ -f /srv/shiny-server/sequencing-app/sequencing_projects.db ]; then
+  sudo chmod 666 /srv/shiny-server/sequencing-app/sequencing_projects.db
+else
+  echo "Note: DB file not found at /srv/shiny-server/sequencing-app/sequencing_projects.db (skipping chmod)."
+fi
   sudo systemctl restart shiny-server
   echo "Deployment complete!"
 else
