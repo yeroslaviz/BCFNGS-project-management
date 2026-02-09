@@ -1083,6 +1083,70 @@ sudo systemctl restart apache2
 sudo systemctl restart shiny-server
 ```
 
+## Admin access in LDAP mode (VM)
+
+When `AUTH_MODE=ldap` is enabled, the local login form is disabled. To get admin access, I mark the **LDAP user** as admin in the SQLite database.
+
+**Option 1: Pre‑create the user as admin (works even before first login)**
+
+```{bash}
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"INSERT OR IGNORE INTO users (username, is_admin) VALUES ('soyer', 1);"
+```
+
+This creates the user row (if missing). On first LDAP login, the app fills in email/phone/OU.
+
+**Option 2: Promote after the user logs in once**
+
+```{bash}
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"UPDATE users SET is_admin=1 WHERE username='soyer';"
+```
+
+Note: `UPDATE` does nothing if the user row does **not** exist yet.
+
+**Verify:**
+
+```{bash}
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"SELECT username, is_admin FROM users WHERE username IN ('yeroslaviz','soyer');"
+```
+
+## Switch between LDAP and local modes (VM)
+
+I switch auth modes by changing the `AUTH_MODE` environment variable for the `shiny-server` service and restarting it.
+
+Open the systemd override:
+
+```{bash}
+sudo systemctl edit shiny-server
+```
+
+**LDAP mode (production):**
+
+```ini
+[Service]
+Environment=AUTH_MODE=ldap
+Environment=LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
+Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
+```
+
+**Local mode (maintenance/testing):**
+
+```ini
+[Service]
+Environment=AUTH_MODE=local
+```
+
+Apply changes:
+
+```{bash}
+sudo systemctl restart shiny-server
+sudo systemctl show shiny-server --property=Environment
+```
+
+If I switch back to LDAP, I also remove any dev‑only variables like `DEV_REMOTE_USER`.
+
 ## Local dev testing (LDAP mode)
 
 To test LDAP integration on your local machine without affecting production, run the app in dev mode and simulate the authenticated user. If LDAP attribute lookup is needed, provide a bind DN/password (personal credentials are OK for **local testing only**).
