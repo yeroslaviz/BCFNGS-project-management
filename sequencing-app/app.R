@@ -324,6 +324,22 @@ ui <- fluidPage(
 
 # Server logic
 server <- function(input, output, session) {
+  if (Sys.getenv("LDAP_DEBUG", "") == "1") {
+    session$onFlushed(function() {
+      req <- session$request
+      keys <- names(req)
+      keys <- keys[grepl("^HTTP_|REMOTE_USER$", keys)]
+      cat("LDAP DEBUG: session headers snapshot\n")
+      if (length(keys) == 0) {
+        cat("  (no HTTP_* or REMOTE_USER headers found)\n")
+      } else {
+        for (k in keys) {
+          val <- req[[k]]
+          cat("  ", k, "=", ifelse(is.null(val) || val == "", "<empty>", val), "\n")
+        }
+      }
+    }, once = TRUE)
+  }
   
   ##################################################################
   # DATABASE VALIDATION AND REPAIR FUNCTIONS
