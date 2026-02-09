@@ -1321,6 +1321,20 @@ server <- function(input, output, session) {
         )
         ldap_warned(TRUE)
       }
+      if (Sys.getenv("LDAP_DEBUG", "") == "1") {
+        req <- session$request
+        header_keys <- names(req)
+        header_keys <- header_keys[grepl("^HTTP_|REMOTE_USER$", header_keys)]
+        if (length(header_keys) == 0) {
+          cat("LDAP DEBUG: no HTTP_*/REMOTE_USER headers found in request.\n")
+        } else {
+          cat("LDAP DEBUG: headers received:\n")
+          for (k in header_keys) {
+            val <- req[[k]]
+            cat("  ", k, "=", ifelse(is.null(val) || val == "", "<empty>", val), "\n")
+          }
+        }
+      }
       return()
     }
 
