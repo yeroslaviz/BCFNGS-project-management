@@ -1,0 +1,209 @@
+---
+title: "Ubuntu Bare Server Setup HOWTO"
+execute:
+  eval: false
+---
+
+## Ubuntu Bare Server Setup HOWTO (Shiny + LDAP)
+
+This is a complete, end-to-end setup checklist for a fresh Ubuntu VM to run the sequencing Shiny app with Apache + LDAP.
+
+### AI session restart (quick resume)
+
+If I ever need to resume this work with a new AI tool or a new chat session:
+
+1. Read `notes/vm-rollout-summary-2026-02-09.md` for the current system state.
+2. Read `notes/vm-troubleshooting-guide.md` for common failures and fixes.
+3. Re-run the validation `curl` commands in the summary to confirm the stack is still working.
+
+### 1) Base OS prep
+
+```bash
+sudo apt update
+sudo apt upgrade -y
+```
+
+Install common tools and libraries:
+
+```bash
+sudo apt install -y \
+  git rsync curl ca-certificates \
+  build-essential \
+  libcurl4-openssl-dev libssl-dev libxml2-dev \
+  sqlite3 libsqlite3-dev \
+  ldap-utils \
+  apache2 apache2-utils
+```
+
+If mail sending via `mailR` is needed, install a Java runtime:
+
+```bash
+sudo apt install -y default-jre
+```
+
+If LDAP-related R packages need OpenLDAP headers, install:
+
+```bash
+sudo apt install -y libldap2-dev libsasl2-dev
+```
+
+### 2) Install R
+
+```bash
+sudo apt install -y r-base
+```
+
+If you need a newer R version than the Ubuntu default, add the CRAN repo and install from there (optional).
+
+### 3) Install Shiny Server
+
+Download the latest Shiny Server `.deb` from Posit and install it:
+
+```bash
+# Example pattern (replace filename with the current version)
+# wget https://download3.rstudio.org/ubuntu-22.04/x86_64/shiny-server-<version>.deb
+# sudo dpkg -i shiny-server-<version>.deb
+# sudo apt -f install -y
+```
+
+Start and enable the service:
+
+```bash
+sudo systemctl enable shiny-server
+sudo systemctl start shiny-server
+```
+
+### 4) Clone the repo
+
+```bash
+cd /home/<your-user>
+git clone git@github.com:yeroslaviz/BCFNGS-project-management.git
+```
+
+### 5) Configure the Shiny app folder
+
+```bash
+sudo usermod -a -G shiny $USER
+sudo mv /srv/shiny-server/sequencing-app /srv/shiny-server/sequencing-app.backup 2>/dev/null || true
+sudo mkdir -p /srv/shiny-server/sequencing-app
+sudo chown -R $USER:shiny /srv/shiny-server/sequencing-app
+```
+
+Deploy the app files:
+
+```bash
+cd /home/<your-user>/BCFNGS-project-management
+./deploy.sh
+```
+
+### 6) Install required R packages
+
+From R (or `R -q -e`):
+
+```r
+install.packages(c(
+  "shiny",
+  "shinyjs",
+  "DBI",
+  "RSQLite",
+  "digest",
+  "DT",
+  "shinyWidgets",
+  "mailR",
+  "ldapr"
+))
+```
+
+If any package fails, install missing system libraries and retry.
+
+### 7) Configure Shiny Server environment variables
+
+Recommended: systemd drop-in (production-safe).
+
+```bash
+sudo systemctl edit shiny-server
+```
+
+Add:
+
+```
+[Service]
+Environment=AUTH_MODE=ldap
+Environment=LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
+Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
+# Optional debug (dev only):
+# Environment=APP_ENV=dev
+# Environment=LDAP_DEBUG=1
+```
+
+Then restart:
+
+```bash
+sudo systemctl restart shiny-server
+```
+
+Alternative: `/home/shiny/.Renviron` (simpler, less explicit).
+
+### 8) Configure LDAP trust (OpenLDAP client)
+
+Edit `/etc/ldap/ldap.conf` and ensure:
+
+```
+BASE            dc=biochem,dc=mpg,dc=de
+URI             ldaps://ldapserv1.biochem.mpg.de ldaps://ldapserv2.biochem.mpg.de ldaps://ldapserv3.biochem.mpg.de
+TLS_REQCERT     hard
+TLS_CACERTDIR   /etc/ssl/certs
+```
+
+Test:
+
+```bash
+ldapsearch -x -H ldaps://ldapserv1.biochem.mpg.de:636 \
+  -b "dc=biochem,dc=mpg,dc=de" "(uid=USER)" mail
+```
+
+### 9) Configure Apache reverse proxy + LDAP auth
+
+Copy the repo Apache config and enable required modules:
+
+```bash
+sudo cp /home/<your-user>/BCFNGS-project-management/01-main.conf /etc/apache2/sites-enabled/01-main.conf
+sudo a2enmod proxy proxy_http proxy_wstunnel rewrite ssl headers ldap authnz_ldap
+sudo apache2ctl -t
+sudo systemctl restart apache2
+```
+
+### 10) Validate the full flow
+
+```bash
+curl -Ik https://ngs-testing-vm.biochem.mpg.de/
+# Expect 401
+
+curl -Ik -u USER https://ngs-testing-vm.biochem.mpg.de/
+# Expect 302 to /sequencing-app/?auth_user=USER
+
+curl -Ik -u USER https://ngs-testing-vm.biochem.mpg.de/sequencing-app/
+# Expect 200
+
+curl -I http://localhost:3838/sequencing-app/
+# Expect 200
+```
+
+### 11) Routine updates
+
+```bash
+cd /home/<your-user>/BCFNGS-project-management
+git pull origin main
+./deploy.sh
+```
+
+### 12) Production hygiene
+
+1. Use a **service bind account** if LDAP requires bind credentials.
+2. Keep DB files out of git.
+3. Keep Apache debug logs off unless diagnosing a problem.
+
+### References
+
+- `notes/vm-troubleshooting-guide.md`
+- `Server_preparations.qmd`

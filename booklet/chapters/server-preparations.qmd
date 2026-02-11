@@ -2,52 +2,11 @@
 title: "Server Preparations"
 execute:
   eval: false
-  echo: true
-  warning: false
-engine: knitr
-author:
-  - name: Assa Yeroslaviz
-    orcid: 0000-0001-9638-4026
-    corresponding: true
-    email: yeroslaviz@biochem.mpg.de
-    roles:
-      - Investigation
-      - Visualization
-    affiliations:
-      - Max-Planck-Institute for Biochemistry
-keywords:
-  - RNA-Seq
-  - transcriptomics
-  - P405
-  - Marion
-  - Peter
-  - AG Murray
-abstract: |
-   t.b.d.
-plain-language-summary: |
-  s.a.
-date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
-number-sections: true
-format:
-  html:
-    code-fold: true
-    toc: true
-    toc-depth: 4
-    toc-expand: false
-    number-sections: true
-    number-depth: 4
-qknitr:
-  opts_chunk:
-    comment: "#>"
-    collapse: true
-bibliography: /Users/yeroslaviz/ownCloud/ownCloud_projects/citations.bib
-editor_options:
-  chunk_output_type: inline
 ---
 
 ```{r}
 #| echo: false
-#| eval: true
+#| eval: false
 
 suppressPackageStartupMessages(
   {
@@ -66,9 +25,9 @@ suppressPackageStartupMessages(
 })
 ```
 
-# Server Infrastructure
+## Server Infrastructure
 
-## Install required system dependencies
+### Install required system dependencies
 
 ```{bash}
 
@@ -76,7 +35,7 @@ sudo apt install -y libssl-dev libxml2-dev libcurl4-openssl-dev libudunits2-dev 
 
 ```
 
-## Changing hostname to fit the apache2 config file
+### Changing hostname to fit the apache2 config file
 
 ```{bash}
 
@@ -112,7 +71,7 @@ sudo systemctl restart apache2
 
 ```
 
-## Automatic start-up
+### Automatic start-up
 
 ```{bash}
 
@@ -121,7 +80,7 @@ sudo systemctl enable shiny-server
 
 ```
 
-# Monitoring
+## Monitoring
 
 The shiny app server writes log files specific with date and time in the `/var/log/shiny-server` folder.
 
@@ -135,11 +94,11 @@ sudo tail -f /var/log/apache2/sequencing-app-error.log
 
 ```
 
-# Regular backups
+## Regular backups
 
 The VM is regularly back-up every night. The SQL database backup setting are in the script, but for now commented out, as we're not in productive version.
 
-## cron job for data base backup
+### cron job for data base backup
 
 If needed, we can also set up a cron job to backup the data base
 
@@ -163,7 +122,7 @@ sudo crontab -l | { cat; echo "0 2 * * * /usr/local/bin/backup_sequencing_db.sh"
 
 ```
 
-# Required Server Setup
+## Required Server Setup
 
 ```
 /srv/shiny-server/
@@ -176,9 +135,9 @@ sudo crontab -l | { cat; echo "0 2 * * * /usr/local/bin/backup_sequencing_db.sh"
   │ └── minerva.png
 ```
 
-# Github repository
+## Github repository
 
-## Step 1: Generate SSH keys
+### Step 1: Generate SSH keys
 
 ```{bash}
 
@@ -198,11 +157,11 @@ eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/ngs-testing-vm.id_rsa # or the name of the local key
 ```
 
-## Add both keys to the github repository
+### Add both keys to the github repository
 
 Copy for each of the two keys the `*pub` version and add it under `Settings → SSH and GPG keys → New SSH key`.
 
-## Make sure we clone using ssh (not html)
+### Make sure we clone using ssh (not html)
 
 First test if the connection exists already.
 
@@ -232,7 +191,7 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)
 
 then we already use ssh.
 
-## Test and check the connection
+### Test and check the connection
 
 ```{bash}
 ssh -T git@github.com
@@ -244,7 +203,7 @@ this should return something like
 Hi yeroslaviz! You've successfully authenticated, but GitHub does not provide shell access.
 ```
 
-## Pulling/Pushing
+### Pulling/Pushing
 
 the repository can be managed from the path `/home/yeroslaviz/BCFNGS-project-management` (the VM path is mentioned here).
 
@@ -259,7 +218,7 @@ To redeploy the server, one follows the following steps:
 3.  go to the folder `/home/yeroslaviz/BCFNGS-project-management` on the VM `ngs-testing-vm` and pull the changes.
 4.  Execute the `deploy.sh` script to copy the new changes to the shiny-server folder and restart both apache2 and the shiny-server.
 
-## Production rollout checklist (quick reference)
+### Production rollout checklist (quick reference)
 
 This is the short checklist I use on production. Details for each step are below in the VM rollout HOW‑TO section.
 
@@ -310,11 +269,11 @@ sudo systemctl restart shiny-server
 sudo systemctl restart apache2
 ```
 
-## VM rollout HOW‑TO (Git + deploy + safety)
+### VM rollout HOW‑TO (Git + deploy + safety)
 
 This is the repeatable checklist I use when rolling out to a VM (first `ngs-testing-vm`, then `ngs-vm`).
 
-### 1) Make sure GitHub access works on the VM
+#### 1) Make sure GitHub access works on the VM
 
 Check which remote is set:
 
@@ -337,7 +296,7 @@ cat ~/.ssh/id_ed25519.pub
 Then add that key in GitHub:
 `Repo → Settings → Deploy keys → Add deploy key` (read‑only is enough for pull).
 
-### 2) Pull latest code
+#### 2) Pull latest code
 
 ```{bash}
 cd /home/yeroslaviz/BCFNGS-project-management
@@ -361,7 +320,7 @@ git pull origin main
 
 This does **not** delete the local DB file. It just removes it from Git so future pulls work.
 
-### 3) Production safety backups (fast rollback)
+#### 3) Production safety backups (fast rollback)
 
 ```{bash}
 sudo rsync -av /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup_$(date +%Y%m%d_%H%M)/
@@ -371,13 +330,13 @@ sudo cp /etc/apache2/sites-enabled/01-main.conf \
   /etc/apache2/sites-enabled/01-main.conf.backup_$(date +%Y%m%d_%H%M)
 ```
 
-### 4) Deploy
+#### 4) Deploy
 
 ```{bash}
 ./deploy.sh
 ```
 
-### 5) Restart and smoke‑test
+#### 5) Restart and smoke‑test
 
 ```{bash}
 sudo systemctl restart shiny-server
@@ -389,7 +348,7 @@ Then open the app URL and verify:
 - login works
 - app loads
 
-### 6) Rollback (if needed)
+#### 6) Rollback (if needed)
 
 ```{bash}
 sudo rsync -av --delete /srv/shiny-server/sequencing-app.backup_YYYYMMDD_HHMM/ /srv/shiny-server/sequencing-app/
@@ -397,11 +356,11 @@ sudo systemctl restart shiny-server
 sudo systemctl restart apache2
 ```
 
-# Security
+## Security
 
 Not sure, if this is all necessary, will consult the IT when it is appropriate
 
-## Backup older settings
+### Backup older settings
 
 ```{bash}
 
@@ -424,7 +383,7 @@ sudo mv /etc/apache2/certificate/********.cer /etc/ssl/backup/
 └── auth_ldap.conf -> ../sites-available/auth_ldap.conf
 ```
 
-## Applying for a new certificate from MPI/MPG
+### Applying for a new certificate from MPI/MPG
 
 The new setting of the certificates. I have three files.
 
@@ -451,7 +410,7 @@ sudo ln -s /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_N
 
 ```
 
-## Firewall
+### Firewall
 
 at the moment is not active, but maybe in the future.
 
@@ -463,7 +422,7 @@ sudo ufw allow 443
 
 ```
 
-# Change connection to shiny server folder to https
+## Change connection to shiny server folder to https
 
 The shiny app takes information from the config file under `/etc/shiny-server/shiny-server.conf`. Here we can see where the log files are written into and where the directory of the shiny app are stored.
 
@@ -497,7 +456,7 @@ When this is done, it restart the shiny server.
 
 **This script must be run each time the files inside the sequencing-app folder were changed**, but not if other changed were made in the repo.
 
-# Changes on 11.02.2026
+## Changes on 11.02.2026
 
 1.  Added a production rollout checklist with the exact commands for pull, backup, deploy, restart, and smoke‑tests.
 2.  Added a dedicated section for **admin access in LDAP mode** (pre‑create vs promote after first login).
@@ -507,7 +466,7 @@ When this is done, it restart the shiny server.
 6.  Moved legacy/obsolete content to the end of the document under **Obsolete / now wrong**.
 7.  Replaced the old deploy script reference (`deploy_shiny_server.sh`) with `deploy.sh`.
 
-# Changes on 09.02.2026
+## Changes on 09.02.2026
 
 1.  Added a VM rollout HOW‑TO (GitHub SSH/deploy keys, divergent branches, DB tracking fix, backups, deploy, restart, rollback).
 2.  Documented production safeguards (app folder backup, DB backup, Apache config backup).
@@ -516,7 +475,7 @@ When this is done, it restart the shiny server.
 5.  Made LDAP debug output in the Shiny app conditional on **both** `APP_ENV=dev` and `LDAP_DEBUG=1` to avoid production log noise.
 6.  Documented the VM LDAP validation test (real user + service group user, and email routing behavior).
 
-## VM rollout validation (what I tested and confirmed)
+### VM rollout validation (what I tested and confirmed)
 
 I verified end‑to‑end behavior on the VM after fixing the Apache proxy path:
 
@@ -528,11 +487,11 @@ I verified end‑to‑end behavior on the VM after fixing the Apache proxy path:
 
 If all three happen, the LDAP→app→email flow is working as intended.
 
-# Possible errors and fixes (VM LDAP rollout)
+## Possible errors and fixes (VM LDAP rollout)
 
 This section captures the real errors I hit during the VM rollout and the fixes that worked. It is meant as a troubleshooting reference.
 
-## 1) Apache won’t restart after LDAP change
+### 1) Apache won’t restart after LDAP change
 
 **Symptom**
 
@@ -554,7 +513,7 @@ AuthLDAPURL "ldaps://ldapserv1.biochem.mpg.de:636/dc=biochem,dc=mpg,dc=de?uid?su
 
 If the multi‑server line fails, I keep one server and fall back manually if needed.
 
-## 2) `LDAPTLS_CACERTDIR` breaks Apache
+### 2) `LDAPTLS_CACERTDIR` breaks Apache
 
 **Symptom**
 
@@ -570,7 +529,7 @@ Invalid command 'LDAPTLS_CACERTDIR'
 
 Remove it from Apache. If I need TLS trust, I configure it in `/etc/ldap/ldap.conf` instead.
 
-## 3) LDAP login shows 500 Internal Server Error
+### 3) LDAP login shows 500 Internal Server Error
 
 **Symptom**
 
@@ -621,7 +580,7 @@ Then restart Apache:
 sudo systemctl restart apache2
 ```
 
-## 4) Shiny app runs locally but crashes via Apache
+### 4) Shiny app runs locally but crashes via Apache
 
 **Symptom**
 
@@ -636,7 +595,7 @@ LDAP authentication failure in Apache (not an app crash).
 
 Check Apache log for `authnz_ldap` errors and fix TLS trust as above.
 
-## 5) LDAP works, but `/sequencing-app/` returns 404
+### 5) LDAP works, but `/sequencing-app/` returns 404
 
 **Symptom**
 
@@ -664,7 +623,7 @@ sudo apache2ctl -t
 sudo systemctl restart apache2
 ```
 
-## 6) Debug logging too noisy (Apache or Shiny)
+### 6) Debug logging too noisy (Apache or Shiny)
 
 **Symptom**
 
@@ -704,7 +663,7 @@ LDAP_DEBUG=1
 
 and restart the service again.
 
-## Comprehensive error‑checking checklist (VM LDAP + Shiny)
+### Comprehensive error‑checking checklist (VM LDAP + Shiny)
 
 When something breaks, I run through this list in order:
 
@@ -788,7 +747,7 @@ sudo systemctl restart apache2
 sudo systemctl restart shiny-server
 ```
 
-# Changes on 06.02.2026
+## Changes on 06.02.2026
 
 1.  Added LDAP login flow in the Shiny app (auto‑login via `X-Remote-User`, local dev simulation, and optional attribute lookup).
 2.  LDAP attribute lookup now works with anonymous bind; uses `ldapsearch` fallback for older `ldapr` versions.
@@ -800,7 +759,7 @@ sudo systemctl restart shiny-server
 8.  Updated Apache LDAP configuration template and added local dev testing instructions + env var cleanup.
 9.  I do **not** track SQLite DB files in git because they change constantly, are environment‑specific (local vs VM), and can contain sensitive data. I ignore `*.db`/`*.sqlite` and keep only the schema/seed files in git.
 
-# Changes on 14.11.2026
+## Changes on 14.11.2026
 
 1.  I would Like you to show me where the admin email address can be changed, if I want to have a different user as admin. 1.1 Please show me the parts of the script where this can be changed.
 
@@ -897,7 +856,7 @@ When working on the server, the best place to look for problems are the log file
 
 there is an app for a bi-weekly automaic backup. The function is for now commented out, so not working.
 
-## modify registration page
+### modify registration page
 
 ```{bash}
 sqlite3 sequencing_projects.db
@@ -944,10 +903,10 @@ Some of the research groups have multiple cost centers.
 When a user registers, he must select a research group. The user then gets assigned a cost center based on the table of budget holders. If (and this applies only for some of the budget holders), this specific research group has multiple cost centers, it gets assigned the first one found by the app. BUT, manually the user still can change this in the app when applying for a project.
 :::
 
-## control for budegt holder info in the DB
+### control for budegt holder info in the DB
 
 ```{r}
-#| eval: true
+#| eval: false
 con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
 budget_holders <- dbGetQuery(con, "SELECT * FROM budget_holders")
 # Print the data
@@ -957,9 +916,9 @@ dbGetQuery(con, "SELECT * FROM users")
 on.exit(dbDisconnect(con))
 ```
 
-## Budget holders can be read from an Excel sheet
+### Budget holders can be read from an Excel sheet
 
-# SSL Certificate (for HTTPS)
+## SSL Certificate (for HTTPS)
 
 the new setting of the certificates. I have three files.
 
@@ -986,7 +945,7 @@ sudo ln -s /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_N
 
 ```
 
-# LDAP
+## LDAP
 
 The app uses Apache LDAP authentication in front of Shiny. The Apache config template is in `01-main.conf`.
 
@@ -1039,7 +998,7 @@ sudo systemctl restart apache2
 sudo systemctl restart shiny-server
 ```
 
-## Admin access in LDAP mode (VM)
+### Admin access in LDAP mode (VM)
 
 When `AUTH_MODE=ldap` is enabled, the local login form is disabled. To get admin access, I mark the **LDAP user** as admin in the SQLite database.
 
@@ -1075,7 +1034,7 @@ sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
 "SELECT username, is_admin FROM users WHERE username IN ('yeroslaviz','soyer');"
 ```
 
-## Switch between LDAP and local modes (VM)
+### Switch between LDAP and local modes (VM)
 
 I switch auth modes by changing the `AUTH_MODE` environment variable for the `shiny-server` service and restarting it.
 
@@ -1110,7 +1069,7 @@ sudo systemctl show shiny-server --property=Environment
 
 If I switch back to LDAP, I also remove any dev‑only variables like `DEV_REMOTE_USER`.
 
-## Local dev testing (LDAP mode)
+### Local dev testing (LDAP mode)
 
 To test LDAP integration on your local machine without affecting production, run the app in dev mode and simulate the authenticated user. If LDAP attribute lookup is needed, provide a bind DN/password (personal credentials are OK for **local testing only**).
 
@@ -1150,7 +1109,7 @@ Sys.unsetenv(c(
 ))
 ```
 
-## How I run the app locally (my notes)
+### How I run the app locally (my notes)
 
 When I want the **normal local login**, I run:
 
@@ -1191,7 +1150,7 @@ Sys.unsetenv(c(
 **Dev badge:**
 In dev mode, I see a small badge in the app header that shows `DEV · LDAP` or `DEV · LOCAL`, so I always know which mode I’m running.
 
-## Budget holder auto-assignment (first login)
+### Budget holder auto-assignment (first login)
 
 On first LDAP login, the app attempts to map the user to a budget holder based on the LDAP `ou` value.\
 If the `ou` contains a group key in parentheses (e.g., `(... Cox)`), the app matches that key against `budget_holders` and stores the **full PI name** (e.g., `Cox Juergen`) in `users.research_group`.
@@ -1199,11 +1158,11 @@ If the `ou` contains a group key in parentheses (e.g., `(... Cox)`), the app mat
 When a new project is created, this `research_group` value is used to auto‑select the budget holder (and thus the cost center).\
 If multiple cost centers exist for the same PI, the first match is selected by default and can be adjusted during project creation.
 
-# Obsolete / now wrong (kept for reference)
+## Obsolete / now wrong (kept for reference)
 
 These sections are retained to understand the history but should not be followed anymore.
 
-## Legacy environment variable location (no longer used)
+### Legacy environment variable location (no longer used)
 
 ```{bash}
 
@@ -1214,7 +1173,7 @@ LC_ALL=en_US.UTF-8
 
 ```
 
-## Legacy folder layout (/var/shiny-server)
+### Legacy folder layout (/var/shiny-server)
 
 ```
 /var/shiny-server/
@@ -1227,7 +1186,7 @@ LC_ALL=en_US.UTF-8
   │ └── minerva.png
 ```
 
-## Legacy install steps (nginx-based, superseded by Apache setup)
+### Legacy install steps (nginx-based, superseded by Apache setup)
 
 ```{bash}
 
@@ -1252,7 +1211,7 @@ sudo gdebi shiny-server-1.5.23.1030-amd64.deb
 
 ```
 
-## Legacy Apache config (old ProxyPass / path)
+### Legacy Apache config (old ProxyPass / path)
 
 ```{bash}
 <VirtualHost *:80>
@@ -1300,11 +1259,11 @@ sudo gdebi shiny-server-1.5.23.1030-amd64.deb
 </VirtualHost>
 ```
 
-## Legacy deployment script name
+### Legacy deployment script name
 
 The old notes referenced `deploy_shiny_server.sh`. This has been replaced by `deploy.sh` in the repo root.
 
-## Legacy tree output (old VM layout example)
+### Legacy tree output (old VM layout example)
 
 ```
 $ tree -L 1
@@ -1316,7 +1275,7 @@ $ tree -L 1
     └── deploy_shiny_server.sh
 ```
 
-## Legacy git pull via HTTPS + PAT (no longer used)
+### Legacy git pull via HTTPS + PAT (no longer used)
 
 ```{bash}
  git pull origin main
@@ -1325,6 +1284,6 @@ $ tree -L 1
  ...
 ```
 
-## Legacy note: dedicated user (superseded)
+### Legacy note: dedicated user (superseded)
 
 As we're planning to use the LDAP, I'm not sure, this is necessary. I need a method to add specific users as admin.

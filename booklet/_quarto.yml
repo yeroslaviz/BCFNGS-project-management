@@ -1,0 +1,24 @@
+project:
+  type: book
+  output-dir: _site
+
+book:
+  title: "NGS Sequencing App Ops Booklet"
+  subtitle: "Shiny + LDAP + VM rollout"
+  author: "Assa Yeroslaviz"
+  chapters:
+    - index.qmd
+    - chapters/server-preparations.qmd
+    - part: "Operational Notes"
+      chapters:
+        - chapters/ldap-setup-summary-2026-02-06.qmd
+        - chapters/vm-rollout-summary-2026-02-09.qmd
+        - chapters/vm-troubleshooting-guide.qmd
+        - chapters/ubuntu-bare-server-setup-howto.qmd
+
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: true

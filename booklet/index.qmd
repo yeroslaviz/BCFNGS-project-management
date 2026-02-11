@@ -1,0 +1,24 @@
+---
+title: "Operations Booklet"
+---
+
+This booklet collects all operational notes for the sequencing Shiny app, including VM rollout, LDAP, troubleshooting, and bare‑metal setup.
+
+## How to render
+
+Render the entire booklet (all pages):
+
+```bash
+python3 booklet/update_book_sources.py
+quarto render booklet/
+```
+
+## Sources
+
+The book chapters are generated from these source files:
+
+- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/Server_preparations.qmd`
+- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/notes/ldap-setup-summary-2026-02-06.md`
+- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/notes/vm-rollout-summary-2026-02-09.md`
+- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/notes/vm-troubleshooting-guide.md`
+- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/notes/ubuntu-bare-server-setup-howto.md`

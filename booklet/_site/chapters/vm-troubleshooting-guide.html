@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>vm-troubleshooting-guide</title>
+<title>NGS Sequencing App Ops Booklet - 5&nbsp; VM Troubleshooting Guide</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -23,41 +23,195 @@ ul.task-list li input[type="checkbox"] {
 </style>
 
 
-<script src="vm-troubleshooting-guide_files/libs/clipboard/clipboard.min.js"></script>
-<script src="vm-troubleshooting-guide_files/libs/quarto-html/quarto.js"></script>
-<script src="vm-troubleshooting-guide_files/libs/quarto-html/popper.min.js"></script>
-<script src="vm-troubleshooting-guide_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="vm-troubleshooting-guide_files/libs/quarto-html/anchor.min.js"></script>
-<link href="vm-troubleshooting-guide_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="vm-troubleshooting-guide_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="vm-troubleshooting-guide_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="vm-troubleshooting-guide_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="vm-troubleshooting-guide_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/ubuntu-bare-server-setup-howto.html" rel="next">
+<link href="../chapters/vm-rollout-summary-2026-02-09.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
 
 
 </head>
 
-<body class="fullcontent">
+<body class="nav-sidebar floating">
 
-<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/ldap-setup-summary-2026-02-06.html">Operational Notes</a></li><li class="breadcrumb-item"><a href="../chapters/vm-troubleshooting-guide.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">VM Troubleshooting Guide</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">NGS Sequencing App Ops Booklet</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Operations Booklet</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/server-preparations.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Server Preparations</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text">Operational Notes</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ldap-setup-summary-2026-02-06.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">LDAP Setup Summary (2026-02-06)</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/vm-rollout-summary-2026-02-09.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">VM Rollout Summary (2026-02-09)</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/vm-troubleshooting-guide.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">VM Troubleshooting Guide</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ubuntu-bare-server-setup-howto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Ubuntu Bare Server Setup HOWTO</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#vm-troubleshooting-guide-github-ldap-apache-shiny" id="toc-vm-troubleshooting-guide-github-ldap-apache-shiny" class="nav-link active" data-scroll-target="#vm-troubleshooting-guide-github-ldap-apache-shiny"><span class="header-section-number">5.1</span> VM Troubleshooting Guide (GitHub, LDAP, Apache, Shiny)</a>
+  <ul class="collapse">
+  <li><a href="#ai-session-restart-quick-resume" id="toc-ai-session-restart-quick-resume" class="nav-link" data-scroll-target="#ai-session-restart-quick-resume"><span class="header-section-number">5.1.1</span> AI session restart (quick resume)</a></li>
+  <li><a href="#a-git-github-sync-problems" id="toc-a-git-github-sync-problems" class="nav-link" data-scroll-target="#a-git-github-sync-problems"><span class="header-section-number">5.1.2</span> A) Git / GitHub sync problems</a></li>
+  <li><a href="#b-apache-ldap-authentication-issues" id="toc-b-apache-ldap-authentication-issues" class="nav-link" data-scroll-target="#b-apache-ldap-authentication-issues"><span class="header-section-number">5.1.3</span> B) Apache / LDAP authentication issues</a></li>
+  <li><a href="#c-admin-access-in-ldap-mode" id="toc-c-admin-access-in-ldap-mode" class="nav-link" data-scroll-target="#c-admin-access-in-ldap-mode"><span class="header-section-number">5.1.4</span> C) Admin access in LDAP mode</a></li>
+  <li><a href="#d-sqlite-quick-reference-inspect-db-structure" id="toc-d-sqlite-quick-reference-inspect-db-structure" class="nav-link" data-scroll-target="#d-sqlite-quick-reference-inspect-db-structure"><span class="header-section-number">5.1.5</span> D) SQLite quick reference (inspect DB structure)</a></li>
+  <li><a href="#e-switching-between-ldap-and-local-auth" id="toc-e-switching-between-ldap-and-local-auth" class="nav-link" data-scroll-target="#e-switching-between-ldap-and-local-auth"><span class="header-section-number">5.1.6</span> E) Switching between LDAP and local auth</a></li>
+  <li><a href="#f-apache-proxy-issues" id="toc-f-apache-proxy-issues" class="nav-link" data-scroll-target="#f-apache-proxy-issues"><span class="header-section-number">5.1.7</span> F) Apache proxy issues</a></li>
+  <li><a href="#g-shiny-app-issues" id="toc-g-shiny-app-issues" class="nav-link" data-scroll-target="#g-shiny-app-issues"><span class="header-section-number">5.1.8</span> G) Shiny app issues</a></li>
+  <li><a href="#h-deployment-issues" id="toc-h-deployment-issues" class="nav-link" data-scroll-target="#h-deployment-issues"><span class="header-section-number">5.1.9</span> H) Deployment issues</a></li>
+  <li><a href="#quick-validation-commands" id="toc-quick-validation-commands" class="nav-link" data-scroll-target="#quick-validation-commands"><span class="header-section-number">5.1.10</span> Quick validation commands</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">5.1.11</span> References</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
 <main class="content" id="quarto-document-content">
 
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/ldap-setup-summary-2026-02-06.html">Operational Notes</a></li><li class="breadcrumb-item"><a href="../chapters/vm-troubleshooting-guide.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">VM Troubleshooting Guide</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">VM Troubleshooting Guide</span></h1>
+</div>
 
 
-<section id="vm-troubleshooting-guide-github-ldap-apache-shiny" class="level1">
-<h1>VM Troubleshooting Guide (GitHub, LDAP, Apache, Shiny)</h1>
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+<section id="vm-troubleshooting-guide-github-ldap-apache-shiny" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="vm-troubleshooting-guide-github-ldap-apache-shiny"><span class="header-section-number">5.1</span> VM Troubleshooting Guide (GitHub, LDAP, Apache, Shiny)</h2>
 <p>This checklist covers the most common issues we hit and how to fix them quickly.</p>
-<section id="ai-session-restart-quick-resume" class="level2">
-<h2 class="anchored" data-anchor-id="ai-session-restart-quick-resume">AI session restart (quick resume)</h2>
+<section id="ai-session-restart-quick-resume" class="level3" data-number="5.1.1">
+<h3 data-number="5.1.1" class="anchored" data-anchor-id="ai-session-restart-quick-resume"><span class="header-section-number">5.1.1</span> AI session restart (quick resume)</h3>
 <p>If I need to resume work in a new AI session, I point it to:</p>
 <ol type="1">
 <li><code>notes/vm-rollout-summary-2026-02-09.md</code> for the current state and validation.</li>
 <li><code>notes/ubuntu-bare-server-setup-howto.md</code> for the full setup flow.</li>
 </ol>
 </section>
-<section id="a-git-github-sync-problems" class="level2">
-<h2 class="anchored" data-anchor-id="a-git-github-sync-problems">A) Git / GitHub sync problems</h2>
+<section id="a-git-github-sync-problems" class="level3" data-number="5.1.2">
+<h3 data-number="5.1.2" class="anchored" data-anchor-id="a-git-github-sync-problems"><span class="header-section-number">5.1.2</span> A) Git / GitHub sync problems</h3>
 <p><strong>1) Permission denied (publickey)</strong></p>
 <p>Symptoms:</p>
 <ul>
@@ -105,8 +259,8 @@ git checkout --theirs &lt;file&gt;</code></pre>
 <li>Ignore, delete, or add to <code>.gitignore</code>.</li>
 </ul>
 </section>
-<section id="b-apache-ldap-authentication-issues" class="level2">
-<h2 class="anchored" data-anchor-id="b-apache-ldap-authentication-issues">B) Apache / LDAP authentication issues</h2>
+<section id="b-apache-ldap-authentication-issues" class="level3" data-number="5.1.3">
+<h3 data-number="5.1.3" class="anchored" data-anchor-id="b-apache-ldap-authentication-issues"><span class="header-section-number">5.1.3</span> B) Apache / LDAP authentication issues</h3>
 <p><strong>1) Apache won’t restart after LDAP change</strong></p>
 <p>Symptoms:</p>
 <pre><code>AH00526: Syntax error ... Bad LDAP URL while parsing.</code></pre>
@@ -139,8 +293,8 @@ git checkout --theirs &lt;file&gt;</code></pre>
 <p>Fix:</p>
 <p>Move it to a global Apache config or comment it out (if not needed).</p>
 </section>
-<section id="c-admin-access-in-ldap-mode" class="level2">
-<h2 class="anchored" data-anchor-id="c-admin-access-in-ldap-mode">C) Admin access in LDAP mode</h2>
+<section id="c-admin-access-in-ldap-mode" class="level3" data-number="5.1.4">
+<h3 data-number="5.1.4" class="anchored" data-anchor-id="c-admin-access-in-ldap-mode"><span class="header-section-number">5.1.4</span> C) Admin access in LDAP mode</h3>
 <p><strong>Problem</strong></p>
 <p>Local login is disabled when <code>AUTH_MODE=ldap</code>, so the built‑in <code>admin</code> user cannot log in.</p>
 <p><strong>Fix</strong></p>
@@ -148,15 +302,35 @@ git checkout --theirs &lt;file&gt;</code></pre>
 <p><strong>Option 1: Pre‑create the user as admin (before first login)</strong></p>
 <pre><code>sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
 "INSERT OR IGNORE INTO users (username, is_admin) VALUES ('soyer', 1);"</code></pre>
+<p>If the user row does <strong>not</strong> insert, the table likely has <code>NOT NULL</code> columns (e.g., <code>password</code>, <code>email</code>). In that case use:</p>
+<pre><code>sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"INSERT OR IGNORE INTO users (username, password, email, is_admin) VALUES ('soyer', 'ldap-only', 'soyer@biochem.mpg.de', 1);"</code></pre>
 <p><strong>Option 2: Promote after first login</strong></p>
 <pre><code>sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
 "UPDATE users SET is_admin=1 WHERE username='soyer';"</code></pre>
+<p>If the user already exists and you want to update email at the same time, use:</p>
+<pre><code>sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"UPDATE users SET is_admin=1, email='soyer@biochem.mpg.de' WHERE username='soyer';"</code></pre>
 <p><strong>Verify</strong></p>
 <pre><code>sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
 "SELECT username, is_admin FROM users WHERE username IN ('yeroslaviz','soyer');"</code></pre>
 </section>
-<section id="d-switching-between-ldap-and-local-auth" class="level2">
-<h2 class="anchored" data-anchor-id="d-switching-between-ldap-and-local-auth">D) Switching between LDAP and local auth</h2>
+<section id="d-sqlite-quick-reference-inspect-db-structure" class="level3" data-number="5.1.5">
+<h3 data-number="5.1.5" class="anchored" data-anchor-id="d-sqlite-quick-reference-inspect-db-structure"><span class="header-section-number">5.1.5</span> D) SQLite quick reference (inspect DB structure)</h3>
+<p><strong>Show all tables</strong></p>
+<pre><code>sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db ".tables"</code></pre>
+<p><strong>Show table schema</strong></p>
+<pre><code>sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"PRAGMA table_info(users);"</code></pre>
+<p><strong>Show full CREATE statement</strong></p>
+<pre><code>sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+".schema users"</code></pre>
+<p><strong>Preview rows</strong></p>
+<pre><code>sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"SELECT username, email, is_admin FROM users LIMIT 20;"</code></pre>
+</section>
+<section id="e-switching-between-ldap-and-local-auth" class="level3" data-number="5.1.6">
+<h3 data-number="5.1.6" class="anchored" data-anchor-id="e-switching-between-ldap-and-local-auth"><span class="header-section-number">5.1.6</span> E) Switching between LDAP and local auth</h3>
 <p><strong>LDAP mode</strong></p>
 <pre><code>sudo systemctl edit shiny-server</code></pre>
 <pre><code>[Service]
@@ -170,8 +344,8 @@ Environment=AUTH_MODE=local</code></pre>
 <pre><code>sudo systemctl restart shiny-server
 sudo systemctl show shiny-server --property=Environment</code></pre>
 </section>
-<section id="e-apache-proxy-issues" class="level2">
-<h2 class="anchored" data-anchor-id="e-apache-proxy-issues">E) Apache proxy issues</h2>
+<section id="f-apache-proxy-issues" class="level3" data-number="5.1.7">
+<h3 data-number="5.1.7" class="anchored" data-anchor-id="f-apache-proxy-issues"><span class="header-section-number">5.1.7</span> F) Apache proxy issues</h3>
 <p><strong>1) <code>/sequencing-app/</code> returns 404</strong></p>
 <p>Symptoms:</p>
 <ul>
@@ -198,8 +372,8 @@ sudo systemctl restart apache2</code></pre>
 <p>Fix:</p>
 <p>Use <code>/sequencing-app/</code> as the app path and update redirects accordingly.</p>
 </section>
-<section id="f-shiny-app-issues" class="level2">
-<h2 class="anchored" data-anchor-id="f-shiny-app-issues">F) Shiny app issues</h2>
+<section id="g-shiny-app-issues" class="level3" data-number="5.1.8">
+<h3 data-number="5.1.8" class="anchored" data-anchor-id="g-shiny-app-issues"><span class="header-section-number">5.1.8</span> G) Shiny app issues</h3>
 <p><strong>1) App works locally but fails via Apache</strong></p>
 <p>Check:</p>
 <ul>
@@ -220,8 +394,8 @@ sudo systemctl restart apache2</code></pre>
 <p>Restart after changes:</p>
 <pre><code>sudo systemctl restart shiny-server</code></pre>
 </section>
-<section id="g-deployment-issues" class="level2">
-<h2 class="anchored" data-anchor-id="g-deployment-issues">G) Deployment issues</h2>
+<section id="h-deployment-issues" class="level3" data-number="5.1.9">
+<h3 data-number="5.1.9" class="anchored" data-anchor-id="h-deployment-issues"><span class="header-section-number">5.1.9</span> H) Deployment issues</h3>
 <p><strong>1) Deploy script ran but app unchanged</strong></p>
 <p>Fix:</p>
 <ul>
@@ -235,8 +409,8 @@ sudo systemctl restart apache2</code></pre>
 <li>Keep <code>*.db</code> ignored in git.</li>
 </ul>
 </section>
-<section id="quick-validation-commands" class="level2">
-<h2 class="anchored" data-anchor-id="quick-validation-commands">Quick validation commands</h2>
+<section id="quick-validation-commands" class="level3" data-number="5.1.10">
+<h3 data-number="5.1.10" class="anchored" data-anchor-id="quick-validation-commands"><span class="header-section-number">5.1.10</span> Quick validation commands</h3>
 <pre><code># Apache
 sudo apache2ctl -t
 sudo apache2ctl -S
@@ -251,17 +425,18 @@ curl -Ik -u USER https://ngs-testing-vm.biochem.mpg.de/sequencing-app/
 # App (backend)
 curl -I http://localhost:3838/sequencing-app/</code></pre>
 </section>
-<section id="references" class="level2">
-<h2 class="anchored" data-anchor-id="references">References</h2>
+<section id="references" class="level3" data-number="5.1.11">
+<h3 data-number="5.1.11" class="anchored" data-anchor-id="references"><span class="header-section-number">5.1.11</span> References</h3>
 <ul>
 <li><code>notes/ubuntu-bare-server-setup-howto.md</code></li>
 <li><code>notes/vm-rollout-summary-2026-02-09.md</code></li>
 </ul>
+
+
 </section>
 </section>
 
-</main>
-<!-- /main column -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
@@ -606,6 +781,18 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   }
 });
 </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/vm-rollout-summary-2026-02-09.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">VM Rollout Summary (2026-02-09)</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/ubuntu-bare-server-setup-howto.html" class="pagination-link">
+        <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Ubuntu Bare Server Setup HOWTO</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
 </div> <!-- /content -->
 
 

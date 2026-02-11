@@ -1,15 +1,21 @@
-# VM Troubleshooting Guide (GitHub, LDAP, Apache, Shiny)
+---
+title: "VM Troubleshooting Guide"
+execute:
+  eval: false
+---
+
+## VM Troubleshooting Guide (GitHub, LDAP, Apache, Shiny)
 
 This checklist covers the most common issues we hit and how to fix them quickly.
 
-## AI session restart (quick resume)
+### AI session restart (quick resume)
 
 If I need to resume work in a new AI session, I point it to:
 
 1. `notes/vm-rollout-summary-2026-02-09.md` for the current state and validation.
 2. `notes/ubuntu-bare-server-setup-howto.md` for the full setup flow.
 
-## A) Git / GitHub sync problems
+### A) Git / GitHub sync problems
 
 **1) Permission denied (publickey)**
 
@@ -91,7 +97,7 @@ Fix:
 
 - Ignore, delete, or add to `.gitignore`.
 
-## B) Apache / LDAP authentication issues
+### B) Apache / LDAP authentication issues
 
 **1) Apache won’t restart after LDAP change**
 
@@ -154,7 +160,7 @@ Fix:
 
 Move it to a global Apache config or comment it out (if not needed).
 
-## C) Admin access in LDAP mode
+### C) Admin access in LDAP mode
 
 **Problem**
 
@@ -199,7 +205,7 @@ sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
 "SELECT username, is_admin FROM users WHERE username IN ('yeroslaviz','soyer');"
 ```
 
-## D) SQLite quick reference (inspect DB structure)
+### D) SQLite quick reference (inspect DB structure)
 
 **Show all tables**
 
@@ -228,7 +234,7 @@ sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
 "SELECT username, email, is_admin FROM users LIMIT 20;"
 ```
 
-## E) Switching between LDAP and local auth
+### E) Switching between LDAP and local auth
 
 **LDAP mode**
 
@@ -257,7 +263,7 @@ sudo systemctl restart shiny-server
 sudo systemctl show shiny-server --property=Environment
 ```
 
-## F) Apache proxy issues
+### F) Apache proxy issues
 
 **1) `/sequencing-app/` returns 404**
 
@@ -298,7 +304,7 @@ Fix:
 
 Use `/sequencing-app/` as the app path and update redirects accordingly.
 
-## G) Shiny app issues
+### G) Shiny app issues
 
 **1) App works locally but fails via Apache**
 
@@ -332,7 +338,7 @@ Restart after changes:
 sudo systemctl restart shiny-server
 ```
 
-## H) Deployment issues
+### H) Deployment issues
 
 **1) Deploy script ran but app unchanged**
 
@@ -348,7 +354,7 @@ Fix:
 - Ensure `deploy.sh` excludes `sequencing_projects.db`.
 - Keep `*.db` ignored in git.
 
-## Quick validation commands
+### Quick validation commands
 
 ```
 # Apache
@@ -366,7 +372,7 @@ curl -Ik -u USER https://ngs-testing-vm.biochem.mpg.de/sequencing-app/
 curl -I http://localhost:3838/sequencing-app/
 ```
 
-## References
+### References
 
 - `notes/ubuntu-bare-server-setup-howto.md`
 - `notes/vm-rollout-summary-2026-02-09.md`
