@@ -324,7 +324,7 @@ ui <- fluidPage(
 
 # Server logic
 server <- function(input, output, session) {
-  if (Sys.getenv("LDAP_DEBUG", "") == "1" && Sys.getenv("APP_ENV", "") == "dev") {
+  if (Sys.getenv("LDAP_DEBUG", "") == "1") {
     session$onFlushed(function() {
       req <- session$request
       keys <- names(req)
@@ -461,7 +461,9 @@ server <- function(input, output, session) {
 
   app_env_is_dev <- tolower(Sys.getenv("APP_ENV", "")) == "dev"
   dev_mode <- app_env_is_dev || to_bool(Sys.getenv("SHOW_DEV_TOOLS", ""))
-  allow_untrusted_auth_fallback <- app_env_is_dev || to_bool(Sys.getenv("ALLOW_UNTRUSTED_AUTH_FALLBACK", ""))
+  # Security: untrusted URL/cookie fallback must be explicitly enabled.
+  # Never auto-enable it just because APP_ENV=dev.
+  allow_untrusted_auth_fallback <- to_bool(Sys.getenv("ALLOW_UNTRUSTED_AUTH_FALLBACK", ""))
 
   ldap_warned <- reactiveVal(FALSE)
   ldap_bind_warned <- reactiveVal(FALSE)
@@ -504,28 +506,21 @@ server <- function(input, output, session) {
       return(header_user)
     }
 
-    # Security default: never trust URL/cookie identity in production.
-    # This fallback is allowed only in explicit dev setups.
-    if (!allow_untrusted_auth_fallback) return(NULL)
-
-    # Fallback: read auth_user from query string.
-    # In production this should be enabled only when Apache canonicalizes auth_user
-    # to the authenticated REMOTE_USER.
-    qs <- session$clientData$url_search
-    if (!is.null(qs) && qs != "") {
-      parsed <- shiny::parseQueryString(qs)
-      if (!is.null(parsed$auth_user) && parsed$auth_user != "") {
-        # If multiple auth_user values exist, take the last (Apache rewrite appends)
-        auth_vals <- parsed$auth_user
-        if (length(auth_vals) > 1) {
-          auth_vals <- auth_vals[length(auth_vals)]
+    # Optional emergency fallback for controlled debugging only.
+    # This is intentionally disabled unless ALLOW_UNTRUSTED_AUTH_FALLBACK=true.
+    if (allow_untrusted_auth_fallback) {
+      qs <- session$clientData$url_search
+      if (!is.null(qs) && qs != "") {
+        parsed <- shiny::parseQueryString(qs)
+        if (!is.null(parsed$auth_user) && parsed$auth_user != "") {
+          auth_vals <- parsed$auth_user
+          if (length(auth_vals) > 1) {
+            auth_vals <- auth_vals[length(auth_vals)]
+          }
+          if (!is.null(auth_vals) && auth_vals != "") return(auth_vals)
         }
-        if (!is.null(auth_vals) && auth_vals != "") return(auth_vals)
       }
-    }
 
-    # Dev-only legacy cookie fallback
-    if (app_env_is_dev) {
       cookie_header <- session$request$HTTP_COOKIE
       if (!is.null(cookie_header) && cookie_header != "") {
         cookies <- unlist(strsplit(cookie_header, ";"))
@@ -540,7 +535,7 @@ server <- function(input, output, session) {
       }
     }
 
-    if (app_env_is_dev) {
+    if (dev_mode) {
       dev_user <- dev_auth_user()
       if (!is.null(dev_user) && dev_user != "") return(dev_user)
     }
@@ -990,7 +985,7 @@ server <- function(input, output, session) {
     attrs$phone <- scalar_text(attrs$phone)
     attrs$ou <- scalar_text(attrs$ou)
 
-    if (Sys.getenv("LDAP_DEBUG", "") == "1" && Sys.getenv("APP_ENV", "") == "dev") {
+    if (Sys.getenv("LDAP_DEBUG", "") == "1") {
       cat("LDAP LOGIN ATTRS:",
           "user=", username,
           "email=", attrs$email %||% "<missing>",
@@ -1404,7 +1399,7 @@ server <- function(input, output, session) {
         )
         ldap_warned(TRUE)
       }
-      if (Sys.getenv("LDAP_DEBUG", "") == "1" && Sys.getenv("APP_ENV", "") == "dev") {
+      if (Sys.getenv("LDAP_DEBUG", "") == "1") {
         req <- session$request
         header_keys <- names(req)
         header_keys <- header_keys[grepl("^HTTP_|REMOTE_USER$", header_keys)]
