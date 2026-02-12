@@ -348,6 +348,15 @@ server <- function(input, output, session) {
           cat("  ", k, "=", ifelse(is.null(val) || val == "", "<empty>", val), "\n", file = stderr())
         }
       }
+      cat(
+        "LDAP DEBUG: resolved auth candidates",
+        "X_REMOTE_USER=", get_req_header(req, "x-remote-user") %||% "<missing>",
+        "REMOTE_USER=", scalar_text(req$REMOTE_USER) %||% "<missing>",
+        "X_FORWARDED_USER=", get_req_header(req, "x-forwarded-user") %||% "<missing>",
+        "AUTHORIZATION=", ifelse(is.null(get_req_header(req, "authorization")), "<missing>", "<present>"),
+        "\n",
+        file = stderr()
+      )
       flush.console()
     }, once = TRUE)
   }
@@ -499,8 +508,49 @@ server <- function(input, output, session) {
     x
   }
 
+  get_req_header <- function(req, header_name) {
+    if (is.null(req) || is.null(header_name) || header_name == "") return(NULL)
+
+    key_upper <- toupper(gsub("-", "_", header_name))
+    env_key <- paste0("HTTP_", key_upper)
+
+    candidates <- c(req[[env_key]], req[[key_upper]])
+
+    hdrs <- req$HEADERS
+    if (is.null(hdrs) || !is.list(hdrs)) hdrs <- req$headers
+    if (is.list(hdrs)) {
+      candidates <- c(
+        candidates,
+        hdrs[[tolower(header_name)]],
+        hdrs[[header_name]],
+        hdrs[[key_upper]]
+      )
+    }
+
+    for (v in candidates) {
+      vv <- scalar_text(v)
+      if (!is.null(vv)) return(vv)
+    }
+    NULL
+  }
+
+  get_proxy_authenticated_user <- function(session) {
+    req <- session$request
+    candidates <- c(
+      get_req_header(req, "x-remote-user"),
+      get_req_header(req, "remote-user"),
+      scalar_text(req$REMOTE_USER),
+      get_req_header(req, "x-forwarded-user")
+    )
+    candidates <- candidates[!is.na(candidates) & candidates != ""]
+    if (length(candidates) == 0) return(NULL)
+    candidates[1]
+  }
+
   parse_basic_auth_username <- function(auth_header) {
-    if (is.null(auth_header) || auth_header == "") return(NULL)
+    auth_header <- scalar_text(auth_header)
+    if (is.null(auth_header)) return(NULL)
+    if (!requireNamespace("base64enc", quietly = TRUE)) return(NULL)
 
     m <- regexec("^[Bb]asic[[:space:]]+(.+)$", auth_header)
     mm <- regmatches(auth_header, m)
@@ -523,14 +573,9 @@ server <- function(input, output, session) {
   get_auth_username <- function(session) {
     if (get_auth_mode() != "ldap") return(NULL)
 
-    basic_user <- parse_basic_auth_username(session$request$HTTP_AUTHORIZATION)
-    candidates <- c(
-      session$request$HTTP_X_REMOTE_USER,
-      session$request$HTTP_REMOTE_USER,
-      session$request$REMOTE_USER,
-      session$request$HTTP_X_FORWARDED_USER,
-      basic_user
-    )
+    req <- session$request
+    basic_user <- parse_basic_auth_username(get_req_header(req, "authorization"))
+    candidates <- c(get_proxy_authenticated_user(session), basic_user)
     candidates <- candidates[!is.na(candidates) & candidates != ""]
     header_user <- if (length(candidates) > 0) candidates[1] else NULL
 
@@ -1404,7 +1449,7 @@ server <- function(input, output, session) {
 
   observe({
     if (get_auth_mode() == "ldap") {
-      header_user <- session$request$HTTP_X_REMOTE_USER
+      header_user <- get_proxy_authenticated_user(session)
       if (user$logged_in) {
         shinyjs::hide("login_screen", anim = FALSE)
       } else if (!is.null(header_user) && header_user != "" && !ldap_login_blocked()) {
@@ -1445,6 +1490,15 @@ server <- function(input, output, session) {
             cat("  ", k, "=", ifelse(is.null(val) || val == "", "<empty>", val), "\n", file = stderr())
           }
         }
+        cat(
+          "LDAP DEBUG: resolved auth candidates when missing",
+          "X_REMOTE_USER=", get_req_header(req, "x-remote-user") %||% "<missing>",
+          "REMOTE_USER=", scalar_text(req$REMOTE_USER) %||% "<missing>",
+          "X_FORWARDED_USER=", get_req_header(req, "x-forwarded-user") %||% "<missing>",
+          "AUTHORIZATION=", ifelse(is.null(get_req_header(req, "authorization")), "<missing>", "<present>"),
+          "\n",
+          file = stderr()
+        )
         flush.console()
       }
       return()
@@ -1507,7 +1561,7 @@ server <- function(input, output, session) {
   output$dev_login_ui <- renderUI({
     if (!dev_mode) return(NULL)
     if (get_auth_mode() != "ldap") return(NULL)
-    header_user <- session$request$HTTP_X_REMOTE_USER
+    header_user <- get_proxy_authenticated_user(session)
     if (!is.null(header_user) && header_user != "") return(NULL)
     if (user$logged_in) return(NULL)
 
@@ -1661,7 +1715,7 @@ server <- function(input, output, session) {
     user$is_admin <- FALSE
 
     if (get_auth_mode() == "ldap") {
-      header_user <- session$request$HTTP_X_REMOTE_USER
+      header_user <- get_proxy_authenticated_user(session)
       hide("main_app")
       show("login_screen")
 
