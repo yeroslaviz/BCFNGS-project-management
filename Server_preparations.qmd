@@ -497,6 +497,21 @@ When this is done, it restart the shiny server.
 
 **This script must be run each time the files inside the sequencing-app folder were changed**, but not if other changed were made in the repo.
 
+# Changes on 12.02.2026
+
+1.  Fixed LDAP URL impersonation risk by enforcing canonical `auth_user` handling in Apache: tampered `?auth_user=` values are rewritten to the authenticated LDAP user.
+2.  Fixed redirect-loop behavior in the Apache auth rewrite logic and validated canonical redirect behavior with `curl` (expected `302` to the authenticated user).
+3.  Confirmed and documented required shiny-server environment for LDAP mode:
+    - `AUTH_MODE=ldap`
+    - `TRUST_PROXY_AUTH_USER_QUERY=1`
+4.  Extended `deploy.sh` with post-deploy LDAP smoke tests (canonical redirect, tampered query rewrite, final `200` response) and actionable failure hints.
+5.  Added/merged troubleshooting guidance for LDAP login failures, disconnects, and redirect loops into the VM troubleshooting documentation.
+6.  Improved Projects table readability in the Shiny UI (`sequencing-app/app.R`):
+    - explicit DT column widths
+    - wrapped long cell text
+    - reliable column reflow on tab switch and resize
+    - preserved horizontal scrolling and existing formatting.
+
 # Changes on 11.02.2026
 
 1.  Added a production rollout checklist with the exact commands for pull, backup, deploy, restart, and smoke‑tests.
