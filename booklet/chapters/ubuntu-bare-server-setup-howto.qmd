@@ -1,5 +1,5 @@
 ---
-title: "Ubuntu Bare Server Setup HOWTO"
+title: "Ubuntu Bare Server Setup HOWTO (Shiny + LDAP)"
 execute:
   eval: false
 ---

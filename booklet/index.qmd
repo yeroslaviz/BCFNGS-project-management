@@ -2,7 +2,7 @@
 title: "Operations Booklet"
 ---
 
-This booklet collects all operational notes for the sequencing Shiny app, including VM rollout, LDAP, troubleshooting, and bare‑metal setup.
+This booklet collects operational documentation for the sequencing Shiny app, including VM rollout, LDAP, troubleshooting, and server setup.
 
 ## How to render
 
@@ -13,12 +13,25 @@ python3 booklet/update_book_sources.py
 quarto render booklet/
 ```
 
+The source-sync step automatically includes:
+
+- all root-level `.qmd` files (for example `Server_preparations.qmd`, `Modifying_ngs-vm.qmd`)
+- all Markdown files in `notes/*.md`
+
+## GitHub Pages
+
+This repository includes a GitHub Actions workflow that renders and publishes the booklet to GitHub Pages.
+
+Expected site URL:
+
+- `https://yeroslaviz.github.io/BCFNGS-project-management/`
+
 ## Sources
 
-The book chapters are generated from these source files:
+Generated chapters are written to:
 
-- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/Server_preparations.qmd`
-- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/notes/ldap-setup-summary-2026-02-06.md`
-- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/notes/vm-rollout-summary-2026-02-09.md`
-- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/notes/vm-troubleshooting-guide.md`
-- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/notes/ubuntu-bare-server-setup-howto.md`
+- `booklet/chapters/*.qmd`
+
+Navigation config is generated in:
+
+- `booklet/_quarto.yml`

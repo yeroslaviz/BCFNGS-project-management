@@ -23,7 +23,20 @@ After registration is complete, you can directly login with your MPIB account to
 # Operations docs
 
 - [Git auth on new laptop](README-git-auth-new-laptop.md)
-- [LDAP deploy smoke tests and troubleshooting](README-ldap-deploy-troubleshooting.md)
+- [VM troubleshooting guide (includes LDAP deploy smoke tests)](notes/vm-troubleshooting-guide.md)
+- [Operations booklet landing page (Quarto)](booklet/index.qmd)
+
+## Publish docs on GitHub Pages (Quarto)
+
+The repository now includes a workflow at `.github/workflows/quarto-gh-pages.yml` that builds and publishes the Quarto booklet from:
+
+- all root `.qmd` files
+- all files under `notes/*.md`
+
+To publish:
+
+1. Push to `main`
+2. In GitHub repository settings, set `Pages -> Build and deployment -> Source` to `GitHub Actions`
 
 
 # Changes

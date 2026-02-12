@@ -1,0 +1,327 @@
+---
+title: "Modifying NGS-VM"
+execute:
+  eval: false
+---
+
+## Background
+
+in our NGS-VM we need some intensive modifications. 
+
+We would like to clean it a bit and remove projects we dont need anymore, as well as add new projects. 
+
+More important we would like to be able to add a cost estimation, calculation of the costs per samples. Each time, a project is created, an email with this cost etimation will be sned to the use/supervisor. 
+
+
+The NGS-VM contains a DB created mit PostgreSQL. We have multiple tables in there with dependencies between them. In order for me to be able to add information I need to understand a lot more SQL. 
+
+For that we created a backup VM, called ngs-testing. It is identical to the original VM, just fewer projects, as it is not being updated each time. 
+
+Web page for original VM - [https://ngs-vm.biochem.mpg.de/information.cgi](https://ngs-vm.biochem.mpg.de/information.cgi).
+The back VM can be reached via [https://ngs-testing-vm.biochem.mpg.de/admin.cgi](https://ngs-testing-vm.biochem.mpg.de/admin.cgi)
+
+Both machines can be logged-in directly via ssh
+
+```{bash}
+
+ssh yeroslaviz@ngs-testing-vm.biochem.mpg.de
+
+```
+
+This is a clone of the original machine. The clone was done on 11 March 2025.
+
+
+## The GUI
+
+to see which data base the GUI is accessing, I can call for the apache2' config file under 
+` /etc/apache2/sites-available/auth_ldap.conf`
+
+```
+ LDAPConnectionTimeout 3
+ LDAPTimeout 10
+
+<Directory /www/mpiseq2/web>
+#<Directory /var/www/html/auth-ldap>
+    SSLRequireSSL
+#    AuthName "LDAP Authentication Example"
+    AuthName "LDAP Authentication"
+    AuthType Basic
+    AuthBasicProvider ldap
+    AuthLDAPURL "ldaps://ldapserv1.biochem.mpg.de ldapserv2.biochem.mpg.de ldapserv3.biochem.mpg.de/dc=biochem,dc=mpg,dc=de?uid?sub?(objectClass=posixAccount)"
+    Require valid-user
+ </Directory>
+/etc/apache2/sites-available/auth_ldap.conf (END)
+```
+
+
+Here all the files are listed:
+
+```{bash}
+$ ll /www/mpiseq2/web/
+total 208
+drwxr-xr-x 9 letunic b_mcf  4096 Mar  3 08:57 ./
+drwxr-xr-x 9 letunic b_mcf  4096 Oct  4  2022 ../
+-rwxr-xr-x 1 letunic b_mcf  1368 Oct  4  2022 404.cgi*
+-rwxr-xr-x 1 letunic b_mcf  1434 Oct  4  2022 505.cgi*
+-rwxr-xr-x 1 letunic b_mcf  1139 Oct  4  2022 about.cgi*
+-rwxr-xr-x 1 letunic b_mcf  1862 Oct  4  2022 account.cgi*
+-rwxr-xr-x 1 letunic b_mcf  2839 Oct  4  2022 addProjectFile.cgi*
+drwxr-xr-x 2 letunic b_mcf  4096 Apr 28  2023 admin/
+-rwxr-xr-x 1 letunic b_mcf  7494 Oct  4  2022 admin.cgi*
+drwxr-xr-x 2 letunic b_mcf  4096 Apr 28  2023 ajax/
+-rwxr-xr-x 1 letunic b_mcf  2182 Oct  4  2022 barcodeIDlist.cgi*
+drwxr-xr-x 2 letunic b_mcf  4096 Oct  4  2022 css/
+-rwxr-xr-x 1 letunic b_mcf 10019 Apr 28  2023 dataRelease.cgi*
+-rwxr-xr-x 1 letunic b_mcf 21653 Jun 10  2024 demultiplex.cgi*
+-rwxr-xr-x 1 letunic b_mcf  1163 Oct  4  2022 downloadSampleSheet.cgi*
+-rwxr-xr-x 1 letunic b_mcf 12203 Oct  4  2022 genome_mapping.cgi*
+-rwxr-xr-x 1 letunic b_mcf  3354 Mar  3 08:57 help.html*
+drwxr-xr-x 2 letunic b_mcf  4096 Oct  4  2022 img/
+-rwxr-xr-x 1 letunic b_mcf  1967 Oct  4  2022 index.cgi*
+-rwxr-xr-x 1 letunic b_mcf   963 Oct  4  2022 information.cgi*
+drwxr-xr-x 3 letunic b_mcf  4096 Jan 23 13:40 js/
+-rwxr-xr-x 1 letunic b_mcf  5350 Oct  4  2022 login.cgi*
+drwxr-xr-x 2 letunic b_mcf  4096 Oct  4  2022 metadata/
+-rwxr-xr-x 1 letunic b_mcf 10681 Oct  4  2022 processAdminSamplesFile.cgi*
+-rwxr-xr-x 1 letunic b_mcf 16152 Oct  4  2022 processSamplesFile.cgi*
+-rwxr-xr-x 1 letunic b_mcf 10213 Oct 11  2022 projectAdmin.cgi*
+-rwxr-xr-x 1 letunic b_mcf  8097 Oct  4  2022 projectDetails.cgi*
+-rwxr-xr-x 1 letunic b_mcf  7679 Feb  5 12:01 register.cgi*
+drwxr-xr-x 2 letunic b_mcf  4096 Oct 17  2022 templates/
+-rwxr-xr-x 1 letunic b_mcf  1261 Oct  4  2022 t.pl*
+-rwxr-xr-x 1 letunic b_mcf  2263 Oct  4  2022 userDetails.cgi*
+-rwxr-xr-x 1 letunic b_mcf  1512 Oct  4  2022 viewProjectFile.cgi*
+```
+
+
+Starting t understand the DB structure
+
+### Change used database
+
+under `/www/mpiseq2/lib/` the perl packages used for the tool are stored. 
+
+here we can see where the path to the DB is deifned. 
+
+```
+package mpiseqWWW;
+...
+use strict;
+use warnings;
+use CGI;
+use mpiseqGlobals;
+use CGI::Session ( '-ip_match' );
+
+my $base_dir = $mpiseqGlobals::base_dir;
+my $session_dir = $mpiseqGlobals::session_dir;
+```
+
+and following that we look inside mpiseqGlobals
+
+```
+package mpiseqGlobals;
+
+use Exporter ();
+@ISA = qw(Exporter);
+
+@EXPORT = qw(
+    $base_dir
+    $session_dir
+    $session_name
+    $tree_root
+    $data_root
+    $project_files
+    $raw_sequence_root
+    $processed_sequence_root
+    $user_data_root
+    $data_release_step
+    $db_driver
+    $db_name
+    $db_host
+    $db_user
+    $db_port
+    $db_pass
+    $admin_email
+    $send_notifications
+    $ldap_server
+    $ldap_base
+    $bcl2fastq_bin
+    $fastqc_bin
+    $demultiplex_bin
+    $mapping_bin
+    $cpus
+    );
+
+
+#directories
+$base_dir = '/www/mpiseq2/web';
+
+#sequening data folders, for data release
+$raw_sequence_root = "/fs/pool/pool-bcfngs/Raw_data/";
+$processed_sequence_root = "/fs/pool/pool-bcfngs/fastq_files/";
+$user_data_root = "/fs/pool/pool-dnaseq/user/";
+#$user_data_root = "/fs/pool/pool-dnaseq/";
+```
+
+## modify specific tables
+
+a  lot of information I can modify in the GUI. 
+
+for example the sample types I can change in the admin page 
+
+![change sample type in the admin page](Figures/admin_change_sample_type.png)
+
+By clicking on Edit, one can change any rows available.
+
+I want to add a column here with the costs per sample
+
+
+HOW?
+
+
+```{bash}
+ALTER TABLE project.sample_type 
+ADD COLUMN costs integer NOT NULL DEFAULT 0;
+```
+
+
+### log in 
+
+```{bash}
+
+psql -h 127.0.0.1 -p 5432 -U admin_user -d mpiseq2_db
+psql -h 127.0.0.1 -p 5432 -U letunic -d mpiseq2_db # gives sudo rights
+
+GRANT USAGE ON SCHEMA people, project TO admin_user;
+
+```
+
+
+## PostgreSQL commands
+
+```{bash}
+
+\l # show list of data bases
+
+\s # show history of command used inside the DB
+
+\c mpiseq2_db # connect to a dabase
+
+\dn: #Lists all Schemas in the database. 
+
+\dt project.* # lists all tables from the schema `project`
+
+\d # show table structure ( column names)
+```
+
+To show all information from a specific table we can use the following SQL command
+
+```{bash}
+
+SELECT * FROM people.lab
+
+```
+
+
+## Adding a sequencing platform
+
+in order for a new sequencing platform to be added we need to change the `js/mpiseq.js` file in the web/ folder
+
+```
+            {label: 'Sequencing platform', name: 'sequencing_platform' , type: 'select', options: [
+                    {label: 'NovaSeq 6000'},
+                    {label:'NextSeq 500'},
+                    {label:'Aviti'},
+                    {label:'Nanopore'}
+```
+
+This already adds the needed machine in the UI on the web page.
+
+to see how many projects were used which machine, one can look in the SQL DB
+
+```{bash}
+# Check distinct values currently in the database
+SELECT DISTINCT sequencing_platform, COUNT(*)
+FROM project.project
+GROUP BY sequencing_platform
+ORDER BY COUNT(*) DESC;
+
+```
+
+```
+ sequencing_platform | count
+---------------------+-------
+ Aviti               |    31
+ New Sequencer       |    24
+ NextSeq 500         |    55
+ NovaSeq 6000        |   287
+                     |   406
+```
+
+I want to manually change netries in the DB. For example Now, I need to change the sequencing platform for two projects
+
+```{bash}
+ SELECT id, sequencing_platform
+FROM project.project
+WHERE id IN ('985', '986');
+```
+
+```
+ id  | sequencing_platform
+-----+---------------------
+ 985 | NextSeq 500
+ 986 | NovaSeq 6000
+ ```
+
+But both these projects are Nanopore.
+
+So we need to cahnge the entries in the DB
+
+
+```{bash}
+-- Using transaction for safety
+BEGIN;
+
+UPDATE project.project 
+SET sequencing_platform = 'Nanopore' 
+WHERE id IN ('985', '986');
+
+-- Verify the changes
+SELECT id, sequencing_platform, sequencing_kit
+FROM project.project 
+WHERE id IN ('985', '986');
+
+-- If everything looks correct, commit
+COMMIT;
+
+-- If something looks wrong, rollback instead:
+-- ROLLBACK;
+```
+
+
+```{bash}
+-- Using transaction for safety
+BEGIN;
+
+UPDATE project.project 
+SET sequencing_kit = 'ONT' 
+WHERE id IN ('985', '986');
+
+-- Verify the changes
+SELECT id, sequencing_platform, sequencing_kit
+FROM project.project 
+WHERE id IN ('985', '986');
+
+-- If everything looks correct, commit
+COMMIT;
+
+-- If something looks wrong, rollback instead:
+-- ROLLBACK;
+
+```
+
+
+
+
+
+
+
