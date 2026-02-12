@@ -52,11 +52,8 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-# GitHub Pages publish folder is intentionally committed
-# docs/
-
-# Python cache
-booklet/__pycache__/
+# pkgdown site
+docs/
 
 # translation temp files
 po/*~
