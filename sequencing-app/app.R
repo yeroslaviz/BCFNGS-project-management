@@ -325,6 +325,16 @@ ui <- fluidPage(
 # Server logic
 server <- function(input, output, session) {
   if (Sys.getenv("LDAP_DEBUG", "") == "1") {
+    cat(
+      "LDAP DEBUG: startup env",
+      "AUTH_MODE=", Sys.getenv("AUTH_MODE", "<unset>"),
+      "APP_ENV=", Sys.getenv("APP_ENV", "<unset>"),
+      "ALLOW_UNTRUSTED_AUTH_FALLBACK=", Sys.getenv("ALLOW_UNTRUSTED_AUTH_FALLBACK", "<unset>"),
+      "\n",
+      file = stderr()
+    )
+    flush.console()
+
     session$onFlushed(function() {
       req <- session$request
       keys <- names(req)
@@ -489,14 +499,37 @@ server <- function(input, output, session) {
     x
   }
 
+  parse_basic_auth_username <- function(auth_header) {
+    if (is.null(auth_header) || auth_header == "") return(NULL)
+
+    m <- regexec("^[Bb]asic[[:space:]]+(.+)$", auth_header)
+    mm <- regmatches(auth_header, m)
+    if (length(mm) == 0 || length(mm[[1]]) < 2) return(NULL)
+
+    token <- trimws(mm[[1]][2])
+    if (token == "") return(NULL)
+
+    decoded <- tryCatch({
+      rawToChar(base64enc::base64decode(token))
+    }, error = function(e) NULL)
+    if (is.null(decoded) || decoded == "") return(NULL)
+
+    user <- sub(":.*$", "", decoded)
+    user <- trimws(user)
+    if (is.na(user) || user == "") return(NULL)
+    user
+  }
+
   get_auth_username <- function(session) {
     if (get_auth_mode() != "ldap") return(NULL)
 
+    basic_user <- parse_basic_auth_username(session$request$HTTP_AUTHORIZATION)
     candidates <- c(
       session$request$HTTP_X_REMOTE_USER,
       session$request$HTTP_REMOTE_USER,
       session$request$REMOTE_USER,
-      session$request$HTTP_X_FORWARDED_USER
+      session$request$HTTP_X_FORWARDED_USER,
+      basic_user
     )
     candidates <- candidates[!is.na(candidates) & candidates != ""]
     header_user <- if (length(candidates) > 0) candidates[1] else NULL
