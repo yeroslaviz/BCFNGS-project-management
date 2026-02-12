@@ -336,27 +336,37 @@ server <- function(input, output, session) {
     flush.console()
 
     session$onFlushed(function() {
-      req <- session$request
-      keys <- names(req)
-      keys <- keys[grepl("^HTTP_|REMOTE_USER$", keys)]
-      cat("LDAP DEBUG: session headers snapshot\n", file = stderr())
-      if (length(keys) == 0) {
-        cat("  (no HTTP_* or REMOTE_USER headers found)\n", file = stderr())
-      } else {
-        for (k in keys) {
-          val <- req[[k]]
-          cat("  ", k, "=", ifelse(is.null(val) || val == "", "<empty>", val), "\n", file = stderr())
+      tryCatch({
+        req <- session$request
+        keys <- names(req)
+        keys <- keys[grepl("^HTTP_|REMOTE_USER$", keys)]
+        cat("LDAP DEBUG: session headers snapshot\n", file = stderr())
+        if (length(keys) == 0) {
+          cat("  (no HTTP_* or REMOTE_USER headers found)\n", file = stderr())
+        } else {
+          for (k in keys) {
+            val <- req[[k]]
+            cat("  ", k, "=", ifelse(is.null(val) || val == "", "<empty>", val), "\n", file = stderr())
+          }
         }
-      }
-      cat(
-        "LDAP DEBUG: resolved auth candidates",
-        "X_REMOTE_USER=", get_req_header(req, "x-remote-user") %||% "<missing>",
-        "REMOTE_USER=", scalar_text(req$REMOTE_USER) %||% "<missing>",
-        "X_FORWARDED_USER=", get_req_header(req, "x-forwarded-user") %||% "<missing>",
-        "AUTHORIZATION=", ifelse(is.null(get_req_header(req, "authorization")), "<missing>", "<present>"),
-        "\n",
-        file = stderr()
-      )
+
+        x_remote <- req$HTTP_X_REMOTE_USER
+        remote_user <- req$REMOTE_USER
+        x_forwarded <- req$HTTP_X_FORWARDED_USER
+        authz <- req$HTTP_AUTHORIZATION
+
+        cat(
+          "LDAP DEBUG: resolved auth candidates",
+          "X_REMOTE_USER=", ifelse(is.null(x_remote) || x_remote == "", "<missing>", x_remote),
+          "REMOTE_USER=", ifelse(is.null(remote_user) || remote_user == "", "<missing>", remote_user),
+          "X_FORWARDED_USER=", ifelse(is.null(x_forwarded) || x_forwarded == "", "<missing>", x_forwarded),
+          "AUTHORIZATION=", ifelse(is.null(authz) || authz == "", "<missing>", "<present>"),
+          "\n",
+          file = stderr()
+        )
+      }, error = function(e) {
+        cat("LDAP DEBUG ERROR (onFlushed):", e$message, "\n", file = stderr())
+      })
       flush.console()
     }, once = TRUE)
   }
@@ -547,10 +557,45 @@ server <- function(input, output, session) {
     candidates[1]
   }
 
+  base64_decode_raw <- function(encoded) {
+    encoded <- gsub("[[:space:]]", "", encoded)
+    if (encoded == "" || nchar(encoded) %% 4 != 0) return(NULL)
+
+    alphabet <- c(LETTERS, letters, as.character(0:9), "+", "/")
+    map <- stats::setNames(0:63, alphabet)
+    chars <- strsplit(encoded, "", fixed = TRUE)[[1]]
+    values <- rep(NA_integer_, length(chars))
+
+    for (i in seq_along(chars)) {
+      ch <- chars[i]
+      if (ch == "=") {
+        values[i] <- 0L
+      } else {
+        v <- map[[ch]]
+        if (is.null(v)) return(NULL)
+        values[i] <- as.integer(v)
+      }
+    }
+
+    out <- raw()
+    for (i in seq(1, length(values), by = 4)) {
+      v <- values[i:(i + 3)]
+      b1 <- bitwShiftL(v[1], 2) + bitwShiftR(v[2], 4)
+      b2 <- bitwShiftL(bitwAnd(v[2], 15), 4) + bitwShiftR(v[3], 2)
+      b3 <- bitwShiftL(bitwAnd(v[3], 3), 6) + v[4]
+      out <- c(out, as.raw(c(b1, b2, b3)))
+    }
+
+    pad <- sum(chars == "=")
+    if (pad > 0 && length(out) >= pad) {
+      out <- out[seq_len(length(out) - pad)]
+    }
+    out
+  }
+
   parse_basic_auth_username <- function(auth_header) {
     auth_header <- scalar_text(auth_header)
     if (is.null(auth_header)) return(NULL)
-    if (!requireNamespace("base64enc", quietly = TRUE)) return(NULL)
 
     m <- regexec("^[Bb]asic[[:space:]]+(.+)$", auth_header)
     mm <- regmatches(auth_header, m)
@@ -560,7 +605,9 @@ server <- function(input, output, session) {
     if (token == "") return(NULL)
 
     decoded <- tryCatch({
-      rawToChar(base64enc::base64decode(token))
+      raw <- base64_decode_raw(token)
+      if (is.null(raw) || length(raw) == 0) return(NULL)
+      rawToChar(raw)
     }, error = function(e) NULL)
     if (is.null(decoded) || decoded == "") return(NULL)
 
