@@ -479,6 +479,14 @@ server <- function(input, output, session) {
     if (!is.null(x) && !is.na(x) && x != "") x else y
   }
 
+  scalar_text <- function(x) {
+    if (is.null(x) || length(x) == 0) return(NULL)
+    x <- as.character(x[[1]])
+    x <- trimws(x)
+    if (is.na(x) || x == "") return(NULL)
+    x
+  }
+
   get_auth_username <- function(session) {
     if (get_auth_mode() != "ldap") return(NULL)
 
@@ -974,6 +982,20 @@ server <- function(input, output, session) {
                             "SELECT * FROM users WHERE username = ?",
                             params = list(username))
     attrs <- ldap_lookup_user(username)
+    attrs$email <- scalar_text(attrs$email)
+    attrs$phone <- scalar_text(attrs$phone)
+    attrs$ou <- scalar_text(attrs$ou)
+
+    if (Sys.getenv("LDAP_DEBUG", "") == "1" && Sys.getenv("APP_ENV", "") == "dev") {
+      cat("LDAP LOGIN ATTRS:",
+          "user=", username,
+          "email=", attrs$email %||% "<missing>",
+          "phone=", attrs$phone %||% "<missing>",
+          "ou=", attrs$ou %||% "<missing>",
+          "\n", file = stderr())
+      flush.console()
+    }
+
     mapped_group <- map_group_from_ldap_ou(attrs$ou, con)
     if (!is.null(mapped_group) && mapped_group != "") {
       attrs$ou <- mapped_group
