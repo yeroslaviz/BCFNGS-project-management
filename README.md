@@ -20,6 +20,11 @@ If you want to use the NGS service for the first time, you have to [register for
 
 After registration is complete, you can directly login with your MPIB account to submit your new project(s).
 
+# Operations docs
+
+- [Git auth on new laptop](README-git-auth-new-laptop.md)
+- [LDAP deploy smoke tests and troubleshooting](README-ldap-deploy-troubleshooting.md)
+
 
 # Changes
 
