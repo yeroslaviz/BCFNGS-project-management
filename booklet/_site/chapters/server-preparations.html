@@ -229,47 +229,48 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#firewall" id="toc-firewall" class="nav-link" data-scroll-target="#firewall"><span class="header-section-number">2.6.3</span> Firewall</a></li>
   </ul></li>
   <li><a href="#change-connection-to-shiny-server-folder-to-https" id="toc-change-connection-to-shiny-server-folder-to-https" class="nav-link" data-scroll-target="#change-connection-to-shiny-server-folder-to-https"><span class="header-section-number">2.7</span> Change connection to shiny server folder to https</a></li>
-  <li><a href="#changes-on-11.02.2026" id="toc-changes-on-11.02.2026" class="nav-link" data-scroll-target="#changes-on-11.02.2026"><span class="header-section-number">2.8</span> Changes on 11.02.2026</a></li>
-  <li><a href="#changes-on-09.02.2026" id="toc-changes-on-09.02.2026" class="nav-link" data-scroll-target="#changes-on-09.02.2026"><span class="header-section-number">2.9</span> Changes on 09.02.2026</a>
+  <li><a href="#changes-on-12.02.2026" id="toc-changes-on-12.02.2026" class="nav-link" data-scroll-target="#changes-on-12.02.2026"><span class="header-section-number">2.8</span> Changes on 12.02.2026</a></li>
+  <li><a href="#changes-on-11.02.2026" id="toc-changes-on-11.02.2026" class="nav-link" data-scroll-target="#changes-on-11.02.2026"><span class="header-section-number">2.9</span> Changes on 11.02.2026</a></li>
+  <li><a href="#changes-on-09.02.2026" id="toc-changes-on-09.02.2026" class="nav-link" data-scroll-target="#changes-on-09.02.2026"><span class="header-section-number">2.10</span> Changes on 09.02.2026</a>
   <ul class="collapse">
-  <li><a href="#vm-rollout-validation-what-i-tested-and-confirmed" id="toc-vm-rollout-validation-what-i-tested-and-confirmed" class="nav-link" data-scroll-target="#vm-rollout-validation-what-i-tested-and-confirmed"><span class="header-section-number">2.9.1</span> VM rollout validation (what I tested and confirmed)</a></li>
+  <li><a href="#vm-rollout-validation-what-i-tested-and-confirmed" id="toc-vm-rollout-validation-what-i-tested-and-confirmed" class="nav-link" data-scroll-target="#vm-rollout-validation-what-i-tested-and-confirmed"><span class="header-section-number">2.10.1</span> VM rollout validation (what I tested and confirmed)</a></li>
   </ul></li>
-  <li><a href="#possible-errors-and-fixes-vm-ldap-rollout" id="toc-possible-errors-and-fixes-vm-ldap-rollout" class="nav-link" data-scroll-target="#possible-errors-and-fixes-vm-ldap-rollout"><span class="header-section-number">2.10</span> Possible errors and fixes (VM LDAP rollout)</a>
+  <li><a href="#possible-errors-and-fixes-vm-ldap-rollout" id="toc-possible-errors-and-fixes-vm-ldap-rollout" class="nav-link" data-scroll-target="#possible-errors-and-fixes-vm-ldap-rollout"><span class="header-section-number">2.11</span> Possible errors and fixes (VM LDAP rollout)</a>
   <ul class="collapse">
-  <li><a href="#apache-wont-restart-after-ldap-change" id="toc-apache-wont-restart-after-ldap-change" class="nav-link" data-scroll-target="#apache-wont-restart-after-ldap-change"><span class="header-section-number">2.10.1</span> 1) Apache won’t restart after LDAP change</a></li>
-  <li><a href="#ldaptls_cacertdir-breaks-apache" id="toc-ldaptls_cacertdir-breaks-apache" class="nav-link" data-scroll-target="#ldaptls_cacertdir-breaks-apache"><span class="header-section-number">2.10.2</span> 2) <code>LDAPTLS_CACERTDIR</code> breaks Apache</a></li>
-  <li><a href="#ldap-login-shows-500-internal-server-error" id="toc-ldap-login-shows-500-internal-server-error" class="nav-link" data-scroll-target="#ldap-login-shows-500-internal-server-error"><span class="header-section-number">2.10.3</span> 3) LDAP login shows 500 Internal Server Error</a></li>
-  <li><a href="#shiny-app-runs-locally-but-crashes-via-apache" id="toc-shiny-app-runs-locally-but-crashes-via-apache" class="nav-link" data-scroll-target="#shiny-app-runs-locally-but-crashes-via-apache"><span class="header-section-number">2.10.4</span> 4) Shiny app runs locally but crashes via Apache</a></li>
-  <li><a href="#ldap-works-but-sequencing-app-returns-404" id="toc-ldap-works-but-sequencing-app-returns-404" class="nav-link" data-scroll-target="#ldap-works-but-sequencing-app-returns-404"><span class="header-section-number">2.10.5</span> 5) LDAP works, but <code>/sequencing-app/</code> returns 404</a></li>
-  <li><a href="#debug-logging-too-noisy-apache-or-shiny" id="toc-debug-logging-too-noisy-apache-or-shiny" class="nav-link" data-scroll-target="#debug-logging-too-noisy-apache-or-shiny"><span class="header-section-number">2.10.6</span> 6) Debug logging too noisy (Apache or Shiny)</a></li>
-  <li><a href="#comprehensive-errorchecking-checklist-vm-ldap-shiny" id="toc-comprehensive-errorchecking-checklist-vm-ldap-shiny" class="nav-link" data-scroll-target="#comprehensive-errorchecking-checklist-vm-ldap-shiny"><span class="header-section-number">2.10.7</span> Comprehensive error‑checking checklist (VM LDAP + Shiny)</a></li>
+  <li><a href="#apache-wont-restart-after-ldap-change" id="toc-apache-wont-restart-after-ldap-change" class="nav-link" data-scroll-target="#apache-wont-restart-after-ldap-change"><span class="header-section-number">2.11.1</span> 1) Apache won’t restart after LDAP change</a></li>
+  <li><a href="#ldaptls_cacertdir-breaks-apache" id="toc-ldaptls_cacertdir-breaks-apache" class="nav-link" data-scroll-target="#ldaptls_cacertdir-breaks-apache"><span class="header-section-number">2.11.2</span> 2) <code>LDAPTLS_CACERTDIR</code> breaks Apache</a></li>
+  <li><a href="#ldap-login-shows-500-internal-server-error" id="toc-ldap-login-shows-500-internal-server-error" class="nav-link" data-scroll-target="#ldap-login-shows-500-internal-server-error"><span class="header-section-number">2.11.3</span> 3) LDAP login shows 500 Internal Server Error</a></li>
+  <li><a href="#shiny-app-runs-locally-but-crashes-via-apache" id="toc-shiny-app-runs-locally-but-crashes-via-apache" class="nav-link" data-scroll-target="#shiny-app-runs-locally-but-crashes-via-apache"><span class="header-section-number">2.11.4</span> 4) Shiny app runs locally but crashes via Apache</a></li>
+  <li><a href="#ldap-works-but-sequencing-app-returns-404" id="toc-ldap-works-but-sequencing-app-returns-404" class="nav-link" data-scroll-target="#ldap-works-but-sequencing-app-returns-404"><span class="header-section-number">2.11.5</span> 5) LDAP works, but <code>/sequencing-app/</code> returns 404</a></li>
+  <li><a href="#debug-logging-too-noisy-apache-or-shiny" id="toc-debug-logging-too-noisy-apache-or-shiny" class="nav-link" data-scroll-target="#debug-logging-too-noisy-apache-or-shiny"><span class="header-section-number">2.11.6</span> 6) Debug logging too noisy (Apache or Shiny)</a></li>
+  <li><a href="#comprehensive-errorchecking-checklist-vm-ldap-shiny" id="toc-comprehensive-errorchecking-checklist-vm-ldap-shiny" class="nav-link" data-scroll-target="#comprehensive-errorchecking-checklist-vm-ldap-shiny"><span class="header-section-number">2.11.7</span> Comprehensive error‑checking checklist (VM LDAP + Shiny)</a></li>
   </ul></li>
-  <li><a href="#changes-on-06.02.2026" id="toc-changes-on-06.02.2026" class="nav-link" data-scroll-target="#changes-on-06.02.2026"><span class="header-section-number">2.11</span> Changes on 06.02.2026</a></li>
-  <li><a href="#changes-on-14.11.2026" id="toc-changes-on-14.11.2026" class="nav-link" data-scroll-target="#changes-on-14.11.2026"><span class="header-section-number">2.12</span> Changes on 14.11.2026</a>
+  <li><a href="#changes-on-06.02.2026" id="toc-changes-on-06.02.2026" class="nav-link" data-scroll-target="#changes-on-06.02.2026"><span class="header-section-number">2.12</span> Changes on 06.02.2026</a></li>
+  <li><a href="#changes-on-14.11.2026" id="toc-changes-on-14.11.2026" class="nav-link" data-scroll-target="#changes-on-14.11.2026"><span class="header-section-number">2.13</span> Changes on 14.11.2026</a>
   <ul class="collapse">
-  <li><a href="#modify-registration-page" id="toc-modify-registration-page" class="nav-link" data-scroll-target="#modify-registration-page"><span class="header-section-number">2.12.1</span> modify registration page</a></li>
-  <li><a href="#control-for-budegt-holder-info-in-the-db" id="toc-control-for-budegt-holder-info-in-the-db" class="nav-link" data-scroll-target="#control-for-budegt-holder-info-in-the-db"><span class="header-section-number">2.12.2</span> control for budegt holder info in the DB</a></li>
-  <li><a href="#budget-holders-can-be-read-from-an-excel-sheet" id="toc-budget-holders-can-be-read-from-an-excel-sheet" class="nav-link" data-scroll-target="#budget-holders-can-be-read-from-an-excel-sheet"><span class="header-section-number">2.12.3</span> Budget holders can be read from an Excel sheet</a></li>
+  <li><a href="#modify-registration-page" id="toc-modify-registration-page" class="nav-link" data-scroll-target="#modify-registration-page"><span class="header-section-number">2.13.1</span> modify registration page</a></li>
+  <li><a href="#control-for-budegt-holder-info-in-the-db" id="toc-control-for-budegt-holder-info-in-the-db" class="nav-link" data-scroll-target="#control-for-budegt-holder-info-in-the-db"><span class="header-section-number">2.13.2</span> control for budegt holder info in the DB</a></li>
+  <li><a href="#budget-holders-can-be-read-from-an-excel-sheet" id="toc-budget-holders-can-be-read-from-an-excel-sheet" class="nav-link" data-scroll-target="#budget-holders-can-be-read-from-an-excel-sheet"><span class="header-section-number">2.13.3</span> Budget holders can be read from an Excel sheet</a></li>
   </ul></li>
-  <li><a href="#ssl-certificate-for-https" id="toc-ssl-certificate-for-https" class="nav-link" data-scroll-target="#ssl-certificate-for-https"><span class="header-section-number">2.13</span> SSL Certificate (for HTTPS)</a></li>
-  <li><a href="#ldap" id="toc-ldap" class="nav-link" data-scroll-target="#ldap"><span class="header-section-number">2.14</span> LDAP</a>
+  <li><a href="#ssl-certificate-for-https" id="toc-ssl-certificate-for-https" class="nav-link" data-scroll-target="#ssl-certificate-for-https"><span class="header-section-number">2.14</span> SSL Certificate (for HTTPS)</a></li>
+  <li><a href="#ldap" id="toc-ldap" class="nav-link" data-scroll-target="#ldap"><span class="header-section-number">2.15</span> LDAP</a>
   <ul class="collapse">
-  <li><a href="#admin-access-in-ldap-mode-vm" id="toc-admin-access-in-ldap-mode-vm" class="nav-link" data-scroll-target="#admin-access-in-ldap-mode-vm"><span class="header-section-number">2.14.1</span> Admin access in LDAP mode (VM)</a></li>
-  <li><a href="#switch-between-ldap-and-local-modes-vm" id="toc-switch-between-ldap-and-local-modes-vm" class="nav-link" data-scroll-target="#switch-between-ldap-and-local-modes-vm"><span class="header-section-number">2.14.2</span> Switch between LDAP and local modes (VM)</a></li>
-  <li><a href="#local-dev-testing-ldap-mode" id="toc-local-dev-testing-ldap-mode" class="nav-link" data-scroll-target="#local-dev-testing-ldap-mode"><span class="header-section-number">2.14.3</span> Local dev testing (LDAP mode)</a></li>
-  <li><a href="#how-i-run-the-app-locally-my-notes" id="toc-how-i-run-the-app-locally-my-notes" class="nav-link" data-scroll-target="#how-i-run-the-app-locally-my-notes"><span class="header-section-number">2.14.4</span> How I run the app locally (my notes)</a></li>
-  <li><a href="#budget-holder-auto-assignment-first-login" id="toc-budget-holder-auto-assignment-first-login" class="nav-link" data-scroll-target="#budget-holder-auto-assignment-first-login"><span class="header-section-number">2.14.5</span> Budget holder auto-assignment (first login)</a></li>
+  <li><a href="#admin-access-in-ldap-mode-vm" id="toc-admin-access-in-ldap-mode-vm" class="nav-link" data-scroll-target="#admin-access-in-ldap-mode-vm"><span class="header-section-number">2.15.1</span> Admin access in LDAP mode (VM)</a></li>
+  <li><a href="#switch-between-ldap-and-local-modes-vm" id="toc-switch-between-ldap-and-local-modes-vm" class="nav-link" data-scroll-target="#switch-between-ldap-and-local-modes-vm"><span class="header-section-number">2.15.2</span> Switch between LDAP and local modes (VM)</a></li>
+  <li><a href="#local-dev-testing-ldap-mode" id="toc-local-dev-testing-ldap-mode" class="nav-link" data-scroll-target="#local-dev-testing-ldap-mode"><span class="header-section-number">2.15.3</span> Local dev testing (LDAP mode)</a></li>
+  <li><a href="#how-i-run-the-app-locally-my-notes" id="toc-how-i-run-the-app-locally-my-notes" class="nav-link" data-scroll-target="#how-i-run-the-app-locally-my-notes"><span class="header-section-number">2.15.4</span> How I run the app locally (my notes)</a></li>
+  <li><a href="#budget-holder-auto-assignment-first-login" id="toc-budget-holder-auto-assignment-first-login" class="nav-link" data-scroll-target="#budget-holder-auto-assignment-first-login"><span class="header-section-number">2.15.5</span> Budget holder auto-assignment (first login)</a></li>
   </ul></li>
-  <li><a href="#obsolete-now-wrong-kept-for-reference" id="toc-obsolete-now-wrong-kept-for-reference" class="nav-link" data-scroll-target="#obsolete-now-wrong-kept-for-reference"><span class="header-section-number">2.15</span> Obsolete / now wrong (kept for reference)</a>
+  <li><a href="#obsolete-now-wrong-kept-for-reference" id="toc-obsolete-now-wrong-kept-for-reference" class="nav-link" data-scroll-target="#obsolete-now-wrong-kept-for-reference"><span class="header-section-number">2.16</span> Obsolete / now wrong (kept for reference)</a>
   <ul class="collapse">
-  <li><a href="#legacy-environment-variable-location-no-longer-used" id="toc-legacy-environment-variable-location-no-longer-used" class="nav-link" data-scroll-target="#legacy-environment-variable-location-no-longer-used"><span class="header-section-number">2.15.1</span> Legacy environment variable location (no longer used)</a></li>
-  <li><a href="#legacy-folder-layout-varshiny-server" id="toc-legacy-folder-layout-varshiny-server" class="nav-link" data-scroll-target="#legacy-folder-layout-varshiny-server"><span class="header-section-number">2.15.2</span> Legacy folder layout (/var/shiny-server)</a></li>
-  <li><a href="#legacy-install-steps-nginx-based-superseded-by-apache-setup" id="toc-legacy-install-steps-nginx-based-superseded-by-apache-setup" class="nav-link" data-scroll-target="#legacy-install-steps-nginx-based-superseded-by-apache-setup"><span class="header-section-number">2.15.3</span> Legacy install steps (nginx-based, superseded by Apache setup)</a></li>
-  <li><a href="#legacy-apache-config-old-proxypass-path" id="toc-legacy-apache-config-old-proxypass-path" class="nav-link" data-scroll-target="#legacy-apache-config-old-proxypass-path"><span class="header-section-number">2.15.4</span> Legacy Apache config (old ProxyPass / path)</a></li>
-  <li><a href="#legacy-deployment-script-name" id="toc-legacy-deployment-script-name" class="nav-link" data-scroll-target="#legacy-deployment-script-name"><span class="header-section-number">2.15.5</span> Legacy deployment script name</a></li>
-  <li><a href="#legacy-tree-output-old-vm-layout-example" id="toc-legacy-tree-output-old-vm-layout-example" class="nav-link" data-scroll-target="#legacy-tree-output-old-vm-layout-example"><span class="header-section-number">2.15.6</span> Legacy tree output (old VM layout example)</a></li>
-  <li><a href="#legacy-git-pull-via-https-pat-no-longer-used" id="toc-legacy-git-pull-via-https-pat-no-longer-used" class="nav-link" data-scroll-target="#legacy-git-pull-via-https-pat-no-longer-used"><span class="header-section-number">2.15.7</span> Legacy git pull via HTTPS + PAT (no longer used)</a></li>
-  <li><a href="#legacy-note-dedicated-user-superseded" id="toc-legacy-note-dedicated-user-superseded" class="nav-link" data-scroll-target="#legacy-note-dedicated-user-superseded"><span class="header-section-number">2.15.8</span> Legacy note: dedicated user (superseded)</a></li>
+  <li><a href="#legacy-environment-variable-location-no-longer-used" id="toc-legacy-environment-variable-location-no-longer-used" class="nav-link" data-scroll-target="#legacy-environment-variable-location-no-longer-used"><span class="header-section-number">2.16.1</span> Legacy environment variable location (no longer used)</a></li>
+  <li><a href="#legacy-folder-layout-varshiny-server" id="toc-legacy-folder-layout-varshiny-server" class="nav-link" data-scroll-target="#legacy-folder-layout-varshiny-server"><span class="header-section-number">2.16.2</span> Legacy folder layout (/var/shiny-server)</a></li>
+  <li><a href="#legacy-install-steps-nginx-based-superseded-by-apache-setup" id="toc-legacy-install-steps-nginx-based-superseded-by-apache-setup" class="nav-link" data-scroll-target="#legacy-install-steps-nginx-based-superseded-by-apache-setup"><span class="header-section-number">2.16.3</span> Legacy install steps (nginx-based, superseded by Apache setup)</a></li>
+  <li><a href="#legacy-apache-config-old-proxypass-path" id="toc-legacy-apache-config-old-proxypass-path" class="nav-link" data-scroll-target="#legacy-apache-config-old-proxypass-path"><span class="header-section-number">2.16.4</span> Legacy Apache config (old ProxyPass / path)</a></li>
+  <li><a href="#legacy-deployment-script-name" id="toc-legacy-deployment-script-name" class="nav-link" data-scroll-target="#legacy-deployment-script-name"><span class="header-section-number">2.16.5</span> Legacy deployment script name</a></li>
+  <li><a href="#legacy-tree-output-old-vm-layout-example" id="toc-legacy-tree-output-old-vm-layout-example" class="nav-link" data-scroll-target="#legacy-tree-output-old-vm-layout-example"><span class="header-section-number">2.16.6</span> Legacy tree output (old VM layout example)</a></li>
+  <li><a href="#legacy-git-pull-via-https-pat-no-longer-used" id="toc-legacy-git-pull-via-https-pat-no-longer-used" class="nav-link" data-scroll-target="#legacy-git-pull-via-https-pat-no-longer-used"><span class="header-section-number">2.16.7</span> Legacy git pull via HTTPS + PAT (no longer used)</a></li>
+  <li><a href="#legacy-note-dedicated-user-superseded" id="toc-legacy-note-dedicated-user-superseded" class="nav-link" data-scroll-target="#legacy-note-dedicated-user-superseded"><span class="header-section-number">2.16.8</span> Legacy note: dedicated user (superseded)</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -753,8 +754,29 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></p
 <p>When this is done, it restart the shiny server.</p>
 <p><strong>This script must be run each time the files inside the sequencing-app folder were changed</strong>, but not if other changed were made in the repo.</p>
 </section>
-<section id="changes-on-11.02.2026" class="level2" data-number="2.8">
-<h2 data-number="2.8" class="anchored" data-anchor-id="changes-on-11.02.2026"><span class="header-section-number">2.8</span> Changes on 11.02.2026</h2>
+<section id="changes-on-12.02.2026" class="level2" data-number="2.8">
+<h2 data-number="2.8" class="anchored" data-anchor-id="changes-on-12.02.2026"><span class="header-section-number">2.8</span> Changes on 12.02.2026</h2>
+<ol type="1">
+<li>Fixed LDAP URL impersonation risk by enforcing canonical <code>auth_user</code> handling in Apache: tampered <code>?auth_user=</code> values are rewritten to the authenticated LDAP user.</li>
+<li>Fixed redirect-loop behavior in the Apache auth rewrite logic and validated canonical redirect behavior with <code>curl</code> (expected <code>302</code> to the authenticated user).</li>
+<li>Confirmed and documented required shiny-server environment for LDAP mode:
+<ul>
+<li><code>AUTH_MODE=ldap</code></li>
+<li><code>TRUST_PROXY_AUTH_USER_QUERY=1</code></li>
+</ul></li>
+<li>Extended <code>deploy.sh</code> with post-deploy LDAP smoke tests (canonical redirect, tampered query rewrite, final <code>200</code> response) and actionable failure hints.</li>
+<li>Added/merged troubleshooting guidance for LDAP login failures, disconnects, and redirect loops into the VM troubleshooting documentation.</li>
+<li>Improved Projects table readability in the Shiny UI (<code>sequencing-app/app.R</code>):
+<ul>
+<li>explicit DT column widths</li>
+<li>wrapped long cell text</li>
+<li>reliable column reflow on tab switch and resize</li>
+<li>preserved horizontal scrolling and existing formatting.</li>
+</ul></li>
+</ol>
+</section>
+<section id="changes-on-11.02.2026" class="level2" data-number="2.9">
+<h2 data-number="2.9" class="anchored" data-anchor-id="changes-on-11.02.2026"><span class="header-section-number">2.9</span> Changes on 11.02.2026</h2>
 <ol type="1">
 <li>Added a production rollout checklist with the exact commands for pull, backup, deploy, restart, and smoke‑tests.</li>
 <li>Added a dedicated section for <strong>admin access in LDAP mode</strong> (pre‑create vs promote after first login).</li>
@@ -765,8 +787,8 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></p
 <li>Replaced the old deploy script reference (<code>deploy_shiny_server.sh</code>) with <code>deploy.sh</code>.</li>
 </ol>
 </section>
-<section id="changes-on-09.02.2026" class="level2" data-number="2.9">
-<h2 data-number="2.9" class="anchored" data-anchor-id="changes-on-09.02.2026"><span class="header-section-number">2.9</span> Changes on 09.02.2026</h2>
+<section id="changes-on-09.02.2026" class="level2" data-number="2.10">
+<h2 data-number="2.10" class="anchored" data-anchor-id="changes-on-09.02.2026"><span class="header-section-number">2.10</span> Changes on 09.02.2026</h2>
 <ol type="1">
 <li>Added a VM rollout HOW‑TO (GitHub SSH/deploy keys, divergent branches, DB tracking fix, backups, deploy, restart, rollback).</li>
 <li>Documented production safeguards (app folder backup, DB backup, Apache config backup).</li>
@@ -775,8 +797,8 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></p
 <li>Made LDAP debug output in the Shiny app conditional on <strong>both</strong> <code>APP_ENV=dev</code> and <code>LDAP_DEBUG=1</code> to avoid production log noise.</li>
 <li>Documented the VM LDAP validation test (real user + service group user, and email routing behavior).</li>
 </ol>
-<section id="vm-rollout-validation-what-i-tested-and-confirmed" class="level3" data-number="2.9.1">
-<h3 data-number="2.9.1" class="anchored" data-anchor-id="vm-rollout-validation-what-i-tested-and-confirmed"><span class="header-section-number">2.9.1</span> VM rollout validation (what I tested and confirmed)</h3>
+<section id="vm-rollout-validation-what-i-tested-and-confirmed" class="level3" data-number="2.10.1">
+<h3 data-number="2.10.1" class="anchored" data-anchor-id="vm-rollout-validation-what-i-tested-and-confirmed"><span class="header-section-number">2.10.1</span> VM rollout validation (what I tested and confirmed)</h3>
 <p>I verified end‑to‑end behavior on the VM after fixing the Apache proxy path:</p>
 <ul>
 <li><strong>LDAP login works</strong>: the browser prompts for username/password and redirects to <code>/sequencing-app/?auth_user=&lt;user&gt;</code>.</li>
@@ -788,11 +810,11 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></p
 <p>If all three happen, the LDAP→app→email flow is working as intended.</p>
 </section>
 </section>
-<section id="possible-errors-and-fixes-vm-ldap-rollout" class="level2" data-number="2.10">
-<h2 data-number="2.10" class="anchored" data-anchor-id="possible-errors-and-fixes-vm-ldap-rollout"><span class="header-section-number">2.10</span> Possible errors and fixes (VM LDAP rollout)</h2>
+<section id="possible-errors-and-fixes-vm-ldap-rollout" class="level2" data-number="2.11">
+<h2 data-number="2.11" class="anchored" data-anchor-id="possible-errors-and-fixes-vm-ldap-rollout"><span class="header-section-number">2.11</span> Possible errors and fixes (VM LDAP rollout)</h2>
 <p>This section captures the real errors I hit during the VM rollout and the fixes that worked. It is meant as a troubleshooting reference.</p>
-<section id="apache-wont-restart-after-ldap-change" class="level3" data-number="2.10.1">
-<h3 data-number="2.10.1" class="anchored" data-anchor-id="apache-wont-restart-after-ldap-change"><span class="header-section-number">2.10.1</span> 1) Apache won’t restart after LDAP change</h3>
+<section id="apache-wont-restart-after-ldap-change" class="level3" data-number="2.11.1">
+<h3 data-number="2.11.1" class="anchored" data-anchor-id="apache-wont-restart-after-ldap-change"><span class="header-section-number">2.11.1</span> 1) Apache won’t restart after LDAP change</h3>
 <p><strong>Symptom</strong></p>
 <pre><code>AH00526: Syntax error ... Bad LDAP URL while parsing.</code></pre>
 <p><strong>Cause</strong></p>
@@ -802,8 +824,8 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></p
 <pre><code>AuthLDAPURL "ldaps://ldapserv1.biochem.mpg.de:636/dc=biochem,dc=mpg,dc=de?uid?sub?(objectClass=posixAccount)"</code></pre>
 <p>If the multi‑server line fails, I keep one server and fall back manually if needed.</p>
 </section>
-<section id="ldaptls_cacertdir-breaks-apache" class="level3" data-number="2.10.2">
-<h3 data-number="2.10.2" class="anchored" data-anchor-id="ldaptls_cacertdir-breaks-apache"><span class="header-section-number">2.10.2</span> 2) <code>LDAPTLS_CACERTDIR</code> breaks Apache</h3>
+<section id="ldaptls_cacertdir-breaks-apache" class="level3" data-number="2.11.2">
+<h3 data-number="2.11.2" class="anchored" data-anchor-id="ldaptls_cacertdir-breaks-apache"><span class="header-section-number">2.11.2</span> 2) <code>LDAPTLS_CACERTDIR</code> breaks Apache</h3>
 <p><strong>Symptom</strong></p>
 <pre><code>Invalid command 'LDAPTLS_CACERTDIR'</code></pre>
 <p><strong>Cause</strong></p>
@@ -811,8 +833,8 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></p
 <p><strong>Fix</strong></p>
 <p>Remove it from Apache. If I need TLS trust, I configure it in <code>/etc/ldap/ldap.conf</code> instead.</p>
 </section>
-<section id="ldap-login-shows-500-internal-server-error" class="level3" data-number="2.10.3">
-<h3 data-number="2.10.3" class="anchored" data-anchor-id="ldap-login-shows-500-internal-server-error"><span class="header-section-number">2.10.3</span> 3) LDAP login shows 500 Internal Server Error</h3>
+<section id="ldap-login-shows-500-internal-server-error" class="level3" data-number="2.11.3">
+<h3 data-number="2.11.3" class="anchored" data-anchor-id="ldap-login-shows-500-internal-server-error"><span class="header-section-number">2.11.3</span> 3) LDAP login shows 500 Internal Server Error</h3>
 <p><strong>Symptom</strong></p>
 <ul>
 <li>Browser shows <code>Internal Server Error</code></li>
@@ -844,8 +866,8 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></p
 <p>Then restart Apache:</p>
 <pre><code>sudo systemctl restart apache2</code></pre>
 </section>
-<section id="shiny-app-runs-locally-but-crashes-via-apache" class="level3" data-number="2.10.4">
-<h3 data-number="2.10.4" class="anchored" data-anchor-id="shiny-app-runs-locally-but-crashes-via-apache"><span class="header-section-number">2.10.4</span> 4) Shiny app runs locally but crashes via Apache</h3>
+<section id="shiny-app-runs-locally-but-crashes-via-apache" class="level3" data-number="2.11.4">
+<h3 data-number="2.11.4" class="anchored" data-anchor-id="shiny-app-runs-locally-but-crashes-via-apache"><span class="header-section-number">2.11.4</span> 4) Shiny app runs locally but crashes via Apache</h3>
 <p><strong>Symptom</strong></p>
 <ul>
 <li>App works with <code>shiny::runApp()</code></li>
@@ -856,8 +878,8 @@ origin  git@github.com:yeroslaviz/BCFNGS-project-management.git (push)</code></p
 <p><strong>Fix</strong></p>
 <p>Check Apache log for <code>authnz_ldap</code> errors and fix TLS trust as above.</p>
 </section>
-<section id="ldap-works-but-sequencing-app-returns-404" class="level3" data-number="2.10.5">
-<h3 data-number="2.10.5" class="anchored" data-anchor-id="ldap-works-but-sequencing-app-returns-404"><span class="header-section-number">2.10.5</span> 5) LDAP works, but <code>/sequencing-app/</code> returns 404</h3>
+<section id="ldap-works-but-sequencing-app-returns-404" class="level3" data-number="2.11.5">
+<h3 data-number="2.11.5" class="anchored" data-anchor-id="ldap-works-but-sequencing-app-returns-404"><span class="header-section-number">2.11.5</span> 5) LDAP works, but <code>/sequencing-app/</code> returns 404</h3>
 <p><strong>Symptom</strong></p>
 <ul>
 <li><code>curl -Ik -u USER https://host/sequencing-app/</code> returns <strong>404</strong></li>
@@ -878,8 +900,8 @@ ProxyPassReverse /sequencing-app/ http://localhost:3838/sequencing-app/</code></
 <pre><code>sudo apache2ctl -t
 sudo systemctl restart apache2</code></pre>
 </section>
-<section id="debug-logging-too-noisy-apache-or-shiny" class="level3" data-number="2.10.6">
-<h3 data-number="2.10.6" class="anchored" data-anchor-id="debug-logging-too-noisy-apache-or-shiny"><span class="header-section-number">2.10.6</span> 6) Debug logging too noisy (Apache or Shiny)</h3>
+<section id="debug-logging-too-noisy-apache-or-shiny" class="level3" data-number="2.11.6">
+<h3 data-number="2.11.6" class="anchored" data-anchor-id="debug-logging-too-noisy-apache-or-shiny"><span class="header-section-number">2.11.6</span> 6) Debug logging too noisy (Apache or Shiny)</h3>
 <p><strong>Symptom</strong></p>
 <p>Lots of LDAP debug output in logs during normal use.</p>
 <p><strong>Fix (Apache)</strong></p>
@@ -903,8 +925,8 @@ sudo systemctl restart apache2</code></pre>
 LDAP_DEBUG=1</code></pre>
 <p>and restart the service again.</p>
 </section>
-<section id="comprehensive-errorchecking-checklist-vm-ldap-shiny" class="level3" data-number="2.10.7">
-<h3 data-number="2.10.7" class="anchored" data-anchor-id="comprehensive-errorchecking-checklist-vm-ldap-shiny"><span class="header-section-number">2.10.7</span> Comprehensive error‑checking checklist (VM LDAP + Shiny)</h3>
+<section id="comprehensive-errorchecking-checklist-vm-ldap-shiny" class="level3" data-number="2.11.7">
+<h3 data-number="2.11.7" class="anchored" data-anchor-id="comprehensive-errorchecking-checklist-vm-ldap-shiny"><span class="header-section-number">2.11.7</span> Comprehensive error‑checking checklist (VM LDAP + Shiny)</h3>
 <p>When something breaks, I run through this list in order:</p>
 <ol type="1">
 <li><strong>Apache syntax</strong></li>
@@ -960,8 +982,8 @@ sudo tail -n 200 /var/log/shiny-server/FILE.log</code></pre>
 sudo systemctl restart shiny-server</code></pre>
 </section>
 </section>
-<section id="changes-on-06.02.2026" class="level2" data-number="2.11">
-<h2 data-number="2.11" class="anchored" data-anchor-id="changes-on-06.02.2026"><span class="header-section-number">2.11</span> Changes on 06.02.2026</h2>
+<section id="changes-on-06.02.2026" class="level2" data-number="2.12">
+<h2 data-number="2.12" class="anchored" data-anchor-id="changes-on-06.02.2026"><span class="header-section-number">2.12</span> Changes on 06.02.2026</h2>
 <ol type="1">
 <li>Added LDAP login flow in the Shiny app (auto‑login via <code>X-Remote-User</code>, local dev simulation, and optional attribute lookup).</li>
 <li>LDAP attribute lookup now works with anonymous bind; uses <code>ldapsearch</code> fallback for older <code>ldapr</code> versions.</li>
@@ -974,8 +996,8 @@ sudo systemctl restart shiny-server</code></pre>
 <li>I do <strong>not</strong> track SQLite DB files in git because they change constantly, are environment‑specific (local vs VM), and can contain sensitive data. I ignore <code>*.db</code>/<code>*.sqlite</code> and keep only the schema/seed files in git.</li>
 </ol>
 </section>
-<section id="changes-on-14.11.2026" class="level2" data-number="2.12">
-<h2 data-number="2.12" class="anchored" data-anchor-id="changes-on-14.11.2026"><span class="header-section-number">2.12</span> Changes on 14.11.2026</h2>
+<section id="changes-on-14.11.2026" class="level2" data-number="2.13">
+<h2 data-number="2.13" class="anchored" data-anchor-id="changes-on-14.11.2026"><span class="header-section-number">2.13</span> Changes on 14.11.2026</h2>
 <ol type="1">
 <li>I would Like you to show me where the admin email address can be changed, if I want to have a different user as admin. 1.1 Please show me the parts of the script where this can be changed.</li>
 </ol>
@@ -1070,8 +1092,8 @@ sudo systemctl restart shiny-server</code></pre>
 <li>Do I have a weekly&nbsp;backup of the SQL db?&nbsp;</li>
 </ol>
 <p>there is an app for a bi-weekly automaic backup. The function is for now commented out, so not working.</p>
-<section id="modify-registration-page" class="level3" data-number="2.12.1">
-<h3 data-number="2.12.1" class="anchored" data-anchor-id="modify-registration-page"><span class="header-section-number">2.12.1</span> modify registration page</h3>
+<section id="modify-registration-page" class="level3" data-number="2.13.1">
+<h3 data-number="2.13.1" class="anchored" data-anchor-id="modify-registration-page"><span class="header-section-number">2.13.1</span> modify registration page</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -1120,8 +1142,8 @@ Note
 </div>
 </div>
 </section>
-<section id="control-for-budegt-holder-info-in-the-db" class="level3" data-number="2.12.2">
-<h3 data-number="2.12.2" class="anchored" data-anchor-id="control-for-budegt-holder-info-in-the-db"><span class="header-section-number">2.12.2</span> control for budegt holder info in the DB</h3>
+<section id="control-for-budegt-holder-info-in-the-db" class="level3" data-number="2.13.2">
+<h3 data-number="2.13.2" class="anchored" data-anchor-id="control-for-budegt-holder-info-in-the-db"><span class="header-section-number">2.13.2</span> control for budegt holder info in the DB</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -1135,12 +1157,12 @@ Note
 </details>
 </div>
 </section>
-<section id="budget-holders-can-be-read-from-an-excel-sheet" class="level3" data-number="2.12.3">
-<h3 data-number="2.12.3" class="anchored" data-anchor-id="budget-holders-can-be-read-from-an-excel-sheet"><span class="header-section-number">2.12.3</span> Budget holders can be read from an Excel sheet</h3>
+<section id="budget-holders-can-be-read-from-an-excel-sheet" class="level3" data-number="2.13.3">
+<h3 data-number="2.13.3" class="anchored" data-anchor-id="budget-holders-can-be-read-from-an-excel-sheet"><span class="header-section-number">2.13.3</span> Budget holders can be read from an Excel sheet</h3>
 </section>
 </section>
-<section id="ssl-certificate-for-https" class="level2" data-number="2.13">
-<h2 data-number="2.13" class="anchored" data-anchor-id="ssl-certificate-for-https"><span class="header-section-number">2.13</span> SSL Certificate (for HTTPS)</h2>
+<section id="ssl-certificate-for-https" class="level2" data-number="2.14">
+<h2 data-number="2.14" class="anchored" data-anchor-id="ssl-certificate-for-https"><span class="header-section-number">2.14</span> SSL Certificate (for HTTPS)</h2>
 <p>the new setting of the certificates. I have three files.</p>
 <p>The private key I created when applying for the certificate. The other two were downloaded, when the emial came from Harica (the certificate provider).</p>
 <p>the <code>PEM</code> is the pem file and the <code>DER (issuer)</code> is the chain file. Both of them are needed.</p>
@@ -1159,8 +1181,8 @@ Note
 </details>
 </div>
 </section>
-<section id="ldap" class="level2" data-number="2.14">
-<h2 data-number="2.14" class="anchored" data-anchor-id="ldap"><span class="header-section-number">2.14</span> LDAP</h2>
+<section id="ldap" class="level2" data-number="2.15">
+<h2 data-number="2.15" class="anchored" data-anchor-id="ldap"><span class="header-section-number">2.15</span> LDAP</h2>
 <p>The app uses Apache LDAP authentication in front of Shiny. The Apache config template is in <code>01-main.conf</code>.</p>
 <p>Enable required Apache modules:</p>
 <div class="cell">
@@ -1217,8 +1239,8 @@ Warning
 <span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<section id="admin-access-in-ldap-mode-vm" class="level3" data-number="2.14.1">
-<h3 data-number="2.14.1" class="anchored" data-anchor-id="admin-access-in-ldap-mode-vm"><span class="header-section-number">2.14.1</span> Admin access in LDAP mode (VM)</h3>
+<section id="admin-access-in-ldap-mode-vm" class="level3" data-number="2.15.1">
+<h3 data-number="2.15.1" class="anchored" data-anchor-id="admin-access-in-ldap-mode-vm"><span class="header-section-number">2.15.1</span> Admin access in LDAP mode (VM)</h3>
 <p>When <code>AUTH_MODE=ldap</code> is enabled, the local login form is disabled. To get admin access, I mark the <strong>LDAP user</strong> as admin in the SQLite database.</p>
 <p><strong>Option 1: Pre‑create the user as admin (works even before first login)</strong></p>
 <div class="cell">
@@ -1255,8 +1277,8 @@ Warning
 </details>
 </div>
 </section>
-<section id="switch-between-ldap-and-local-modes-vm" class="level3" data-number="2.14.2">
-<h3 data-number="2.14.2" class="anchored" data-anchor-id="switch-between-ldap-and-local-modes-vm"><span class="header-section-number">2.14.2</span> Switch between LDAP and local modes (VM)</h3>
+<section id="switch-between-ldap-and-local-modes-vm" class="level3" data-number="2.15.2">
+<h3 data-number="2.15.2" class="anchored" data-anchor-id="switch-between-ldap-and-local-modes-vm"><span class="header-section-number">2.15.2</span> Switch between LDAP and local modes (VM)</h3>
 <p>I switch auth modes by changing the <code>AUTH_MODE</code> environment variable for the <code>shiny-server</code> service and restarting it.</p>
 <p>Open the systemd override:</p>
 <div class="cell">
@@ -1283,8 +1305,8 @@ Warning
 </div>
 <p>If I switch back to LDAP, I also remove any dev‑only variables like <code>DEV_REMOTE_USER</code>.</p>
 </section>
-<section id="local-dev-testing-ldap-mode" class="level3" data-number="2.14.3">
-<h3 data-number="2.14.3" class="anchored" data-anchor-id="local-dev-testing-ldap-mode"><span class="header-section-number">2.14.3</span> Local dev testing (LDAP mode)</h3>
+<section id="local-dev-testing-ldap-mode" class="level3" data-number="2.15.3">
+<h3 data-number="2.15.3" class="anchored" data-anchor-id="local-dev-testing-ldap-mode"><span class="header-section-number">2.15.3</span> Local dev testing (LDAP mode)</h3>
 <p>To test LDAP integration on your local machine without affecting production, run the app in dev mode and simulate the authenticated user. If LDAP attribute lookup is needed, provide a bind DN/password (personal credentials are OK for <strong>local testing only</strong>).</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb96"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(</span>
 <span id="cb96-2"><a href="#cb96-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">APP_ENV =</span> <span class="st">"dev"</span>,</span>
@@ -1308,8 +1330,8 @@ Warning
 <span id="cb99-4"><a href="#cb99-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_URI"</span>, <span class="st">"LDAP_BASE_DN"</span>, <span class="st">"LDAP_DEBUG"</span></span>
 <span id="cb99-5"><a href="#cb99-5" aria-hidden="true" tabindex="-1"></a>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="how-i-run-the-app-locally-my-notes" class="level3" data-number="2.14.4">
-<h3 data-number="2.14.4" class="anchored" data-anchor-id="how-i-run-the-app-locally-my-notes"><span class="header-section-number">2.14.4</span> How I run the app locally (my notes)</h3>
+<section id="how-i-run-the-app-locally-my-notes" class="level3" data-number="2.15.4">
+<h3 data-number="2.15.4" class="anchored" data-anchor-id="how-i-run-the-app-locally-my-notes"><span class="header-section-number">2.15.4</span> How I run the app locally (my notes)</h3>
 <p>When I want the <strong>normal local login</strong>, I run:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb100"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">APP_ENV =</span> <span class="st">"dev"</span>, <span class="at">AUTH_MODE =</span> <span class="st">"local"</span>)</span>
 <span id="cb100-2"><a href="#cb100-2" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -1336,19 +1358,19 @@ Warning
 </ul>
 <p><strong>Dev badge:</strong> In dev mode, I see a small badge in the app header that shows <code>DEV · LDAP</code> or <code>DEV · LOCAL</code>, so I always know which mode I’m running.</p>
 </section>
-<section id="budget-holder-auto-assignment-first-login" class="level3" data-number="2.14.5">
-<h3 data-number="2.14.5" class="anchored" data-anchor-id="budget-holder-auto-assignment-first-login"><span class="header-section-number">2.14.5</span> Budget holder auto-assignment (first login)</h3>
+<section id="budget-holder-auto-assignment-first-login" class="level3" data-number="2.15.5">
+<h3 data-number="2.15.5" class="anchored" data-anchor-id="budget-holder-auto-assignment-first-login"><span class="header-section-number">2.15.5</span> Budget holder auto-assignment (first login)</h3>
 <p>On first LDAP login, the app attempts to map the user to a budget holder based on the LDAP <code>ou</code> value.<br>
 If the <code>ou</code> contains a group key in parentheses (e.g., <code>(... Cox)</code>), the app matches that key against <code>budget_holders</code> and stores the <strong>full PI name</strong> (e.g., <code>Cox Juergen</code>) in <code>users.research_group</code>.</p>
 <p>When a new project is created, this <code>research_group</code> value is used to auto‑select the budget holder (and thus the cost center).<br>
 If multiple cost centers exist for the same PI, the first match is selected by default and can be adjusted during project creation.</p>
 </section>
 </section>
-<section id="obsolete-now-wrong-kept-for-reference" class="level2" data-number="2.15">
-<h2 data-number="2.15" class="anchored" data-anchor-id="obsolete-now-wrong-kept-for-reference"><span class="header-section-number">2.15</span> Obsolete / now wrong (kept for reference)</h2>
+<section id="obsolete-now-wrong-kept-for-reference" class="level2" data-number="2.16">
+<h2 data-number="2.16" class="anchored" data-anchor-id="obsolete-now-wrong-kept-for-reference"><span class="header-section-number">2.16</span> Obsolete / now wrong (kept for reference)</h2>
 <p>These sections are retained to understand the history but should not be followed anymore.</p>
-<section id="legacy-environment-variable-location-no-longer-used" class="level3" data-number="2.15.1">
-<h3 data-number="2.15.1" class="anchored" data-anchor-id="legacy-environment-variable-location-no-longer-used"><span class="header-section-number">2.15.1</span> Legacy environment variable location (no longer used)</h3>
+<section id="legacy-environment-variable-location-no-longer-used" class="level3" data-number="2.16.1">
+<h3 data-number="2.16.1" class="anchored" data-anchor-id="legacy-environment-variable-location-no-longer-used"><span class="header-section-number">2.16.1</span> Legacy environment variable location (no longer used)</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -1360,8 +1382,8 @@ If multiple cost centers exist for the same PI, the first match is selected by d
 </details>
 </div>
 </section>
-<section id="legacy-folder-layout-varshiny-server" class="level3" data-number="2.15.2">
-<h3 data-number="2.15.2" class="anchored" data-anchor-id="legacy-folder-layout-varshiny-server"><span class="header-section-number">2.15.2</span> Legacy folder layout (/var/shiny-server)</h3>
+<section id="legacy-folder-layout-varshiny-server" class="level3" data-number="2.16.2">
+<h3 data-number="2.16.2" class="anchored" data-anchor-id="legacy-folder-layout-varshiny-server"><span class="header-section-number">2.16.2</span> Legacy folder layout (/var/shiny-server)</h3>
 <pre><code>/var/shiny-server/
 ├── sequencing-app/
 │ ├── app.R
@@ -1371,8 +1393,8 @@ If multiple cost centers exist for the same PI, the first match is selected by d
   │ ├── logo.png
   │ └── minerva.png</code></pre>
 </section>
-<section id="legacy-install-steps-nginx-based-superseded-by-apache-setup" class="level3" data-number="2.15.3">
-<h3 data-number="2.15.3" class="anchored" data-anchor-id="legacy-install-steps-nginx-based-superseded-by-apache-setup"><span class="header-section-number">2.15.3</span> Legacy install steps (nginx-based, superseded by Apache setup)</h3>
+<section id="legacy-install-steps-nginx-based-superseded-by-apache-setup" class="level3" data-number="2.16.3">
+<h3 data-number="2.16.3" class="anchored" data-anchor-id="legacy-install-steps-nginx-based-superseded-by-apache-setup"><span class="header-section-number">2.16.3</span> Legacy install steps (nginx-based, superseded by Apache setup)</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -1398,8 +1420,8 @@ If multiple cost centers exist for the same PI, the first match is selected by d
 </details>
 </div>
 </section>
-<section id="legacy-apache-config-old-proxypass-path" class="level3" data-number="2.15.4">
-<h3 data-number="2.15.4" class="anchored" data-anchor-id="legacy-apache-config-old-proxypass-path"><span class="header-section-number">2.15.4</span> Legacy Apache config (old ProxyPass / path)</h3>
+<section id="legacy-apache-config-old-proxypass-path" class="level3" data-number="2.16.4">
+<h3 data-number="2.16.4" class="anchored" data-anchor-id="legacy-apache-config-old-proxypass-path"><span class="header-section-number">2.16.4</span> Legacy Apache config (old ProxyPass / path)</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -1449,12 +1471,12 @@ If multiple cost centers exist for the same PI, the first match is selected by d
 </details>
 </div>
 </section>
-<section id="legacy-deployment-script-name" class="level3" data-number="2.15.5">
-<h3 data-number="2.15.5" class="anchored" data-anchor-id="legacy-deployment-script-name"><span class="header-section-number">2.15.5</span> Legacy deployment script name</h3>
+<section id="legacy-deployment-script-name" class="level3" data-number="2.16.5">
+<h3 data-number="2.16.5" class="anchored" data-anchor-id="legacy-deployment-script-name"><span class="header-section-number">2.16.5</span> Legacy deployment script name</h3>
 <p>The old notes referenced <code>deploy_shiny_server.sh</code>. This has been replaced by <code>deploy.sh</code> in the repo root.</p>
 </section>
-<section id="legacy-tree-output-old-vm-layout-example" class="level3" data-number="2.15.6">
-<h3 data-number="2.15.6" class="anchored" data-anchor-id="legacy-tree-output-old-vm-layout-example"><span class="header-section-number">2.15.6</span> Legacy tree output (old VM layout example)</h3>
+<section id="legacy-tree-output-old-vm-layout-example" class="level3" data-number="2.16.6">
+<h3 data-number="2.16.6" class="anchored" data-anchor-id="legacy-tree-output-old-vm-layout-example"><span class="header-section-number">2.16.6</span> Legacy tree output (old VM layout example)</h3>
 <pre><code>$ tree -L 1
 .
 ├── BCFNGS-project-management
@@ -1463,8 +1485,8 @@ If multiple cost centers exist for the same PI, the first match is selected by d
 └── scripts
     └── deploy_shiny_server.sh</code></pre>
 </section>
-<section id="legacy-git-pull-via-https-pat-no-longer-used" class="level3" data-number="2.15.7">
-<h3 data-number="2.15.7" class="anchored" data-anchor-id="legacy-git-pull-via-https-pat-no-longer-used"><span class="header-section-number">2.15.7</span> Legacy git pull via HTTPS + PAT (no longer used)</h3>
+<section id="legacy-git-pull-via-https-pat-no-longer-used" class="level3" data-number="2.16.7">
+<h3 data-number="2.16.7" class="anchored" data-anchor-id="legacy-git-pull-via-https-pat-no-longer-used"><span class="header-section-number">2.16.7</span> Legacy git pull via HTTPS + PAT (no longer used)</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -1475,8 +1497,8 @@ If multiple cost centers exist for the same PI, the first match is selected by d
 </details>
 </div>
 </section>
-<section id="legacy-note-dedicated-user-superseded" class="level3" data-number="2.15.8">
-<h3 data-number="2.15.8" class="anchored" data-anchor-id="legacy-note-dedicated-user-superseded"><span class="header-section-number">2.15.8</span> Legacy note: dedicated user (superseded)</h3>
+<section id="legacy-note-dedicated-user-superseded" class="level3" data-number="2.16.8">
+<h3 data-number="2.16.8" class="anchored" data-anchor-id="legacy-note-dedicated-user-superseded"><span class="header-section-number">2.16.8</span> Legacy note: dedicated user (superseded)</h3>
 <p>As we’re planning to use the LDAP, I’m not sure, this is necessary. I need a method to add specific users as admin.</p>
 
 

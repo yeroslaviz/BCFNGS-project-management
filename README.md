@@ -24,6 +24,7 @@ After registration is complete, you can directly login with your MPIB account to
 
 - [Git auth on new laptop](README-git-auth-new-laptop.md)
 - [LDAP deploy smoke tests and troubleshooting](README-ldap-deploy-troubleshooting.md)
+git status -sb
 
 
 # Changes
