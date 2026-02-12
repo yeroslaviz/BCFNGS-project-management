@@ -508,21 +508,9 @@ server <- function(input, output, session) {
     # This fallback is allowed only in explicit dev setups.
     if (!allow_untrusted_auth_fallback) return(NULL)
 
-    # Fallback: read auth_user from cookie (set by Apache after LDAP auth)
-    cookie_header <- session$request$HTTP_COOKIE
-    if (!is.null(cookie_header) && cookie_header != "") {
-      cookies <- unlist(strsplit(cookie_header, ";"))
-      cookies <- trimws(cookies)
-      auth_kv <- cookies[grepl("^auth_user=", cookies)]
-      if (length(auth_kv) > 0) {
-        auth_val <- sub("^auth_user=", "", auth_kv[1])
-        if (!is.null(auth_val) && auth_val != "") {
-          return(utils::URLdecode(auth_val))
-        }
-      }
-    }
-
-    # Fallback: read auth_user from query string if headers are not passed through
+    # Fallback: read auth_user from query string.
+    # In production this should be enabled only when Apache canonicalizes auth_user
+    # to the authenticated REMOTE_USER.
     qs <- session$clientData$url_search
     if (!is.null(qs) && qs != "") {
       parsed <- shiny::parseQueryString(qs)
@@ -533,6 +521,22 @@ server <- function(input, output, session) {
           auth_vals <- auth_vals[length(auth_vals)]
         }
         if (!is.null(auth_vals) && auth_vals != "") return(auth_vals)
+      }
+    }
+
+    # Dev-only legacy cookie fallback
+    if (app_env_is_dev) {
+      cookie_header <- session$request$HTTP_COOKIE
+      if (!is.null(cookie_header) && cookie_header != "") {
+        cookies <- unlist(strsplit(cookie_header, ";"))
+        cookies <- trimws(cookies)
+        auth_kv <- cookies[grepl("^auth_user=", cookies)]
+        if (length(auth_kv) > 0) {
+          auth_val <- sub("^auth_user=", "", auth_kv[1])
+          if (!is.null(auth_val) && auth_val != "") {
+            return(utils::URLdecode(auth_val))
+          }
+        }
       }
     }
 
