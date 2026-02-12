@@ -330,6 +330,7 @@ server <- function(input, output, session) {
       "AUTH_MODE=", Sys.getenv("AUTH_MODE", "<unset>"),
       "APP_ENV=", Sys.getenv("APP_ENV", "<unset>"),
       "ALLOW_UNTRUSTED_AUTH_FALLBACK=", Sys.getenv("ALLOW_UNTRUSTED_AUTH_FALLBACK", "<unset>"),
+      "TRUST_PROXY_AUTH_USER_QUERY=", Sys.getenv("TRUST_PROXY_AUTH_USER_QUERY", "<unset>"),
       "\n",
       file = stderr()
     )
@@ -493,6 +494,8 @@ server <- function(input, output, session) {
   # Security: untrusted URL/cookie fallback must be explicitly enabled.
   # Never auto-enable it just because APP_ENV=dev.
   allow_untrusted_auth_fallback <- to_bool(Sys.getenv("ALLOW_UNTRUSTED_AUTH_FALLBACK", ""))
+  # Trusted only when Apache canonicalizes auth_user from REMOTE_USER.
+  trust_proxy_auth_user_query <- to_bool(Sys.getenv("TRUST_PROXY_AUTH_USER_QUERY", ""))
 
   ldap_warned <- reactiveVal(FALSE)
   ldap_bind_warned <- reactiveVal(FALSE)
@@ -629,6 +632,20 @@ server <- function(input, output, session) {
     if (!is.null(header_user) && header_user != "") {
       if (ldap_login_blocked()) return(NULL)
       return(header_user)
+    }
+
+    if (trust_proxy_auth_user_query) {
+      qs <- session$clientData$url_search
+      if (!is.null(qs) && qs != "") {
+        parsed <- shiny::parseQueryString(qs)
+        if (!is.null(parsed$auth_user) && parsed$auth_user != "") {
+          auth_vals <- parsed$auth_user
+          if (length(auth_vals) > 1) {
+            auth_vals <- auth_vals[length(auth_vals)]
+          }
+          if (!is.null(auth_vals) && auth_vals != "") return(auth_vals)
+        }
+      }
     }
 
     # Optional emergency fallback for controlled debugging only.
