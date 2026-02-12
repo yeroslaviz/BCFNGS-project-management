@@ -1,5 +1,5 @@
 ---
-title: "LDAP + Project Management App Summary (2026-02-06)"
+title: "LDAP Setup Summary (2026-02-06)"
 execute:
   eval: false
 ---

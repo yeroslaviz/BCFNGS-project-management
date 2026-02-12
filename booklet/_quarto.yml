@@ -6,23 +6,18 @@ book:
   title: "NGS Sequencing App Ops Booklet"
   subtitle: "Shiny + LDAP + VM rollout"
   author: "Assa Yeroslaviz"
-  site-url: "https://yeroslaviz.github.io/BCFNGS-project-management/"
   chapters:
     - index.qmd
-    - part: "Project QMD Documents"
-      chapters:
-        - chapters/modifying-ngs-vm.qmd
-        - chapters/server-preparations.qmd
+    - chapters/server-preparations.qmd
     - part: "Operational Notes"
       chapters:
         - chapters/ldap-setup-summary-2026-02-06.qmd
-        - chapters/ubuntu-bare-server-setup-howto.qmd
         - chapters/vm-rollout-summary-2026-02-09.qmd
         - chapters/vm-troubleshooting-guide.qmd
+        - chapters/ubuntu-bare-server-setup-howto.qmd
 
 format:
   html:
-    theme: cosmo
     toc: true
     toc-depth: 3
     number-sections: true
