@@ -455,7 +455,13 @@ server <- function(input, output, session) {
   auth_mode_val <- reactiveVal(initial_auth_mode)
   get_auth_mode <- function() auth_mode_val()
 
-  dev_mode <- tolower(Sys.getenv("APP_ENV", "")) == "dev" || Sys.getenv("SHOW_DEV_TOOLS", "") == "1"
+  to_bool <- function(x) {
+    tolower(trimws(x)) %in% c("1", "true", "yes", "on")
+  }
+
+  app_env_is_dev <- tolower(Sys.getenv("APP_ENV", "")) == "dev"
+  dev_mode <- app_env_is_dev || to_bool(Sys.getenv("SHOW_DEV_TOOLS", ""))
+  allow_untrusted_auth_fallback <- app_env_is_dev || to_bool(Sys.getenv("ALLOW_UNTRUSTED_AUTH_FALLBACK", ""))
 
   ldap_warned <- reactiveVal(FALSE)
   ldap_bind_warned <- reactiveVal(FALSE)
@@ -480,8 +486,7 @@ server <- function(input, output, session) {
       session$request$HTTP_X_REMOTE_USER,
       session$request$HTTP_REMOTE_USER,
       session$request$REMOTE_USER,
-      session$request$HTTP_X_FORWARDED_USER,
-      session$request$HTTP_X_FORWARDED_EMAIL
+      session$request$HTTP_X_FORWARDED_USER
     )
     candidates <- candidates[!is.na(candidates) & candidates != ""]
     header_user <- if (length(candidates) > 0) candidates[1] else NULL
@@ -490,6 +495,10 @@ server <- function(input, output, session) {
       if (ldap_login_blocked()) return(NULL)
       return(header_user)
     }
+
+    # Security default: never trust URL/cookie identity in production.
+    # This fallback is allowed only in explicit dev setups.
+    if (!allow_untrusted_auth_fallback) return(NULL)
 
     # Fallback: read auth_user from cookie (set by Apache after LDAP auth)
     cookie_header <- session$request$HTTP_COOKIE
@@ -519,8 +528,10 @@ server <- function(input, output, session) {
       }
     }
 
-    dev_user <- dev_auth_user()
-    if (!is.null(dev_user) && dev_user != "") return(dev_user)
+    if (app_env_is_dev) {
+      dev_user <- dev_auth_user()
+      if (!is.null(dev_user) && dev_user != "") return(dev_user)
+    }
     return(NULL)
   }
 
@@ -1385,7 +1396,16 @@ server <- function(input, output, session) {
       return()
     }
 
-    handle_ldap_login(username)
+    tryCatch({
+      handle_ldap_login(username)
+    }, error = function(e) {
+      cat("LDAP LOGIN ERROR:", e$message, "\n", file = stderr())
+      showNotification(
+        "Authentication failed due to a server-side error. Please try again or contact admin.",
+        type = "error",
+        duration = 10
+      )
+    })
   })
 
   output$dev_tools_ui <- renderUI({
