@@ -68,6 +68,25 @@ ui <- fluidPage(
   .dataTables_wrapper {
     overflow-x: auto;
   }
+  /* Projects table readability (scoped: do not affect admin modal tables) */
+  #projects_table_wrapper {
+    width: 100%;
+  }
+  #projects_table_wrapper .dataTables_scrollBody {
+    overflow-x: auto !important;
+  }
+  #projects_table.dataTable {
+    width: 100% !important;
+  }
+  #projects_table.dataTable th,
+  #projects_table.dataTable td {
+    white-space: normal !important;
+    word-break: break-word;
+    vertical-align: top;
+    font-size: 12px;
+    line-height: 1.35;
+    padding: 6px 8px;
+  }
   .status-application-received { background-color: #fff3cd !important; color: #333333 !important; }
   .status-under-review { background-color: #cce7ff !important; color: #333333 !important; }
   .status-approved { background-color: #d4edda !important; color: #333333 !important; }
@@ -238,6 +257,16 @@ ui <- fluidPage(
         }
       }
 
+      function adjustProjectsTable() {
+        if (!window.jQuery || !$.fn || !$.fn.dataTable) return;
+        var tableEl = $('#projects_table');
+        if (tableEl.length === 0) return;
+
+        if ($.fn.dataTable.isDataTable(tableEl[0])) {
+          tableEl.DataTable().columns.adjust();
+        }
+      }
+
       $(document).ready(function() {
         $(document).on('keyup', '#login_username, #login_password', function(e) {
           if (e.keyCode === 13) {
@@ -245,9 +274,20 @@ ui <- fluidPage(
           }
         });
 
+        $(document).on('shown.bs.tab', 'a[data-toggle=\"tab\"], a[data-bs-toggle=\"tab\"]', function() {
+          setTimeout(adjustProjectsTable, 50);
+        });
+
+        var resizeTimer = null;
+        $(window).on('resize', function() {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(adjustProjectsTable, 150);
+        });
+
         publishUrlSearch();
         $(window).on('popstate hashchange', publishUrlSearch);
         setTimeout(publishUrlSearch, 300);
+        setTimeout(adjustProjectsTable, 250);
       });
     ")
   ),
@@ -2418,14 +2458,50 @@ server <- function(input, output, session) {
     } else {
       column_names <- c(column_names, "Created")
     }
-    
+
+    column_width_defs <- list(
+      list(targets = 0, width = "80px"),   # Project ID
+      list(targets = 1, width = "180px"),  # Project Name
+      list(targets = 2, width = "70px"),   # Samples
+      list(targets = 3, width = "110px"),  # Platform
+      list(targets = 4, width = "140px"),  # Reference
+      list(targets = 5, width = "170px"),  # Service Type
+      list(targets = 6, width = "190px"),  # Project Type
+      list(targets = 7, width = "150px"),  # Sequencing Depth
+      list(targets = 8, width = "130px"),  # Sequencing Cycles
+      list(targets = 9, width = "180px"),  # Budget Holder
+      list(targets = 10, width = "130px"), # Responsible User
+      list(targets = 11, width = "240px"), # Kick-off Meeting
+      list(targets = 12, width = "90px"),  # Total Cost
+      list(targets = 13, width = "140px")  # Status
+    )
+
+    if(user$is_admin) {
+      column_width_defs <- c(
+        column_width_defs,
+        list(
+          list(targets = 14, width = "110px"), # Created By
+          list(targets = 15, width = "150px")  # Created
+        )
+      )
+    } else {
+      column_width_defs <- c(
+        column_width_defs,
+        list(
+          list(targets = 14, width = "150px") # Created
+        )
+      )
+    }
+
     datatable(
       display_data,
       selection = 'single',
       options = list(
         pageLength = 10,
-        autoWidth = TRUE,
-        scrollX = TRUE
+        autoWidth = FALSE,
+        scrollX = TRUE,
+        scrollCollapse = TRUE,
+        columnDefs = column_width_defs
       ),
       rownames = FALSE,
       colnames = column_names
