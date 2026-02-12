@@ -232,12 +232,22 @@ ui <- fluidPage(
   }
   "),
     tags$script("
+      function publishUrlSearch() {
+        if (window.Shiny && Shiny.setInputValue) {
+          Shiny.setInputValue('client_url_search', window.location.search || '', {priority: 'event'});
+        }
+      }
+
       $(document).ready(function() {
         $(document).on('keyup', '#login_username, #login_password', function(e) {
           if (e.keyCode === 13) {
             $('#login_btn').click();
           }
         });
+
+        publishUrlSearch();
+        $(window).on('popstate hashchange', publishUrlSearch);
+        setTimeout(publishUrlSearch, 300);
       });
     ")
   ),
@@ -362,6 +372,9 @@ server <- function(input, output, session) {
           "REMOTE_USER=", ifelse(is.null(remote_user) || remote_user == "", "<missing>", remote_user),
           "X_FORWARDED_USER=", ifelse(is.null(x_forwarded) || x_forwarded == "", "<missing>", x_forwarded),
           "AUTHORIZATION=", ifelse(is.null(authz) || authz == "", "<missing>", "<present>"),
+          "CLIENT_URL_SEARCH=", client_url_search() %||% "<missing>",
+          "SESSION_URL_SEARCH=", scalar_text(session$clientData$url_search) %||% "<missing>",
+          "REQ_QUERY_STRING=", scalar_text(req$QUERY_STRING) %||% "<missing>",
           "\n",
           file = stderr()
         )
@@ -501,6 +514,7 @@ server <- function(input, output, session) {
   ldap_bind_warned <- reactiveVal(FALSE)
   ldap_login_blocked <- reactiveVal(FALSE)
   dev_auth_user <- reactiveVal(Sys.getenv("DEV_REMOTE_USER", ""))
+  client_url_search <- reactiveVal("")
 
   pending_profile <- reactiveValues(
     active = FALSE,
@@ -520,6 +534,15 @@ server <- function(input, output, session) {
     if (is.na(x) || x == "") return(NULL)
     x
   }
+
+  observeEvent(input$client_url_search, {
+    qs <- scalar_text(input$client_url_search)
+    client_url_search(qs %||% "")
+    if (Sys.getenv("LDAP_DEBUG", "") == "1") {
+      cat("LDAP DEBUG: client url_search =", client_url_search(), "\n", file = stderr())
+      flush.console()
+    }
+  }, ignoreInit = FALSE)
 
   get_req_header <- function(req, header_name) {
     if (is.null(req) || is.null(header_name) || header_name == "") return(NULL)
@@ -634,33 +657,35 @@ server <- function(input, output, session) {
       return(header_user)
     }
 
+    parse_auth_user_from_qs <- function(qs) {
+      qs <- scalar_text(qs)
+      if (is.null(qs)) return(NULL)
+      parsed <- shiny::parseQueryString(qs)
+      if (is.null(parsed$auth_user) || parsed$auth_user == "") return(NULL)
+      auth_vals <- parsed$auth_user
+      if (length(auth_vals) > 1) auth_vals <- auth_vals[length(auth_vals)]
+      scalar_text(auth_vals)
+    }
+
+    query_candidates <- unique(c(
+      client_url_search(),
+      session$clientData$url_search,
+      req$QUERY_STRING
+    ))
+
     if (trust_proxy_auth_user_query) {
-      qs <- session$clientData$url_search
-      if (!is.null(qs) && qs != "") {
-        parsed <- shiny::parseQueryString(qs)
-        if (!is.null(parsed$auth_user) && parsed$auth_user != "") {
-          auth_vals <- parsed$auth_user
-          if (length(auth_vals) > 1) {
-            auth_vals <- auth_vals[length(auth_vals)]
-          }
-          if (!is.null(auth_vals) && auth_vals != "") return(auth_vals)
-        }
+      for (qs in query_candidates) {
+        auth_user_qs <- parse_auth_user_from_qs(qs)
+        if (!is.null(auth_user_qs) && auth_user_qs != "") return(auth_user_qs)
       }
     }
 
     # Optional emergency fallback for controlled debugging only.
     # This is intentionally disabled unless ALLOW_UNTRUSTED_AUTH_FALLBACK=true.
     if (allow_untrusted_auth_fallback) {
-      qs <- session$clientData$url_search
-      if (!is.null(qs) && qs != "") {
-        parsed <- shiny::parseQueryString(qs)
-        if (!is.null(parsed$auth_user) && parsed$auth_user != "") {
-          auth_vals <- parsed$auth_user
-          if (length(auth_vals) > 1) {
-            auth_vals <- auth_vals[length(auth_vals)]
-          }
-          if (!is.null(auth_vals) && auth_vals != "") return(auth_vals)
-        }
+      for (qs in query_candidates) {
+        auth_user_qs <- parse_auth_user_from_qs(qs)
+        if (!is.null(auth_user_qs) && auth_user_qs != "") return(auth_user_qs)
       }
 
       cookie_header <- session$request$HTTP_COOKIE
@@ -1560,6 +1585,9 @@ server <- function(input, output, session) {
           "REMOTE_USER=", scalar_text(req$REMOTE_USER) %||% "<missing>",
           "X_FORWARDED_USER=", get_req_header(req, "x-forwarded-user") %||% "<missing>",
           "AUTHORIZATION=", ifelse(is.null(get_req_header(req, "authorization")), "<missing>", "<present>"),
+          "CLIENT_URL_SEARCH=", client_url_search() %||% "<missing>",
+          "SESSION_URL_SEARCH=", scalar_text(session$clientData$url_search) %||% "<missing>",
+          "REQ_QUERY_STRING=", scalar_text(req$QUERY_STRING) %||% "<missing>",
           "\n",
           file = stderr()
         )
