@@ -1483,12 +1483,21 @@ server <- function(input, output, session) {
       
       cat("DEBUG: Attempting to send email...\n")
       
+      # Build subject with project ID prefix (e.g., "P2 - Subject")
+      subject_base <- template$subject
+      subject <- subject_base
+      if (!is.null(project_data$project_code) &&
+          !is.na(project_data$project_code) &&
+          nzchar(project_data$project_code)) {
+        subject <- paste(project_data$project_code, subject_base, sep = " - ")
+      }
+
       # Send email
       send.mail(
         from = "ngs@biochem.mpg.de",
         to = c(budget_holder$email, user_email, admin_emails),
         encoding = "utf-8",
-        subject = template$subject,
+        subject = subject,
         body = email_body,
         smtp = list(
           host.name = "msx.biochem.mpg.de",
@@ -2370,8 +2379,21 @@ server <- function(input, output, session) {
     total_cost
   ))
     
+    # Resolve the auto-generated project_id for email subject (P<number>)
+    new_row_id <- dbGetQuery(con, "SELECT last_insert_rowid() AS id")$id
+    project_id_value <- dbGetQuery(con, "SELECT project_id FROM projects WHERE id = ?",
+                                   params = list(as.numeric(new_row_id)))$project_id
+    project_code <- if (!is.null(project_id_value) && length(project_id_value) > 0 &&
+                          !is.na(project_id_value)) {
+      paste0("P", project_id_value)
+    } else {
+      ""
+    }
+
     # Get the created project data for email
     project_data <- list(
+      project_id = project_id_value,
+      project_code = project_code,
       project_name = input$project_name,
       responsible_user = input$responsible_user,
       num_samples = input$num_samples,
