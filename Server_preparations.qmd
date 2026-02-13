@@ -170,6 +170,17 @@ sudo -u shiny Rscript setup_database.R
 
 sudo systemctl start shiny-server
 ```
+
+**Add admin users to an existing DB (no rebuild)**
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"INSERT OR IGNORE INTO users (username, password, email, is_admin, research_group) VALUES
+ ('yeroslaviz','ldap-only','yeroslaviz@biochem.mpg.de',1,'Cox'),
+ ('rkim','ldap-only','rkim@biochem.mpg.de',1,'NGS Facility'),
+ ('casper','ldap-only','casper@biochem.mpg.de',1,'NGS Facility'),
+ ('gautsch','ldap-only','gautsch@biochem.mpg.de',1,'NGS Facility');"
+```
 ## Install required system dependencies
 
 ```{bash}
