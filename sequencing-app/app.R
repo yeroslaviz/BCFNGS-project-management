@@ -360,7 +360,7 @@ ui <- fluidPage(
               class = "user-info-panel",
               textOutput("welcome_user"),
               uiOutput("dev_mode_badge"),
-              actionButton("logout_btn", "Logout", class = "btn-logout")
+              actionButton("logout_btn", "End Session", class = "btn-logout")
             )
           )
         )
@@ -1841,42 +1841,29 @@ server <- function(input, output, session) {
   
   # Logout functionality
   observeEvent(input$logout_btn, {
+    if (get_auth_mode() == "ldap") {
+      showModal(modalDialog(
+        title = "End Session (LDAP)",
+        tagList(
+          p("LDAP authentication is managed by the web server."),
+          p("To fully log out or switch users, please close this tab/window or use a private window.")
+        ),
+        footer = modalButton("OK"),
+        easyClose = TRUE
+      ))
+      return()
+    }
+
     user$logged_in <- FALSE
     user$username <- NULL
     user$user_id <- NULL
     user$is_admin <- FALSE
 
-    if (get_auth_mode() == "ldap") {
-      header_user <- get_proxy_authenticated_user(session)
-      hide("main_app")
-      show("login_screen")
-
-      if (!is.null(header_user) && header_user != "") {
-        ldap_login_blocked(TRUE)
-        showModal(modalDialog(
-          title = "Logged Out",
-          tagList(
-            p("LDAP authentication is managed by the web server."),
-            p("To log in again, click \"Re-login\" below."),
-            p("To switch users, close the browser or use a private window and log in with different credentials.")
-          ),
-          footer = actionButton("ldap_relogin_btn", "Re-login", class = "btn-primary"),
-          easyClose = FALSE
-        ))
-      } else {
-        ldap_login_blocked(FALSE)
-        dev_auth_user("")
-        Sys.unsetenv("DEV_REMOTE_USER")
-        hide("login_error")
-        showNotification("Logged out. Enter a different dev username to log in again.", type = "message")
-      }
-    } else {
-      show("login_screen")
-      hide("main_app")
-      updateTextInput(session, "login_username", value = "")
-      updateTextInput(session, "login_password", value = "")
-      hide("login_error")
-    }
+    show("login_screen")
+    hide("main_app")
+    updateTextInput(session, "login_username", value = "")
+    updateTextInput(session, "login_password", value = "")
+    hide("login_error")
   })
   
   # Welcome message

@@ -1,7 +1,5 @@
 # LDAP + Project Management App Summary (2026-02-06)
 
-This file summarizes the work done today and how to run/test the app locally and on the VM.
-
 ## What Changed
 
 - Added LDAP login flow with auto-login via `X-Remote-User` and local dev simulation via `DEV_REMOTE_USER`.
