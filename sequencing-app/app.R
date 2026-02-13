@@ -1302,6 +1302,15 @@ server <- function(input, output, session) {
     "Data released"
   )
 
+  status_colors <- c(
+    "Created" = "#fff3cd",
+    "Samples received" = "#cce7ff",
+    "Library preparation" = "#e2e3e5",
+    "QC done" = "#d1ecf1",
+    "Data analysis" = "#f8d7da",
+    "Data released" = "#d4edda"
+  )
+
   make_status_choices <- function(current_status = NULL) {
     choices <- status_options
     if (!is.null(current_status) && nzchar(current_status) && !(current_status %in% choices)) {
@@ -2503,8 +2512,8 @@ server <- function(input, output, session) {
       formatStyle(
         'status',
         backgroundColor = styleEqual(
-          status_options,
-          c('#fff3cd', '#cce7ff', '#e2e3e5', '#d1ecf1', '#d4edda', '#f8d7da', '#d4edda')
+          names(status_colors),
+          unname(status_colors)
         )
       ) %>%
       formatCurrency('total_cost', currency = "€", digits = 2)

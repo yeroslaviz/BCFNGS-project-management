@@ -155,17 +155,20 @@ You only need to rebuild the entire SQLite DB when the **schema** changes (for e
 
 **Rebuild procedure (VM)**
 
+The rebuild **must run inside** `/srv/shiny-server/sequencing-app` so relative paths (e.g., `budget_holders.csv`) resolve correctly.
+
 ```bash
 sudo systemctl stop shiny-server
 
 # Backup first
-cp /srv/shiny-server/sequencing-app/sequencing_projects.db   /srv/shiny-server/sequencing_projects.db.backup_$(date +%Y%m%d_%H%M)
+cp /srv/shiny-server/sequencing-app/sequencing_projects.db \
+  /srv/shiny-server/sequencing_projects.db.backup_$(date +%Y%m%d_%H%M)
 
 # Remove DB
 rm /srv/shiny-server/sequencing-app/sequencing_projects.db
 
-# Recreate DB from schema
-cd /home/yeroslaviz/BCFNGS-project-management/sequencing-app
+# Recreate DB from schema (run in the live app folder)
+cd /srv/shiny-server/sequencing-app
 sudo -u shiny Rscript setup_database.R
 
 sudo systemctl start shiny-server
@@ -609,6 +612,11 @@ It then resets permissions for all files (the DB file remains in place and keeps
 When this is done, it restart the shiny server.
 
 **This script must be run each time the files inside the sequencing-app folder were changed**, but not if other changed were made in the repo.
+
+**Rule of thumb after `git pull`:**
+
+- **Run `./deploy.sh`** if anything under `sequencing-app/` changed (e.g. `app.R`, `setup_database.R`, CSS, images).
+- **Skip `./deploy.sh`** if only docs changed (`.qmd`, `.md`, `notes/`) or other non‑app files.
 
 # Changes on 12.02.2026
 
