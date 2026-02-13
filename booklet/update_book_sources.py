@@ -8,9 +8,10 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "booklet" / "chapters"
 
 SOURCES = [
+    ("Quick Start (How to run the app)", ROOT / "quick-start.qmd", OUT_DIR / "quick-start.qmd"),
     ("Server Preparations", ROOT / "Server_preparations.qmd", OUT_DIR / "server-preparations.qmd"),
     ("LDAP Setup Summary (2026-02-06)", ROOT / "notes" / "ldap-setup-summary-2026-02-06.qmd", OUT_DIR / "ldap-setup-summary-2026-02-06.qmd"),
-    ("VM Rollout Summary (2026-02-09)", ROOT / "notes" / "vm-rollout-summary-2026-02-09.qmd", OUT_DIR / "vm-rollout-summary-2026-02-09.qmd"),
+    ("SQL Handling", ROOT / "notes" / "sql-handling.qmd", OUT_DIR / "sql-handling.qmd"),
     ("VM Troubleshooting Guide", ROOT / "notes" / "vm-troubleshooting-guide.qmd", OUT_DIR / "vm-troubleshooting-guide.qmd"),
     ("Ubuntu Bare Server Setup HOWTO", ROOT / "notes" / "ubuntu-bare-server-setup-howto.qmd", OUT_DIR / "ubuntu-bare-server-setup-howto.qmd"),
 ]

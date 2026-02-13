@@ -8,11 +8,12 @@ book:
   author: "Assa Yeroslaviz"
   chapters:
     - index.qmd
+    - chapters/quick-start.qmd
     - chapters/server-preparations.qmd
     - part: "Operational Notes"
       chapters:
         - chapters/ldap-setup-summary-2026-02-06.qmd
-        - chapters/vm-rollout-summary-2026-02-09.qmd
+        - chapters/sql-handling.qmd
         - chapters/vm-troubleshooting-guide.qmd
         - chapters/ubuntu-bare-server-setup-howto.qmd
 

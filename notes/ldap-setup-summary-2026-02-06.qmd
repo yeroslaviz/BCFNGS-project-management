@@ -105,13 +105,9 @@ Sys.unsetenv(c(
 ))
 ```
 
-## Verify LDAP Attributes in SQLite
+## SQL handling (moved)
 
-```r
-con <- DBI::dbConnect(RSQLite::SQLite(), "sequencing-app/sequencing_projects.db")
-DBI::dbGetQuery(con, "SELECT username, email, phone, research_group FROM users WHERE username='your_username'")
-DBI::dbDisconnect(con)
-```
+All SQL database commands and explanations were moved to **`notes/sql-handling.qmd`**.
 
 ## Budget Holder Behavior
 
@@ -169,13 +165,12 @@ Restart:
 sudo systemctl restart shiny-server
 ```
 
-## Why DB Files Are Ignored
+## Why DB Files Are Ignored (moved)
 
-SQLite DBs change constantly, are environment-specific (local vs VM), and may contain sensitive data. We ignore `*.db` and `*.sqlite` and keep only schema/seed files in git.
+See **`notes/sql-handling.qmd`** for the full rationale and git commands.
 
 ## Tools Needed
 
 - `ldapsearch` is required for LDAP attribute fallback:
   - Ubuntu: `sudo apt install -y ldap-utils`
   - macOS: `brew install openldap`
-

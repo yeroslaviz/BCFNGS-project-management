@@ -17,8 +17,9 @@ quarto render booklet/
 
 The book chapters are generated from these source files:
 
-- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/Server_preparations.qmd`
-- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/notes/ldap-setup-summary-2026-02-06.md`
-- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/notes/vm-rollout-summary-2026-02-09.md`
-- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/notes/vm-troubleshooting-guide.md`
-- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/notes/ubuntu-bare-server-setup-howto.md`
+- [Quick Start (How to run the app)](chapters/quick-start.html)
+- [Server Preparations](chapters/server-preparations.html)
+- [LDAP Setup Summary (2026-02-06)](chapters/ldap-setup-summary-2026-02-06.html)
+- [SQL Handling](chapters/sql-handling.html)
+- [VM Troubleshooting Guide](chapters/vm-troubleshooting-guide.html)
+- [Ubuntu Bare Server Setup HOWTO](chapters/ubuntu-bare-server-setup-howto.html)

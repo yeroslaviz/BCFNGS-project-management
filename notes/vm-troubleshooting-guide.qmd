@@ -43,83 +43,15 @@ editor_options:
 
 # VM Troubleshooting Guide (GitHub, LDAP, Apache, Shiny)
 
-## Quick Start (How to run the app)
-
-### Local dev — local mode
-
-```r
-Sys.setenv(APP_ENV = "dev", AUTH_MODE = "local")
-shiny::runApp("sequencing-app")
-```
-
-### Local dev — LDAP simulation
-
-```r
-Sys.setenv(
-  APP_ENV = "dev",
-  AUTH_MODE = "ldap",
-  DEV_REMOTE_USER = "your_username",
-  LDAP_URI = "ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636",
-  LDAP_BASE_DN = "dc=biochem,dc=mpg,dc=de"
-)
-shiny::runApp("sequencing-app")
-```
-
-### Local dev — unset
-
-```r
-Sys.unsetenv(c(
-  "APP_ENV","AUTH_MODE","DEV_REMOTE_USER",
-  "LDAP_BIND_DN","LDAP_BIND_PW",
-  "LDAP_URI","LDAP_BASE_DN","LDAP_DEBUG"
-))
-```
-
-### VM — LDAP mode (production)
-
-```bash
-sudo systemctl edit shiny-server
-```
-
-```ini
-[Service]
-Environment=AUTH_MODE=ldap
-Environment=LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
-Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
-```
-
-```bash
-sudo systemctl restart shiny-server
-```
-
-### VM — local mode (maintenance)
-
-```ini
-[Service]
-Environment=AUTH_MODE=local
-```
-
-```bash
-sudo systemctl restart shiny-server
-```
-
-### VM — unset (clear overrides)
-
-```bash
-sudo systemctl edit shiny-server
-# remove AUTH_MODE/LDAP_* lines, save, then:
-sudo systemctl restart shiny-server
-```
-
-
 This checklist covers the most common issues we hit and how to fix them quickly.
 
 ## AI session restart (quick resume)
 
 If I need to resume work in a new AI session, I point it to:
 
-1. `notes/vm-rollout-summary-2026-02-09.md` for the current state and validation.
-2. `notes/ubuntu-bare-server-setup-howto.md` for the full setup flow.
+1. `Server_preparations.qmd` for the current state and validation.
+2. `notes/sql-handling.qmd` for DB operations and maintenance.
+3. `notes/ubuntu-bare-server-setup-howto.qmd` for the full setup flow.
 
 ## A) Git / GitHub sync problems
 
@@ -266,115 +198,12 @@ Fix:
 
 Move it to a global Apache config or comment it out (if not needed).
 
-## C) Admin access in LDAP mode
+## C) SQL handling (moved)
 
-**Problem**
+All SQL database commands and explanations were moved to **`notes/sql-handling.qmd`**.  
+This includes admin promotion in LDAP mode, SQLite inspection commands, and budget holder updates.
 
-Local login is disabled when `AUTH_MODE=ldap`, so the built‑in `admin` user cannot log in.
-
-**Fix**
-
-Promote the LDAP user in SQLite.
-
-**Option 1: Pre‑create the user as admin (before first login)**
-
-```
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"INSERT OR IGNORE INTO users (username, is_admin) VALUES ('soyer', 1);"
-```
-
-If the user row does **not** insert, the table likely has `NOT NULL` columns (e.g., `password`, `email`). In that case use:
-
-```
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"INSERT OR IGNORE INTO users (username, password, email, is_admin) VALUES ('soyer', 'ldap-only', 'soyer@biochem.mpg.de', 1);"
-```
-
-**Option 2: Promote after first login**
-
-```
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"UPDATE users SET is_admin=1 WHERE username='soyer';"
-```
-
-If the user already exists and you want to update email at the same time, use:
-
-```
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"UPDATE users SET is_admin=1, email='soyer@biochem.mpg.de' WHERE username='soyer';"
-```
-
-**Verify**
-
-```
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"SELECT username, is_admin FROM users WHERE username IN ('yeroslaviz','soyer');"
-```
-
-**List all admin users**
-
-```
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"SELECT username, email, is_admin FROM users WHERE is_admin = 1;"
-```
-
-## D) SQLite quick reference (inspect DB structure)
-
-**Show all tables**
-
-```
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db ".tables"
-```
-
-**Show table schema**
-
-```
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"PRAGMA table_info(users);"
-```
-
-**Show full CREATE statement**
-
-```
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-".schema users"
-```
-
-**Preview rows**
-
-```
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"SELECT username, email, is_admin FROM users LIMIT 20;"
-```
-
-## E) Update budget holders (CSV vs DB)
-
-The app reads **budget holders from the SQLite DB**, not directly from the CSV.  
-Editing the Excel/CSV file does **not** change the running app unless you rebuild the DB.
-
-**Option A — Update via the app (safe, no rebuild)**  
-Use **Administer Projects → Manage Budget Holders**. Changes are written to the DB immediately.
-
-**Option B — Update via SQL (safe, no rebuild)**
-
-```
-# Update cost center
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"UPDATE budget_holders SET cost_center='P350' WHERE name='Cox' AND surname='Juergen';"
-
-# Add a new PI
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"INSERT INTO budget_holders (name, surname, cost_center, email) VALUES ('NewPI','Lastname','P999','newpi@biochem.mpg.de');"
-```
-
-**Option C — Rebuild DB from CSV (destructive)**
-
-```
-cd /srv/shiny-server/sequencing-app
-sudo -u shiny Rscript setup_database.R
-```
-
-## F) Switching between LDAP and local auth
+## D) Switching between LDAP and local auth
 
 **LDAP mode**
 
@@ -514,5 +343,6 @@ curl -I http://localhost:3838/sequencing-app/
 
 ## References
 
-- `notes/ubuntu-bare-server-setup-howto.md`
-- `notes/vm-rollout-summary-2026-02-09.md`
+- `Server_preparations.qmd`
+- `notes/sql-handling.qmd`
+- `notes/ubuntu-bare-server-setup-howto.qmd`

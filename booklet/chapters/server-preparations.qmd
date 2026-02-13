@@ -4,75 +4,6 @@ execute:
   eval: false
 ---
 
-### Quick Start (How to run the app)
-
-#### Local dev — local mode
-
-```r
-Sys.setenv(APP_ENV = "dev", AUTH_MODE = "local")
-shiny::runApp("sequencing-app")
-```
-
-#### Local dev — LDAP simulation
-
-```r
-Sys.setenv(
-  APP_ENV = "dev",
-  AUTH_MODE = "ldap",
-  DEV_REMOTE_USER = "your_username",
-  LDAP_URI = "ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636",
-  LDAP_BASE_DN = "dc=biochem,dc=mpg,dc=de"
-)
-shiny::runApp("sequencing-app")
-```
-
-#### Local dev — unset
-
-```r
-Sys.unsetenv(c(
-  "APP_ENV","AUTH_MODE","DEV_REMOTE_USER",
-  "LDAP_BIND_DN","LDAP_BIND_PW",
-  "LDAP_URI","LDAP_BASE_DN","LDAP_DEBUG"
-))
-```
-
-#### VM — LDAP mode (production)
-
-```bash
-sudo systemctl edit shiny-server
-```
-
-```ini
-[Service]
-Environment=AUTH_MODE=ldap
-Environment=LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
-Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
-```
-
-```bash
-sudo systemctl restart shiny-server
-```
-
-#### VM — local mode (maintenance)
-
-```ini
-[Service]
-Environment=AUTH_MODE=local
-```
-
-```bash
-sudo systemctl restart shiny-server
-```
-
-#### VM — unset (clear overrides)
-
-```bash
-sudo systemctl edit shiny-server
-# remove AUTH_MODE/LDAP_* lines, save, then:
-sudo systemctl restart shiny-server
-```
-
-
 ```{r}
 #| echo: false
 #| eval: false
@@ -96,82 +27,15 @@ suppressPackageStartupMessages(
 
 ## Server Infrastructure
 
+### SQL handling (moved)
 
-### When and why to rebuild the database
+All SQL database commands and explanations were moved to **`notes/sql-handling.qmd`**.  
+This includes:
 
-You only need to rebuild the entire SQLite DB when the **schema** changes (for example: removing a status option from a `CHECK` constraint, adding/removing columns, or changing table constraints). If the app logic changes but the DB structure is the same, a rebuild is **not** required.
-
-**When a full rebuild makes sense**
-
-- The DB is still a test instance and you can afford to reset data.
-- You changed `setup_database.R` and want a clean, consistent schema.
-- You want to permanently remove a legacy status or constraint.
-
-**When not to rebuild**
-
-- You already have real production data.
-- You only changed app logic or UI (no schema change).
-
-**Rebuild procedure (VM)**
-
-The rebuild **must run inside** `/srv/shiny-server/sequencing-app` so relative paths (e.g., `budget_holders.csv`) resolve correctly.
-
-```bash
-sudo systemctl stop shiny-server
-
-# Backup first
-cp /srv/shiny-server/sequencing-app/sequencing_projects.db \
-  /srv/shiny-server/sequencing_projects.db.backup_$(date +%Y%m%d_%H%M)
-
-# Remove DB
-rm /srv/shiny-server/sequencing-app/sequencing_projects.db
-
-# Recreate DB from schema (run in the live app folder)
-cd /srv/shiny-server/sequencing-app
-sudo -u shiny Rscript setup_database.R
-
-sudo systemctl start shiny-server
-```
-
-**Add admin users to an existing DB (no rebuild)**
-
-```bash
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"INSERT OR IGNORE INTO users (username, password, email, is_admin, research_group) VALUES
- ('yeroslaviz','ldap-only','yeroslaviz@biochem.mpg.de',1,'Cox'),
- ('rkim','ldap-only','rkim@biochem.mpg.de',1,'NGS Facility'),
- ('casper','ldap-only','casper@biochem.mpg.de',1,'NGS Facility'),
- ('gautsch','ldap-only','gautsch@biochem.mpg.de',1,'NGS Facility');"
-```
-
-### Update budget holders (CSV vs DB)
-
-The app reads **budget holders from the SQLite DB**, not directly from the CSV.  
-Editing the Excel/CSV file does **not** change the running app unless you rebuild the DB.
-
-**Option A — Update via the app (safe, no rebuild)**  
-Use **Administer Projects → Manage Budget Holders**. Changes are written to the DB immediately.
-
-**Option B — Update via SQL (safe, no rebuild)**  
-Use this for scripted updates:
-
-```bash
-# Update cost center
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"UPDATE budget_holders SET cost_center='P350' WHERE name='Cox' AND surname='Juergen';"
-
-# Add a new PI
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"INSERT INTO budget_holders (name, surname, cost_center, email) VALUES ('NewPI','Lastname','P999','newpi@biochem.mpg.de');"
-```
-
-**Option C — Rebuild DB from CSV (destructive)**  
-The CSV is **only** read during a full rebuild:
-
-```bash
-cd /srv/shiny-server/sequencing-app
-sudo -u shiny Rscript setup_database.R
-```
+- DB rebuild procedure
+- Admin user promotion in LDAP mode
+- Budget holder updates (CSV vs DB)
+- SQLite inspection and maintenance commands
 ### Install required system dependencies
 
 ```{bash}
@@ -606,6 +470,14 @@ When this is done, it restart the shiny server.
 - **Run `./deploy.sh`** if anything under `sequencing-app/` changed (e.g. `app.R`, `setup_database.R`, CSS, images).
 - **Skip `./deploy.sh`** if only docs changed (`.qmd`, `.md`, `notes/`) or other non‑app files.
 
+## Changes on 13.02.2026
+
+1.  New project emails now **prefix the subject with the project ID** (e.g., `P2 - ...`).
+2.  Project description (if provided) is appended to the email body.
+3.  Email recipients changed to **budget holder + project creator + `ngs@biochem.mpg.de`**.  
+    Admin broadcast is retained in the code but **commented out** for easy rollback.
+4.  Notes were converted from `.md` to `.qmd` with a consistent header template, and the booklet generator now reads the `.qmd` sources.
+
 ## Changes on 12.02.2026
 
 1.  Fixed LDAP URL impersonation risk by enforcing canonical `auth_user` handling in Apache: tampered `?auth_user=` values are rewritten to the authenticated LDAP user.
@@ -926,162 +798,7 @@ sudo systemctl restart shiny-server
 
 ## Changes on 14.11.2026
 
-1.  I would Like you to show me where the admin email address can be changed, if I want to have a different user as admin. 1.1 Please show me the parts of the script where this can be changed.
-
-The admin password is set here:
-
-```{bash}
-# Insert default admin user
-default_password <- digest::digest("admin123")
-dbExecute(con, "
-  INSERT OR IGNORE INTO users (username, password, email, is_admin)
-  VALUES ('admin', ?, 'yeroslaviz@biochem.mpg.de', 1)
-", params = list(default_password))
-```
-
-1.2 Can this be changed without recreating the whole databank or restart the app? 1.3 How do I change the admin email address without recreating the db?
-
-This can be changed without recreating the database, using two options:
-
--   Option 1: Direct database update
-
-Run this SQL command on your database:
-
-```{sql}
-
-UPDATE users SET email = 'newadmin@institute.org' WHERE username = 'admin';
-
-```
-
-To execute this, we can either log in directly to the database via the command line
-
-```{bash}
-sqlite3 sequencing_projects.db
-```
-
-and execute
-
-```{bash}
-UPDATE users SET email = 'newadmin@institute.org' WHERE username = 'admin';
-.exit
-```
-
-or via the R pormpt:
-
-```{r}
-library(DBI)
-library(RSQLite)
-con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
-dbExecute(con, "UPDATE users SET email = 'newadmin@institute.org' WHERE username = 'admin'")
-dbDisconnect(con)
-```
-
-**Don't forget to modify the `setup_database_*.R` script afterwards, so these information will be also kept, if the database is recreated!**
-
--   Option 2: Through the app's user management (as admin)
-
-In the "Administer Projects" tab, one can click "Manage Users" and change (or add) the admin user and edit their email.
-
-1.4 How can I turn on/off sending the notification mail to the admin, if not needed?
-
-The admin notification email is sent in the `send_project_creation_email` function in the app file.
-
-2.  When creating a new project, an email is being sent. 2.1 can you please tell me to whome this email is being sent? 2.2 Can you show me the part of the script where it is set up? 2.3 Now, the Email should be sent to budget holder and to user, who created the project, as well as to the admin. Can this be changed easily, if needed?
-
-This was done also in point 1. The function `send_project_creation_email` set the users who gets an email, when a project is created. the row
-
-```
-        to = c(budget_holder$email, user_email, admin_emails),
-```
-
-set the recipient of the mail. we can remove one of the elements, or even just add a specific mail address to the `to =` row.
-
-3.  How do I make changes to the cost estimations w.o. Recreating the db? 3.1 Is it possible to modify existing columns, in case prices are changing? Or would deleting and making a new element would be easier? 3.2 If I change anything in these tables, Would it also change it in the SQL data base?
-
-At the moment the tables `Service types` and `Sequencing depths` are not editable. If prices change, the easiet option is to delete the row and recreate it using the new value. This way, the older projects will use the previous costs, while the new one will get the new costs.
-
-One can also directly use the SQL commands to apply these chages, similar to above
-
-```{bash}
-sqlite3 sequencing_projects.db
-```
-
-and execute
-
-```{bash}
-UPDATE service_types SET costs_per_sample = 55 WHERE service_type = 'single cell/low mRNAseq';
-.exit
-```
-
-4.  something is wrong with the Sequencing Cycles Management table. When I run the app, go to the Admin projects Tab and click the Sequencing Cycles - Manage Cycles, I see this message: "Error: An error has occurred. Check your logs or contact the app author for clarification." 4.1 which log files can I consult?
-
-When working on the server, the best place to look for problems are the log files of either the `apache2` (`/var/log/apache2/`) or the `shiny-server` (`/var/log/shiny-server/`).
-
-5.  Do I have a weekly backup of the SQL db? 
-
-there is an app for a bi-weekly automaic backup. The function is for now commented out, so not working.
-
-### modify registration page
-
-```{bash}
-sqlite3 sequencing_projects.db
-```
-
-we add information to the registration page, so the user must choose a group. This way we know which is the budget holder for this user.
-
-After ward we added the information to the Registration Server Logic
-
-```{bash}
-dbExecute(con, "
-INSERT INTO users (username, password, email, phone, research_group, is_admin)
-VALUES (?, ?, ?, ?, ?, 0)
-", params = list(
-  input$reg_username,
-  digest(input$reg_password),
-  input$reg_email,
-  input$reg_phone,
-  input$reg_group
-))
-```
-
-as well as modified the User registration modal
-
-Now, when a user register, he must choose a group from the given drop-down menu. this group is attached to the budget holder. When the user creates a new project, this budget holder (group) will automatically be assigned to the project (This can be manually changed, when the project is created).
-
-I have changed the `setup_databases.R` script to load the budget holders information from a csv file, stored in the same folder as the script itself.
-
-We have a csv-formatted table with the information of the groups and their cost centers. This is an easy way to upload the information.
-
-```
-name,surname,email,cost_center
-Kim,Rin-Ho,rkim@biochem.mpg.de,N.A.
-Administrator,surname,rkim@biochem.mpg.de,N.A.
-Baier,Herwig,herwig.baier@bi.mpg.de,P350
-Baldwin,Maude,Maude.Baldwin@bi.mpg.de,P550
-```
-
-The registration process was change to make choosing a research group mandatory. The chosen research group is then set to also assign the cost center to the user.
-
-::: callout-note
-Some of the research groups have multiple cost centers.
-
-When a user registers, he must select a research group. The user then gets assigned a cost center based on the table of budget holders. If (and this applies only for some of the budget holders), this specific research group has multiple cost centers, it gets assigned the first one found by the app. BUT, manually the user still can change this in the app when applying for a project.
-:::
-
-### control for budegt holder info in the DB
-
-```{r}
-#| eval: false
-con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
-budget_holders <- dbGetQuery(con, "SELECT * FROM budget_holders")
-# Print the data
-print(budget_holders[1:3,])
-dbGetQuery(con, "SELECT * FROM budget_holders")
-dbGetQuery(con, "SELECT * FROM users")
-on.exit(dbDisconnect(con))
-```
-
-### Budget holders can be read from an Excel sheet
+SQL‑related commands and explanations (admin email updates, service cost updates, registration/budget holder DB updates, and DB inspection) were moved to **`notes/sql-handling.qmd`**.
 
 ## SSL Certificate (for HTTPS)
 
@@ -1165,39 +882,7 @@ sudo systemctl restart shiny-server
 
 ### Admin access in LDAP mode (VM)
 
-When `AUTH_MODE=ldap` is enabled, the local login form is disabled. To get admin access, I mark the **LDAP user** as admin in the SQLite database.
-
-**Option 1: Pre‑create the user as admin (works even before first login)**
-
-```{bash}
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"INSERT OR IGNORE INTO users (username, is_admin) VALUES ('soyer', 1);"
-```
-
-If the insert is ignored because the table requires `password`/`email`, use:
-
-```{bash}
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"INSERT OR IGNORE INTO users (username, password, email, is_admin) VALUES ('soyer', 'ldap-only', 'soyer@biochem.mpg.de', 1);"
-```
-
-On first LDAP login, the app fills in email/phone/OU (if missing).
-
-**Option 2: Promote after the user logs in once**
-
-```{bash}
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"UPDATE users SET is_admin=1 WHERE username='soyer';"
-```
-
-Note: `UPDATE` does nothing if the user row does **not** exist yet.
-
-**Verify:**
-
-```{bash}
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
-"SELECT username, is_admin FROM users WHERE username IN ('yeroslaviz','soyer');"
-```
+Moved to **`notes/sql-handling.qmd`** (admin promotion and verification commands).
 
 ### Switch between LDAP and local modes (VM)
 
@@ -1247,14 +932,6 @@ Sys.setenv(
   LDAP_BIND_PW = "YOUR_PASSWORD"
 )
 shiny::runApp("sequencing-app")
-```
-
-After login, verify the user record in SQLite:
-
-``` r
-con <- DBI::dbConnect(RSQLite::SQLite(), "sequencing-app/sequencing_projects.db")
-DBI::dbGetQuery(con, "SELECT username, email, phone, research_group FROM users WHERE username='your_username'")
-DBI::dbDisconnect(con)
 ```
 
 To switch back to normal local login (no LDAP), run:

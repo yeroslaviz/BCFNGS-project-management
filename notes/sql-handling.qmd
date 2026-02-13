@@ -1,0 +1,243 @@
+---
+title: SQL handling
+execute: 
+  eval: false
+  echo: true
+  warning: false
+engine: knitr
+author:
+  - name: Assa Yeroslaviz
+    orcid: 0000-0001-9638-4026
+    corresponding: true
+    email: yeroslaviz@biochem.mpg.de
+    roles:
+      - Investigation
+      - Visualization
+    affiliations:
+      - Max-Planck-Institute for Biochemistry
+keywords:
+  - 
+  - 
+abstract: |
+   t.b.d.
+plain-language-summary: |
+  s.a.
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
+number-sections: true
+format: 
+  html:
+    code-fold: true
+    toc: true
+    toc-depth: 4
+    toc-expand: false
+    number-sections: true
+    number-depth: 4
+qknitr:
+  opts_chunk:
+    comment: "#>"
+    collapse: true
+bibliography: /Users/yeroslaviz/ownCloud/ownCloud_projects/citations.bib
+editor_options: 
+  chunk_output_type: console
+---
+
+# SQL handling
+
+## Contents
+
+- [Database locations](#database-locations)
+- [Inspect database structure](#inspect-database-structure)
+- [Admin users in LDAP mode](#admin-users-in-ldap-mode)
+- [Update budget holders (CSV vs DB)](#update-budget-holders-csv-vs-db)
+- [Rebuild the database (when/why/how)](#rebuild-the-database-whenwhyhow)
+- [Backups and retention](#backups-and-retention)
+- [Git tracking for DB files](#git-tracking-for-db-files)
+- [Common fixes](#common-fixes)
+
+## Database locations
+
+- **Local dev**: `sequencing-app/sequencing_projects.db`
+- **VM**: `/srv/shiny-server/sequencing-app/sequencing_projects.db`
+
+On the VM, run SQL commands as the `shiny` user:
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db "SELECT 1;"
+```
+
+## Inspect database structure
+
+**Show all tables**
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db ".tables"
+```
+
+**Show table schema**
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"PRAGMA table_info(users);"
+```
+
+**Show CREATE statement**
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+".schema users"
+```
+
+**Preview rows**
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"SELECT username, email, is_admin FROM users LIMIT 20;"
+```
+
+## Admin users in LDAP mode
+
+When `AUTH_MODE=ldap` is enabled, local login is disabled.  
+To grant admin access, mark the LDAP user as admin in SQLite.
+
+**Option 1: Pre‑create the user as admin (before first login)**
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"INSERT OR IGNORE INTO users (username, is_admin) VALUES ('soyer', 1);"
+```
+
+If the insert is ignored because `password`/`email` are NOT NULL, use:
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"INSERT OR IGNORE INTO users (username, password, email, is_admin) VALUES ('soyer', 'ldap-only', 'soyer@biochem.mpg.de', 1);"
+```
+
+**Option 2: Promote after first login**
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"UPDATE users SET is_admin=1 WHERE username='soyer';"
+```
+
+**List all admin users**
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"SELECT username, email, is_admin FROM users WHERE is_admin = 1;"
+```
+
+## Update budget holders (CSV vs DB)
+
+The app reads **budget holders from the SQLite DB**, not directly from the CSV.  
+Editing the Excel/CSV file does **not** change the running app unless you rebuild the DB.
+
+**Option A — Update via the app (safe, no rebuild)**  
+Use **Administer Projects → Manage Budget Holders**. Changes are written to the DB immediately.
+
+**Option B — Update via SQL (safe, no rebuild)**
+
+```bash
+# Update cost center
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"UPDATE budget_holders SET cost_center='P350' WHERE name='Cox' AND surname='Juergen';"
+
+# Add a new PI
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"INSERT INTO budget_holders (name, surname, cost_center, email) VALUES ('NewPI','Lastname','P999','newpi@biochem.mpg.de');"
+```
+
+**Option C — Rebuild DB from CSV (destructive)**  
+See the rebuild section below.
+
+## Rebuild the database (when/why/how)
+
+You only need a full rebuild when the **schema** changes (e.g., CHECK constraints, new columns, removed columns).
+
+**When a rebuild makes sense**
+
+- Test instance and it’s OK to reset.
+- `setup_database.R` changed and you want a clean schema.
+- You want to permanently remove a legacy status/constraint.
+
+**When *not* to rebuild**
+
+- You already have production data.
+- You only changed app logic/UI.
+
+**Rebuild procedure (VM)**
+
+The rebuild **must run inside** `/srv/shiny-server/sequencing-app` so relative paths (e.g., `budget_holders.csv`) resolve correctly.
+
+```bash
+sudo systemctl stop shiny-server
+
+# Backup first
+cp /srv/shiny-server/sequencing-app/sequencing_projects.db \
+  /srv/shiny-server/sequencing_projects.db.backup_$(date +%Y%m%d_%H%M)
+
+# Remove DB
+rm /srv/shiny-server/sequencing-app/sequencing_projects.db
+
+# Recreate DB from schema (run in the live app folder)
+cd /srv/shiny-server/sequencing-app
+sudo -u shiny Rscript setup_database.R
+
+sudo systemctl start shiny-server
+```
+
+## Backups and retention
+
+If the VM backup script is enabled, it typically copies the DB with a timestamp and deletes old backups:
+
+```bash
+cp /srv/shiny-server/sequencing-app/sequencing_projects.db $BACKUP_DIR/sequencing_projects.db.$TIMESTAMP
+find $BACKUP_DIR -name "sequencing_projects.db.*" -mtime +30 -delete
+```
+
+## Git tracking for DB files
+
+SQLite DB files change constantly and are environment‑specific.  
+They should **not** be tracked in git.
+
+If a DB file is accidentally tracked:
+
+```bash
+git rm --cached sequencing-app/sequencing_projects.db
+git commit -m "Stop tracking local SQLite DB"
+```
+
+This **does not** delete the local DB file — it only stops tracking it.
+
+## Common fixes
+
+**Readonly database error**
+
+Run SQL as the `shiny` user and fix permissions:
+
+```bash
+sudo chown shiny:shiny /srv/shiny-server/sequencing-app/sequencing_projects.db
+sudo chmod 664 /srv/shiny-server/sequencing-app/sequencing_projects.db
+```
+
+**Update admin email**
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"UPDATE users SET email='newadmin@institute.org' WHERE username='admin';"
+```
+
+**Update service type costs**
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"UPDATE service_types SET costs_per_sample = 55 WHERE service_type = 'single cell/low mRNAseq';"
+```
+
+**Verify LDAP user attributes in SQLite**
+
+```r
+con <- DBI::dbConnect(RSQLite::SQLite(), "sequencing-app/sequencing_projects.db")
+DBI::dbGetQuery(con, "SELECT username, email, phone, research_group FROM users WHERE username='your_username'")
+DBI::dbDisconnect(con)
+```
