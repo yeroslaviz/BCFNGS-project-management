@@ -297,7 +297,34 @@ sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
 "SELECT username, email, is_admin FROM users LIMIT 20;"
 ```
 
-## E) Switching between LDAP and local auth
+## E) Update budget holders (CSV vs DB)
+
+The app reads **budget holders from the SQLite DB**, not directly from the CSV.  
+Editing the Excel/CSV file does **not** change the running app unless you rebuild the DB.
+
+**Option A — Update via the app (safe, no rebuild)**  
+Use **Administer Projects → Manage Budget Holders**. Changes are written to the DB immediately.
+
+**Option B — Update via SQL (safe, no rebuild)**
+
+```
+# Update cost center
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"UPDATE budget_holders SET cost_center='P350' WHERE name='Cox' AND surname='Juergen';"
+
+# Add a new PI
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"INSERT INTO budget_holders (name, surname, cost_center, email) VALUES ('NewPI','Lastname','P999','newpi@biochem.mpg.de');"
+```
+
+**Option C — Rebuild DB from CSV (destructive)**
+
+```
+cd /srv/shiny-server/sequencing-app
+sudo -u shiny Rscript setup_database.R
+```
+
+## F) Switching between LDAP and local auth
 
 **LDAP mode**
 
