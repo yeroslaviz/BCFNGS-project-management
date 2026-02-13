@@ -1,3 +1,46 @@
+---
+title: LDAP Setup Summary 2026-02-06
+execute: 
+  eval: false
+  echo: true
+  warning: false
+engine: knitr
+author:
+  - name: Assa Yeroslaviz
+    orcid: 0000-0001-9638-4026
+    corresponding: true
+    email: yeroslaviz@biochem.mpg.de
+    roles:
+      - Investigation
+      - Visualization
+    affiliations:
+      - Max-Planck-Institute for Biochemistry
+keywords:
+  - 
+  - 
+abstract: |
+   t.b.d.
+plain-language-summary: |
+  s.a.
+date: "Last compiled on `r format(Sys.time(), '%d %B, %Y')`"
+number-sections: true
+format: 
+  html:
+    code-fold: true
+    toc: true
+    toc-depth: 4
+    toc-expand: false
+    number-sections: true
+    number-depth: 4
+qknitr:
+  opts_chunk:
+    comment: "#>"
+    collapse: true
+bibliography: /Users/yeroslaviz/ownCloud/ownCloud_projects/citations.bib
+editor_options: 
+  chunk_output_type: console
+---
+
 # LDAP + Project Management App Summary (2026-02-06)
 
 ## What Changed

@@ -4,6 +4,75 @@ execute:
   eval: false
 ---
 
+### Quick Start (How to run the app)
+
+#### Local dev — local mode
+
+```r
+Sys.setenv(APP_ENV = "dev", AUTH_MODE = "local")
+shiny::runApp("sequencing-app")
+```
+
+#### Local dev — LDAP simulation
+
+```r
+Sys.setenv(
+  APP_ENV = "dev",
+  AUTH_MODE = "ldap",
+  DEV_REMOTE_USER = "your_username",
+  LDAP_URI = "ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636",
+  LDAP_BASE_DN = "dc=biochem,dc=mpg,dc=de"
+)
+shiny::runApp("sequencing-app")
+```
+
+#### Local dev — unset
+
+```r
+Sys.unsetenv(c(
+  "APP_ENV","AUTH_MODE","DEV_REMOTE_USER",
+  "LDAP_BIND_DN","LDAP_BIND_PW",
+  "LDAP_URI","LDAP_BASE_DN","LDAP_DEBUG"
+))
+```
+
+#### VM — LDAP mode (production)
+
+```bash
+sudo systemctl edit shiny-server
+```
+
+```ini
+[Service]
+Environment=AUTH_MODE=ldap
+Environment=LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
+Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
+```
+
+```bash
+sudo systemctl restart shiny-server
+```
+
+#### VM — local mode (maintenance)
+
+```ini
+[Service]
+Environment=AUTH_MODE=local
+```
+
+```bash
+sudo systemctl restart shiny-server
+```
+
+#### VM — unset (clear overrides)
+
+```bash
+sudo systemctl edit shiny-server
+# remove AUTH_MODE/LDAP_* lines, save, then:
+sudo systemctl restart shiny-server
+```
+
+
 ```{r}
 #| echo: false
 #| eval: false
@@ -27,6 +96,82 @@ suppressPackageStartupMessages(
 
 ## Server Infrastructure
 
+
+### When and why to rebuild the database
+
+You only need to rebuild the entire SQLite DB when the **schema** changes (for example: removing a status option from a `CHECK` constraint, adding/removing columns, or changing table constraints). If the app logic changes but the DB structure is the same, a rebuild is **not** required.
+
+**When a full rebuild makes sense**
+
+- The DB is still a test instance and you can afford to reset data.
+- You changed `setup_database.R` and want a clean, consistent schema.
+- You want to permanently remove a legacy status or constraint.
+
+**When not to rebuild**
+
+- You already have real production data.
+- You only changed app logic or UI (no schema change).
+
+**Rebuild procedure (VM)**
+
+The rebuild **must run inside** `/srv/shiny-server/sequencing-app` so relative paths (e.g., `budget_holders.csv`) resolve correctly.
+
+```bash
+sudo systemctl stop shiny-server
+
+# Backup first
+cp /srv/shiny-server/sequencing-app/sequencing_projects.db \
+  /srv/shiny-server/sequencing_projects.db.backup_$(date +%Y%m%d_%H%M)
+
+# Remove DB
+rm /srv/shiny-server/sequencing-app/sequencing_projects.db
+
+# Recreate DB from schema (run in the live app folder)
+cd /srv/shiny-server/sequencing-app
+sudo -u shiny Rscript setup_database.R
+
+sudo systemctl start shiny-server
+```
+
+**Add admin users to an existing DB (no rebuild)**
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"INSERT OR IGNORE INTO users (username, password, email, is_admin, research_group) VALUES
+ ('yeroslaviz','ldap-only','yeroslaviz@biochem.mpg.de',1,'Cox'),
+ ('rkim','ldap-only','rkim@biochem.mpg.de',1,'NGS Facility'),
+ ('casper','ldap-only','casper@biochem.mpg.de',1,'NGS Facility'),
+ ('gautsch','ldap-only','gautsch@biochem.mpg.de',1,'NGS Facility');"
+```
+
+### Update budget holders (CSV vs DB)
+
+The app reads **budget holders from the SQLite DB**, not directly from the CSV.  
+Editing the Excel/CSV file does **not** change the running app unless you rebuild the DB.
+
+**Option A — Update via the app (safe, no rebuild)**  
+Use **Administer Projects → Manage Budget Holders**. Changes are written to the DB immediately.
+
+**Option B — Update via SQL (safe, no rebuild)**  
+Use this for scripted updates:
+
+```bash
+# Update cost center
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"UPDATE budget_holders SET cost_center='P350' WHERE name='Cox' AND surname='Juergen';"
+
+# Add a new PI
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"INSERT INTO budget_holders (name, surname, cost_center, email) VALUES ('NewPI','Lastname','P999','newpi@biochem.mpg.de');"
+```
+
+**Option C — Rebuild DB from CSV (destructive)**  
+The CSV is **only** read during a full rebuild:
+
+```bash
+cd /srv/shiny-server/sequencing-app
+sudo -u shiny Rscript setup_database.R
+```
 ### Install required system dependencies
 
 ```{bash}
@@ -455,6 +600,11 @@ It then resets permissions for all files (the DB file remains in place and keeps
 When this is done, it restart the shiny server.
 
 **This script must be run each time the files inside the sequencing-app folder were changed**, but not if other changed were made in the repo.
+
+**Rule of thumb after `git pull`:**
+
+- **Run `./deploy.sh`** if anything under `sequencing-app/` changed (e.g. `app.R`, `setup_database.R`, CSS, images).
+- **Skip `./deploy.sh`** if only docs changed (`.qmd`, `.md`, `notes/`) or other non‑app files.
 
 ## Changes on 12.02.2026
 

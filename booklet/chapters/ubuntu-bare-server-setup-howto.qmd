@@ -6,8 +6,6 @@ execute:
 
 ## Ubuntu Bare Server Setup HOWTO (Shiny + LDAP)
 
-This is a complete, end-to-end setup checklist for a fresh Ubuntu VM to run the sequencing Shiny app with Apache + LDAP.
-
 ### AI session restart (quick resume)
 
 If I ever need to resume this work with a new AI tool or a new chat session:

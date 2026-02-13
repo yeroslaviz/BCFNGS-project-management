@@ -9,10 +9,10 @@ OUT_DIR = ROOT / "booklet" / "chapters"
 
 SOURCES = [
     ("Server Preparations", ROOT / "Server_preparations.qmd", OUT_DIR / "server-preparations.qmd"),
-    ("LDAP Setup Summary (2026-02-06)", ROOT / "notes" / "ldap-setup-summary-2026-02-06.md", OUT_DIR / "ldap-setup-summary-2026-02-06.qmd"),
-    ("VM Rollout Summary (2026-02-09)", ROOT / "notes" / "vm-rollout-summary-2026-02-09.md", OUT_DIR / "vm-rollout-summary-2026-02-09.qmd"),
-    ("VM Troubleshooting Guide", ROOT / "notes" / "vm-troubleshooting-guide.md", OUT_DIR / "vm-troubleshooting-guide.qmd"),
-    ("Ubuntu Bare Server Setup HOWTO", ROOT / "notes" / "ubuntu-bare-server-setup-howto.md", OUT_DIR / "ubuntu-bare-server-setup-howto.qmd"),
+    ("LDAP Setup Summary (2026-02-06)", ROOT / "notes" / "ldap-setup-summary-2026-02-06.qmd", OUT_DIR / "ldap-setup-summary-2026-02-06.qmd"),
+    ("VM Rollout Summary (2026-02-09)", ROOT / "notes" / "vm-rollout-summary-2026-02-09.qmd", OUT_DIR / "vm-rollout-summary-2026-02-09.qmd"),
+    ("VM Troubleshooting Guide", ROOT / "notes" / "vm-troubleshooting-guide.qmd", OUT_DIR / "vm-troubleshooting-guide.qmd"),
+    ("Ubuntu Bare Server Setup HOWTO", ROOT / "notes" / "ubuntu-bare-server-setup-howto.qmd", OUT_DIR / "ubuntu-bare-server-setup-howto.qmd"),
 ]
 
 FENCE_RE = re.compile(r"^(```|~~~)")
