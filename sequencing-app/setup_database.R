@@ -156,7 +156,6 @@ setup_complete_database <- function() {
         'Samples received', 
         'Library preparation',
         'QC done',
-        'On the sequencer', 
         'Data analysis', 
         'Data released'
       )),

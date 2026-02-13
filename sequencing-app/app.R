@@ -1298,10 +1298,17 @@ server <- function(input, output, session) {
     "Samples received", 
     "Library preparation",
     "QC done",
-    "On the sequencer", 
     "Data analysis", 
     "Data released"
   )
+
+  make_status_choices <- function(current_status = NULL) {
+    choices <- status_options
+    if (!is.null(current_status) && nzchar(current_status) && !(current_status %in% choices)) {
+      choices <- c(choices, setNames(current_status, paste0(current_status, " (legacy)")))
+    }
+    choices
+  }
   
   # Database connection
   get_db_connection <- function() {
@@ -3576,9 +3583,9 @@ server <- function(input, output, session) {
       if(user$is_admin) {
         fluidRow(
           column(12,
-                 selectInput("edit_project_status", "Project Status *",
-                             choices = status_options,
-                             selected = project$status)
+                selectInput("edit_project_status", "Project Status *",
+                            choices = make_status_choices(project$status),
+                            selected = project$status)
           )
         )
       }
@@ -3780,7 +3787,7 @@ server <- function(input, output, session) {
       p(paste("Current Status:", project$status)),
       
       selectInput("new_project_status", "New Status:",
-                  choices = status_options,
+                  choices = make_status_choices(project$status),
                   selected = project$status),
       
       textAreaInput("status_notes", "Status Notes (Optional):", 

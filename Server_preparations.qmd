@@ -137,6 +137,39 @@ suppressPackageStartupMessages(
 
 # Server Infrastructure
 
+
+## When and why to rebuild the database
+
+You only need to rebuild the entire SQLite DB when the **schema** changes (for example: removing a status option from a `CHECK` constraint, adding/removing columns, or changing table constraints). If the app logic changes but the DB structure is the same, a rebuild is **not** required.
+
+**When a full rebuild makes sense**
+
+- The DB is still a test instance and you can afford to reset data.
+- You changed `setup_database.R` and want a clean, consistent schema.
+- You want to permanently remove a legacy status or constraint.
+
+**When not to rebuild**
+
+- You already have real production data.
+- You only changed app logic or UI (no schema change).
+
+**Rebuild procedure (VM)**
+
+```bash
+sudo systemctl stop shiny-server
+
+# Backup first
+cp /srv/shiny-server/sequencing-app/sequencing_projects.db   /srv/shiny-server/sequencing_projects.db.backup_$(date +%Y%m%d_%H%M)
+
+# Remove DB
+rm /srv/shiny-server/sequencing-app/sequencing_projects.db
+
+# Recreate DB from schema
+cd /home/yeroslaviz/BCFNGS-project-management/sequencing-app
+sudo -u shiny Rscript setup_database.R
+
+sudo systemctl start shiny-server
+```
 ## Install required system dependencies
 
 ```{bash}
