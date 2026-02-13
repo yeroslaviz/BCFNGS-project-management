@@ -1457,10 +1457,15 @@ server <- function(input, output, session) {
       
       cat("DEBUG: Template found, preparing content\n")
       
-      # Get admin emails (using the SAME connection)
-      admin_emails <- dbGetQuery(con, "SELECT email FROM users WHERE is_admin = 1")$email
+      # Fixed notification address for the facility
+      facility_email <- "ngs@biochem.mpg.de"
+
+      # NOTE: Admin notifications are currently disabled to avoid emailing all admins
+      # for every new project. If you want to re-enable, uncomment the lines below
+      # and include `admin_emails` in the `to =` list.
+      # admin_emails <- dbGetQuery(con, "SELECT email FROM users WHERE is_admin = 1")$email
       
-      cat("DEBUG: To:", paste(c(budget_holder$email, user_email, admin_emails), collapse = ", "), "\n")
+      cat("DEBUG: To:", paste(c(budget_holder$email, user_email, facility_email), collapse = ", "), "\n")
       
       # Prepare cost warning
       sequencing_depth <- admin_data$sequencing_depths[admin_data$sequencing_depths$id == project_data$sequencing_depth_id, ]
@@ -1480,6 +1485,18 @@ server <- function(input, output, session) {
       email_body <- gsub("\\{service_type\\}", admin_data$service_types$service_type[admin_data$service_types$id == project_data$service_type_id], email_body)
       email_body <- gsub("\\{total_cost\\}", sprintf("%.2f", project_data$total_cost), email_body)
       email_body <- gsub("\\{cost_warning\\}", cost_warning, email_body)
+
+      # Append project description if provided
+      project_description <- trimws(project_data$description %||% "")
+      if (nzchar(project_description)) {
+        email_body <- paste(
+          email_body,
+          "",
+          "Project Description:",
+          project_description,
+          sep = "\n"
+        )
+      }
       
       cat("DEBUG: Attempting to send email...\n")
       
@@ -1495,7 +1512,9 @@ server <- function(input, output, session) {
       # Send email
       send.mail(
         from = "ngs@biochem.mpg.de",
-        to = c(budget_holder$email, user_email, admin_emails),
+        # NOTE: Admin notifications are currently disabled; to re-enable,
+        # include `admin_emails` below and uncomment the query above.
+        to = c(budget_holder$email, user_email, facility_email),
         encoding = "utf-8",
         subject = subject,
         body = email_body,
@@ -2395,6 +2414,7 @@ server <- function(input, output, session) {
       project_id = project_id_value,
       project_code = project_code,
       project_name = input$project_name,
+      description = input$project_description,
       responsible_user = input$responsible_user,
       num_samples = input$num_samples,
       service_type_id = as.numeric(input$service_type_id),

@@ -268,6 +268,13 @@ sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
 "SELECT username, is_admin FROM users WHERE username IN ('yeroslaviz','soyer');"
 ```
 
+**List all admin users**
+
+```
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"SELECT username, email, is_admin FROM users WHERE is_admin = 1;"
+```
+
 ## D) SQLite quick reference (inspect DB structure)
 
 **Show all tables**
