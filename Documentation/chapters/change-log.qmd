@@ -1,0 +1,86 @@
+---
+title: "Change Log"
+execute:
+  eval: false
+  echo: true
+  warning: false
+---
+
+## Changes on 13.02.2026
+
+1.  New project emails now **prefix the subject with the project ID** (e.g., `P2 - ...`).
+2.  Project description (if provided) is appended to the email body.
+3.  Email recipients changed to **budget holder + project creator + `ngs@biochem.mpg.de`**.  
+    Admin broadcast is retained in the code but **commented out** for easy rollback.
+4.  Notes were converted from `.md` to `.qmd` with a consistent header template, and the booklet generator now reads the `.qmd` sources.
+
+
+## Changes on 12.02.2026
+
+1.  Fixed LDAP URL impersonation risk by enforcing canonical `auth_user` handling in Apache: tampered `?auth_user=` values are rewritten to the authenticated LDAP user.
+2.  Fixed redirect-loop behavior in the Apache auth rewrite logic and validated canonical redirect behavior with `curl` (expected `302` to the authenticated user).
+3.  Confirmed and documented required shiny-server environment for LDAP mode:
+    - `AUTH_MODE=ldap`
+    - `TRUST_PROXY_AUTH_USER_QUERY=1`
+4.  Extended `deploy.sh` with post-deploy LDAP smoke tests (canonical redirect, tampered query rewrite, final `200` response) and actionable failure hints.
+5.  Added/merged troubleshooting guidance for LDAP login failures, disconnects, and redirect loops into the VM troubleshooting documentation.
+6.  Improved Projects table readability in the Shiny UI (`sequencing-app/app.R`):
+    - explicit DT column widths
+    - wrapped long cell text
+    - reliable column reflow on tab switch and resize
+    - preserved horizontal scrolling and existing formatting.
+
+
+## Changes on 11.02.2026
+
+1.  Added a production rollout checklist with the exact commands for pull, backup, deploy, restart, and smoke‑tests.
+2.  Added a dedicated section for **admin access in LDAP mode** (pre‑create vs promote after first login).
+3.  Added a dedicated section on **switching between LDAP and local auth** on the VM (`AUTH_MODE` via systemd override).
+4.  Added the full **pre‑create admin** example that includes `password`/`email` for NOT NULL constraints.
+5.  Updated the canonical server path to `/srv/shiny-server` and corrected repo path on the local machine.
+6.  Moved legacy/obsolete content to the end of the document under **Obsolete / now wrong**.
+7.  Replaced the old deploy script reference (`deploy_shiny_server.sh`) with `deploy.sh`.
+
+
+## Changes on 09.02.2026
+
+1.  Added a VM rollout HOW‑TO (GitHub SSH/deploy keys, divergent branches, DB tracking fix, backups, deploy, restart, rollback).
+2.  Documented production safeguards (app folder backup, DB backup, Apache config backup).
+3.  Updated `deploy.sh` to restart Shiny only if `rsync` succeeds (prevents restarts on failed deploys).
+4.  Cleaned up Apache LDAP logging (default to quiet logs; debug only when explicitly enabled).
+5.  Made LDAP debug output in the Shiny app conditional on **both** `APP_ENV=dev` and `LDAP_DEBUG=1` to avoid production log noise.
+6.  Documented the VM LDAP validation test (real user + service group user, and email routing behavior).
+
+### VM rollout validation (what I tested and confirmed)
+
+I verified end‑to‑end behavior on the VM after fixing the Apache proxy path:
+
+-   **LDAP login works**: the browser prompts for username/password and redirects to `/sequencing-app/?auth_user=<user>`.
+-   **User mapping works**: `yeroslaviz` (OU contains Cox) is mapped to the **Cox** group and the correct PI.
+-   **User mapping works**: `yeroslaviz-test` (OU = **NGS Facility**) is treated as a service‑group user (no PI match).
+-   **Email routing works**: research group users trigger mail to the PI **and** NGS.
+-   **Email routing works**: service group users (no PI match) trigger mail to the **administrator**.
+
+If all three happen, the LDAP→app→email flow is working as intended.
+
+
+## Changes on 06.02.2026
+
+1.  Added LDAP login flow in the Shiny app (auto‑login via `X-Remote-User`, local dev simulation, and optional attribute lookup).
+2.  LDAP attribute lookup now works with anonymous bind; uses `ldapsearch` fallback for older `ldapr` versions.
+3.  Added dev tools toggle (dev only) to switch between LDAP and local auth while testing.
+4.  Mapped LDAP `ou` values to budget holders, auto‑selecting the correct PI in the project form (with partial match fallback).
+5.  Added budget holder notices for multiple cost centers and missing cost center values.
+6.  Added “Other / not listed” budget holder option so users can enter a new PI (name/surname required; cost center optional with a warning).
+7.  Updated `deploy.sh` to use `rsync` and exclude `sequencing_projects.db`.
+8.  Updated Apache LDAP configuration template and added local dev testing instructions + env var cleanup.
+9.  I do **not** track SQLite DB files in git because they change constantly, are environment‑specific (local vs VM), and can contain sensitive data. I ignore `*.db`/`*.sqlite` and keep only the schema/seed files in git.
+
+
+## Changes on 14.11.2026
+
+1. changing admin email address
+2. add editing possibilities to the tables containing costs information.
+3. bi-weekly backup is added, but still commented out. 
+4. list of group leaders can now be read from an Excel sheet (must be in the same folder)
+5. SQL‑related commands and explanations (admin email updates, service cost updates, registration/budget holder DB updates, and DB inspection) were moved to **`notes/sql-handling.qmd`**.
