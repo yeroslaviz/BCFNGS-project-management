@@ -16,6 +16,7 @@ execute:
 6.  Softened the announcement box border color.
 7.  Made project deletion admin‑only (UI hides delete for non‑admins; backend enforces admin‑only delete).
 8.  Documented admin‑only delete policy and rollback steps in **Deploy & Operations**.
+9.  Added troubleshooting note for Quarto search requiring a local web server.
 
 ## Changes on 13.02.2026
 
