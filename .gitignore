@@ -8,7 +8,7 @@
 # backup files and folders
 .backup/
 backup/
-
+mpiseq2/
 
 
 # SQLite / database files

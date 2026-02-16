@@ -234,7 +234,7 @@ ui <- fluidPage(
   }
   .announcement-panel,
   .service-panel {
-    background-color: #f2e9fb;
+    background-color: #cadced;
     border: 1px solid #d8c4f0;
     border-radius: 6px;
     padding: 16px 18px;
