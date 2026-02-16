@@ -19,6 +19,8 @@ execute:
 9.  Added troubleshooting note for Quarto search requiring a local web server.
 10. Added full‑name support for users (LDAP full name mapping, `users.full_name`, and full‑name display in project lists).
 11. Added a legacy import workflow and script for perl‑VM → shiny‑VM migration, plus a separate vhost cutover script.
+12. Fixed the perl‑VM PostgreSQL legacy export query to match the real schema (`ref_genome.genome`, `sample_type.type`, `type.type`, `budget_group.budget`).
+13. Documented CSV encoding normalization (mojibake fix) and post‑import budget holder placeholder cleanup.
 
 ## Changes on 13.02.2026
 

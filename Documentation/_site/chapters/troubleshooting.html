@@ -229,7 +229,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#ldap-works-but-sequencing-app-returns-404" id="toc-ldap-works-but-sequencing-app-returns-404" class="nav-link" data-scroll-target="#ldap-works-but-sequencing-app-returns-404"><span class="header-section-number">8.3.5</span> LDAP works, but <code>/sequencing-app/</code> returns 404</a></li>
   <li><a href="#debug-logging-too-noisy-apache-or-shiny" id="toc-debug-logging-too-noisy-apache-or-shiny" class="nav-link" data-scroll-target="#debug-logging-too-noisy-apache-or-shiny"><span class="header-section-number">8.3.6</span> Debug logging too noisy (Apache or Shiny)</a></li>
   </ul></li>
-  <li><a href="#sql-moved" id="toc-sql-moved" class="nav-link" data-scroll-target="#sql-moved"><span class="header-section-number">8.4</span> SQL (moved)</a></li>
+  <li><a href="#sql-moved" id="toc-sql-moved" class="nav-link" data-scroll-target="#sql-moved"><span class="header-section-number">8.4</span> SQL (moved)</a>
+  <ul class="collapse">
+  <li><a href="#sqlite-attempt-to-write-a-readonly-database" id="toc-sqlite-attempt-to-write-a-readonly-database" class="nav-link" data-scroll-target="#sqlite-attempt-to-write-a-readonly-database"><span class="header-section-number">8.4.1</span> SQLite: “attempt to write a readonly database”</a></li>
+  </ul></li>
   <li><a href="#auth-mode-switching" id="toc-auth-mode-switching" class="nav-link" data-scroll-target="#auth-mode-switching"><span class="header-section-number">8.5</span> Auth mode switching</a></li>
   <li><a href="#apache-proxy" id="toc-apache-proxy" class="nav-link" data-scroll-target="#apache-proxy"><span class="header-section-number">8.6</span> Apache proxy</a>
   <ul class="collapse">
@@ -460,8 +463,21 @@ LDAP_DEBUG=1</code></pre>
 </section>
 <section id="sql-moved" class="level2" data-number="8.4">
 <h2 data-number="8.4" class="anchored" data-anchor-id="sql-moved"><span class="header-section-number">8.4</span> SQL (moved)</h2>
-<p>All SQL database commands and explanations were moved to <strong><code>notes/sql-handling.qmd</code></strong>.<br>
-This includes admin promotion in LDAP mode, SQLite inspection commands, and budget holder updates.</p>
+<p>All SQL database commands and explanations are documented in the <strong>SQL Handling</strong> chapter (<code>Documentation/chapters/sql-handling.qmd</code>).<br>
+This includes admin promotion in LDAP mode, SQLite inspection commands, budget holder updates, and the legacy import workflow.</p>
+<section id="sqlite-attempt-to-write-a-readonly-database" class="level3" data-number="8.4.1">
+<h3 data-number="8.4.1" class="anchored" data-anchor-id="sqlite-attempt-to-write-a-readonly-database"><span class="header-section-number">8.4.1</span> SQLite: “attempt to write a readonly database”</h3>
+<p>If you see <code>sqlite3.OperationalError: attempt to write a readonly database</code> when running setup/import scripts, you are usually running as the wrong user.</p>
+<ul>
+<li>On the VM, the live DB under <code>/srv/shiny-server/sequencing-app/</code> is typically owned by <code>shiny</code>.</li>
+<li>Stop Shiny Server, run the command as <code>shiny</code>, then start it again:</li>
+</ul>
+<div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny <span class="op">&lt;</span>your command here<span class="op">&gt;</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>If it still fails, check DB ownership/permissions:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-l</span> /srv/shiny-server/sequencing-app/sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
 </section>
 <section id="auth-mode-switching" class="level2" data-number="8.5">
 <h2 data-number="8.5" class="anchored" data-anchor-id="auth-mode-switching"><span class="header-section-number">8.5</span> Auth mode switching</h2>
@@ -544,7 +560,7 @@ sudo systemctl restart apache2</code></pre>
 <h3 data-number="8.8.1" class="anchored" data-anchor-id="deploy-script-ran-but-app-unchanged"><span class="header-section-number">8.8.1</span> Deploy script ran but app unchanged</h3>
 <p>Fix:</p>
 <ul>
-<li>Verify <code>deploy.sh</code> ran successfully.</li>
+<li>Verify <code>scripts/deploy.sh</code> ran successfully.</li>
 <li>Confirm files in <code>/srv/shiny-server/sequencing-app/</code> updated.</li>
 </ul>
 </section>
@@ -552,7 +568,7 @@ sudo systemctl restart apache2</code></pre>
 <h3 data-number="8.8.2" class="anchored" data-anchor-id="database-overwritten"><span class="header-section-number">8.8.2</span> Database overwritten</h3>
 <p>Fix:</p>
 <ul>
-<li>Ensure <code>deploy.sh</code> excludes <code>sequencing_projects.db</code>.</li>
+<li>Ensure <code>scripts/deploy.sh</code> excludes <code>sequencing_projects.db</code>.</li>
 <li>Keep <code>*.db</code> ignored in git.</li>
 </ul>
 </section>
@@ -593,11 +609,11 @@ curl -I http://localhost:3838/sequencing-app/</code></pre>
 <li>Apache rewrite rule loop in <code>/etc/apache2/sites-enabled/01-main.conf</code>.</li>
 </ul>
 <p>Fix:</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp ~/BCFNGS-project-management/01-main.conf /etc/apache2/sites-available/01-main.conf</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-sf</span> /etc/apache2/sites-available/01-main.conf /etc/apache2/sites-enabled/01-main.conf</span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl configtest</span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb34"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp ~/BCFNGS-project-management/01-main.conf /etc/apache2/sites-available/01-main.conf</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-sf</span> /etc/apache2/sites-available/01-main.conf /etc/apache2/sites-enabled/01-main.conf</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl configtest</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Then re-run curl checks from section 4.</p>
 </section>
 <section id="app-shows-local-login-page-ldap-mode-enabled-but-no-authenticated-user-found" class="level3" data-number="8.12.2">
@@ -607,7 +623,7 @@ curl -I http://localhost:3838/sequencing-app/</code></pre>
 <li>Shiny is in LDAP mode, but proxy trust/query fallback settings are missing.</li>
 </ul>
 <p>Checks:</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl show shiny-server <span class="at">--property</span><span class="op">=</span>Environment</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb35"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl show shiny-server <span class="at">--property</span><span class="op">=</span>Environment</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Required:</p>
 <ul>
 <li><code>AUTH_MODE=ldap</code></li>
@@ -622,11 +638,11 @@ curl -I http://localhost:3838/sequencing-app/</code></pre>
 <li>Apache websocket/proxy path mismatch</li>
 </ul>
 <p>Checks:</p>
-<div class="sourceCode" id="cb34"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> journalctl <span class="at">-u</span> shiny-server <span class="at">-n</span> 200 <span class="at">--no-pager</span></span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-n</span> 200 /var/log/shiny-server/<span class="va">$(</span><span class="fu">sudo</span> ls <span class="at">-t</span> /var/log/shiny-server <span class="kw">|</span> <span class="fu">head</span> <span class="at">-n</span> 1<span class="va">)</span></span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-n</span> 200 /var/log/apache2/sequencing-app-ssl-error.log</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb36"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> journalctl <span class="at">-u</span> shiny-server <span class="at">-n</span> 200 <span class="at">--no-pager</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-n</span> 200 /var/log/shiny-server/<span class="va">$(</span><span class="fu">sudo</span> ls <span class="at">-t</span> /var/log/shiny-server <span class="kw">|</span> <span class="fu">head</span> <span class="at">-n</span> 1<span class="va">)</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-n</span> 200 /var/log/apache2/sequencing-app-ssl-error.log</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Also ensure Apache modules are enabled:</p>
-<div class="sourceCode" id="cb35"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-M</span> <span class="kw">|</span> <span class="fu">egrep</span> <span class="st">'headers_module|rewrite_module|proxy_module|proxy_http_module|proxy_wstunnel_module|ldap_module|authnz_ldap_module'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb37"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-M</span> <span class="kw">|</span> <span class="fu">egrep</span> <span class="st">'headers_module|rewrite_module|proxy_module|proxy_http_module|proxy_wstunnel_module|ldap_module|authnz_ldap_module'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="user-can-impersonate-another-user-via-url-query" class="level3" data-number="8.12.4">
 <h3 data-number="8.12.4" class="anchored" data-anchor-id="user-can-impersonate-another-user-via-url-query"><span class="header-section-number">8.12.4</span> User can impersonate another user via URL query</h3>

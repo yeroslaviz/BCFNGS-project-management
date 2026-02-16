@@ -220,6 +220,10 @@ ul.task-list li input[type="checkbox"] {
 <li>Made project deletion admin‑only (UI hides delete for non‑admins; backend enforces admin‑only delete).</li>
 <li>Documented admin‑only delete policy and rollback steps in <strong>Deploy &amp; Operations</strong>.</li>
 <li>Added troubleshooting note for Quarto search requiring a local web server.</li>
+<li>Added full‑name support for users (LDAP full name mapping, <code>users.full_name</code>, and full‑name display in project lists).</li>
+<li>Added a legacy import workflow and script for perl‑VM → shiny‑VM migration, plus a separate vhost cutover script.</li>
+<li>Fixed the perl‑VM PostgreSQL legacy export query to match the real schema (<code>ref_genome.genome</code>, <code>sample_type.type</code>, <code>type.type</code>, <code>budget_group.budget</code>).</li>
+<li>Documented CSV encoding normalization (mojibake fix) and post‑import budget holder placeholder cleanup.</li>
 </ol>
 </section>
 <section id="changes-on-13.02.2026" class="level2" data-number="9.2">
@@ -242,7 +246,7 @@ Admin broadcast is retained in the code but <strong>commented out</strong> for e
 <li><code>AUTH_MODE=ldap</code></li>
 <li><code>TRUST_PROXY_AUTH_USER_QUERY=1</code></li>
 </ul></li>
-<li>Extended <code>deploy.sh</code> with post-deploy LDAP smoke tests (canonical redirect, tampered query rewrite, final <code>200</code> response) and actionable failure hints.</li>
+<li>Extended <code>scripts/deploy.sh</code> with post-deploy LDAP smoke tests (canonical redirect, tampered query rewrite, final <code>200</code> response) and actionable failure hints.</li>
 <li>Added/merged troubleshooting guidance for LDAP login failures, disconnects, and redirect loops into the VM troubleshooting documentation.</li>
 <li>Improved Projects table readability in the Shiny UI (<code>sequencing-app/app.R</code>):
 <ul>
@@ -262,7 +266,7 @@ Admin broadcast is retained in the code but <strong>commented out</strong> for e
 <li>Added the full <strong>pre‑create admin</strong> example that includes <code>password</code>/<code>email</code> for NOT NULL constraints.</li>
 <li>Updated the canonical server path to <code>/srv/shiny-server</code> and corrected repo path on the local machine.</li>
 <li>Moved legacy/obsolete content to the end of the document under <strong>Obsolete / now wrong</strong>.</li>
-<li>Replaced the old deploy script reference (<code>deploy_shiny_server.sh</code>) with <code>deploy.sh</code>.</li>
+<li>Replaced the old deploy script reference (<code>deploy_shiny_server.sh</code>) with <code>scripts/deploy.sh</code>.</li>
 </ol>
 </section>
 <section id="changes-on-09.02.2026" class="level2" data-number="9.5">
@@ -270,7 +274,7 @@ Admin broadcast is retained in the code but <strong>commented out</strong> for e
 <ol type="1">
 <li>Added a VM rollout HOW‑TO (GitHub SSH/deploy keys, divergent branches, DB tracking fix, backups, deploy, restart, rollback).</li>
 <li>Documented production safeguards (app folder backup, DB backup, Apache config backup).</li>
-<li>Updated <code>deploy.sh</code> to restart Shiny only if <code>rsync</code> succeeds (prevents restarts on failed deploys).</li>
+<li>Updated <code>scripts/deploy.sh</code> to restart Shiny only if <code>rsync</code> succeeds (prevents restarts on failed deploys).</li>
 <li>Cleaned up Apache LDAP logging (default to quiet logs; debug only when explicitly enabled).</li>
 <li>Made LDAP debug output in the Shiny app conditional on <strong>both</strong> <code>APP_ENV=dev</code> and <code>LDAP_DEBUG=1</code> to avoid production log noise.</li>
 <li>Documented the VM LDAP validation test (real user + service group user, and email routing behavior).</li>
@@ -297,7 +301,7 @@ Admin broadcast is retained in the code but <strong>commented out</strong> for e
 <li>Mapped LDAP <code>ou</code> values to budget holders, auto‑selecting the correct PI in the project form (with partial match fallback).</li>
 <li>Added budget holder notices for multiple cost centers and missing cost center values.</li>
 <li>Added “Other / not listed” budget holder option so users can enter a new PI (name/surname required; cost center optional with a warning).</li>
-<li>Updated <code>deploy.sh</code> to use <code>rsync</code> and exclude <code>sequencing_projects.db</code>.</li>
+<li>Updated <code>scripts/deploy.sh</code> to use <code>rsync</code> and exclude <code>sequencing_projects.db</code>.</li>
 <li>Updated Apache LDAP configuration template and added local dev testing instructions + env var cleanup.</li>
 <li>I do <strong>not</strong> track SQLite DB files in git because they change constantly, are environment‑specific (local vs VM), and can contain sensitive data. I ignore <code>*.db</code>/<code>*.sqlite</code> and keep only the schema/seed files in git.</li>
 </ol>

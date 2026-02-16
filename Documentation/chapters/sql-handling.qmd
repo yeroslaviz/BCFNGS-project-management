@@ -169,23 +169,56 @@ psql -U letunic -h 127.0.0.1 -d mpiseq2_db -c "\
     m.login AS login, \
     m.name AS user_full_name, \
     l.name AS group_name, \
-    p.ref_genome AS reference_genome, \
-    p.type AS type_label, \
-    p.sample_type AS sample_type, \
+    COALESCE(p.ref_genome_legacy, rg.genome) AS reference_genome, \
+    COALESCE(p.sample_type_legacy, st.type) AS sample_type, \
+    t.type AS type_label, \
     p.sequencing_length AS sequencing_length, \
-    p.budget_group AS budget_group, \
+    COALESCE(p.budget_group_legacy, bg.budget) AS budget_group, \
     p.sequencing_platform AS sequencing_platform, \
-    p.sequencing_kit AS sequencing_kit, \
+    COALESCE(p.sequencing_kit_legacy, p.sequencing_kit) AS sequencing_kit, \
     p.sequencing_index AS sequencing_index, \
     p.note AS note \
   FROM project.project p \
   LEFT JOIN people.member m ON p.user_id = m.id \
   LEFT JOIN people.lab l ON m.lab_id = l.id \
+  LEFT JOIN project.ref_genome rg ON p.ref_genome_id = rg.id \
+  LEFT JOIN project.sample_type st ON p.sample_type_id = st.id \
+  LEFT JOIN project.type t ON p.type_id = t.id \
+  LEFT JOIN project.budget_group bg ON p.budget_group_id = bg.id \
   ORDER BY p.id\
 ) TO '/www/mpiseq2/exports/legacy_projects.csv' CSV HEADER"
 ```
 
-**Step 2 — Copy CSV to shiny‑VM (if needed)**
+**Step 2 — Normalize encoding (optional)**
+
+If names look like `MÃ¼ller` in the CSV, normalize the file before import.
+
+**Recommended (robust)**
+
+```bash
+sudo python3 - <<'PY'
+src = "/www/mpiseq2/exports/legacy_projects.csv"
+dst = "/www/mpiseq2/exports/legacy_projects.utf8.csv"
+with open(src, "r", encoding="utf-8", errors="ignore") as f, \
+     open(dst, "w", encoding="utf-8") as out:
+    for line in f:
+        if "Ã" in line or "Â" in line:
+            line = line.encode("latin1", errors="ignore").decode("utf-8", errors="ignore")
+        out.write(line)
+PY
+```
+
+**Alternative (iconv)**
+
+```bash
+sudo sh -c "iconv -f UTF-8 -t ISO-8859-1 /www/mpiseq2/exports/legacy_projects.csv \
+  | iconv -f ISO-8859-1 -t UTF-8 \
+  > /www/mpiseq2/exports/legacy_projects.utf8.csv"
+```
+
+Use the `.utf8.csv` file in the next steps if you ran this.
+
+**Step 3 — Copy CSV to shiny‑VM (if needed)**
 
 If perl‑VM and shiny‑VM are different machines, copy the CSV:
 
@@ -193,14 +226,22 @@ If perl‑VM and shiny‑VM are different machines, copy the CSV:
 scp /www/mpiseq2/exports/legacy_projects.csv USER@shiny-vm:/home/yeroslaviz/BCFNGS-project-management/exports/
 ```
 
-**Step 3 — Run the import script on shiny‑VM**
+If you normalized, copy the `.utf8.csv` instead.
+
+**Step 4 — Run the import script on shiny‑VM**
+
+Stop Shiny Server first (avoids open DB handles) and run the import as the `shiny` user (the DB is owned by `shiny` on the VM).
 
 ```bash
+sudo systemctl stop shiny-server
 cd /srv/shiny-server/sequencing-app
-python3 /home/yeroslaviz/BCFNGS-project-management/scripts/import_legacy_projects.py \
+sudo -u shiny python3 /home/yeroslaviz/BCFNGS-project-management/scripts/import_legacy_projects.py \
   --db /srv/shiny-server/sequencing-app/sequencing_projects.db \
   --csv /home/yeroslaviz/BCFNGS-project-management/exports/legacy_projects.csv
+sudo systemctl start shiny-server
 ```
+
+If you normalized, point `--csv` at `legacy_projects.utf8.csv`.
 
 **What the import does**
 
@@ -210,6 +251,41 @@ python3 /home/yeroslaviz/BCFNGS-project-management/scripts/import_legacy_project
 - Maps **Type → `types`** and **Sample type → `service_types`** (no legacy suffix).
 - Creates placeholders if a budget holder is missing (reported at the end).
 - Adds `users.full_name` and extends the status constraint to allow `Legacy project` if missing.
+
+**Post‑import: resolve placeholder budget holders (if any)**
+
+If the import prints missing groups and creates placeholder `budget_holders` rows (typically `surname = 'Legacy'`), you can repoint projects to the real PI/cost center and then delete placeholders.
+
+1. List placeholder budget holders:
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"SELECT id, surname, name, email, cost_center FROM budget_holders WHERE surname='Legacy' ORDER BY id;"
+```
+
+2. Find the “real” budget holder IDs (example by cost center):
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"SELECT id, surname, name, email, cost_center FROM budget_holders WHERE cost_center IN ('K120','K250','K411');"
+```
+
+3. Repoint projects from placeholder IDs to the real IDs, then delete placeholders (example):
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"UPDATE projects SET budget_id = 30 WHERE budget_id = 47;
+ UPDATE projects SET budget_id = 13 WHERE budget_id = 50;
+ UPDATE projects SET budget_id = 23 WHERE budget_id = 51;
+ DELETE FROM budget_holders WHERE id IN (47,50,51);"
+```
+
+4. Verify no projects still reference placeholders:
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"SELECT budget_id, COUNT(*) FROM projects WHERE budget_id IN (47,50,51) GROUP BY budget_id;"
+```
 
 **Verify**
 

@@ -247,8 +247,27 @@ and restart the service again.
 
 ## SQL (moved)
 
-All SQL database commands and explanations were moved to **`notes/sql-handling.qmd`**.  
-This includes admin promotion in LDAP mode, SQLite inspection commands, and budget holder updates.
+All SQL database commands and explanations are documented in the **SQL Handling** chapter (`Documentation/chapters/sql-handling.qmd`).  
+This includes admin promotion in LDAP mode, SQLite inspection commands, budget holder updates, and the legacy import workflow.
+
+### SQLite: "attempt to write a readonly database"
+
+If you see `sqlite3.OperationalError: attempt to write a readonly database` when running setup/import scripts, you are usually running as the wrong user.
+
+- On the VM, the live DB under `/srv/shiny-server/sequencing-app/` is typically owned by `shiny`.
+- Stop Shiny Server, run the command as `shiny`, then start it again:
+
+```bash
+sudo systemctl stop shiny-server
+sudo -u shiny <your command here>
+sudo systemctl start shiny-server
+```
+
+If it still fails, check DB ownership/permissions:
+
+```bash
+ls -l /srv/shiny-server/sequencing-app/sequencing_projects.db
+```
 
 ## Auth mode switching
 

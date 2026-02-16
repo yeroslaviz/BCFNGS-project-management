@@ -391,7 +391,7 @@ If multiple cost centers exist for the same PI, the first match is selected by d
 <li>Mapped LDAP <code>ou</code> values to budget holders, auto-selecting the correct PI in the project form (with partial match fallback).</li>
 <li>Added notices when a PI has multiple cost centers or missing cost center.</li>
 <li>Added “Other / not listed” budget holder option so users can enter a new PI (name + surname required; cost center optional with warning).</li>
-<li><code>deploy.sh</code> now uses <code>rsync</code> and excludes the SQLite DB.</li>
+<li><code>scripts/deploy.sh</code> now uses <code>rsync</code> and excludes the SQLite DB.</li>
 <li>Docs updated with LDAP setup, local testing, and env cleanup.</li>
 <li><code>.gitignore</code> updated to ignore DB files and backup folders.</li>
 </ul>
@@ -400,7 +400,7 @@ If multiple cost centers exist for the same PI, the first match is selected by d
 <h3 data-number="6.4.2" class="anchored" data-anchor-id="files-updated"><span class="header-section-number">6.4.2</span> Files Updated</h3>
 <ul>
 <li><code>sequencing-app/app.R</code></li>
-<li><code>deploy.sh</code></li>
+<li><code>scripts/deploy.sh</code></li>
 <li><code>01-main.conf</code></li>
 <li><code>Server_preparations.qmd</code></li>
 <li><code>.gitignore</code></li>
@@ -450,8 +450,8 @@ If multiple cost centers exist for the same PI, the first match is selected by d
 <h3 data-number="6.4.8" class="anchored" data-anchor-id="deploy-vm"><span class="header-section-number">6.4.8</span> Deploy (VM)</h3>
 <div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/yeroslaviz/BCFNGS-project-management</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> pull</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="ex">./deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p><code>deploy.sh</code> uses <code>rsync</code> and <strong>does not overwrite</strong> the SQLite DB.</p>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><code>scripts/deploy.sh</code> uses <code>rsync</code> and <strong>does not overwrite</strong> the SQLite DB.</p>
 </section>
 <section id="ldap-on-vm-when-ready" class="level3" data-number="6.4.9">
 <h3 data-number="6.4.9" class="anchored" data-anchor-id="ldap-on-vm-when-ready"><span class="header-section-number">6.4.9</span> LDAP on VM (when ready)</h3>

@@ -221,8 +221,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#deploy-with-built-in-smoke-tests" id="toc-deploy-with-built-in-smoke-tests" class="nav-link" data-scroll-target="#deploy-with-built-in-smoke-tests"><span class="header-section-number">5.3.1</span> 1) Deploy with built-in smoke tests</a></li>
   <li><a href="#non-interactive-usage-optional" id="toc-non-interactive-usage-optional" class="nav-link" data-scroll-target="#non-interactive-usage-optional"><span class="header-section-number">5.3.2</span> 2) Non-interactive usage (optional)</a></li>
-  <li><a href="#baseline-environment-checks" id="toc-baseline-environment-checks" class="nav-link" data-scroll-target="#baseline-environment-checks"><span class="header-section-number">5.3.3</span> 3) Baseline environment checks</a></li>
-  <li><a href="#manual-curl-validation-reference" id="toc-manual-curl-validation-reference" class="nav-link" data-scroll-target="#manual-curl-validation-reference"><span class="header-section-number">5.3.4</span> 4) Manual curl validation (reference)</a></li>
+  </ul></li>
+  <li><a href="#vhost-cutover-perlvm-shinyvm" id="toc-vhost-cutover-perlvm-shinyvm" class="nav-link" data-scroll-target="#vhost-cutover-perlvm-shinyvm"><span class="header-section-number">5.4</span> VHost cutover (perl‑VM → shiny‑VM)</a>
+  <ul class="collapse">
+  <li><a href="#prepare-two-vhosts" id="toc-prepare-two-vhosts" class="nav-link" data-scroll-target="#prepare-two-vhosts"><span class="header-section-number">5.4.1</span> 1) Prepare two vhosts</a></li>
+  <li><a href="#optional-redirect-the-old-hostname" id="toc-optional-redirect-the-old-hostname" class="nav-link" data-scroll-target="#optional-redirect-the-old-hostname"><span class="header-section-number">5.4.2</span> 2) Optional: redirect the old hostname</a></li>
+  <li><a href="#switch-vhosts-script" id="toc-switch-vhosts-script" class="nav-link" data-scroll-target="#switch-vhosts-script"><span class="header-section-number">5.4.3</span> 3) Switch vhosts (script)</a></li>
+  <li><a href="#rollback-if-needed-1" id="toc-rollback-if-needed-1" class="nav-link" data-scroll-target="#rollback-if-needed-1"><span class="header-section-number">5.4.4</span> 4) Rollback (if needed)</a></li>
+  <li><a href="#baseline-environment-checks" id="toc-baseline-environment-checks" class="nav-link" data-scroll-target="#baseline-environment-checks"><span class="header-section-number">5.4.5</span> 3) Baseline environment checks</a></li>
+  <li><a href="#manual-curl-validation-reference" id="toc-manual-curl-validation-reference" class="nav-link" data-scroll-target="#manual-curl-validation-reference"><span class="header-section-number">5.4.6</span> 4) Manual curl validation (reference)</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -294,7 +301,7 @@ sudo cp /etc/apache2/sites-enabled/01-main.conf \
 <ol start="3" type="1">
 <li>Deploy.</li>
 </ol>
-<pre class="{bash}"><code>./deploy.sh</code></pre>
+<pre class="{bash}"><code>./scripts/deploy.sh</code></pre>
 <ol start="4" type="1">
 <li>Restart services.</li>
 </ol>
@@ -349,7 +356,7 @@ sudo cp /etc/apache2/sites-enabled/01-main.conf \
 </section>
 <section id="deploy" class="level4" data-number="5.2.2.4">
 <h4 data-number="5.2.2.4" class="anchored" data-anchor-id="deploy"><span class="header-section-number">5.2.2.4</span> 4) Deploy</h4>
-<pre class="{bash}"><code>./deploy.sh</code></pre>
+<pre class="{bash}"><code>./scripts/deploy.sh</code></pre>
 </section>
 <section id="restart-and-smoketest" class="level4" data-number="5.2.2.5">
 <h4 data-number="5.2.2.5" class="anchored" data-anchor-id="restart-and-smoketest"><span class="header-section-number">5.2.2.5</span> 5) Restart and smoke‑test</h4>
@@ -371,7 +378,7 @@ sudo systemctl restart apache2</code></pre>
 <h3 data-number="5.3.1" class="anchored" data-anchor-id="deploy-with-built-in-smoke-tests"><span class="header-section-number">5.3.1</span> 1) Deploy with built-in smoke tests</h3>
 <p>Run on VM:</p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/BCFNGS-project-management</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The script now:</p>
 <ol type="1">
 <li>Deploys app files to <code>/srv/shiny-server/sequencing-app/</code></li>
@@ -386,51 +393,85 @@ sudo systemctl restart apache2</code></pre>
 <p>It exits with non-zero status and prints remediation hints if any check fails.</p>
 <p>Note:</p>
 <ul>
-<li><code>deploy.sh</code> syncs app code only. If you changed Apache config (<code>01-main.conf</code>), apply/restart Apache separately, then run the curl checks in section 4.</li>
+<li><code>scripts/deploy.sh</code> syncs app code only. If you changed Apache config (<code>01-main.conf</code>), apply/restart Apache separately, then run the curl checks in section 4.</li>
 </ul>
 </section>
 <section id="non-interactive-usage-optional" class="level3" data-number="5.3.2">
 <h3 data-number="5.3.2" class="anchored" data-anchor-id="non-interactive-usage-optional"><span class="header-section-number">5.3.2</span> 2) Non-interactive usage (optional)</h3>
 <p>If you do not want password prompts:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="va">LDAP_TEST_USER</span><span class="op">=</span><span class="st">"yeroslaviz-test"</span> <span class="va">LDAP_TEST_PASSWORD</span><span class="op">=</span><span class="st">"YOUR_PASSWORD"</span> <span class="ex">./deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="va">LDAP_TEST_USER</span><span class="op">=</span><span class="st">"yeroslaviz-test"</span> <span class="va">LDAP_TEST_PASSWORD</span><span class="op">=</span><span class="st">"YOUR_PASSWORD"</span> <span class="ex">./scripts/deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Skip smoke tests only when needed:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="va">SKIP_SMOKE_TEST</span><span class="op">=</span>1 <span class="ex">./deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="va">SKIP_SMOKE_TEST</span><span class="op">=</span>1 <span class="ex">./scripts/deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Override target base URL:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="va">PUBLIC_BASE_URL</span><span class="op">=</span><span class="st">"https://ngs-testing-vm.biochem.mpg.de"</span> <span class="ex">./deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="va">PUBLIC_BASE_URL</span><span class="op">=</span><span class="st">"https://ngs-testing-vm.biochem.mpg.de"</span> <span class="ex">./scripts/deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="baseline-environment-checks" class="level3" data-number="5.3.3">
-<h3 data-number="5.3.3" class="anchored" data-anchor-id="baseline-environment-checks"><span class="header-section-number">5.3.3</span> 3) Baseline environment checks</h3>
-<section id="shiny-environment-must-include" class="level4" data-number="5.3.3.1">
-<h4 data-number="5.3.3.1" class="anchored" data-anchor-id="shiny-environment-must-include"><span class="header-section-number">5.3.3.1</span> Shiny environment must include:</h4>
-<div class="sourceCode" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl show shiny-server <span class="at">--property</span><span class="op">=</span>Environment</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="vhost-cutover-perlvm-shinyvm" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="vhost-cutover-perlvm-shinyvm"><span class="header-section-number">5.4</span> VHost cutover (perl‑VM → shiny‑VM)</h2>
+<p>This is the <strong>separate workflow</strong> for switching Apache from the perl‑VM app to the shiny‑VM app. Do <strong>not</strong> run this until shiny‑VM is fully validated.</p>
+<section id="prepare-two-vhosts" class="level3" data-number="5.4.1">
+<h3 data-number="5.4.1" class="anchored" data-anchor-id="prepare-two-vhosts"><span class="header-section-number">5.4.1</span> 1) Prepare two vhosts</h3>
+<ul>
+<li><strong>perl vhost</strong> (legacy): <code>ngs-vm.biochem.mpg.de</code></li>
+<li><strong>shiny vhost</strong> (new): <code>ngs-vm-shiny.biochem.mpg.de</code></li>
+</ul>
+<p>Keep both configs on disk so you can roll back quickly. If the shiny hostname changes later, update it in the vhost file and in the script env vars below.</p>
+</section>
+<section id="optional-redirect-the-old-hostname" class="level3" data-number="5.4.2">
+<h3 data-number="5.4.2" class="anchored" data-anchor-id="optional-redirect-the-old-hostname"><span class="header-section-number">5.4.2</span> 2) Optional: redirect the old hostname</h3>
+<p>When you cut over, add a redirect in the perl vhost:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode apache code-with-copy"><code class="sourceCode apache"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>Redirect<span class="st"> permanent / https://ngs-vm-shiny.biochem.mpg.de/</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="switch-vhosts-script" class="level3" data-number="5.4.3">
+<h3 data-number="5.4.3" class="anchored" data-anchor-id="switch-vhosts-script"><span class="header-section-number">5.4.3</span> 3) Switch vhosts (script)</h3>
+<p>The repo includes a switch script you can run later:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ex">scripts/switch_vhosts.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>You can override hostnames or file names:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="va">PERL_SITE</span><span class="op">=</span>ngs-vm.conf <span class="dt">\</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="va">SHINY_SITE</span><span class="op">=</span>ngs-vm-shiny.conf <span class="dt">\</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="va">SHINY_HOSTNAME</span><span class="op">=</span>ngs-vm-shiny.biochem.mpg.de <span class="dt">\</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="va">REDIRECT_FROM</span><span class="op">=</span>ngs-vm.biochem.mpg.de <span class="dt">\</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="ex">scripts/switch_vhosts.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="rollback-if-needed-1" class="level3" data-number="5.4.4">
+<h3 data-number="5.4.4" class="anchored" data-anchor-id="rollback-if-needed-1"><span class="header-section-number">5.4.4</span> 4) Rollback (if needed)</h3>
+<div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2dissite ngs-vm-shiny.conf</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite ngs-vm.conf</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl reload apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="baseline-environment-checks" class="level3" data-number="5.4.5">
+<h3 data-number="5.4.5" class="anchored" data-anchor-id="baseline-environment-checks"><span class="header-section-number">5.4.5</span> 3) Baseline environment checks</h3>
+<section id="shiny-environment-must-include" class="level4" data-number="5.4.5.1">
+<h4 data-number="5.4.5.1" class="anchored" data-anchor-id="shiny-environment-must-include"><span class="header-section-number">5.4.5.1</span> Shiny environment must include:</h4>
+<div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl show shiny-server <span class="at">--property</span><span class="op">=</span>Environment</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Required values:</p>
 <ul>
 <li><code>AUTH_MODE=ldap</code></li>
 <li><code>TRUST_PROXY_AUTH_USER_QUERY=1</code></li>
 </ul>
 <p>If missing, update:</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl edit shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl edit shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Then restart:</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl daemon-reload</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl daemon-reload</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 </section>
-<section id="manual-curl-validation-reference" class="level3" data-number="5.3.4">
-<h3 data-number="5.3.4" class="anchored" data-anchor-id="manual-curl-validation-reference"><span class="header-section-number">5.3.4</span> 4) Manual curl validation (reference)</h3>
+<section id="manual-curl-validation-reference" class="level3" data-number="5.4.6">
+<h3 data-number="5.4.6" class="anchored" data-anchor-id="manual-curl-validation-reference"><span class="header-section-number">5.4.6</span> 4) Manual curl validation (reference)</h3>
 <p>These should match the smoke test behavior.</p>
-<div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-ki</span> <span class="at">-u</span> yeroslaviz-test <span class="st">"https://ngs-testing-vm.biochem.mpg.de/sequencing-app/"</span> <span class="kw">|</span> <span class="fu">sed</span> <span class="at">-n</span> <span class="st">'1,20p'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-ki</span> <span class="at">-u</span> yeroslaviz-test <span class="st">"https://ngs-testing-vm.biochem.mpg.de/sequencing-app/"</span> <span class="kw">|</span> <span class="fu">sed</span> <span class="at">-n</span> <span class="st">'1,20p'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Expected:</p>
 <ul>
 <li><code>HTTP/1.1 302 Found</code></li>
 <li><code>Location: .../sequencing-app/?auth_user=yeroslaviz-test</code></li>
 </ul>
-<div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-ki</span> <span class="at">-u</span> yeroslaviz-test <span class="st">"https://ngs-testing-vm.biochem.mpg.de/sequencing-app/?auth_user=yeroslaviz"</span> <span class="kw">|</span> <span class="fu">sed</span> <span class="at">-n</span> <span class="st">'1,20p'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-ki</span> <span class="at">-u</span> yeroslaviz-test <span class="st">"https://ngs-testing-vm.biochem.mpg.de/sequencing-app/?auth_user=yeroslaviz"</span> <span class="kw">|</span> <span class="fu">sed</span> <span class="at">-n</span> <span class="st">'1,20p'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Expected:</p>
 <ul>
 <li><code>HTTP/1.1 302 Found</code></li>
 <li><code>Location: .../sequencing-app/?auth_user=yeroslaviz-test</code></li>
 </ul>
-<div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-k</span> <span class="at">-L</span> <span class="at">-u</span> yeroslaviz-test <span class="at">-o</span> /dev/null <span class="at">-s</span> <span class="at">-w</span> <span class="st">"%{http_code}\n"</span> <span class="st">"https://ngs-testing-vm.biochem.mpg.de/sequencing-app/"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-k</span> <span class="at">-L</span> <span class="at">-u</span> yeroslaviz-test <span class="at">-o</span> /dev/null <span class="at">-s</span> <span class="at">-w</span> <span class="st">"%{http_code}\n"</span> <span class="st">"https://ngs-testing-vm.biochem.mpg.de/sequencing-app/"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Expected:</p>
 <ul>
 <li><code>200</code></li>
