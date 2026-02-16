@@ -6,6 +6,25 @@ execute:
   warning: false
 ---
 
+## Project Deletion Permissions
+
+Deletion is **admin-only**:
+
+- The Delete button is only shown when `user$is_admin` is true.
+- The backend also enforces admin-only deletion.
+- A delete performs a hard remove from the SQL DB: `DELETE FROM projects WHERE id = ?`.
+
+### Re-enable delete for non-admin users
+
+In `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R`:
+
+1. In `output$user_interface`, render the button unconditionally (remove the `if (user$is_admin)` guard around `delete_project_btn`).
+2. In the `observeEvent(input$delete_project_btn)` handler, allow owners again:
+   - Change `can_delete <- user$is_admin` back to:
+     - `can_delete <- user$is_admin || project$user_id == user$user_id`
+
+Rebuild/redeploy after changes.
+
 ## Deploy Workflow
 
 ### Production rollout checklist (quick reference)

@@ -208,17 +208,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#deploy-workflow" id="toc-deploy-workflow" class="nav-link active" data-scroll-target="#deploy-workflow"><span class="header-section-number">5.1</span> Deploy Workflow</a>
+  <li><a href="#project-deletion-permissions" id="toc-project-deletion-permissions" class="nav-link active" data-scroll-target="#project-deletion-permissions"><span class="header-section-number">5.1</span> Project Deletion Permissions</a>
   <ul class="collapse">
-  <li><a href="#production-rollout-checklist-quick-reference" id="toc-production-rollout-checklist-quick-reference" class="nav-link" data-scroll-target="#production-rollout-checklist-quick-reference"><span class="header-section-number">5.1.1</span> Production rollout checklist (quick reference)</a></li>
-  <li><a href="#vm-rollout-howto-git-deploy-safety" id="toc-vm-rollout-howto-git-deploy-safety" class="nav-link" data-scroll-target="#vm-rollout-howto-git-deploy-safety"><span class="header-section-number">5.1.2</span> VM rollout HOW‑TO (Git + deploy + safety)</a></li>
+  <li><a href="#re-enable-delete-for-non-admin-users" id="toc-re-enable-delete-for-non-admin-users" class="nav-link" data-scroll-target="#re-enable-delete-for-non-admin-users"><span class="header-section-number">5.1.1</span> Re-enable delete for non-admin users</a></li>
   </ul></li>
-  <li><a href="#ldap-deploy-smoke-tests" id="toc-ldap-deploy-smoke-tests" class="nav-link" data-scroll-target="#ldap-deploy-smoke-tests"><span class="header-section-number">5.2</span> LDAP Deploy Smoke Tests</a>
+  <li><a href="#deploy-workflow" id="toc-deploy-workflow" class="nav-link" data-scroll-target="#deploy-workflow"><span class="header-section-number">5.2</span> Deploy Workflow</a>
   <ul class="collapse">
-  <li><a href="#deploy-with-built-in-smoke-tests" id="toc-deploy-with-built-in-smoke-tests" class="nav-link" data-scroll-target="#deploy-with-built-in-smoke-tests"><span class="header-section-number">5.2.1</span> 1) Deploy with built-in smoke tests</a></li>
-  <li><a href="#non-interactive-usage-optional" id="toc-non-interactive-usage-optional" class="nav-link" data-scroll-target="#non-interactive-usage-optional"><span class="header-section-number">5.2.2</span> 2) Non-interactive usage (optional)</a></li>
-  <li><a href="#baseline-environment-checks" id="toc-baseline-environment-checks" class="nav-link" data-scroll-target="#baseline-environment-checks"><span class="header-section-number">5.2.3</span> 3) Baseline environment checks</a></li>
-  <li><a href="#manual-curl-validation-reference" id="toc-manual-curl-validation-reference" class="nav-link" data-scroll-target="#manual-curl-validation-reference"><span class="header-section-number">5.2.4</span> 4) Manual curl validation (reference)</a></li>
+  <li><a href="#production-rollout-checklist-quick-reference" id="toc-production-rollout-checklist-quick-reference" class="nav-link" data-scroll-target="#production-rollout-checklist-quick-reference"><span class="header-section-number">5.2.1</span> Production rollout checklist (quick reference)</a></li>
+  <li><a href="#vm-rollout-howto-git-deploy-safety" id="toc-vm-rollout-howto-git-deploy-safety" class="nav-link" data-scroll-target="#vm-rollout-howto-git-deploy-safety"><span class="header-section-number">5.2.2</span> VM rollout HOW‑TO (Git + deploy + safety)</a></li>
+  </ul></li>
+  <li><a href="#ldap-deploy-smoke-tests" id="toc-ldap-deploy-smoke-tests" class="nav-link" data-scroll-target="#ldap-deploy-smoke-tests"><span class="header-section-number">5.3</span> LDAP Deploy Smoke Tests</a>
+  <ul class="collapse">
+  <li><a href="#deploy-with-built-in-smoke-tests" id="toc-deploy-with-built-in-smoke-tests" class="nav-link" data-scroll-target="#deploy-with-built-in-smoke-tests"><span class="header-section-number">5.3.1</span> 1) Deploy with built-in smoke tests</a></li>
+  <li><a href="#non-interactive-usage-optional" id="toc-non-interactive-usage-optional" class="nav-link" data-scroll-target="#non-interactive-usage-optional"><span class="header-section-number">5.3.2</span> 2) Non-interactive usage (optional)</a></li>
+  <li><a href="#baseline-environment-checks" id="toc-baseline-environment-checks" class="nav-link" data-scroll-target="#baseline-environment-checks"><span class="header-section-number">5.3.3</span> 3) Baseline environment checks</a></li>
+  <li><a href="#manual-curl-validation-reference" id="toc-manual-curl-validation-reference" class="nav-link" data-scroll-target="#manual-curl-validation-reference"><span class="header-section-number">5.3.4</span> 4) Manual curl validation (reference)</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -244,10 +248,34 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<section id="deploy-workflow" class="level2" data-number="5.1">
-<h2 data-number="5.1" class="anchored" data-anchor-id="deploy-workflow"><span class="header-section-number">5.1</span> Deploy Workflow</h2>
-<section id="production-rollout-checklist-quick-reference" class="level3" data-number="5.1.1">
-<h3 data-number="5.1.1" class="anchored" data-anchor-id="production-rollout-checklist-quick-reference"><span class="header-section-number">5.1.1</span> Production rollout checklist (quick reference)</h3>
+<section id="project-deletion-permissions" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="project-deletion-permissions"><span class="header-section-number">5.1</span> Project Deletion Permissions</h2>
+<p>Deletion is <strong>admin-only</strong>:</p>
+<ul>
+<li>The Delete button is only shown when <code>user$is_admin</code> is true.</li>
+<li>The backend also enforces admin-only deletion.</li>
+<li>A delete performs a hard remove from the SQL DB: <code>DELETE FROM projects WHERE id = ?</code>.</li>
+</ul>
+<section id="re-enable-delete-for-non-admin-users" class="level3" data-number="5.1.1">
+<h3 data-number="5.1.1" class="anchored" data-anchor-id="re-enable-delete-for-non-admin-users"><span class="header-section-number">5.1.1</span> Re-enable delete for non-admin users</h3>
+<p>In <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R</code>:</p>
+<ol type="1">
+<li>In <code>output$user_interface</code>, render the button unconditionally (remove the <code>if (user$is_admin)</code> guard around <code>delete_project_btn</code>).</li>
+<li>In the <code>observeEvent(input$delete_project_btn)</code> handler, allow owners again:
+<ul>
+<li>Change <code>can_delete &lt;- user$is_admin</code> back to:
+<ul>
+<li><code>can_delete &lt;- user$is_admin || project$user_id == user$user_id</code></li>
+</ul></li>
+</ul></li>
+</ol>
+<p>Rebuild/redeploy after changes.</p>
+</section>
+</section>
+<section id="deploy-workflow" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="deploy-workflow"><span class="header-section-number">5.2</span> Deploy Workflow</h2>
+<section id="production-rollout-checklist-quick-reference" class="level3" data-number="5.2.1">
+<h3 data-number="5.2.1" class="anchored" data-anchor-id="production-rollout-checklist-quick-reference"><span class="header-section-number">5.2.1</span> Production rollout checklist (quick reference)</h3>
 <p>This is the short checklist I use on production. Details for each step are below in the VM rollout HOW‑TO section.</p>
 <ol type="1">
 <li>Confirm GitHub access and pull latest code.</li>
@@ -285,11 +313,11 @@ curl -Ik -u USER https://ngs-testing-vm.biochem.mpg.de/sequencing-app/</code></p
 sudo systemctl restart shiny-server
 sudo systemctl restart apache2</code></pre>
 </section>
-<section id="vm-rollout-howto-git-deploy-safety" class="level3" data-number="5.1.2">
-<h3 data-number="5.1.2" class="anchored" data-anchor-id="vm-rollout-howto-git-deploy-safety"><span class="header-section-number">5.1.2</span> VM rollout HOW‑TO (Git + deploy + safety)</h3>
+<section id="vm-rollout-howto-git-deploy-safety" class="level3" data-number="5.2.2">
+<h3 data-number="5.2.2" class="anchored" data-anchor-id="vm-rollout-howto-git-deploy-safety"><span class="header-section-number">5.2.2</span> VM rollout HOW‑TO (Git + deploy + safety)</h3>
 <p>This is the repeatable checklist I use when rolling out to a VM (first <code>ngs-testing-vm</code>, then <code>ngs-vm</code>).</p>
-<section id="make-sure-github-access-works-on-the-vm" class="level4" data-number="5.1.2.1">
-<h4 data-number="5.1.2.1" class="anchored" data-anchor-id="make-sure-github-access-works-on-the-vm"><span class="header-section-number">5.1.2.1</span> 1) Make sure GitHub access works on the VM</h4>
+<section id="make-sure-github-access-works-on-the-vm" class="level4" data-number="5.2.2.1">
+<h4 data-number="5.2.2.1" class="anchored" data-anchor-id="make-sure-github-access-works-on-the-vm"><span class="header-section-number">5.2.2.1</span> 1) Make sure GitHub access works on the VM</h4>
 <p>Check which remote is set:</p>
 <pre class="{bash}"><code>git -C /home/yeroslaviz/BCFNGS-project-management remote -v</code></pre>
 <p>If the remote is SSH (<code>git@github.com:...</code>), verify SSH access:</p>
@@ -298,8 +326,8 @@ sudo systemctl restart apache2</code></pre>
 <pre class="{bash}"><code>cat ~/.ssh/id_ed25519.pub</code></pre>
 <p>Then add that key in GitHub: <code>Repo → Settings → Deploy keys → Add deploy key</code> (read‑only is enough for pull).</p>
 </section>
-<section id="pull-latest-code" class="level4" data-number="5.1.2.2">
-<h4 data-number="5.1.2.2" class="anchored" data-anchor-id="pull-latest-code"><span class="header-section-number">5.1.2.2</span> 2) Pull latest code</h4>
+<section id="pull-latest-code" class="level4" data-number="5.2.2.2">
+<h4 data-number="5.2.2.2" class="anchored" data-anchor-id="pull-latest-code"><span class="header-section-number">5.2.2.2</span> 2) Pull latest code</h4>
 <pre class="{bash}"><code>cd /home/yeroslaviz/BCFNGS-project-management
 git pull origin main</code></pre>
 <p>If Git says <strong>divergent branches</strong>, I set merge as the default and pull again:</p>
@@ -311,36 +339,36 @@ git commit -m "Stop tracking local SQLite DB on VM"
 git pull origin main</code></pre>
 <p>This does <strong>not</strong> delete the local DB file. It just removes it from Git so future pulls work.</p>
 </section>
-<section id="production-safety-backups-fast-rollback" class="level4" data-number="5.1.2.3">
-<h4 data-number="5.1.2.3" class="anchored" data-anchor-id="production-safety-backups-fast-rollback"><span class="header-section-number">5.1.2.3</span> 3) Production safety backups (fast rollback)</h4>
+<section id="production-safety-backups-fast-rollback" class="level4" data-number="5.2.2.3">
+<h4 data-number="5.2.2.3" class="anchored" data-anchor-id="production-safety-backups-fast-rollback"><span class="header-section-number">5.2.2.3</span> 3) Production safety backups (fast rollback)</h4>
 <pre class="{bash}"><code>sudo rsync -av /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup_$(date +%Y%m%d_%H%M)/
 cp /srv/shiny-server/sequencing-app/sequencing_projects.db \
   /srv/shiny-server/sequencing-app/sequencing_projects.db.backup_$(date +%Y%m%d_%H%M)
 sudo cp /etc/apache2/sites-enabled/01-main.conf \
   /etc/apache2/sites-enabled/01-main.conf.backup_$(date +%Y%m%d_%H%M)</code></pre>
 </section>
-<section id="deploy" class="level4" data-number="5.1.2.4">
-<h4 data-number="5.1.2.4" class="anchored" data-anchor-id="deploy"><span class="header-section-number">5.1.2.4</span> 4) Deploy</h4>
+<section id="deploy" class="level4" data-number="5.2.2.4">
+<h4 data-number="5.2.2.4" class="anchored" data-anchor-id="deploy"><span class="header-section-number">5.2.2.4</span> 4) Deploy</h4>
 <pre class="{bash}"><code>./deploy.sh</code></pre>
 </section>
-<section id="restart-and-smoketest" class="level4" data-number="5.1.2.5">
-<h4 data-number="5.1.2.5" class="anchored" data-anchor-id="restart-and-smoketest"><span class="header-section-number">5.1.2.5</span> 5) Restart and smoke‑test</h4>
+<section id="restart-and-smoketest" class="level4" data-number="5.2.2.5">
+<h4 data-number="5.2.2.5" class="anchored" data-anchor-id="restart-and-smoketest"><span class="header-section-number">5.2.2.5</span> 5) Restart and smoke‑test</h4>
 <pre class="{bash}"><code>sudo systemctl restart shiny-server
 sudo systemctl restart apache2</code></pre>
 <p>Then open the app URL and verify: - LDAP prompt appears - login works - app loads</p>
 </section>
-<section id="rollback-if-needed" class="level4" data-number="5.1.2.6">
-<h4 data-number="5.1.2.6" class="anchored" data-anchor-id="rollback-if-needed"><span class="header-section-number">5.1.2.6</span> 6) Rollback (if needed)</h4>
+<section id="rollback-if-needed" class="level4" data-number="5.2.2.6">
+<h4 data-number="5.2.2.6" class="anchored" data-anchor-id="rollback-if-needed"><span class="header-section-number">5.2.2.6</span> 6) Rollback (if needed)</h4>
 <pre class="{bash}"><code>sudo rsync -av --delete /srv/shiny-server/sequencing-app.backup_YYYYMMDD_HHMM/ /srv/shiny-server/sequencing-app/
 sudo systemctl restart shiny-server
 sudo systemctl restart apache2</code></pre>
 </section>
 </section>
 </section>
-<section id="ldap-deploy-smoke-tests" class="level2" data-number="5.2">
-<h2 data-number="5.2" class="anchored" data-anchor-id="ldap-deploy-smoke-tests"><span class="header-section-number">5.2</span> LDAP Deploy Smoke Tests</h2>
-<section id="deploy-with-built-in-smoke-tests" class="level3" data-number="5.2.1">
-<h3 data-number="5.2.1" class="anchored" data-anchor-id="deploy-with-built-in-smoke-tests"><span class="header-section-number">5.2.1</span> 1) Deploy with built-in smoke tests</h3>
+<section id="ldap-deploy-smoke-tests" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="ldap-deploy-smoke-tests"><span class="header-section-number">5.3</span> LDAP Deploy Smoke Tests</h2>
+<section id="deploy-with-built-in-smoke-tests" class="level3" data-number="5.3.1">
+<h3 data-number="5.3.1" class="anchored" data-anchor-id="deploy-with-built-in-smoke-tests"><span class="header-section-number">5.3.1</span> 1) Deploy with built-in smoke tests</h3>
 <p>Run on VM:</p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/BCFNGS-project-management</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -361,8 +389,8 @@ sudo systemctl restart apache2</code></pre>
 <li><code>deploy.sh</code> syncs app code only. If you changed Apache config (<code>01-main.conf</code>), apply/restart Apache separately, then run the curl checks in section 4.</li>
 </ul>
 </section>
-<section id="non-interactive-usage-optional" class="level3" data-number="5.2.2">
-<h3 data-number="5.2.2" class="anchored" data-anchor-id="non-interactive-usage-optional"><span class="header-section-number">5.2.2</span> 2) Non-interactive usage (optional)</h3>
+<section id="non-interactive-usage-optional" class="level3" data-number="5.3.2">
+<h3 data-number="5.3.2" class="anchored" data-anchor-id="non-interactive-usage-optional"><span class="header-section-number">5.3.2</span> 2) Non-interactive usage (optional)</h3>
 <p>If you do not want password prompts:</p>
 <div class="sourceCode" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="va">LDAP_TEST_USER</span><span class="op">=</span><span class="st">"yeroslaviz-test"</span> <span class="va">LDAP_TEST_PASSWORD</span><span class="op">=</span><span class="st">"YOUR_PASSWORD"</span> <span class="ex">./deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Skip smoke tests only when needed:</p>
@@ -370,10 +398,10 @@ sudo systemctl restart apache2</code></pre>
 <p>Override target base URL:</p>
 <div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="va">PUBLIC_BASE_URL</span><span class="op">=</span><span class="st">"https://ngs-testing-vm.biochem.mpg.de"</span> <span class="ex">./deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="baseline-environment-checks" class="level3" data-number="5.2.3">
-<h3 data-number="5.2.3" class="anchored" data-anchor-id="baseline-environment-checks"><span class="header-section-number">5.2.3</span> 3) Baseline environment checks</h3>
-<section id="shiny-environment-must-include" class="level4" data-number="5.2.3.1">
-<h4 data-number="5.2.3.1" class="anchored" data-anchor-id="shiny-environment-must-include"><span class="header-section-number">5.2.3.1</span> Shiny environment must include:</h4>
+<section id="baseline-environment-checks" class="level3" data-number="5.3.3">
+<h3 data-number="5.3.3" class="anchored" data-anchor-id="baseline-environment-checks"><span class="header-section-number">5.3.3</span> 3) Baseline environment checks</h3>
+<section id="shiny-environment-must-include" class="level4" data-number="5.3.3.1">
+<h4 data-number="5.3.3.1" class="anchored" data-anchor-id="shiny-environment-must-include"><span class="header-section-number">5.3.3.1</span> Shiny environment must include:</h4>
 <div class="sourceCode" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl show shiny-server <span class="at">--property</span><span class="op">=</span>Environment</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Required values:</p>
 <ul>
@@ -387,8 +415,8 @@ sudo systemctl restart apache2</code></pre>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 </section>
-<section id="manual-curl-validation-reference" class="level3" data-number="5.2.4">
-<h3 data-number="5.2.4" class="anchored" data-anchor-id="manual-curl-validation-reference"><span class="header-section-number">5.2.4</span> 4) Manual curl validation (reference)</h3>
+<section id="manual-curl-validation-reference" class="level3" data-number="5.3.4">
+<h3 data-number="5.3.4" class="anchored" data-anchor-id="manual-curl-validation-reference"><span class="header-section-number">5.3.4</span> 4) Manual curl validation (reference)</h3>
 <p>These should match the smoke test behavior.</p>
 <div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-ki</span> <span class="at">-u</span> yeroslaviz-test <span class="st">"https://ngs-testing-vm.biochem.mpg.de/sequencing-app/"</span> <span class="kw">|</span> <span class="fu">sed</span> <span class="at">-n</span> <span class="st">'1,20p'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Expected:</p>

@@ -14,6 +14,8 @@ execute:
 4.  Restructured the service block into grouped boxes with bullet lists and added the Inter font (extralight italic) for announcement panels.
 5.  Updated **Setup & Infrastructure** quick‑resume references and removed redundant numbering from sub‑headings.
 6.  Softened the announcement box border color.
+7.  Made project deletion admin‑only (UI hides delete for non‑admins; backend enforces admin‑only delete).
+8.  Documented admin‑only delete policy and rollback steps in **Deploy & Operations**.
 
 ## Changes on 13.02.2026
 

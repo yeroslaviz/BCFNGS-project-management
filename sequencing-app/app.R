@@ -2154,8 +2154,10 @@ server <- function(input, output, session) {
                      class = "btn-primary", icon = icon("plus")),
         actionButton("edit_project_btn", "Edit Project", 
                      class = "btn-secondary", icon = icon("edit")),
-        actionButton("delete_project_btn", "Delete Project", 
-                     class = "btn-danger", icon = icon("trash"))
+        if (user$is_admin) {
+          actionButton("delete_project_btn", "Delete Project", 
+                       class = "btn-danger", icon = icon("trash"))
+        }
       ),
       
       if(user$is_admin) {
@@ -3883,10 +3885,10 @@ server <- function(input, output, session) {
     
     project <- projects_data()[selected_row, ]
     
-    can_delete <- user$is_admin || project$user_id == user$user_id
+    can_delete <- user$is_admin
     
     if(!can_delete) {
-      showNotification("You don't have permission to delete this project", type = "error")
+      showNotification("Only administrators can delete projects", type = "error")
       return()
     }
     
