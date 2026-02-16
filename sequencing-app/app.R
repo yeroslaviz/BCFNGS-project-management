@@ -68,7 +68,7 @@ announcement_blocks <- function() {
       div(
         class = "info-box",
         "If you have any further questions, please do not hesitate to contact us @ ",
-        tags$a(href = "mailto:ngs@biochem.mpg.de", "@NGS"),
+        tags$a(href = "mailto:ngs@biochem.mpg.de", tags$strong("@NGS")),
         "!"
       ),
       div(
