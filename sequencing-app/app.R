@@ -645,7 +645,13 @@ server <- function(input, output, session) {
   ##################################################################
   
   # Reactive values
-  user <- reactiveValues(logged_in = FALSE, username = NULL, user_id = NULL, is_admin = FALSE)
+  user <- reactiveValues(
+    logged_in = FALSE,
+    username = NULL,
+    full_name = NULL,
+    user_id = NULL,
+    is_admin = FALSE
+  )
   projects_data <- reactiveVal()
   
   # Reactive values for admin management
@@ -921,7 +927,7 @@ server <- function(input, output, session) {
   }
 
   ldap_lookup_user <- function(username) {
-    attrs <- list(email = NULL, phone = NULL, ou = NULL, bind_ok = NA)
+    attrs <- list(email = NULL, phone = NULL, ou = NULL, full_name = NULL, bind_ok = NA)
     if (is.null(username) || username == "") return(attrs)
 
     default_uri <- paste(
@@ -936,6 +942,9 @@ server <- function(input, output, session) {
     attr_mail <- Sys.getenv("LDAP_ATTR_MAIL", "mail")
     attr_phone <- Sys.getenv("LDAP_ATTR_PHONE", "telephoneNumber")
     attr_ou <- Sys.getenv("LDAP_ATTR_OU", "ou")
+    attr_cn <- Sys.getenv("LDAP_ATTR_CN", "cn")
+    attr_given <- Sys.getenv("LDAP_ATTR_GIVENNAME", "givenName")
+    attr_sn <- Sys.getenv("LDAP_ATTR_SN", "sn")
     bind_dn <- Sys.getenv("LDAP_BIND_DN", "")
     bind_pw <- Sys.getenv("LDAP_BIND_PW", "")
 
@@ -1103,22 +1112,34 @@ server <- function(input, output, session) {
 
       result <- NULL
       if (isTRUE(bind_ok)) {
-        result <- ldap_search(l, ldap_base_dn, filter, c(attr_mail, attr_phone, attr_ou))
+        result <- ldap_search(l, ldap_base_dn, filter, c(attr_mail, attr_phone, attr_ou, attr_cn, attr_given, attr_sn))
       }
 
       if (!is.null(result)) {
         attrs$email <- extract_ldap_attr(result, attr_mail)
         attrs$phone <- extract_ldap_attr(result, attr_phone)
         attrs$ou <- extract_ldap_attr(result, attr_ou)
+        attrs$full_name <- extract_ldap_attr(result, attr_cn)
+        if (is.null(attrs$full_name) || attrs$full_name == "") {
+          given <- extract_ldap_attr(result, attr_given)
+          sn <- extract_ldap_attr(result, attr_sn)
+          if (!is.null(given) && given != "" && !is.null(sn) && sn != "") {
+            attrs$full_name <- paste(given, sn)
+          } else if (!is.null(given) && given != "") {
+            attrs$full_name <- given
+          } else if (!is.null(sn) && sn != "") {
+            attrs$full_name <- sn
+          }
+        }
       }
 
-      needs_lookup <- is.null(attrs$email) || is.null(attrs$phone) || is.null(attrs$ou)
+      needs_lookup <- is.null(attrs$email) || is.null(attrs$phone) || is.null(attrs$ou) || is.null(attrs$full_name)
       if (needs_lookup) {
         ldapsearch_lines <- ldapsearch_lookup(
           uri = if (isTRUE(target$use_ssl)) paste0("ldaps://", target$host, ":", target$port) else paste0("ldap://", target$host, ":", target$port),
           base_dn = ldap_base_dn,
           filter = filter,
-          attrs = c(attr_mail, attr_phone, attr_ou),
+          attrs = c(attr_mail, attr_phone, attr_ou, attr_cn, attr_given, attr_sn),
           bind_dn = bind_dn,
           bind_pw = bind_pw
         )
@@ -1134,10 +1155,25 @@ server <- function(input, output, session) {
         if (is.null(attrs$ou)) {
           attrs$ou <- parse_ldapsearch_output(ldapsearch_lines, attr_ou)
         }
+        if (is.null(attrs$full_name)) {
+          attrs$full_name <- parse_ldapsearch_output(ldapsearch_lines, attr_cn)
+          if (is.null(attrs$full_name) || attrs$full_name == "") {
+            given <- parse_ldapsearch_output(ldapsearch_lines, attr_given)
+            sn <- parse_ldapsearch_output(ldapsearch_lines, attr_sn)
+            if (!is.null(given) && given != "" && !is.null(sn) && sn != "") {
+              attrs$full_name <- paste(given, sn)
+            } else if (!is.null(given) && given != "") {
+              attrs$full_name <- given
+            } else if (!is.null(sn) && sn != "") {
+              attrs$full_name <- sn
+            }
+          }
+        }
         if (dev_mode && Sys.getenv("LDAP_DEBUG", "") == "1") {
           cat("LDAP ATTRS PARSED: ", "email=", attrs$email %||% "NULL",
               " phone=", attrs$phone %||% "NULL",
-              " ou=", attrs$ou %||% "NULL", "\n")
+              " ou=", attrs$ou %||% "NULL",
+              " full_name=", attrs$full_name %||% "NULL", "\n")
         }
       }
 
@@ -1260,6 +1296,11 @@ server <- function(input, output, session) {
   complete_login <- function(user_data) {
     user$logged_in <- TRUE
     user$username <- user_data$username
+    full_name_val <- scalar_text(user_data$full_name)
+    if (is.null(full_name_val) || full_name_val == "") {
+      full_name_val <- scalar_text(user_data$username)
+    }
+    user$full_name <- full_name_val
     user$user_id <- user_data$id
     user$is_admin <- as.logical(user_data$is_admin)
 
@@ -1324,6 +1365,7 @@ server <- function(input, output, session) {
     attrs$email <- scalar_text(attrs$email)
     attrs$phone <- scalar_text(attrs$phone)
     attrs$ou <- scalar_text(attrs$ou)
+    attrs$full_name <- scalar_text(attrs$full_name)
 
     if (Sys.getenv("LDAP_DEBUG", "") == "1") {
       cat("LDAP LOGIN ATTRS:",
@@ -1331,6 +1373,7 @@ server <- function(input, output, session) {
           "email=", attrs$email %||% "<missing>",
           "phone=", attrs$phone %||% "<missing>",
           "ou=", attrs$ou %||% "<missing>",
+          "full_name=", attrs$full_name %||% "<missing>",
           "\n", file = stderr())
       flush.console()
     }
@@ -1357,16 +1400,30 @@ server <- function(input, output, session) {
       }
 
       placeholder_pw <- digest::digest(paste0("ldap-", username))
-      dbExecute(con, "
-        INSERT INTO users (username, password, email, phone, research_group, is_admin)
-        VALUES (?, ?, ?, ?, ?, 0)
-      ", params = list(
-        username,
-        placeholder_pw,
-        attrs$email,
-        attrs$phone %||% "",
-        attrs$ou %||% ""
-      ))
+      if (users_has_full_name(con)) {
+        dbExecute(con, "
+          INSERT INTO users (username, full_name, password, email, phone, research_group, is_admin)
+          VALUES (?, ?, ?, ?, ?, ?, 0)
+        ", params = list(
+          username,
+          attrs$full_name %||% username,
+          placeholder_pw,
+          attrs$email,
+          attrs$phone %||% "",
+          attrs$ou %||% ""
+        ))
+      } else {
+        dbExecute(con, "
+          INSERT INTO users (username, password, email, phone, research_group, is_admin)
+          VALUES (?, ?, ?, ?, ?, 0)
+        ", params = list(
+          username,
+          placeholder_pw,
+          attrs$email,
+          attrs$phone %||% "",
+          attrs$ou %||% ""
+        ))
+      }
 
       user_data <- dbGetQuery(con,
                               "SELECT * FROM users WHERE username = ?",
@@ -1397,17 +1454,35 @@ server <- function(input, output, session) {
       if ((is.null(user_data$research_group) || is.na(user_data$research_group) || user_data$research_group == "") && !is.null(attrs$ou) && attrs$ou != "") {
         updates$research_group <- attrs$ou
       }
+      if (users_has_full_name(con)) {
+        if ((is.null(user_data$full_name) || is.na(user_data$full_name) || user_data$full_name == "") && !is.null(attrs$full_name) && attrs$full_name != "") {
+          updates$full_name <- attrs$full_name
+        }
+      }
 
       if (length(updates) > 0) {
-        dbExecute(con, "
-          UPDATE users SET email = ?, phone = ?, research_group = ?
-          WHERE username = ?
-        ", params = list(
-          updates$email %||% user_data$email,
-          updates$phone %||% user_data$phone,
-          updates$research_group %||% user_data$research_group,
-          username
-        ))
+        if (users_has_full_name(con)) {
+          dbExecute(con, "
+            UPDATE users SET email = ?, phone = ?, research_group = ?, full_name = ?
+            WHERE username = ?
+          ", params = list(
+            updates$email %||% user_data$email,
+            updates$phone %||% user_data$phone,
+            updates$research_group %||% user_data$research_group,
+            updates$full_name %||% user_data$full_name,
+            username
+          ))
+        } else {
+          dbExecute(con, "
+            UPDATE users SET email = ?, phone = ?, research_group = ?
+            WHERE username = ?
+          ", params = list(
+            updates$email %||% user_data$email,
+            updates$phone %||% user_data$phone,
+            updates$research_group %||% user_data$research_group,
+            username
+          ))
+        }
 
         user_data <- dbGetQuery(con,
                                 "SELECT * FROM users WHERE username = ?",
@@ -1432,7 +1507,8 @@ server <- function(input, output, session) {
     "Library preparation",
     "QC done",
     "Data analysis", 
-    "Data released"
+    "Data released",
+    "Legacy project"
   )
 
   status_colors <- c(
@@ -1441,7 +1517,8 @@ server <- function(input, output, session) {
     "Library preparation" = "#e2e3e5",
     "QC done" = "#d1ecf1",
     "Data analysis" = "#f8d7da",
-    "Data released" = "#d4edda"
+    "Data released" = "#d4edda",
+    "Legacy project" = "#e9ecef"
   )
 
   make_status_choices <- function(current_status = NULL) {
@@ -1456,13 +1533,27 @@ server <- function(input, output, session) {
   get_db_connection <- function() {
     dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
   }
+
+  users_has_full_name <- function(con) {
+    tryCatch({
+      "full_name" %in% dbGetQuery(con, "PRAGMA table_info(users)")$name
+    }, error = function(e) FALSE)
+  }
   
   # Get all usernames for responsible user dropdown
   get_all_usernames <- function() {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
-    users <- dbGetQuery(con, "SELECT username FROM users ORDER BY username")
-    return(users$username)
+    if (users_has_full_name(con)) {
+      users <- dbGetQuery(con, "SELECT username, full_name FROM users ORDER BY username")
+    } else {
+      users <- dbGetQuery(con, "SELECT username FROM users ORDER BY username")
+      users$full_name <- NA_character_
+    }
+    if (nrow(users) == 0) return(character(0))
+    display <- trimws(users$full_name)
+    display[is.na(display) | display == ""] <- users$username[is.na(display) | display == ""]
+    unique(c(display, users$username))
   }
   
   # Load budget holders from database
@@ -1527,7 +1618,11 @@ server <- function(input, output, session) {
     on.exit(dbDisconnect(con))
     
     # Load users
-    admin_data$users <- dbGetQuery(con, "SELECT id, username, email, phone, research_group, is_admin FROM users")
+    if (users_has_full_name(con)) {
+      admin_data$users <- dbGetQuery(con, "SELECT id, username, full_name, email, phone, research_group, is_admin FROM users")
+    } else {
+      admin_data$users <- dbGetQuery(con, "SELECT id, username, email, phone, research_group, is_admin FROM users")
+    }
     
     # Load all reference data from database
     admin_data$budget_holders <- load_budget_holders()
@@ -1688,6 +1783,7 @@ server <- function(input, output, session) {
       ),
       
       textInput("reg_username", "Username *", placeholder = "Choose a username"),
+      textInput("reg_full_name", "Full Name", placeholder = "First Last"),
       textInput("reg_email", "Email *", placeholder = "your.email@institute.org"),
       passwordInput("reg_password", "Password *", placeholder = "Choose a password"),
       passwordInput("reg_confirm_password", "Confirm Password *", placeholder = "Confirm your password"),
@@ -1734,16 +1830,35 @@ server <- function(input, output, session) {
     }
     
     # Insert new user
-    dbExecute(con, "
-    INSERT INTO users (username, password, email, phone, research_group, is_admin)
-    VALUES (?, ?, ?, ?, ?, 0)
-    ", params = list(
-      input$reg_username,
-      digest(input$reg_password),
-      input$reg_email,
-      input$reg_phone,
-      input$reg_group
-    ))
+    full_name_input <- trimws(input$reg_full_name %||% "")
+    if (full_name_input == "") {
+      full_name_input <- input$reg_username
+    }
+
+    if (users_has_full_name(con)) {
+      dbExecute(con, "
+      INSERT INTO users (username, full_name, password, email, phone, research_group, is_admin)
+      VALUES (?, ?, ?, ?, ?, ?, 0)
+      ", params = list(
+        input$reg_username,
+        full_name_input,
+        digest(input$reg_password),
+        input$reg_email,
+        input$reg_phone,
+        input$reg_group
+      ))
+    } else {
+      dbExecute(con, "
+      INSERT INTO users (username, password, email, phone, research_group, is_admin)
+      VALUES (?, ?, ?, ?, ?, 0)
+      ", params = list(
+        input$reg_username,
+        digest(input$reg_password),
+        input$reg_email,
+        input$reg_phone,
+        input$reg_group
+      ))
+    }
 
     removeModal()
     showNotification("Registration successful! You can now login.", type = "message")
@@ -1849,6 +1964,7 @@ server <- function(input, output, session) {
 
     user$logged_in <- FALSE
     user$username <- NULL
+    user$full_name <- NULL
     user$user_id <- NULL
     user$is_admin <- FALSE
 
@@ -2108,10 +2224,10 @@ server <- function(input, output, session) {
   load_projects <- function() {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
-    
+
     if(user$is_admin) {
       projects <- dbGetQuery(con, "
-        SELECT p.*, u.username as created_by, t.name as type_name, 
+        SELECT p.*, COALESCE(NULLIF(u.full_name, ''), u.username) as created_by, t.name as type_name, 
                bh.name as budget_holder_name, bh.surname as budget_holder_surname, bh.cost_center,
                st.service_type, sd.depth_description, sc.cycles_description
         FROM projects p 
@@ -2124,8 +2240,12 @@ server <- function(input, output, session) {
         ORDER BY p.project_id DESC
       ")
     } else {
+      current_full_name <- user$full_name
+      if (is.null(current_full_name) || current_full_name == "") {
+        current_full_name <- user$username
+      }
       projects <- dbGetQuery(con, "
-        SELECT p.*, u.username as created_by, t.name as type_name,
+        SELECT p.*, COALESCE(NULLIF(u.full_name, ''), u.username) as created_by, t.name as type_name,
                bh.name as budget_holder_name, bh.surname as budget_holder_surname, bh.cost_center,
                st.service_type, sd.depth_description, sc.cycles_description
         FROM projects p 
@@ -2135,9 +2255,9 @@ server <- function(input, output, session) {
         LEFT JOIN service_types st ON p.service_type_id = st.id
         LEFT JOIN sequencing_depths sd ON p.sequencing_depth_id = sd.id
         LEFT JOIN sequencing_cycles sc ON p.sequencing_cycles_id = sc.id
-        WHERE p.responsible_user = ? OR p.user_id = ?
+        WHERE p.responsible_user = ? OR p.responsible_user = ? OR p.user_id = ?
         ORDER BY p.project_id DESC
-      ", params = list(user$username, user$user_id))
+      ", params = list(current_full_name, user$username, user$user_id))
     }
     
     projects_data(projects)
@@ -2323,7 +2443,9 @@ server <- function(input, output, session) {
                uiOutput("budget_holder_other_fields"),
                selectInput("responsible_user", "Responsible User *",
                            choices = get_all_usernames(),
-                           selected = user$username),
+                           selected = {
+                             if (is.null(user$full_name) || user$full_name == "") user$username else user$full_name
+                           }),
                radioButtons("kickoff_meeting", "Kick-off Meeting Required? *",
                             choices = c("Yes" = 1, "No" = 0), 
                             selected = 0, inline = TRUE)
@@ -3660,7 +3782,8 @@ server <- function(input, output, session) {
     
     can_edit <- user$is_admin || 
       project$user_id == user$user_id || 
-      project$responsible_user == user$username
+      project$responsible_user == user$username ||
+      project$responsible_user == user$full_name
     
     if(!can_edit) {
       showNotification("You don't have permission to edit this project", type = "error")
@@ -3778,7 +3901,8 @@ server <- function(input, output, session) {
     
     can_edit <- user$is_admin || 
       project$user_id == user$user_id || 
-      project$responsible_user == user$username
+      project$responsible_user == user$username ||
+      project$responsible_user == user$full_name
     
     if(!can_edit) {
       showNotification("You don't have permission to edit this project", type = "error")

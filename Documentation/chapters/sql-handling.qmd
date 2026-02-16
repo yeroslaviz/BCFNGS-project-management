@@ -15,6 +15,7 @@ execute:
 - [Admin users in LDAP mode](#admin-users-in-ldap-mode)
 - [Update budget holders (CSV vs DB)](#update-budget-holders-csv-vs-db)
 - [Rebuild the database (when/why/how)](#rebuild-the-database-whenwhyhow)
+- [Legacy import (perl‑VM → shiny‑VM)](#legacy-import-perlvm--shinyvm)
 - [Backups and retention](#backups-and-retention)
 - [Git tracking for DB files](#git-tracking-for-db-files)
 - [Common fixes](#common-fixes)
@@ -149,6 +150,72 @@ cd /srv/shiny-server/sequencing-app
 sudo -u shiny Rscript setup_database.R
 
 sudo systemctl start shiny-server
+```
+
+### Legacy import (perl‑VM → shiny‑VM)
+
+This workflow imports legacy projects from the perl‑VM (PostgreSQL) into the shiny‑VM (SQLite).
+
+**Step 1 — Export CSV on perl‑VM (PostgreSQL)**
+
+Run this on the perl‑VM (adjust DB user if needed):
+
+```bash
+psql -U letunic -h 127.0.0.1 -d mpiseq2_db -c "\
+\\copy (\
+  SELECT \
+    p.id AS legacy_id, \
+    p.name AS project_name, \
+    m.login AS login, \
+    m.name AS user_full_name, \
+    l.name AS group_name, \
+    p.ref_genome AS reference_genome, \
+    p.type AS type_label, \
+    p.sample_type AS sample_type, \
+    p.sequencing_length AS sequencing_length, \
+    p.budget_group AS budget_group, \
+    p.sequencing_platform AS sequencing_platform, \
+    p.sequencing_kit AS sequencing_kit, \
+    p.sequencing_index AS sequencing_index, \
+    p.note AS note \
+  FROM project.project p \
+  LEFT JOIN people.member m ON p.user_id = m.id \
+  LEFT JOIN people.lab l ON m.lab_id = l.id \
+  ORDER BY p.id\
+) TO '~/BCFNGS-project-management/exports/legacy_projects.csv' CSV HEADER"
+```
+
+**Step 2 — Copy CSV to shiny‑VM (if needed)**
+
+If perl‑VM and shiny‑VM are different machines, copy the CSV:
+
+```bash
+scp ~/BCFNGS-project-management/exports/legacy_projects.csv USER@shiny-vm:/srv/shiny-server/sequencing-app/
+```
+
+**Step 3 — Run the import script on shiny‑VM**
+
+```bash
+cd /srv/shiny-server/sequencing-app
+python3 /home/yeroslaviz/BCFNGS-project-management/scripts/import_legacy_projects.py \
+  --db /srv/shiny-server/sequencing-app/sequencing_projects.db \
+  --csv /srv/shiny-server/sequencing-app/legacy_projects.csv
+```
+
+**What the import does**
+
+- Preserves legacy IDs (`project_id = legacy_id` → UI shows `P<id>`).
+- Sets `status = "Legacy project"`.
+- Stores `responsible_user` as the **full name** (from the CSV).
+- Maps **Type → `types`** and **Sample type → `service_types`** (no legacy suffix).
+- Creates placeholders if a budget holder is missing (reported at the end).
+- Adds `users.full_name` and extends the status constraint to allow `Legacy project` if missing.
+
+**Verify**
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"SELECT project_id, project_name, status FROM projects WHERE status='Legacy project' ORDER BY project_id LIMIT 10;"
 ```
 
 ### Backups and retention

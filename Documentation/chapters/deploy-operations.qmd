@@ -52,7 +52,7 @@ sudo cp /etc/apache2/sites-enabled/01-main.conf \
 3.  Deploy.
 
 ```{bash}
-./deploy.sh
+./scripts/deploy.sh
 ```
 
 4.  Restart services.
@@ -143,7 +143,7 @@ sudo cp /etc/apache2/sites-enabled/01-main.conf \
 #### 4) Deploy
 
 ```{bash}
-./deploy.sh
+./scripts/deploy.sh
 ```
 
 #### 5) Restart and smoke‑test
@@ -175,7 +175,7 @@ Run on VM:
 
 ```bash
 cd ~/BCFNGS-project-management
-./deploy.sh
+./scripts/deploy.sh
 ```
 
 The script now:
@@ -191,7 +191,7 @@ It exits with non-zero status and prints remediation hints if any check fails.
 
 Note:
 
-- `deploy.sh` syncs app code only. If you changed Apache config (`01-main.conf`), apply/restart Apache separately, then run the curl checks in section 4.
+- `scripts/deploy.sh` syncs app code only. If you changed Apache config (`01-main.conf`), apply/restart Apache separately, then run the curl checks in section 4.
 
 
 ### 2) Non-interactive usage (optional)
@@ -199,19 +199,66 @@ Note:
 If you do not want password prompts:
 
 ```bash
-LDAP_TEST_USER="yeroslaviz-test" LDAP_TEST_PASSWORD="YOUR_PASSWORD" ./deploy.sh
+LDAP_TEST_USER="yeroslaviz-test" LDAP_TEST_PASSWORD="YOUR_PASSWORD" ./scripts/deploy.sh
 ```
 
 Skip smoke tests only when needed:
 
 ```bash
-SKIP_SMOKE_TEST=1 ./deploy.sh
+SKIP_SMOKE_TEST=1 ./scripts/deploy.sh
 ```
 
 Override target base URL:
 
 ```bash
-PUBLIC_BASE_URL="https://ngs-testing-vm.biochem.mpg.de" ./deploy.sh
+PUBLIC_BASE_URL="https://ngs-testing-vm.biochem.mpg.de" ./scripts/deploy.sh
+```
+
+## VHost cutover (perl‑VM → shiny‑VM)
+
+This is the **separate workflow** for switching Apache from the perl‑VM app to the shiny‑VM app.
+Do **not** run this until shiny‑VM is fully validated.
+
+### 1) Prepare two vhosts
+
+- **perl vhost** (legacy): `ngs-vm.biochem.mpg.de`
+- **shiny vhost** (new): `ngs-vm-shiny.biochem.mpg.de`  
+
+Keep both configs on disk so you can roll back quickly.
+If the shiny hostname changes later, update it in the vhost file and in the script env vars below.
+
+### 2) Optional: redirect the old hostname
+
+When you cut over, add a redirect in the perl vhost:
+
+```apache
+Redirect permanent / https://ngs-vm-shiny.biochem.mpg.de/
+```
+
+### 3) Switch vhosts (script)
+
+The repo includes a switch script you can run later:
+
+```bash
+scripts/switch_vhosts.sh
+```
+
+You can override hostnames or file names:
+
+```bash
+PERL_SITE=ngs-vm.conf \
+SHINY_SITE=ngs-vm-shiny.conf \
+SHINY_HOSTNAME=ngs-vm-shiny.biochem.mpg.de \
+REDIRECT_FROM=ngs-vm.biochem.mpg.de \
+scripts/switch_vhosts.sh
+```
+
+### 4) Rollback (if needed)
+
+```bash
+sudo a2dissite ngs-vm-shiny.conf
+sudo a2ensite ngs-vm.conf
+sudo systemctl reload apache2
 ```
 
 

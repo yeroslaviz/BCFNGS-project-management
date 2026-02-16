@@ -194,14 +194,14 @@ If multiple cost centers exist for the same PI, the first match is selected by d
 - Mapped LDAP `ou` values to budget holders, auto-selecting the correct PI in the project form (with partial match fallback).
 - Added notices when a PI has multiple cost centers or missing cost center.
 - Added “Other / not listed” budget holder option so users can enter a new PI (name + surname required; cost center optional with warning).
-- `deploy.sh` now uses `rsync` and excludes the SQLite DB.
+- `scripts/deploy.sh` now uses `rsync` and excludes the SQLite DB.
 - Docs updated with LDAP setup, local testing, and env cleanup.
 - `.gitignore` updated to ignore DB files and backup folders.
 
 ### Files Updated
 
 - `sequencing-app/app.R`
-- `deploy.sh`
+- `scripts/deploy.sh`
 - `01-main.conf`
 - `Server_preparations.qmd`
 - `.gitignore`
@@ -264,10 +264,10 @@ All SQL database commands and explanations were moved to **`notes/sql-handling.q
 ```bash
 cd /home/yeroslaviz/BCFNGS-project-management
 git pull
-./deploy.sh
+./scripts/deploy.sh
 ```
 
-`deploy.sh` uses `rsync` and **does not overwrite** the SQLite DB.
+`scripts/deploy.sh` uses `rsync` and **does not overwrite** the SQLite DB.
 
 ### LDAP on VM (when ready)
 

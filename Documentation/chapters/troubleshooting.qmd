@@ -360,14 +360,14 @@ sudo systemctl restart shiny-server
 
 Fix:
 
-- Verify `deploy.sh` ran successfully.
+- Verify `scripts/deploy.sh` ran successfully.
 - Confirm files in `/srv/shiny-server/sequencing-app/` updated.
 
 ### Database overwritten
 
 Fix:
 
-- Ensure `deploy.sh` excludes `sequencing_projects.db`.
+- Ensure `scripts/deploy.sh` excludes `sequencing_projects.db`.
 - Keep `*.db` ignored in git.
 
 ## Quick validation commands

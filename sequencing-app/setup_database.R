@@ -26,6 +26,7 @@ setup_complete_database <- function() {
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
+      full_name TEXT,
       password TEXT NOT NULL,
       email TEXT NOT NULL,
       phone TEXT,
@@ -157,7 +158,8 @@ setup_complete_database <- function() {
         'Library preparation',
         'QC done',
         'Data analysis',
-        'Data released'
+        'Data released',
+        'Legacy project'
       )),
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -231,6 +233,7 @@ setup_complete_database <- function() {
   # Insert sample users with phone and research_group
   sample_users <- data.frame(
     username = c('user1', 'user2'),
+    full_name = c('User One', 'User Two'),
     password = c(digest('user1123'), digest('user2123')),
     email = c('user1@institute.org', 'user2@institute.org'),
     phone = c("+49 89 12345678", "+49 89 87654321"),
@@ -240,10 +243,11 @@ setup_complete_database <- function() {
 
   for(i in 1:nrow(sample_users)) {
     dbExecute(con, "
-    INSERT OR IGNORE INTO users (username, password, email, phone, research_group, is_admin)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT OR IGNORE INTO users (username, full_name, password, email, phone, research_group, is_admin)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   ", params = list(
     sample_users$username[i],
+    sample_users$full_name[i],
     sample_users$password[i],
     sample_users$email[i],
     sample_users$phone[i],

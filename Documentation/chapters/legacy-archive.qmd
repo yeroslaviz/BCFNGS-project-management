@@ -111,7 +111,7 @@ sudo gdebi shiny-server-1.5.23.1030-amd64.deb
 
 ### Legacy deployment script name
 
-The old notes referenced `deploy_shiny_server.sh`. This has been replaced by `deploy.sh` in the repo root.
+The old notes referenced `deploy_shiny_server.sh`. This has been replaced by `scripts/deploy.sh` in the repo scripts folder.
 
 ### Legacy tree output (old VM layout example)
 

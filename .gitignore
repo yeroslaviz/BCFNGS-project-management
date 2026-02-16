@@ -9,7 +9,8 @@
 .backup/
 backup/
 mpiseq2/
-
+etc/
+export/
 
 # SQLite / database files
 *.db

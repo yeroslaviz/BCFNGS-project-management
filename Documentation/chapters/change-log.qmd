@@ -17,6 +17,8 @@ execute:
 7.  Made project deletion admin‑only (UI hides delete for non‑admins; backend enforces admin‑only delete).
 8.  Documented admin‑only delete policy and rollback steps in **Deploy & Operations**.
 9.  Added troubleshooting note for Quarto search requiring a local web server.
+10. Added full‑name support for users (LDAP full name mapping, `users.full_name`, and full‑name display in project lists).
+11. Added a legacy import workflow and script for perl‑VM → shiny‑VM migration, plus a separate vhost cutover script.
 
 ## Changes on 13.02.2026
 
@@ -34,7 +36,7 @@ execute:
 3.  Confirmed and documented required shiny-server environment for LDAP mode:
     - `AUTH_MODE=ldap`
     - `TRUST_PROXY_AUTH_USER_QUERY=1`
-4.  Extended `deploy.sh` with post-deploy LDAP smoke tests (canonical redirect, tampered query rewrite, final `200` response) and actionable failure hints.
+4.  Extended `scripts/deploy.sh` with post-deploy LDAP smoke tests (canonical redirect, tampered query rewrite, final `200` response) and actionable failure hints.
 5.  Added/merged troubleshooting guidance for LDAP login failures, disconnects, and redirect loops into the VM troubleshooting documentation.
 6.  Improved Projects table readability in the Shiny UI (`sequencing-app/app.R`):
     - explicit DT column widths
@@ -51,14 +53,14 @@ execute:
 4.  Added the full **pre‑create admin** example that includes `password`/`email` for NOT NULL constraints.
 5.  Updated the canonical server path to `/srv/shiny-server` and corrected repo path on the local machine.
 6.  Moved legacy/obsolete content to the end of the document under **Obsolete / now wrong**.
-7.  Replaced the old deploy script reference (`deploy_shiny_server.sh`) with `deploy.sh`.
+7.  Replaced the old deploy script reference (`deploy_shiny_server.sh`) with `scripts/deploy.sh`.
 
 
 ## Changes on 09.02.2026
 
 1.  Added a VM rollout HOW‑TO (GitHub SSH/deploy keys, divergent branches, DB tracking fix, backups, deploy, restart, rollback).
 2.  Documented production safeguards (app folder backup, DB backup, Apache config backup).
-3.  Updated `deploy.sh` to restart Shiny only if `rsync` succeeds (prevents restarts on failed deploys).
+3.  Updated `scripts/deploy.sh` to restart Shiny only if `rsync` succeeds (prevents restarts on failed deploys).
 4.  Cleaned up Apache LDAP logging (default to quiet logs; debug only when explicitly enabled).
 5.  Made LDAP debug output in the Shiny app conditional on **both** `APP_ENV=dev` and `LDAP_DEBUG=1` to avoid production log noise.
 6.  Documented the VM LDAP validation test (real user + service group user, and email routing behavior).
@@ -84,7 +86,7 @@ If all three happen, the LDAP→app→email flow is working as intended.
 4.  Mapped LDAP `ou` values to budget holders, auto‑selecting the correct PI in the project form (with partial match fallback).
 5.  Added budget holder notices for multiple cost centers and missing cost center values.
 6.  Added “Other / not listed” budget holder option so users can enter a new PI (name/surname required; cost center optional with a warning).
-7.  Updated `deploy.sh` to use `rsync` and exclude `sequencing_projects.db`.
+7.  Updated `scripts/deploy.sh` to use `rsync` and exclude `sequencing_projects.db`.
 8.  Updated Apache LDAP configuration template and added local dev testing instructions + env var cleanup.
 9.  I do **not** track SQLite DB files in git because they change constantly, are environment‑specific (local vs VM), and can contain sensitive data. I ignore `*.db`/`*.sqlite` and keep only the schema/seed files in git.
 

@@ -171,7 +171,7 @@ Deploy the app files:
 
 ```bash
 cd /home/<your-user>/BCFNGS-project-management
-./deploy.sh
+./scripts/deploy.sh
 ```
 
 ### Install required R packages
@@ -272,7 +272,7 @@ curl -I http://localhost:3838/sequencing-app/
 ```bash
 cd /home/<your-user>/BCFNGS-project-management
 git pull origin main
-./deploy.sh
+./scripts/deploy.sh
 ```
 
 ### Production hygiene
