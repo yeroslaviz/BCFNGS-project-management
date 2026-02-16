@@ -8,7 +8,16 @@ execute:
 
 ## Server Infrastructure
 
-## Server Infrastructure
+## Modify Text (Announcements)
+
+The **post‑login announcement/service blocks** (shown in both local and LDAP modes) are defined in:
+
+- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R`
+- Function: `announcement_blocks()`
+- Styles: `.announcement-panel`, `.service-panel`, `.info-box` in the top `tags$style` block
+
+These blocks replace the old “New Projects” instruction list.  
+After editing, redeploy the app (or restart Shiny Server on the VM) so the UI updates.
 
 ### SQL handling (moved)
 
@@ -77,15 +86,15 @@ sudo systemctl enable shiny-server
 
 ## Ubuntu Bare Server Setup HOWTO (Shiny + LDAP)
 
-### AI session restart (quick resume)
+### Restart communication (quick resume)
 
 If I ever need to resume this work with a new AI tool or a new chat session:
 
-1. Read `notes/vm-rollout-summary-2026-02-09.md` for the current system state.
-2. Read `notes/vm-troubleshooting-guide.md` for common failures and fixes.
-3. Re-run the validation `curl` commands in the summary to confirm the stack is still working.
+1. Read **Troubleshooting** for common failures and fixes.
+2. Read **Deploy & Operations** for the current deploy/validation steps.
+3. Read **Change Log** for the latest configuration changes and decisions.
 
-### 1) Base OS prep
+### Base OS prep
 
 ```bash
 sudo apt update
@@ -116,7 +125,7 @@ If LDAP-related R packages need OpenLDAP headers, install:
 sudo apt install -y libldap2-dev libsasl2-dev
 ```
 
-### 2) Install R
+### Install R
 
 ```bash
 sudo apt install -y r-base
@@ -124,7 +133,7 @@ sudo apt install -y r-base
 
 If you need a newer R version than the Ubuntu default, add the CRAN repo and install from there (optional).
 
-### 3) Install Shiny Server
+### Install Shiny Server
 
 Download the latest Shiny Server `.deb` from Posit and install it:
 
@@ -142,14 +151,14 @@ sudo systemctl enable shiny-server
 sudo systemctl start shiny-server
 ```
 
-### 4) Clone the repo
+### Clone the repo
 
 ```bash
 cd /home/<your-user>
 git clone git@github.com:yeroslaviz/BCFNGS-project-management.git
 ```
 
-### 5) Configure the Shiny app folder
+### Configure the Shiny app folder
 
 ```bash
 sudo usermod -a -G shiny $USER
@@ -165,7 +174,7 @@ cd /home/<your-user>/BCFNGS-project-management
 ./deploy.sh
 ```
 
-### 6) Install required R packages
+### Install required R packages
 
 From R (or `R -q -e`):
 
@@ -185,7 +194,7 @@ install.packages(c(
 
 If any package fails, install missing system libraries and retry.
 
-### 7) Configure Shiny Server environment variables
+### Configure Shiny Server environment variables
 
 Recommended: systemd drop-in (production-safe).
 
@@ -213,7 +222,7 @@ sudo systemctl restart shiny-server
 
 Alternative: `/home/shiny/.Renviron` (simpler, less explicit).
 
-### 8) Configure LDAP trust (OpenLDAP client)
+### Configure LDAP trust (OpenLDAP client)
 
 Edit `/etc/ldap/ldap.conf` and ensure:
 
@@ -231,7 +240,7 @@ ldapsearch -x -H ldaps://ldapserv1.biochem.mpg.de:636 \
   -b "dc=biochem,dc=mpg,dc=de" "(uid=USER)" mail
 ```
 
-### 9) Configure Apache reverse proxy + LDAP auth
+### Configure Apache reverse proxy + LDAP auth
 
 Copy the repo Apache config and enable required modules:
 
@@ -242,7 +251,7 @@ sudo apache2ctl -t
 sudo systemctl restart apache2
 ```
 
-### 10) Validate the full flow
+### Validate the full flow
 
 ```bash
 curl -Ik https://ngs-testing-vm.biochem.mpg.de/
@@ -258,7 +267,7 @@ curl -I http://localhost:3838/sequencing-app/
 # Expect 200
 ```
 
-### 11) Routine updates
+### Routine updates
 
 ```bash
 cd /home/<your-user>/BCFNGS-project-management
@@ -266,7 +275,7 @@ git pull origin main
 ./deploy.sh
 ```
 
-### 12) Production hygiene
+### Production hygiene
 
 1. Use a **service bind account** if LDAP requires bind credentials.
 2. Keep DB files out of git.

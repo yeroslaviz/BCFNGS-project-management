@@ -6,6 +6,15 @@ execute:
   warning: false
 ---
 
+## Changes on 16.02.2026
+
+1.  Replaced the old “New Projects” instruction list with two announcement/service blocks (boxed items) shown after login in both local and LDAP modes.
+2.  Added dedicated styles for the new announcement/service panels and boxed items.
+3.  Added a **Modify Text (Announcements)** section in **Setup & Infrastructure** with the edit location.
+4.  Restructured the service block into grouped boxes with bullet lists and added the Inter font (extralight italic) for announcement panels.
+5.  Updated **Setup & Infrastructure** quick‑resume references and removed redundant numbering from sub‑headings.
+6.  Softened the announcement box border color.
+
 ## Changes on 13.02.2026
 
 1.  New project emails now **prefix the subject with the project ID** (e.g., `P2 - ...`).

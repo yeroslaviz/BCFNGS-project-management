@@ -9,12 +9,104 @@ library(shinyWidgets)
 library(mailR)
 library(ldapr)
 
+# Shared announcement/service blocks (shown after login in both local + LDAP modes)
+announcement_blocks <- function() {
+  tagList(
+    div(
+      class = "announcement-panel",
+      div(class = "panel-title", "Announcement"),
+      div(class = "panel-updated", tags$strong("Updated February 2026")),
+      div(
+        class = "info-box",
+        tags$strong("QC submission"),
+        ": Everyday ",
+        tags$strong("9:00 - 11:00"),
+        ", Result will be available ",
+        tags$strong("13:00-15:00"),
+        " in your datashare folder or ask a link."
+      ),
+      div(
+        class = "info-box",
+        tags$strong("8-strip tube"),
+        ": If you submit more than ",
+        tags$strong("(>=) 4 samples for Qubit"),
+        ", please use 8-strip PCR tube."
+      ),
+      div(
+        class = "info-box",
+        tags$strong("NGS data in your personal pool folder:"),
+        tags$br(),
+        "(Windows) \\\\samba-pool-dnaseq\\pool-dnaseq\\",
+        tags$br(),
+        "(Mac) smb://samba-pool-dnaseq/pool-dnaseq/",
+        tags$br(),
+        "or, via datashare - ask a link."
+      ),
+      div(
+        class = "info-box",
+        tags$strong("NGS Facility will not store your samples and data."),
+        " Please submit ",
+        tags$strong("aliquot"),
+        " of your sample and ",
+        tags$strong("back-up"),
+        " the data in your group storage space. We will discard the sample and data every two weeks."
+      )
+    ),
+    div(
+      class = "service-panel",
+      div(
+        class = "info-box",
+        tags$p(
+          "The NGS lab of the Core Facility is providing sequencing as a service. We highly recommend to contact us before the start of your experiment. In collaboration with the Bioinformatics Core Facility, we provide:"
+        ),
+        tags$ul(
+          tags$li("Assistance with experimental design of the studies (required number of samples and replicates)"),
+          tags$li("Assistance with the use of NGS open source analysis tools"),
+          tags$li("Data analysis on collaborative basis")
+        )
+      ),
+      div(
+        class = "info-box",
+        "If you have any further questions, please do not hesitate to contact us @ ",
+        tags$a(href = "mailto:ngs@biochem.mpg.de", "@NGS"),
+        "!"
+      ),
+      div(
+        class = "info-box",
+        tags$ul(
+          tags$li(tagList("To start, Click on ", tags$strong("'Create New Project'"), ".")),
+          tags$li(tagList(
+            "For better overview, we recommend keeping the project Name to this preferred format - ",
+            tags$strong("YYYYMMDD_AB_CD"),
+            " - AB-Groupleader's initial, CD-Researcher's initial)"
+          )),
+          tags$li("After creating the project an email will be sent to you as well as your group leader for approval. The NGS facility will also get a copy of this mail notifying them of a new project.")
+        )
+      )
+    )
+  )
+}
+
 # UI definition
 ui <- fluidPage(
   useShinyjs(),
   tags$head(
 #    tags$link(rel = "stylesheet", type = "text/css", href = "styles.css"),
   tags$style("
+  @font-face {
+    font-family: 'Inter';
+    src: url('Inter/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url('Inter/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+  }
   /* Reset colors and ensure visibility */
   body {
     color: #333333 !important;
@@ -139,6 +231,47 @@ ui <- fluidPage(
   .feature-description {
     color: #7f8c8d !important;
     line-height: 1.5;
+  }
+  .announcement-panel,
+  .service-panel {
+    background-color: #f2e9fb;
+    border: 1px solid #d8c4f0;
+    border-radius: 6px;
+    padding: 16px 18px;
+    margin: 20px 0;
+    color: #2c3e50 !important;
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 200;
+    font-style: italic;
+  }
+  .panel-title {
+    font-size: 1.2em;
+    font-weight: 700;
+    color: #2c3e50 !important;
+    margin-bottom: 8px;
+  }
+  .panel-updated {
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .info-box {
+    border: 1.5pt solid #c9b7ea;
+    border-radius: 4px;
+    background-color: #ffffff;
+    padding: 10px 12px;
+    margin: 8px 0;
+    line-height: 1.45;
+  }
+  .info-box p {
+    margin: 0 0 8px 0;
+  }
+  .info-box ul {
+    margin: 0 0 0 20px;
+    padding-left: 18px;
+  }
+  .info-box a {
+    color: #2c3e50;
+    text-decoration: underline;
   }
   .header-container {
     display: flex;
@@ -1955,18 +2088,7 @@ server <- function(input, output, session) {
         ),
         tabPanel(
           "Apply for Projects",
-          div(
-            class = "instructions-panel",
-            h3("New Projects", class = "instructions-title"),
-            tags$ul(
-              class = "instructions-list",
-              tags$li("Click on 'Create New Project' to create a project."),
-              tags$li("Click on a project name to display its full details, upload additional files, define the samples and submit it to the sequencing facility."),
-              tags$li("Select a project row to enable the Edit and Delete options."),
-              tags$li("Deleting a project will remove all associated data, and cannot be undone."),
-              tags$li("Note that editing and deleting is possible only before project submission.")
-            )
-          ),
+          announcement_blocks(),
           uiOutput("user_interface")
         ),
         tabPanel(
@@ -1976,25 +2098,7 @@ server <- function(input, output, session) {
       )
     } else {
       tagList(
-        div(
-          class = "instructions-panel",
-          h3("New Projects", class = "instructions-title"),
-          tags$ul(
-            class = "instructions-list",
-            tags$li("Click on 'Create New Project' to create a project."),
-            tags$li("A pop-up window will appear which allows you to provide information about your project(s). If anything is not clear, just contact us!"),
-            tags$li("Project Name: The name of the project (YYYYMMDD_AB_CD format preferred, AB-Groupleader's initial, CD-Researcher's initial)"),
-            tags$li("Ref. genome: Which organism & genome version are used in the project."),
-            tags$li("Number of samples: Consider each specific barcoded sample, 1 final library of 10x scRNAseq contains 4 barcoded samples"),
-            tags$li("Type: What kind of sequencing you want to perform (10X scRNAseq, RNAseq and ChIPseq ect.)"),
-            tags$li("Service type: What kind of service do you need?"),
-            tags$li("Sequencing Platform: Which machine should the samples be run on?"),
-            tags$li("Sequencing Depth: How much sequencing depth do you need?"),
-            tags$li("Sequencing Cycles: Choose the sequencing cycles option"),
-            tags$li("Budget holder: Choose your group cost center for billing"),
-            tags$li("Note that editing and deleting is possible only before project submission.")
-          )
-        ),
+        announcement_blocks(),
         uiOutput("user_interface")
       )
     }
