@@ -62,3 +62,7 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# local docs folders
+notes/
+booklet/
