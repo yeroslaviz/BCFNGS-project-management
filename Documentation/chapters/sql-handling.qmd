@@ -182,7 +182,7 @@ psql -U letunic -h 127.0.0.1 -d mpiseq2_db -c "\
   LEFT JOIN people.member m ON p.user_id = m.id \
   LEFT JOIN people.lab l ON m.lab_id = l.id \
   ORDER BY p.id\
-) TO '~/BCFNGS-project-management/exports/legacy_projects.csv' CSV HEADER"
+) TO '/www/mpiseq2/exports/legacy_projects.csv' CSV HEADER"
 ```
 
 **Step 2 — Copy CSV to shiny‑VM (if needed)**
@@ -190,7 +190,7 @@ psql -U letunic -h 127.0.0.1 -d mpiseq2_db -c "\
 If perl‑VM and shiny‑VM are different machines, copy the CSV:
 
 ```bash
-scp ~/BCFNGS-project-management/exports/legacy_projects.csv USER@shiny-vm:/srv/shiny-server/sequencing-app/
+scp /www/mpiseq2/exports/legacy_projects.csv USER@shiny-vm:/home/yeroslaviz/BCFNGS-project-management/exports/
 ```
 
 **Step 3 — Run the import script on shiny‑VM**
@@ -199,7 +199,7 @@ scp ~/BCFNGS-project-management/exports/legacy_projects.csv USER@shiny-vm:/srv/s
 cd /srv/shiny-server/sequencing-app
 python3 /home/yeroslaviz/BCFNGS-project-management/scripts/import_legacy_projects.py \
   --db /srv/shiny-server/sequencing-app/sequencing_projects.db \
-  --csv /srv/shiny-server/sequencing-app/legacy_projects.csv
+  --csv /home/yeroslaviz/BCFNGS-project-management/exports/legacy_projects.csv
 ```
 
 **What the import does**
