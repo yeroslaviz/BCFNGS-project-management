@@ -6,6 +6,18 @@ execute:
   warning: false
 ---
 
+## Change Log
+
+### Contents
+
+- [Changes on 16.02.2026](#changes-on-16.02.2026)
+- [Changes on 13.02.2026](#changes-on-13.02.2026)
+- [Changes on 12.02.2026](#changes-on-12.02.2026)
+- [Changes on 11.02.2026](#changes-on-11.02.2026)
+- [Changes on 09.02.2026](#changes-on-09.02.2026)
+- [Changes on 06.02.2026](#changes-on-06.02.2026)
+- [Changes on 14.11.2026](#changes-on-14.11.2026)
+
 ## Changes on 16.02.2026
 
 1.  Replaced the old “New Projects” instruction list with two announcement/service blocks (boxed items) shown after login in both local and LDAP modes.

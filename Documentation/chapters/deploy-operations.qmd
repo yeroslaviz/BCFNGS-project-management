@@ -6,6 +6,16 @@ execute:
   warning: false
 ---
 
+## Deploy & Operations
+
+### Contents
+
+- [Project Deletion Permissions](#project-deletion-permissions)
+- [Deploy Workflow](#deploy-workflow)
+- [LDAP Deploy Smoke Tests](#ldap-deploy-smoke-tests)
+- [Backups (summary)](#backups-summary)
+- [VHost cutover (perl‑VM → shiny‑VM)](#vhost-cutover-perlvm--shinyvm)
+
 ## Project Deletion Permissions
 
 Deletion is **admin-only**:
@@ -188,6 +198,14 @@ The script now:
    - final app load returns `200`
 
 It exits with non-zero status and prints remediation hints if any check fails.
+
+## Backups (summary)
+
+This project currently has three backup mechanisms:
+
+1. Manual **pre-deploy rollback backups** (recommended before any deploy/maintenance): copy the app folder, the SQLite DB, and the Apache vhost config with a timestamp. See “Production safety backups (fast rollback)” above.
+2. Manual **in-app backup/restore** (Admin UI): admins can download a `.sqlite` backup and restore it later (restore makes a pre-restore copy first).
+3. **Automatic bi-weekly backups**: present in the app code but **commented out / disabled** by default.
 
 Note:
 

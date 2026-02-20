@@ -6,6 +6,18 @@ execute:
   warning: false
 ---
 
+## VM Troubleshooting Guide
+
+### Contents
+
+- [Documentation](#documentation)
+- [Git / GitHub](#git--github)
+- [Apache / LDAP](#apache--ldap)
+- [SQL (moved)](#sql-moved)
+- [Auth mode switching](#auth-mode-switching)
+- [Apache proxy](#apache-proxy)
+- [LDAP Deploy Troubleshooting (by symptom)](#ldap-deploy-troubleshooting-by-symptom)
+
 This checklist covers the most common issues we hit and how to fix them quickly.
 
 ## Documentation

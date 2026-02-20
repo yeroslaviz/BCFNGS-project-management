@@ -208,16 +208,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#github-auth-new-laptop" id="toc-github-auth-new-laptop" class="nav-link active" data-scroll-target="#github-auth-new-laptop"><span class="header-section-number">4.1</span> GitHub Auth (new laptop)</a></li>
-  <li><a href="#fix-github-auth-error-on-a-new-laptop" id="toc-fix-github-auth-error-on-a-new-laptop" class="nav-link" data-scroll-target="#fix-github-auth-error-on-a-new-laptop"><span class="header-section-number">4.2</span> Fix GitHub Auth Error On A New Laptop</a>
+  <li><a href="#git-github" id="toc-git-github" class="nav-link active" data-scroll-target="#git-github"><span class="header-section-number">4.1</span> Git &amp; GitHub</a>
   <ul class="collapse">
-  <li><a href="#recommended-fix-ssh" id="toc-recommended-fix-ssh" class="nav-link" data-scroll-target="#recommended-fix-ssh"><span class="header-section-number">4.2.1</span> Recommended fix (SSH)</a></li>
-  <li><a href="#fallback-fix-https-pat" id="toc-fallback-fix-https-pat" class="nav-link" data-scroll-target="#fallback-fix-https-pat"><span class="header-section-number">4.2.2</span> Fallback fix (HTTPS + PAT)</a></li>
-  <li><a href="#quick-sanity-check" id="toc-quick-sanity-check" class="nav-link" data-scroll-target="#quick-sanity-check"><span class="header-section-number">4.2.3</span> Quick sanity check</a></li>
-  <li><a href="#if-git-pull-is-blocked-by-local-changes" id="toc-if-git-pull-is-blocked-by-local-changes" class="nav-link" data-scroll-target="#if-git-pull-is-blocked-by-local-changes"><span class="header-section-number">4.2.4</span> If <code>git pull</code> is blocked by local changes</a></li>
+  <li><a href="#contents" id="toc-contents" class="nav-link" data-scroll-target="#contents"><span class="header-section-number">4.1.1</span> Contents</a></li>
+  </ul></li>
+  <li><a href="#github-auth-new-laptop" id="toc-github-auth-new-laptop" class="nav-link" data-scroll-target="#github-auth-new-laptop"><span class="header-section-number">4.2</span> GitHub Auth (new laptop)</a>
+  <ul class="collapse">
+  <li><a href="#fix-github-auth-error-on-a-new-laptop" id="toc-fix-github-auth-error-on-a-new-laptop" class="nav-link" data-scroll-target="#fix-github-auth-error-on-a-new-laptop"><span class="header-section-number">4.2.1</span> Fix GitHub auth error on a new laptop</a></li>
+  <li><a href="#recommended-fix-ssh" id="toc-recommended-fix-ssh" class="nav-link" data-scroll-target="#recommended-fix-ssh"><span class="header-section-number">4.2.2</span> Recommended fix (SSH)</a></li>
+  <li><a href="#fallback-fix-https-pat" id="toc-fallback-fix-https-pat" class="nav-link" data-scroll-target="#fallback-fix-https-pat"><span class="header-section-number">4.2.3</span> Fallback fix (HTTPS + PAT)</a></li>
+  <li><a href="#quick-sanity-check" id="toc-quick-sanity-check" class="nav-link" data-scroll-target="#quick-sanity-check"><span class="header-section-number">4.2.4</span> Quick sanity check</a></li>
   </ul></li>
   <li><a href="#repo-setup-on-the-vm" id="toc-repo-setup-on-the-vm" class="nav-link" data-scroll-target="#repo-setup-on-the-vm"><span class="header-section-number">4.3</span> Repo Setup on the VM</a></li>
-  <li><a href="#required-server-setup" id="toc-required-server-setup" class="nav-link" data-scroll-target="#required-server-setup"><span class="header-section-number">4.4</span> Required Server Setup</a></li>
   </ul>
 </nav>
     </div>
@@ -242,17 +244,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<section id="github-auth-new-laptop" class="level2" data-number="4.1">
-<h2 data-number="4.1" class="anchored" data-anchor-id="github-auth-new-laptop"><span class="header-section-number">4.1</span> GitHub Auth (new laptop)</h2>
+<section id="git-github" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="git-github"><span class="header-section-number">4.1</span> Git &amp; GitHub</h2>
+<section id="contents" class="level3" data-number="4.1.1">
+<h3 data-number="4.1.1" class="anchored" data-anchor-id="contents"><span class="header-section-number">4.1.1</span> Contents</h3>
+<ul>
+<li><a href="#github-auth-new-laptop">GitHub Auth (new laptop)</a></li>
+<li><a href="#repo-setup-on-the-vm">Repo Setup on the VM</a></li>
+</ul>
 </section>
-<section id="fix-github-auth-error-on-a-new-laptop" class="level2" data-number="4.2">
-<h2 data-number="4.2" class="anchored" data-anchor-id="fix-github-auth-error-on-a-new-laptop"><span class="header-section-number">4.2</span> Fix GitHub Auth Error On A New Laptop</h2>
+</section>
+<section id="github-auth-new-laptop" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="github-auth-new-laptop"><span class="header-section-number">4.2</span> GitHub Auth (new laptop)</h2>
+<section id="fix-github-auth-error-on-a-new-laptop" class="level3" data-number="4.2.1">
+<h3 data-number="4.2.1" class="anchored" data-anchor-id="fix-github-auth-error-on-a-new-laptop"><span class="header-section-number">4.2.1</span> Fix GitHub auth error on a new laptop</h3>
 <p>Error message:</p>
 <pre><code>remote: Invalid username or token.
 Password authentication is not supported for Git operations.</code></pre>
 <p>This means Git is trying to use HTTPS + password. GitHub no longer accepts account passwords for Git operations.</p>
-<section id="recommended-fix-ssh" class="level3" data-number="4.2.1">
-<h3 data-number="4.2.1" class="anchored" data-anchor-id="recommended-fix-ssh"><span class="header-section-number">4.2.1</span> Recommended fix (SSH)</h3>
+</section>
+<section id="recommended-fix-ssh" class="level3" data-number="4.2.2">
+<h3 data-number="4.2.2" class="anchored" data-anchor-id="recommended-fix-ssh"><span class="header-section-number">4.2.2</span> Recommended fix (SSH)</h3>
 <ol type="1">
 <li>Check current remote:</li>
 </ol>
@@ -281,8 +293,8 @@ Password authentication is not supported for Git operations.</code></pre>
 <div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> <span class="at">-T</span> git@github.com</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> pull origin main</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="fallback-fix-https-pat" class="level3" data-number="4.2.2">
-<h3 data-number="4.2.2" class="anchored" data-anchor-id="fallback-fix-https-pat"><span class="header-section-number">4.2.2</span> Fallback fix (HTTPS + PAT)</h3>
+<section id="fallback-fix-https-pat" class="level3" data-number="4.2.3">
+<h3 data-number="4.2.3" class="anchored" data-anchor-id="fallback-fix-https-pat"><span class="header-section-number">4.2.3</span> Fallback fix (HTTPS + PAT)</h3>
 <p>If SSH is not possible, use a Personal Access Token (PAT), not your account password.</p>
 <ol type="1">
 <li>Keep/set HTTPS remote:</li>
@@ -300,63 +312,17 @@ Password authentication is not supported for Git operations.</code></pre>
 </ol>
 <div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> config <span class="at">--global</span> credential.helper osxkeychain</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="quick-sanity-check" class="level3" data-number="4.2.3">
-<h3 data-number="4.2.3" class="anchored" data-anchor-id="quick-sanity-check"><span class="header-section-number">4.2.3</span> Quick sanity check</h3>
+<section id="quick-sanity-check" class="level3" data-number="4.2.4">
+<h3 data-number="4.2.4" class="anchored" data-anchor-id="quick-sanity-check"><span class="header-section-number">4.2.4</span> Quick sanity check</h3>
 <div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> remote <span class="at">-v</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> fetch origin</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> status</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</section>
-<section id="if-git-pull-is-blocked-by-local-changes" class="level3" data-number="4.2.4">
-<h3 data-number="4.2.4" class="anchored" data-anchor-id="if-git-pull-is-blocked-by-local-changes"><span class="header-section-number">4.2.4</span> If <code>git pull</code> is blocked by local changes</h3>
-<p>Example error:</p>
-<pre class="text"><code>error: cannot pull with rebase: You have unstaged changes.
-error: Please commit or stash them.</code></pre>
-<section id="inspect-what-changed-safe" class="level4" data-number="4.2.4.1">
-<h4 data-number="4.2.4.1" class="anchored" data-anchor-id="inspect-what-changed-safe"><span class="header-section-number">4.2.4.1</span> 1) Inspect what changed (safe)</h4>
-<div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># local unstaged/staged changes</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> status <span class="at">-sb</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> diff <span class="at">--</span> sequencing-app/app.R</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co"># check what exists on remote</span></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> fetch origin</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> log <span class="at">--oneline</span> HEAD..origin/main</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co"># compare your file against remote tip</span></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> diff origin/main <span class="at">--</span> sequencing-app/app.R</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</section>
-<section id="keep-your-local-changes-then-pull" class="level4" data-number="4.2.4.2">
-<h4 data-number="4.2.4.2" class="anchored" data-anchor-id="keep-your-local-changes-then-pull"><span class="header-section-number">4.2.4.2</span> 2) Keep your local changes, then pull</h4>
-<div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> stash push <span class="at">-m</span> <span class="st">"wip before pull"</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> pull origin main</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> stash pop</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</section>
-<section id="commit-your-local-changes-then-pull" class="level4" data-number="4.2.4.3">
-<h4 data-number="4.2.4.3" class="anchored" data-anchor-id="commit-your-local-changes-then-pull"><span class="header-section-number">4.2.4.3</span> 3) Commit your local changes, then pull</h4>
-<div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> add sequencing-app/app.R</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">"Local changes before pull"</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> pull origin main</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</section>
-<section id="discard-local-changes-then-pull" class="level4" data-number="4.2.4.4">
-<h4 data-number="4.2.4.4" class="anchored" data-anchor-id="discard-local-changes-then-pull"><span class="header-section-number">4.2.4.4</span> 4) Discard local changes, then pull</h4>
-<div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># discard one file</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> restore sequencing-app/app.R</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># OR discard all tracked-file changes in repo</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> restore <span class="at">--worktree</span> <span class="at">--staged</span> .</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> pull origin main</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</section>
-<section id="optional-avoid-rebase-style-pull-on-this-machine" class="level4" data-number="4.2.4.5">
-<h4 data-number="4.2.4.5" class="anchored" data-anchor-id="optional-avoid-rebase-style-pull-on-this-machine"><span class="header-section-number">4.2.4.5</span> 5) Optional: avoid rebase-style pull on this machine</h4>
-<div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> config <span class="at">--global</span> pull.rebase false</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</section>
+<p>For VM-side Git troubleshooting (divergent branches, stash/pull, merge conflicts), see <strong>VM Troubleshooting Guide → Git / GitHub</strong>.</p>
 </section>
 </section>
 <section id="repo-setup-on-the-vm" class="level2" data-number="4.3">
 <h2 data-number="4.3" class="anchored" data-anchor-id="repo-setup-on-the-vm"><span class="header-section-number">4.3</span> Repo Setup on the VM</h2>
-</section>
-<section id="required-server-setup" class="level2" data-number="4.4">
-<h2 data-number="4.4" class="anchored" data-anchor-id="required-server-setup"><span class="header-section-number">4.4</span> Required Server Setup</h2>
+<p>Expected server layout:</p>
 <pre><code>/srv/shiny-server/
 ├── sequencing-app/
 │ ├── app.R

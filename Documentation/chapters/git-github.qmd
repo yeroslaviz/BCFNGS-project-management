@@ -6,9 +6,16 @@ execute:
   warning: false
 ---
 
+## Git & GitHub
+
+### Contents
+
+- [GitHub Auth (new laptop)](#github-auth-new-laptop)
+- [Repo Setup on the VM](#repo-setup-on-the-vm)
+
 ## GitHub Auth (new laptop)
 
-## Fix GitHub Auth Error On A New Laptop
+### Fix GitHub auth error on a new laptop
 
 Error message:
 
@@ -89,68 +96,12 @@ git fetch origin
 git status
 ```
 
-### If `git pull` is blocked by local changes
-
-Example error:
-
-```text
-error: cannot pull with rebase: You have unstaged changes.
-error: Please commit or stash them.
-```
-
-#### 1) Inspect what changed (safe)
-
-```bash
-# local unstaged/staged changes
-git status -sb
-git diff -- sequencing-app/app.R
-
-# check what exists on remote
-git fetch origin
-git log --oneline HEAD..origin/main
-
-# compare your file against remote tip
-git diff origin/main -- sequencing-app/app.R
-```
-
-#### 2) Keep your local changes, then pull
-
-```bash
-git stash push -m "wip before pull"
-git pull origin main
-git stash pop
-```
-
-#### 3) Commit your local changes, then pull
-
-```bash
-git add sequencing-app/app.R
-git commit -m "Local changes before pull"
-git pull origin main
-```
-
-#### 4) Discard local changes, then pull
-
-```bash
-# discard one file
-git restore sequencing-app/app.R
-
-# OR discard all tracked-file changes in repo
-git restore --worktree --staged .
-
-git pull origin main
-```
-
-#### 5) Optional: avoid rebase-style pull on this machine
-
-```bash
-git config --global pull.rebase false
-```
+For VM-side Git troubleshooting (divergent branches, stash/pull, merge conflicts), see **VM Troubleshooting Guide → Git / GitHub**.
 
 
 ## Repo Setup on the VM
 
-## Required Server Setup
+Expected server layout:
 
 ```
 /srv/shiny-server/

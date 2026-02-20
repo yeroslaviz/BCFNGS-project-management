@@ -6,6 +6,13 @@ execute:
   warning: false
 ---
 
+## Legacy / Archive
+
+### Contents
+
+- [Obsolete / Now Wrong](#obsolete--now-wrong)
+- [Modifying ngs-vm (Legacy)](#modifying-ngs-vm-legacy)
+
 ## Obsolete / Now Wrong
 
 ## Obsolete / now wrong (kept for reference)

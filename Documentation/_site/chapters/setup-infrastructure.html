@@ -208,36 +208,40 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#server-infrastructure" id="toc-server-infrastructure" class="nav-link active" data-scroll-target="#server-infrastructure"><span class="header-section-number">3.1</span> Server Infrastructure</a></li>
-  <li><a href="#modify-text-announcements" id="toc-modify-text-announcements" class="nav-link" data-scroll-target="#modify-text-announcements"><span class="header-section-number">3.2</span> Modify Text (Announcements)</a>
+  <li><a href="#setup-infrastructure" id="toc-setup-infrastructure" class="nav-link active" data-scroll-target="#setup-infrastructure"><span class="header-section-number">3.1</span> Setup &amp; Infrastructure</a>
   <ul class="collapse">
-  <li><a href="#sql-handling-moved" id="toc-sql-handling-moved" class="nav-link" data-scroll-target="#sql-handling-moved"><span class="header-section-number">3.2.1</span> SQL handling (moved)</a></li>
-  <li><a href="#changing-hostname-to-fit-the-apache2-config-file" id="toc-changing-hostname-to-fit-the-apache2-config-file" class="nav-link" data-scroll-target="#changing-hostname-to-fit-the-apache2-config-file"><span class="header-section-number">3.2.2</span> Changing hostname to fit the apache2 config file</a></li>
-  <li><a href="#automatic-start-up" id="toc-automatic-start-up" class="nav-link" data-scroll-target="#automatic-start-up"><span class="header-section-number">3.2.3</span> Automatic start-up</a></li>
+  <li><a href="#contents" id="toc-contents" class="nav-link" data-scroll-target="#contents"><span class="header-section-number">3.1.1</span> Contents</a></li>
   </ul></li>
-  <li><a href="#bare-server-setup-ubuntu" id="toc-bare-server-setup-ubuntu" class="nav-link" data-scroll-target="#bare-server-setup-ubuntu"><span class="header-section-number">3.3</span> Bare Server Setup (Ubuntu)</a></li>
-  <li><a href="#ubuntu-bare-server-setup-howto-shiny-ldap" id="toc-ubuntu-bare-server-setup-howto-shiny-ldap" class="nav-link" data-scroll-target="#ubuntu-bare-server-setup-howto-shiny-ldap"><span class="header-section-number">3.4</span> Ubuntu Bare Server Setup HOWTO (Shiny + LDAP)</a>
+  <li><a href="#server-infrastructure" id="toc-server-infrastructure" class="nav-link" data-scroll-target="#server-infrastructure"><span class="header-section-number">3.2</span> Server Infrastructure</a></li>
+  <li><a href="#modify-text-announcements" id="toc-modify-text-announcements" class="nav-link" data-scroll-target="#modify-text-announcements"><span class="header-section-number">3.3</span> Modify Text (Announcements)</a>
   <ul class="collapse">
-  <li><a href="#restart-communication-quick-resume" id="toc-restart-communication-quick-resume" class="nav-link" data-scroll-target="#restart-communication-quick-resume"><span class="header-section-number">3.4.1</span> Restart communication (quick resume)</a></li>
-  <li><a href="#base-os-prep" id="toc-base-os-prep" class="nav-link" data-scroll-target="#base-os-prep"><span class="header-section-number">3.4.2</span> Base OS prep</a></li>
-  <li><a href="#install-r" id="toc-install-r" class="nav-link" data-scroll-target="#install-r"><span class="header-section-number">3.4.3</span> Install R</a></li>
-  <li><a href="#install-shiny-server" id="toc-install-shiny-server" class="nav-link" data-scroll-target="#install-shiny-server"><span class="header-section-number">3.4.4</span> Install Shiny Server</a></li>
-  <li><a href="#clone-the-repo" id="toc-clone-the-repo" class="nav-link" data-scroll-target="#clone-the-repo"><span class="header-section-number">3.4.5</span> Clone the repo</a></li>
-  <li><a href="#configure-the-shiny-app-folder" id="toc-configure-the-shiny-app-folder" class="nav-link" data-scroll-target="#configure-the-shiny-app-folder"><span class="header-section-number">3.4.6</span> Configure the Shiny app folder</a></li>
-  <li><a href="#install-required-r-packages" id="toc-install-required-r-packages" class="nav-link" data-scroll-target="#install-required-r-packages"><span class="header-section-number">3.4.7</span> Install required R packages</a></li>
-  <li><a href="#configure-shiny-server-environment-variables" id="toc-configure-shiny-server-environment-variables" class="nav-link" data-scroll-target="#configure-shiny-server-environment-variables"><span class="header-section-number">3.4.8</span> Configure Shiny Server environment variables</a></li>
-  <li><a href="#configure-ldap-trust-openldap-client" id="toc-configure-ldap-trust-openldap-client" class="nav-link" data-scroll-target="#configure-ldap-trust-openldap-client"><span class="header-section-number">3.4.9</span> Configure LDAP trust (OpenLDAP client)</a></li>
-  <li><a href="#configure-apache-reverse-proxy-ldap-auth" id="toc-configure-apache-reverse-proxy-ldap-auth" class="nav-link" data-scroll-target="#configure-apache-reverse-proxy-ldap-auth"><span class="header-section-number">3.4.10</span> Configure Apache reverse proxy + LDAP auth</a></li>
-  <li><a href="#validate-the-full-flow" id="toc-validate-the-full-flow" class="nav-link" data-scroll-target="#validate-the-full-flow"><span class="header-section-number">3.4.11</span> Validate the full flow</a></li>
-  <li><a href="#routine-updates" id="toc-routine-updates" class="nav-link" data-scroll-target="#routine-updates"><span class="header-section-number">3.4.12</span> Routine updates</a></li>
-  <li><a href="#production-hygiene" id="toc-production-hygiene" class="nav-link" data-scroll-target="#production-hygiene"><span class="header-section-number">3.4.13</span> Production hygiene</a></li>
-  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">3.4.14</span> References</a></li>
+  <li><a href="#sql-handling-moved" id="toc-sql-handling-moved" class="nav-link" data-scroll-target="#sql-handling-moved"><span class="header-section-number">3.3.1</span> SQL handling (moved)</a></li>
+  <li><a href="#changing-hostname-to-fit-the-apache2-config-file" id="toc-changing-hostname-to-fit-the-apache2-config-file" class="nav-link" data-scroll-target="#changing-hostname-to-fit-the-apache2-config-file"><span class="header-section-number">3.3.2</span> Changing hostname to fit the apache2 config file</a></li>
+  <li><a href="#automatic-start-up" id="toc-automatic-start-up" class="nav-link" data-scroll-target="#automatic-start-up"><span class="header-section-number">3.3.3</span> Automatic start-up</a></li>
   </ul></li>
-  <li><a href="#ssl-certificates" id="toc-ssl-certificates" class="nav-link" data-scroll-target="#ssl-certificates"><span class="header-section-number">3.5</span> SSL Certificates</a></li>
-  <li><a href="#ssl-certificate-for-https" id="toc-ssl-certificate-for-https" class="nav-link" data-scroll-target="#ssl-certificate-for-https"><span class="header-section-number">3.6</span> SSL Certificate (for HTTPS)</a></li>
-  <li><a href="#firewall" id="toc-firewall" class="nav-link" data-scroll-target="#firewall"><span class="header-section-number">3.7</span> Firewall</a>
+  <li><a href="#bare-server-setup-ubuntu" id="toc-bare-server-setup-ubuntu" class="nav-link" data-scroll-target="#bare-server-setup-ubuntu"><span class="header-section-number">3.4</span> Bare Server Setup (Ubuntu)</a></li>
+  <li><a href="#ubuntu-bare-server-setup-howto-shiny-ldap" id="toc-ubuntu-bare-server-setup-howto-shiny-ldap" class="nav-link" data-scroll-target="#ubuntu-bare-server-setup-howto-shiny-ldap"><span class="header-section-number">3.5</span> Ubuntu Bare Server Setup HOWTO (Shiny + LDAP)</a>
   <ul class="collapse">
-  <li><a href="#firewall-1" id="toc-firewall-1" class="nav-link" data-scroll-target="#firewall-1"><span class="header-section-number">3.7.1</span> Firewall</a></li>
+  <li><a href="#restart-communication-quick-resume" id="toc-restart-communication-quick-resume" class="nav-link" data-scroll-target="#restart-communication-quick-resume"><span class="header-section-number">3.5.1</span> Restart communication (quick resume)</a></li>
+  <li><a href="#base-os-prep" id="toc-base-os-prep" class="nav-link" data-scroll-target="#base-os-prep"><span class="header-section-number">3.5.2</span> Base OS prep</a></li>
+  <li><a href="#install-r" id="toc-install-r" class="nav-link" data-scroll-target="#install-r"><span class="header-section-number">3.5.3</span> Install R</a></li>
+  <li><a href="#install-shiny-server" id="toc-install-shiny-server" class="nav-link" data-scroll-target="#install-shiny-server"><span class="header-section-number">3.5.4</span> Install Shiny Server</a></li>
+  <li><a href="#clone-the-repo" id="toc-clone-the-repo" class="nav-link" data-scroll-target="#clone-the-repo"><span class="header-section-number">3.5.5</span> Clone the repo</a></li>
+  <li><a href="#configure-the-shiny-app-folder" id="toc-configure-the-shiny-app-folder" class="nav-link" data-scroll-target="#configure-the-shiny-app-folder"><span class="header-section-number">3.5.6</span> Configure the Shiny app folder</a></li>
+  <li><a href="#install-required-r-packages" id="toc-install-required-r-packages" class="nav-link" data-scroll-target="#install-required-r-packages"><span class="header-section-number">3.5.7</span> Install required R packages</a></li>
+  <li><a href="#configure-shiny-server-environment-variables" id="toc-configure-shiny-server-environment-variables" class="nav-link" data-scroll-target="#configure-shiny-server-environment-variables"><span class="header-section-number">3.5.8</span> Configure Shiny Server environment variables</a></li>
+  <li><a href="#configure-ldap-trust-openldap-client" id="toc-configure-ldap-trust-openldap-client" class="nav-link" data-scroll-target="#configure-ldap-trust-openldap-client"><span class="header-section-number">3.5.9</span> Configure LDAP trust (OpenLDAP client)</a></li>
+  <li><a href="#configure-apache-reverse-proxy-ldap-auth" id="toc-configure-apache-reverse-proxy-ldap-auth" class="nav-link" data-scroll-target="#configure-apache-reverse-proxy-ldap-auth"><span class="header-section-number">3.5.10</span> Configure Apache reverse proxy + LDAP auth</a></li>
+  <li><a href="#validate-the-full-flow" id="toc-validate-the-full-flow" class="nav-link" data-scroll-target="#validate-the-full-flow"><span class="header-section-number">3.5.11</span> Validate the full flow</a></li>
+  <li><a href="#routine-updates" id="toc-routine-updates" class="nav-link" data-scroll-target="#routine-updates"><span class="header-section-number">3.5.12</span> Routine updates</a></li>
+  <li><a href="#production-hygiene" id="toc-production-hygiene" class="nav-link" data-scroll-target="#production-hygiene"><span class="header-section-number">3.5.13</span> Production hygiene</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">3.5.14</span> References</a></li>
+  </ul></li>
+  <li><a href="#ssl-certificates" id="toc-ssl-certificates" class="nav-link" data-scroll-target="#ssl-certificates"><span class="header-section-number">3.6</span> SSL Certificates</a></li>
+  <li><a href="#ssl-certificate-for-https" id="toc-ssl-certificate-for-https" class="nav-link" data-scroll-target="#ssl-certificate-for-https"><span class="header-section-number">3.7</span> SSL Certificate (for HTTPS)</a></li>
+  <li><a href="#firewall" id="toc-firewall" class="nav-link" data-scroll-target="#firewall"><span class="header-section-number">3.8</span> Firewall</a>
+  <ul class="collapse">
+  <li><a href="#firewall-1" id="toc-firewall-1" class="nav-link" data-scroll-target="#firewall-1"><span class="header-section-number">3.8.1</span> Firewall</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -263,11 +267,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<section id="server-infrastructure" class="level2" data-number="3.1">
-<h2 data-number="3.1" class="anchored" data-anchor-id="server-infrastructure"><span class="header-section-number">3.1</span> Server Infrastructure</h2>
+<section id="setup-infrastructure" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="setup-infrastructure"><span class="header-section-number">3.1</span> Setup &amp; Infrastructure</h2>
+<section id="contents" class="level3" data-number="3.1.1">
+<h3 data-number="3.1.1" class="anchored" data-anchor-id="contents"><span class="header-section-number">3.1.1</span> Contents</h3>
+<ul>
+<li><a href="#server-infrastructure">Server Infrastructure</a></li>
+<li><a href="#modify-text-announcements">Modify Text (Announcements)</a></li>
+<li><a href="#bare-server-setup-ubuntu">Bare Server Setup (Ubuntu)</a></li>
+<li><a href="#ssl-certificates">SSL Certificates</a></li>
+<li><a href="#firewall">Firewall</a></li>
+</ul>
 </section>
-<section id="modify-text-announcements" class="level2" data-number="3.2">
-<h2 data-number="3.2" class="anchored" data-anchor-id="modify-text-announcements"><span class="header-section-number">3.2</span> Modify Text (Announcements)</h2>
+</section>
+<section id="server-infrastructure" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="server-infrastructure"><span class="header-section-number">3.2</span> Server Infrastructure</h2>
+</section>
+<section id="modify-text-announcements" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="modify-text-announcements"><span class="header-section-number">3.3</span> Modify Text (Announcements)</h2>
 <p>The <strong>post‑login announcement/service blocks</strong> (shown in both local and LDAP modes) are defined in:</p>
 <ul>
 <li><code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R</code></li>
@@ -276,8 +293,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ul>
 <p>These blocks replace the old “New Projects” instruction list.<br>
 After editing, redeploy the app (or restart Shiny Server on the VM) so the UI updates.</p>
-<section id="sql-handling-moved" class="level3" data-number="3.2.1">
-<h3 data-number="3.2.1" class="anchored" data-anchor-id="sql-handling-moved"><span class="header-section-number">3.2.1</span> SQL handling (moved)</h3>
+<section id="sql-handling-moved" class="level3" data-number="3.3.1">
+<h3 data-number="3.3.1" class="anchored" data-anchor-id="sql-handling-moved"><span class="header-section-number">3.3.1</span> SQL handling (moved)</h3>
 <p>All SQL database commands and explanations were moved to <strong><code>notes/sql-handling.qmd</code></strong>.<br>
 This includes:</p>
 <ul>
@@ -290,8 +307,8 @@ This includes:</p>
 sudo apt install -y libssl-dev libxml2-dev libcurl4-openssl-dev libudunits2-dev libgdal-dev
 </code></pre>
 </section>
-<section id="changing-hostname-to-fit-the-apache2-config-file" class="level3" data-number="3.2.2">
-<h3 data-number="3.2.2" class="anchored" data-anchor-id="changing-hostname-to-fit-the-apache2-config-file"><span class="header-section-number">3.2.2</span> Changing hostname to fit the apache2 config file</h3>
+<section id="changing-hostname-to-fit-the-apache2-config-file" class="level3" data-number="3.3.2">
+<h3 data-number="3.3.2" class="anchored" data-anchor-id="changing-hostname-to-fit-the-apache2-config-file"><span class="header-section-number">3.3.2</span> Changing hostname to fit the apache2 config file</h3>
 <pre class="{bash}"><code>
 # Change the hostname
 sudo hostnamectl set-hostname ngs-testing-vm.biochem.mpg.de
@@ -315,21 +332,21 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 sudo systemctl restart apache2
 </code></pre>
 </section>
-<section id="automatic-start-up" class="level3" data-number="3.2.3">
-<h3 data-number="3.2.3" class="anchored" data-anchor-id="automatic-start-up"><span class="header-section-number">3.2.3</span> Automatic start-up</h3>
+<section id="automatic-start-up" class="level3" data-number="3.3.3">
+<h3 data-number="3.3.3" class="anchored" data-anchor-id="automatic-start-up"><span class="header-section-number">3.3.3</span> Automatic start-up</h3>
 <pre class="{bash}"><code>
 sudo systemctl enable apache2
 sudo systemctl enable shiny-server
 </code></pre>
 </section>
 </section>
-<section id="bare-server-setup-ubuntu" class="level2" data-number="3.3">
-<h2 data-number="3.3" class="anchored" data-anchor-id="bare-server-setup-ubuntu"><span class="header-section-number">3.3</span> Bare Server Setup (Ubuntu)</h2>
+<section id="bare-server-setup-ubuntu" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="bare-server-setup-ubuntu"><span class="header-section-number">3.4</span> Bare Server Setup (Ubuntu)</h2>
 </section>
-<section id="ubuntu-bare-server-setup-howto-shiny-ldap" class="level2" data-number="3.4">
-<h2 data-number="3.4" class="anchored" data-anchor-id="ubuntu-bare-server-setup-howto-shiny-ldap"><span class="header-section-number">3.4</span> Ubuntu Bare Server Setup HOWTO (Shiny + LDAP)</h2>
-<section id="restart-communication-quick-resume" class="level3" data-number="3.4.1">
-<h3 data-number="3.4.1" class="anchored" data-anchor-id="restart-communication-quick-resume"><span class="header-section-number">3.4.1</span> Restart communication (quick resume)</h3>
+<section id="ubuntu-bare-server-setup-howto-shiny-ldap" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="ubuntu-bare-server-setup-howto-shiny-ldap"><span class="header-section-number">3.5</span> Ubuntu Bare Server Setup HOWTO (Shiny + LDAP)</h2>
+<section id="restart-communication-quick-resume" class="level3" data-number="3.5.1">
+<h3 data-number="3.5.1" class="anchored" data-anchor-id="restart-communication-quick-resume"><span class="header-section-number">3.5.1</span> Restart communication (quick resume)</h3>
 <p>If I ever need to resume this work with a new AI tool or a new chat session:</p>
 <ol type="1">
 <li>Read <strong>Troubleshooting</strong> for common failures and fixes.</li>
@@ -337,8 +354,8 @@ sudo systemctl enable shiny-server
 <li>Read <strong>Change Log</strong> for the latest configuration changes and decisions.</li>
 </ol>
 </section>
-<section id="base-os-prep" class="level3" data-number="3.4.2">
-<h3 data-number="3.4.2" class="anchored" data-anchor-id="base-os-prep"><span class="header-section-number">3.4.2</span> Base OS prep</h3>
+<section id="base-os-prep" class="level3" data-number="3.5.2">
+<h3 data-number="3.5.2" class="anchored" data-anchor-id="base-os-prep"><span class="header-section-number">3.5.2</span> Base OS prep</h3>
 <div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt update</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt upgrade <span class="at">-y</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Install common tools and libraries:</p>
@@ -354,13 +371,13 @@ sudo systemctl enable shiny-server
 <p>If LDAP-related R packages need OpenLDAP headers, install:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> libldap2-dev libsasl2-dev</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="install-r" class="level3" data-number="3.4.3">
-<h3 data-number="3.4.3" class="anchored" data-anchor-id="install-r"><span class="header-section-number">3.4.3</span> Install R</h3>
+<section id="install-r" class="level3" data-number="3.5.3">
+<h3 data-number="3.5.3" class="anchored" data-anchor-id="install-r"><span class="header-section-number">3.5.3</span> Install R</h3>
 <div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> r-base</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>If you need a newer R version than the Ubuntu default, add the CRAN repo and install from there (optional).</p>
 </section>
-<section id="install-shiny-server" class="level3" data-number="3.4.4">
-<h3 data-number="3.4.4" class="anchored" data-anchor-id="install-shiny-server"><span class="header-section-number">3.4.4</span> Install Shiny Server</h3>
+<section id="install-shiny-server" class="level3" data-number="3.5.4">
+<h3 data-number="3.5.4" class="anchored" data-anchor-id="install-shiny-server"><span class="header-section-number">3.5.4</span> Install Shiny Server</h3>
 <p>Download the latest Shiny Server <code>.deb</code> from Posit and install it:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example pattern (replace filename with the current version)</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># wget https://download3.rstudio.org/ubuntu-22.04/x86_64/shiny-server-&lt;version&gt;.deb</span></span>
@@ -370,13 +387,13 @@ sudo systemctl enable shiny-server
 <div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl enable shiny-server</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="clone-the-repo" class="level3" data-number="3.4.5">
-<h3 data-number="3.4.5" class="anchored" data-anchor-id="clone-the-repo"><span class="header-section-number">3.4.5</span> Clone the repo</h3>
+<section id="clone-the-repo" class="level3" data-number="3.5.5">
+<h3 data-number="3.5.5" class="anchored" data-anchor-id="clone-the-repo"><span class="header-section-number">3.5.5</span> Clone the repo</h3>
 <div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>your-user<span class="op">&gt;</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone git@github.com:yeroslaviz/BCFNGS-project-management.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="configure-the-shiny-app-folder" class="level3" data-number="3.4.6">
-<h3 data-number="3.4.6" class="anchored" data-anchor-id="configure-the-shiny-app-folder"><span class="header-section-number">3.4.6</span> Configure the Shiny app folder</h3>
+<section id="configure-the-shiny-app-folder" class="level3" data-number="3.5.6">
+<h3 data-number="3.5.6" class="anchored" data-anchor-id="configure-the-shiny-app-folder"><span class="header-section-number">3.5.6</span> Configure the Shiny app folder</h3>
 <div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> usermod <span class="at">-a</span> <span class="at">-G</span> shiny <span class="va">$USER</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mv /srv/shiny-server/sequencing-app /srv/shiny-server/sequencing-app.backup <span class="dv">2</span><span class="op">&gt;</span>/dev/null <span class="kw">||</span> <span class="fu">true</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /srv/shiny-server/sequencing-app</span>
@@ -385,8 +402,8 @@ sudo systemctl enable shiny-server
 <div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>your-user<span class="op">&gt;</span>/BCFNGS-project-management</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="install-required-r-packages" class="level3" data-number="3.4.7">
-<h3 data-number="3.4.7" class="anchored" data-anchor-id="install-required-r-packages"><span class="header-section-number">3.4.7</span> Install required R packages</h3>
+<section id="install-required-r-packages" class="level3" data-number="3.5.7">
+<h3 data-number="3.5.7" class="anchored" data-anchor-id="install-required-r-packages"><span class="header-section-number">3.5.7</span> Install required R packages</h3>
 <p>From R (or <code>R -q -e</code>):</p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"shiny"</span>,</span>
@@ -401,8 +418,8 @@ sudo systemctl enable shiny-server
 <span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>If any package fails, install missing system libraries and retry.</p>
 </section>
-<section id="configure-shiny-server-environment-variables" class="level3" data-number="3.4.8">
-<h3 data-number="3.4.8" class="anchored" data-anchor-id="configure-shiny-server-environment-variables"><span class="header-section-number">3.4.8</span> Configure Shiny Server environment variables</h3>
+<section id="configure-shiny-server-environment-variables" class="level3" data-number="3.5.8">
+<h3 data-number="3.5.8" class="anchored" data-anchor-id="configure-shiny-server-environment-variables"><span class="header-section-number">3.5.8</span> Configure Shiny Server environment variables</h3>
 <p>Recommended: systemd drop-in (production-safe).</p>
 <div class="sourceCode" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl edit shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Add:</p>
@@ -417,8 +434,8 @@ Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
 <div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Alternative: <code>/home/shiny/.Renviron</code> (simpler, less explicit).</p>
 </section>
-<section id="configure-ldap-trust-openldap-client" class="level3" data-number="3.4.9">
-<h3 data-number="3.4.9" class="anchored" data-anchor-id="configure-ldap-trust-openldap-client"><span class="header-section-number">3.4.9</span> Configure LDAP trust (OpenLDAP client)</h3>
+<section id="configure-ldap-trust-openldap-client" class="level3" data-number="3.5.9">
+<h3 data-number="3.5.9" class="anchored" data-anchor-id="configure-ldap-trust-openldap-client"><span class="header-section-number">3.5.9</span> Configure LDAP trust (OpenLDAP client)</h3>
 <p>Edit <code>/etc/ldap/ldap.conf</code> and ensure:</p>
 <pre><code>BASE            dc=biochem,dc=mpg,dc=de
 URI             ldaps://ldapserv1.biochem.mpg.de ldaps://ldapserv2.biochem.mpg.de ldaps://ldapserv3.biochem.mpg.de
@@ -428,16 +445,16 @@ TLS_CACERTDIR   /etc/ssl/certs</code></pre>
 <div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ldapsearch</span> <span class="at">-x</span> <span class="at">-H</span> ldaps://ldapserv1.biochem.mpg.de:636 <span class="dt">\</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-b</span> <span class="st">"dc=biochem,dc=mpg,dc=de"</span> <span class="st">"(uid=USER)"</span> mail</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="configure-apache-reverse-proxy-ldap-auth" class="level3" data-number="3.4.10">
-<h3 data-number="3.4.10" class="anchored" data-anchor-id="configure-apache-reverse-proxy-ldap-auth"><span class="header-section-number">3.4.10</span> Configure Apache reverse proxy + LDAP auth</h3>
+<section id="configure-apache-reverse-proxy-ldap-auth" class="level3" data-number="3.5.10">
+<h3 data-number="3.5.10" class="anchored" data-anchor-id="configure-apache-reverse-proxy-ldap-auth"><span class="header-section-number">3.5.10</span> Configure Apache reverse proxy + LDAP auth</h3>
 <p>Copy the repo Apache config and enable required modules:</p>
 <div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/<span class="op">&lt;</span>your-user<span class="op">&gt;</span>/BCFNGS-project-management/01-main.conf /etc/apache2/sites-enabled/01-main.conf</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod proxy proxy_http proxy_wstunnel rewrite ssl headers ldap authnz_ldap</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
 <span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="validate-the-full-flow" class="level3" data-number="3.4.11">
-<h3 data-number="3.4.11" class="anchored" data-anchor-id="validate-the-full-flow"><span class="header-section-number">3.4.11</span> Validate the full flow</h3>
+<section id="validate-the-full-flow" class="level3" data-number="3.5.11">
+<h3 data-number="3.5.11" class="anchored" data-anchor-id="validate-the-full-flow"><span class="header-section-number">3.5.11</span> Validate the full flow</h3>
 <div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> https://ngs-testing-vm.biochem.mpg.de/</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Expect 401</span></span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -450,33 +467,33 @@ TLS_CACERTDIR   /etc/ssl/certs</code></pre>
 <span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-I</span> http://localhost:3838/sequencing-app/</span>
 <span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Expect 200</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="routine-updates" class="level3" data-number="3.4.12">
-<h3 data-number="3.4.12" class="anchored" data-anchor-id="routine-updates"><span class="header-section-number">3.4.12</span> Routine updates</h3>
+<section id="routine-updates" class="level3" data-number="3.5.12">
+<h3 data-number="3.5.12" class="anchored" data-anchor-id="routine-updates"><span class="header-section-number">3.5.12</span> Routine updates</h3>
 <div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>your-user<span class="op">&gt;</span>/BCFNGS-project-management</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> pull origin main</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="production-hygiene" class="level3" data-number="3.4.13">
-<h3 data-number="3.4.13" class="anchored" data-anchor-id="production-hygiene"><span class="header-section-number">3.4.13</span> Production hygiene</h3>
+<section id="production-hygiene" class="level3" data-number="3.5.13">
+<h3 data-number="3.5.13" class="anchored" data-anchor-id="production-hygiene"><span class="header-section-number">3.5.13</span> Production hygiene</h3>
 <ol type="1">
 <li>Use a <strong>service bind account</strong> if LDAP requires bind credentials.</li>
 <li>Keep DB files out of git.</li>
 <li>Keep Apache debug logs off unless diagnosing a problem.</li>
 </ol>
 </section>
-<section id="references" class="level3" data-number="3.4.14">
-<h3 data-number="3.4.14" class="anchored" data-anchor-id="references"><span class="header-section-number">3.4.14</span> References</h3>
+<section id="references" class="level3" data-number="3.5.14">
+<h3 data-number="3.5.14" class="anchored" data-anchor-id="references"><span class="header-section-number">3.5.14</span> References</h3>
 <ul>
 <li><code>notes/vm-troubleshooting-guide.md</code></li>
 <li><code>Server_preparations.qmd</code></li>
 </ul>
 </section>
 </section>
-<section id="ssl-certificates" class="level2" data-number="3.5">
-<h2 data-number="3.5" class="anchored" data-anchor-id="ssl-certificates"><span class="header-section-number">3.5</span> SSL Certificates</h2>
+<section id="ssl-certificates" class="level2" data-number="3.6">
+<h2 data-number="3.6" class="anchored" data-anchor-id="ssl-certificates"><span class="header-section-number">3.6</span> SSL Certificates</h2>
 </section>
-<section id="ssl-certificate-for-https" class="level2" data-number="3.6">
-<h2 data-number="3.6" class="anchored" data-anchor-id="ssl-certificate-for-https"><span class="header-section-number">3.6</span> SSL Certificate (for HTTPS)</h2>
+<section id="ssl-certificate-for-https" class="level2" data-number="3.7">
+<h2 data-number="3.7" class="anchored" data-anchor-id="ssl-certificate-for-https"><span class="header-section-number">3.7</span> SSL Certificate (for HTTPS)</h2>
 <p>the new setting of the certificates. I have three files.</p>
 <p>The private key I created when applying for the certificate. The other two were downloaded, when the emial came from Harica (the certificate provider).</p>
 <p>the <code>PEM</code> is the pem file and the <code>DER (issuer)</code> is the chain file. Both of them are needed.</p>
@@ -491,10 +508,10 @@ TLS_CACERTDIR   /etc/ssl/certs</code></pre>
 sudo ln -s /etc/apache2/certificate/2026/NGS_2026_Cert.pem /etc/ssl/certs/2026_NGS_Cert.pem
 </code></pre>
 </section>
-<section id="firewall" class="level2" data-number="3.7">
-<h2 data-number="3.7" class="anchored" data-anchor-id="firewall"><span class="header-section-number">3.7</span> Firewall</h2>
-<section id="firewall-1" class="level3" data-number="3.7.1">
-<h3 data-number="3.7.1" class="anchored" data-anchor-id="firewall-1"><span class="header-section-number">3.7.1</span> Firewall</h3>
+<section id="firewall" class="level2" data-number="3.8">
+<h2 data-number="3.8" class="anchored" data-anchor-id="firewall"><span class="header-section-number">3.8</span> Firewall</h2>
+<section id="firewall-1" class="level3" data-number="3.8.1">
+<h3 data-number="3.8.1" class="anchored" data-anchor-id="firewall-1"><span class="header-section-number">3.8.1</span> Firewall</h3>
 <p>at the moment is not active, but maybe in the future.</p>
 <pre class="{bash}"><code>
 sudo ufw allow 3838

@@ -6,6 +6,16 @@ execute:
   warning: false
 ---
 
+## Setup & Infrastructure
+
+### Contents
+
+- [Server Infrastructure](#server-infrastructure)
+- [Modify Text (Announcements)](#modify-text-announcements)
+- [Bare Server Setup (Ubuntu)](#bare-server-setup-ubuntu)
+- [SSL Certificates](#ssl-certificates)
+- [Firewall](#firewall)
+
 ## Server Infrastructure
 
 ## Modify Text (Announcements)

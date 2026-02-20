@@ -204,7 +204,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#quick-start" id="toc-quick-start" class="nav-link active" data-scroll-target="#quick-start"><span class="header-section-number">2.1</span> Quick Start</a>
+  <ul class="collapse">
+  <li><a href="#contents" id="toc-contents" class="nav-link" data-scroll-target="#contents"><span class="header-section-number">2.1.1</span> Contents</a></li>
+  </ul></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -227,13 +236,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<section id="local-dev-local-mode" class="level4" data-number="2.0.0.1">
-<h4 data-number="2.0.0.1" class="anchored" data-anchor-id="local-dev-local-mode"><span class="header-section-number">2.0.0.1</span> Local dev — local mode</h4>
+<section id="quick-start" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="quick-start"><span class="header-section-number">2.1</span> Quick Start</h2>
+<section id="contents" class="level3" data-number="2.1.1">
+<h3 data-number="2.1.1" class="anchored" data-anchor-id="contents"><span class="header-section-number">2.1.1</span> Contents</h3>
+<ul>
+<li><a href="#local-dev--local-mode">Local dev — local mode</a></li>
+<li><a href="#local-dev--ldap-simulation">Local dev — LDAP simulation</a></li>
+<li><a href="#local-dev--unset">Local dev — unset</a></li>
+<li><a href="#vm--ldap-mode-production">VM — LDAP mode (production)</a></li>
+<li><a href="#vm--local-mode-maintenance">VM — local mode (maintenance)</a></li>
+<li><a href="#vm--unset-clear-overrides">VM — unset (clear overrides)</a></li>
+</ul>
+<section id="local-dev-local-mode" class="level4" data-number="2.1.1.1">
+<h4 data-number="2.1.1.1" class="anchored" data-anchor-id="local-dev-local-mode"><span class="header-section-number">2.1.1.1</span> Local dev — local mode</h4>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">APP_ENV =</span> <span class="st">"dev"</span>, <span class="at">AUTH_MODE =</span> <span class="st">"local"</span>)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="local-dev-ldap-simulation" class="level4" data-number="2.0.0.2">
-<h4 data-number="2.0.0.2" class="anchored" data-anchor-id="local-dev-ldap-simulation"><span class="header-section-number">2.0.0.2</span> Local dev — LDAP simulation</h4>
+<section id="local-dev-ldap-simulation" class="level4" data-number="2.1.1.2">
+<h4 data-number="2.1.1.2" class="anchored" data-anchor-id="local-dev-ldap-simulation"><span class="header-section-number">2.1.1.2</span> Local dev — LDAP simulation</h4>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">APP_ENV =</span> <span class="st">"dev"</span>,</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">AUTH_MODE =</span> <span class="st">"ldap"</span>,</span>
@@ -243,16 +264,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="local-dev-unset" class="level4" data-number="2.0.0.3">
-<h4 data-number="2.0.0.3" class="anchored" data-anchor-id="local-dev-unset"><span class="header-section-number">2.0.0.3</span> Local dev — unset</h4>
+<section id="local-dev-unset" class="level4" data-number="2.1.1.3">
+<h4 data-number="2.1.1.3" class="anchored" data-anchor-id="local-dev-unset"><span class="header-section-number">2.1.1.3</span> Local dev — unset</h4>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.unsetenv</span>(<span class="fu">c</span>(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"APP_ENV"</span>,<span class="st">"AUTH_MODE"</span>,<span class="st">"DEV_REMOTE_USER"</span>,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_BIND_DN"</span>,<span class="st">"LDAP_BIND_PW"</span>,</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_URI"</span>,<span class="st">"LDAP_BASE_DN"</span>,<span class="st">"LDAP_DEBUG"</span></span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="vm-ldap-mode-production" class="level4" data-number="2.0.0.4">
-<h4 data-number="2.0.0.4" class="anchored" data-anchor-id="vm-ldap-mode-production"><span class="header-section-number">2.0.0.4</span> VM — LDAP mode (production)</h4>
+<section id="vm-ldap-mode-production" class="level4" data-number="2.1.1.4">
+<h4 data-number="2.1.1.4" class="anchored" data-anchor-id="vm-ldap-mode-production"><span class="header-section-number">2.1.1.4</span> VM — LDAP mode (production)</h4>
 <div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl edit shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="sourceCode" id="cb5"><pre class="sourceCode ini code-with-copy"><code class="sourceCode ini"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[Service]</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">AUTH_MODE=ldap</span></span>
@@ -260,19 +281,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="vm-local-mode-maintenance" class="level4" data-number="2.0.0.5">
-<h4 data-number="2.0.0.5" class="anchored" data-anchor-id="vm-local-mode-maintenance"><span class="header-section-number">2.0.0.5</span> VM — local mode (maintenance)</h4>
+<section id="vm-local-mode-maintenance" class="level4" data-number="2.1.1.5">
+<h4 data-number="2.1.1.5" class="anchored" data-anchor-id="vm-local-mode-maintenance"><span class="header-section-number">2.1.1.5</span> VM — local mode (maintenance)</h4>
 <div class="sourceCode" id="cb7"><pre class="sourceCode ini code-with-copy"><code class="sourceCode ini"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[Service]</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">AUTH_MODE=local</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="vm-unset-clear-overrides" class="level4" data-number="2.0.0.6">
-<h4 data-number="2.0.0.6" class="anchored" data-anchor-id="vm-unset-clear-overrides"><span class="header-section-number">2.0.0.6</span> VM — unset (clear overrides)</h4>
+<section id="vm-unset-clear-overrides" class="level4" data-number="2.1.1.6">
+<h4 data-number="2.1.1.6" class="anchored" data-anchor-id="vm-unset-clear-overrides"><span class="header-section-number">2.1.1.6</span> VM — unset (clear overrides)</h4>
 <div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl edit shiny-server</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># remove AUTH_MODE/LDAP_* lines, save, then:</span></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 
 
+</section>
+</section>
 </section>
 
 </main> <!-- /main -->

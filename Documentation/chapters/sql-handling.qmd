@@ -296,6 +296,12 @@ sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
 
 ### Backups and retention
 
+This project currently has three backup mechanisms:
+
+1. Manual **pre-deploy rollback backups** (recommended before any deploy/maintenance): copy the app folder, the SQLite DB, and the Apache vhost config with a timestamp. See **Deploy & Operations**.
+2. Manual **in-app backup/restore** (Admin UI): admins can download a `.sqlite` backup and restore it later (restore makes a pre-restore copy first).
+3. **Automatic bi-weekly backups**: present in the app code but **commented out / disabled** by default.
+
 If the VM backup script is enabled, it typically copies the DB with a timestamp and deletes old backups:
 
 ```bash

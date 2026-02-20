@@ -6,6 +6,17 @@ execute:
   warning: false
 ---
 
+## Quick Start
+
+### Contents
+
+- [Local dev — local mode](#local-dev--local-mode)
+- [Local dev — LDAP simulation](#local-dev--ldap-simulation)
+- [Local dev — unset](#local-dev--unset)
+- [VM — LDAP mode (production)](#vm--ldap-mode-production)
+- [VM — local mode (maintenance)](#vm--local-mode-maintenance)
+- [VM — unset (clear overrides)](#vm--unset-clear-overrides)
+
 #### Local dev — local mode
 
 ```r

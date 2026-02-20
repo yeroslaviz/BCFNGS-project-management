@@ -6,6 +6,13 @@ execute:
   warning: false
 ---
 
+## LDAP Authentication
+
+### Contents
+
+- [LDAP Configuration](#ldap-configuration)
+- [LDAP Summary (2026-02-06)](#ldap-summary-2026-02-06)
+
 ## LDAP Configuration
 
 ## LDAP

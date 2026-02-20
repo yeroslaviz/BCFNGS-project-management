@@ -451,6 +451,12 @@ See the rebuild section below.</p>
 </section>
 <section id="backups-and-retention" class="level3" data-number="7.1.8">
 <h3 data-number="7.1.8" class="anchored" data-anchor-id="backups-and-retention"><span class="header-section-number">7.1.8</span> Backups and retention</h3>
+<p>This project currently has three backup mechanisms:</p>
+<ol type="1">
+<li>Manual <strong>pre-deploy rollback backups</strong> (recommended before any deploy/maintenance): copy the app folder, the SQLite DB, and the Apache vhost config with a timestamp. See <strong>Deploy &amp; Operations</strong>.</li>
+<li>Manual <strong>in-app backup/restore</strong> (Admin UI): admins can download a <code>.sqlite</code> backup and restore it later (restore makes a pre-restore copy first).</li>
+<li><strong>Automatic bi-weekly backups</strong>: present in the app code but <strong>commented out / disabled</strong> by default.</li>
+</ol>
 <p>If the VM backup script is enabled, it typically copies the DB with a timestamp and deletes old backups:</p>
 <div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="va">$BACKUP_DIR</span>/sequencing_projects.db.<span class="va">$TIMESTAMP</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> <span class="va">$BACKUP_DIR</span> <span class="at">-name</span> <span class="st">"sequencing_projects.db.*"</span> <span class="at">-mtime</span> +30 <span class="at">-delete</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
