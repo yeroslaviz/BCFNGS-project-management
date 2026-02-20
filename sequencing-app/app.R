@@ -2835,7 +2835,10 @@ server <- function(input, output, session) {
       hr(),
       h4("Existing Budget Holders"),
       DTOutput("budget_holders_table_admin"),
-      actionButton("delete_budget_holder_btn", "Delete Selected Budget Holder", class = "btn-danger")
+      div(
+        actionButton("edit_budget_holder_btn", "Edit Selected", class = "btn-warning"),
+        actionButton("delete_budget_holder_btn", "Delete Selected Budget Holder", class = "btn-danger")
+      )
     ))
   })
   
@@ -2990,7 +2993,10 @@ server <- function(input, output, session) {
       hr(),
       h4("Current Reference Genomes"),
       DTOutput("genomes_table_admin"),
-      actionButton("delete_genome_btn", "Delete Selected Genome", class = "btn-danger")
+      div(
+        actionButton("edit_genome_btn", "Edit Selected", class = "btn-warning"),
+        actionButton("delete_genome_btn", "Delete Selected Genome", class = "btn-danger")
+      )
     ))
   })
   
@@ -3013,7 +3019,10 @@ server <- function(input, output, session) {
       hr(),
       h4("Current Project Types"),
       DTOutput("types_table_admin"),
-      actionButton("delete_type_btn", "Delete Selected Type", class = "btn-danger")
+      div(
+        actionButton("edit_type_btn", "Edit Selected", class = "btn-warning"),
+        actionButton("delete_type_btn", "Delete Selected Type", class = "btn-danger")
+      )
     ))
   })
   
@@ -3036,7 +3045,10 @@ server <- function(input, output, session) {
       hr(),
       h4("Current Sequencing Platforms"),
       DTOutput("sequencing_platforms_table_admin"),
-      actionButton("delete_sequencing_platform_btn", "Delete Selected Platform", class = "btn-danger")
+      div(
+        actionButton("edit_sequencing_platform_btn", "Edit Selected", class = "btn-warning"),
+        actionButton("delete_sequencing_platform_btn", "Delete Selected Platform", class = "btn-danger")
+      )
     ))
   })
   
@@ -3243,6 +3255,217 @@ server <- function(input, output, session) {
       textInput("edit_service_kit", "Kit", value = service_to_edit$kit),
       numericInput("edit_service_cost", "Cost per Sample", value = service_to_edit$costs_per_sample, min = 0)
     ))
+  })
+
+  # Edit Budget Holder
+  observeEvent(input$edit_budget_holder_btn, {
+    selected_row <- input$budget_holders_table_admin_rows_selected
+    if (length(selected_row) == 0) {
+      showNotification("Please select a budget holder to edit", type = "warning")
+      return()
+    }
+
+    bh_to_edit <- admin_data$budget_holders[selected_row, ]
+
+    showModal(modalDialog(
+      title = "Edit Budget Holder",
+      size = "m",
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton("update_budget_holder_btn", "Update Budget Holder", class = "btn-primary")
+      ),
+      textInput("edit_bh_name", "Name", value = bh_to_edit$name),
+      textInput("edit_bh_surname", "Surname", value = bh_to_edit$surname),
+      textInput("edit_bh_cost_center", "Cost Center", value = bh_to_edit$cost_center),
+      textInput("edit_bh_email", "Email", value = bh_to_edit$email)
+    ))
+  })
+
+  observeEvent(input$update_budget_holder_btn, {
+    selected_row <- input$budget_holders_table_admin_rows_selected
+    if (length(selected_row) == 0) return()
+
+    bh_to_edit <- admin_data$budget_holders[selected_row, ]
+    req(input$edit_bh_name, input$edit_bh_surname, input$edit_bh_cost_center, input$edit_bh_email)
+
+    if (trimws(input$edit_bh_name) == "" ||
+        trimws(input$edit_bh_surname) == "" ||
+        trimws(input$edit_bh_cost_center) == "" ||
+        trimws(input$edit_bh_email) == "") {
+      showNotification("Please fill in all budget holder fields", type = "error")
+      return()
+    }
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+
+    existing_cc <- dbGetQuery(
+      con,
+      "SELECT id FROM budget_holders WHERE cost_center = ? AND id != ?",
+      params = list(trimws(input$edit_bh_cost_center), bh_to_edit$id)
+    )
+    if (nrow(existing_cc) > 0) {
+      showNotification("Cost center already exists", type = "error")
+      return()
+    }
+
+    dbExecute(con, "
+      UPDATE budget_holders
+      SET name = ?, surname = ?, cost_center = ?, email = ?
+      WHERE id = ?
+    ", params = list(
+      trimws(input$edit_bh_name),
+      trimws(input$edit_bh_surname),
+      trimws(input$edit_bh_cost_center),
+      trimws(input$edit_bh_email),
+      bh_to_edit$id
+    ))
+
+    removeModal()
+    admin_data$budget_holders <- load_budget_holders()
+    showNotification("Budget holder updated successfully!", type = "message")
+  })
+
+  # Edit Reference Genome
+  observeEvent(input$edit_genome_btn, {
+    selected_row <- input$genomes_table_admin_rows_selected
+    if (length(selected_row) == 0) {
+      showNotification("Please select a reference genome to edit", type = "warning")
+      return()
+    }
+
+    old_name <- admin_data$reference_genomes[selected_row]
+
+    showModal(modalDialog(
+      title = "Edit Reference Genome",
+      size = "m",
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton("update_genome_btn", "Update Genome", class = "btn-primary")
+      ),
+      textInput("edit_genome_name", "Genome Name", value = old_name)
+    ))
+  })
+
+  observeEvent(input$update_genome_btn, {
+    selected_row <- input$genomes_table_admin_rows_selected
+    if (length(selected_row) == 0) return()
+
+    old_name <- admin_data$reference_genomes[selected_row]
+    req(input$edit_genome_name)
+    new_name <- trimws(input$edit_genome_name)
+
+    if (new_name == "") {
+      showNotification("Please enter a genome name", type = "error")
+      return()
+    }
+    if (new_name %in% admin_data$reference_genomes && new_name != old_name) {
+      showNotification("This genome already exists", type = "error")
+      return()
+    }
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+
+    dbExecute(con, "UPDATE reference_genomes SET name = ? WHERE name = ?", params = list(new_name, old_name))
+
+    removeModal()
+    admin_data$reference_genomes <- load_reference_genomes()
+    showNotification("Reference genome updated successfully!", type = "message")
+  })
+
+  # Edit Project Type
+  observeEvent(input$edit_type_btn, {
+    selected_row <- input$types_table_admin_rows_selected
+    if (length(selected_row) == 0) {
+      showNotification("Please select a type to edit", type = "warning")
+      return()
+    }
+
+    type_to_edit <- admin_data$types[selected_row, ]
+
+    showModal(modalDialog(
+      title = "Edit Project Type",
+      size = "m",
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton("update_type_btn", "Update Type", class = "btn-primary")
+      ),
+      textInput("edit_type_name", "Type Name", value = type_to_edit$name)
+    ))
+  })
+
+  observeEvent(input$update_type_btn, {
+    selected_row <- input$types_table_admin_rows_selected
+    if (length(selected_row) == 0) return()
+
+    type_to_edit <- admin_data$types[selected_row, ]
+    req(input$edit_type_name)
+    new_name <- trimws(input$edit_type_name)
+
+    if (new_name == "") {
+      showNotification("Please enter a type name", type = "error")
+      return()
+    }
+    if (new_name %in% admin_data$types$name && new_name != type_to_edit$name) {
+      showNotification("This type already exists", type = "error")
+      return()
+    }
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+    dbExecute(con, "UPDATE types SET name = ? WHERE id = ?", params = list(new_name, type_to_edit$id))
+
+    removeModal()
+    admin_data$types <- load_types()
+    showNotification("Type updated successfully!", type = "message")
+  })
+
+  # Edit Sequencing Platform
+  observeEvent(input$edit_sequencing_platform_btn, {
+    selected_row <- input$sequencing_platforms_table_admin_rows_selected
+    if (length(selected_row) == 0) {
+      showNotification("Please select a platform to edit", type = "warning")
+      return()
+    }
+
+    plat_to_edit <- admin_data$sequencing_platforms[selected_row, ]
+
+    showModal(modalDialog(
+      title = "Edit Sequencing Platform",
+      size = "m",
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton("update_sequencing_platform_update_btn", "Update Platform", class = "btn-primary")
+      ),
+      textInput("edit_sequencing_platform_name2", "Platform Name", value = plat_to_edit$name)
+    ))
+  })
+
+  observeEvent(input$update_sequencing_platform_update_btn, {
+    selected_row <- input$sequencing_platforms_table_admin_rows_selected
+    if (length(selected_row) == 0) return()
+
+    plat_to_edit <- admin_data$sequencing_platforms[selected_row, ]
+    req(input$edit_sequencing_platform_name2)
+    new_name <- trimws(input$edit_sequencing_platform_name2)
+
+    if (new_name == "") {
+      showNotification("Please enter a platform name", type = "error")
+      return()
+    }
+    if (new_name %in% admin_data$sequencing_platforms$name && new_name != plat_to_edit$name) {
+      showNotification("This platform already exists", type = "error")
+      return()
+    }
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+    dbExecute(con, "UPDATE sequencing_platforms SET name = ? WHERE id = ?", params = list(new_name, plat_to_edit$id))
+
+    removeModal()
+    admin_data$sequencing_platforms <- load_sequencing_platforms()
+    showNotification("Platform updated successfully!", type = "message")
   })
   
   # Update Service Type
