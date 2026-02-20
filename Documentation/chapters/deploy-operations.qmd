@@ -93,7 +93,7 @@ sudo systemctl restart apache2
 
 This is the repeatable checklist I use when rolling out to a VM (first `ngs-testing-vm`, then `ngs-vm`).
 
-#### 1) Make sure GitHub access works on the VM
+#### Step 1: Make sure GitHub access works on the VM
 
 Check which remote is set:
 
@@ -116,7 +116,7 @@ cat ~/.ssh/id_ed25519.pub
 Then add that key in GitHub:
 `Repo → Settings → Deploy keys → Add deploy key` (read‑only is enough for pull).
 
-#### 2) Pull latest code
+#### Step 2: Pull latest code
 
 ```{bash}
 cd /home/yeroslaviz/BCFNGS-project-management
@@ -140,7 +140,7 @@ git pull origin main
 
 This does **not** delete the local DB file. It just removes it from Git so future pulls work.
 
-#### 3) Production safety backups (fast rollback)
+#### Step 3: Production safety backups (fast rollback)
 
 ```{bash}
 sudo rsync -av /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup_$(date +%Y%m%d_%H%M)/
@@ -150,13 +150,13 @@ sudo cp /etc/apache2/sites-enabled/01-main.conf \
   /etc/apache2/sites-enabled/01-main.conf.backup_$(date +%Y%m%d_%H%M)
 ```
 
-#### 4) Deploy
+#### Step 4: Deploy
 
 ```{bash}
 ./scripts/deploy.sh
 ```
 
-#### 5) Restart and smoke‑test
+#### Step 5: Restart and smoke‑test
 
 ```{bash}
 sudo systemctl restart shiny-server
@@ -168,7 +168,7 @@ Then open the app URL and verify:
 - login works
 - app loads
 
-#### 6) Rollback (if needed)
+#### Step 6: Rollback (if needed)
 
 ```{bash}
 sudo rsync -av --delete /srv/shiny-server/sequencing-app.backup_YYYYMMDD_HHMM/ /srv/shiny-server/sequencing-app/
@@ -179,7 +179,7 @@ sudo systemctl restart apache2
 
 ## LDAP Deploy Smoke Tests
 
-### 1) Deploy with built-in smoke tests
+### Step 1: Deploy with built-in smoke tests
 
 Run on VM:
 
@@ -212,7 +212,7 @@ Note:
 - `scripts/deploy.sh` syncs app code only. If you changed Apache config (`01-main.conf`), apply/restart Apache separately, then run the curl checks in section 4.
 
 
-### 2) Non-interactive usage (optional)
+### Step 2: Non-interactive usage (optional)
 
 If you do not want password prompts:
 
@@ -237,7 +237,7 @@ PUBLIC_BASE_URL="https://ngs-testing-vm.biochem.mpg.de" ./scripts/deploy.sh
 This is the **separate workflow** for switching Apache from the perl‑VM app to the shiny‑VM app.
 Do **not** run this until shiny‑VM is fully validated.
 
-### 1) Prepare two vhosts
+### Step 1: Prepare two vhosts
 
 - **perl vhost** (legacy): `ngs-vm.biochem.mpg.de`
 - **shiny vhost** (new): `ngs-vm-shiny.biochem.mpg.de`  
@@ -245,7 +245,7 @@ Do **not** run this until shiny‑VM is fully validated.
 Keep both configs on disk so you can roll back quickly.
 If the shiny hostname changes later, update it in the vhost file and in the script env vars below.
 
-### 2) Optional: redirect the old hostname
+### Step 2: Optional: redirect the old hostname
 
 When you cut over, add a redirect in the perl vhost:
 
@@ -253,7 +253,7 @@ When you cut over, add a redirect in the perl vhost:
 Redirect permanent / https://ngs-vm-shiny.biochem.mpg.de/
 ```
 
-### 3) Switch vhosts (script)
+### Step 3: Switch vhosts (script)
 
 The repo includes a switch script you can run later:
 
@@ -271,7 +271,7 @@ REDIRECT_FROM=ngs-vm.biochem.mpg.de \
 scripts/switch_vhosts.sh
 ```
 
-### 4) Rollback (if needed)
+### Step 4: Rollback (if needed)
 
 ```bash
 sudo a2dissite ngs-vm-shiny.conf
@@ -280,7 +280,7 @@ sudo systemctl reload apache2
 ```
 
 
-### 3) Baseline environment checks
+### Step 3: Baseline environment checks
 
 #### Shiny environment must include:
 
@@ -307,7 +307,7 @@ sudo systemctl restart shiny-server
 ```
 
 
-### 4) Manual curl validation (reference)
+### Step 4: Manual curl validation (reference)
 
 These should match the smoke test behavior.
 
