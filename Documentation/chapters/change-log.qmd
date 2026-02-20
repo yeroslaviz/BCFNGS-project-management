@@ -10,6 +10,7 @@ execute:
 
 ### Contents
 
+- [Changes on 20.02.2026](#changes-on-20.02.2026)
 - [Changes on 16.02.2026](#changes-on-16.02.2026)
 - [Changes on 13.02.2026](#changes-on-13.02.2026)
 - [Changes on 12.02.2026](#changes-on-12.02.2026)
@@ -17,6 +18,18 @@ execute:
 - [Changes on 09.02.2026](#changes-on-09.02.2026)
 - [Changes on 06.02.2026](#changes-on-06.02.2026)
 - [Changes on 14.11.2026](#changes-on-14.11.2026)
+
+## Changes on 20.02.2026
+
+1.  Fixed local dev compatibility when the SQLite DB is missing `users.full_name` by falling back to `u.username` in project list queries.
+2.  Fixed project ID sorting in the Projects table: IDs now sort numerically while still displaying as `P<id>`; default sort is newest first (e.g. `P1035` at the top).
+3.  Added edit buttons + edit dialogs for the missing Admin panels:
+    - Budget holders
+    - Project types
+    - Sequencing platforms
+    - Reference genomes
+4.  Added “Contents” section links to all Documentation chapters for consistent navigation.
+5.  Standardized step-style headings in Deploy & Operations (`Step 1:` / `Step 2:` …) where headings previously used `1)` / `2)` formatting.
 
 ## Changes on 16.02.2026
 
