@@ -2225,9 +2225,15 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
+    created_by_expr <- if (users_has_full_name(con)) {
+      "COALESCE(NULLIF(u.full_name, ''), u.username)"
+    } else {
+      "u.username"
+    }
+
     if(user$is_admin) {
-      projects <- dbGetQuery(con, "
-        SELECT p.*, COALESCE(NULLIF(u.full_name, ''), u.username) as created_by, t.name as type_name, 
+      projects <- dbGetQuery(con, paste0("
+        SELECT p.*, ", created_by_expr, " as created_by, t.name as type_name,
                bh.name as budget_holder_name, bh.surname as budget_holder_surname, bh.cost_center,
                st.service_type, sd.depth_description, sc.cycles_description
         FROM projects p 
@@ -2238,14 +2244,14 @@ server <- function(input, output, session) {
         LEFT JOIN sequencing_depths sd ON p.sequencing_depth_id = sd.id
         LEFT JOIN sequencing_cycles sc ON p.sequencing_cycles_id = sc.id
         ORDER BY p.project_id DESC
-      ")
+      "))
     } else {
       current_full_name <- user$full_name
       if (is.null(current_full_name) || current_full_name == "") {
         current_full_name <- user$username
       }
-      projects <- dbGetQuery(con, "
-        SELECT p.*, COALESCE(NULLIF(u.full_name, ''), u.username) as created_by, t.name as type_name,
+      projects <- dbGetQuery(con, paste0("
+        SELECT p.*, ", created_by_expr, " as created_by, t.name as type_name,
                bh.name as budget_holder_name, bh.surname as budget_holder_surname, bh.cost_center,
                st.service_type, sd.depth_description, sc.cycles_description
         FROM projects p 
@@ -2257,7 +2263,7 @@ server <- function(input, output, session) {
         LEFT JOIN sequencing_cycles sc ON p.sequencing_cycles_id = sc.id
         WHERE p.responsible_user = ? OR p.responsible_user = ? OR p.user_id = ?
         ORDER BY p.project_id DESC
-      ", params = list(current_full_name, user$username, user$user_id))
+      "), params = list(current_full_name, user$username, user$user_id))
     }
     
     projects_data(projects)
@@ -2683,11 +2689,6 @@ server <- function(input, output, session) {
       ))
     }
     
-    # Convert project_id to prefixed format (P1, P2, etc.) for display but keep original for sorting
-    if("project_id" %in% names(display_data)) {
-      display_data$project_id_display <- paste0("P", display_data$project_id)
-    }
-    
     # Convert kickoff_meeting to descriptive text
     if("kickoff_meeting" %in% names(display_data)) {
       display_data$kickoff_meeting <- ifelse(
@@ -2702,8 +2703,8 @@ server <- function(input, output, session) {
       display_data$budget_display <- paste(display_data$budget_holder_name, "-", display_data$cost_center)
     }
     
-    # Define the columns we want to show - USING PREFIXED ID FOR DISPLAY
-    display_columns <- c("project_id_display", "project_name", "num_samples", "sequencing_platform", 
+    # Define the columns we want to show (project_id is numeric; we render the P-prefix at display-time)
+    display_columns <- c("project_id", "project_name", "num_samples", "sequencing_platform", 
                          "reference_genome", "service_type", "type_name", 
                          "depth_description", "cycles_description", "budget_display",
                          "responsible_user", "kickoff_meeting", "total_cost", "status")
@@ -2733,7 +2734,11 @@ server <- function(input, output, session) {
     }
 
     column_width_defs <- list(
-      list(targets = 0, width = "80px"),   # Project ID
+      list(
+        targets = 0,
+        width = "80px",
+        render = JS("function(data, type, row, meta) { if (type === 'display') return 'P' + data; return data; }")
+      ),   # Project ID (numeric sort, prefixed display)
       list(targets = 1, width = "180px"),  # Project Name
       list(targets = 2, width = "70px"),   # Samples
       list(targets = 3, width = "110px"),  # Platform
@@ -2774,7 +2779,8 @@ server <- function(input, output, session) {
         autoWidth = FALSE,
         scrollX = TRUE,
         scrollCollapse = TRUE,
-        columnDefs = column_width_defs
+        columnDefs = column_width_defs,
+        order = list(list(0, "asc"))
       ),
       rownames = FALSE,
       colnames = column_names
