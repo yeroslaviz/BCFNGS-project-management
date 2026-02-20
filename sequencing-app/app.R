@@ -2780,7 +2780,7 @@ server <- function(input, output, session) {
         scrollX = TRUE,
         scrollCollapse = TRUE,
         columnDefs = column_width_defs,
-        order = list(list(0, "asc"))
+        order = list(list(0, "desc"))
       ),
       rownames = FALSE,
       colnames = column_names
