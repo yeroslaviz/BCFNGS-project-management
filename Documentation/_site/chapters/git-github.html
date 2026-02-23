@@ -365,11 +365,17 @@ Password authentication is not supported for Git operations.</code></pre>
 <section id="step-3-add-key-in-github" class="level3" data-number="5.3.3">
 <h3 data-number="5.3.3" class="anchored" data-anchor-id="step-3-add-key-in-github"><span class="header-section-number">5.3.3</span> Step 3: Add key in GitHub</h3>
 <div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> ~/.ssh/id_ed25519_bcfngs_vm.pub</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Copy the full output (public key) and paste it in GitHub. Do <strong>not</strong> paste the private key file.</p>
 <p>Choose one:</p>
 <ol type="1">
 <li><strong>Deploy key (read-only)</strong> on this repo: clone + pull only.</li>
 <li><strong>User/account SSH key (write access)</strong>: clone + pull + push.</li>
 </ol>
+<p>Where to paste:</p>
+<ul>
+<li>Deploy key: <a href="https://github.com/yeroslaviz/BCFNGS-project-management">GitHub repo <code>BCFNGS-project-management</code></a> -&gt; <code>Settings</code> -&gt; <code>Deploy keys</code> -&gt; <code>Add deploy key</code>.</li>
+<li>User key: GitHub account -&gt; <code>Settings</code> -&gt; <code>SSH and GPG keys</code> -&gt; <code>New SSH key</code>.</li>
+</ul>
 <p>After choosing:</p>
 <ul>
 <li>If you chose <strong>Deploy key (read-only)</strong>:</li>
@@ -411,8 +417,7 @@ Password authentication is not supported for Git operations.</code></pre>
 </section>
 <section id="enable-push-from-the-vm" class="level2" data-number="5.4">
 <h2 data-number="5.4" class="anchored" data-anchor-id="enable-push-from-the-vm"><span class="header-section-number">5.4</span> Enable push from the VM</h2>
-<p>If the VM currently uses a deploy key, push will be denied.<br>
-To allow push, use an SSH key attached to a GitHub user that has write permission.</p>
+<p>If the VM currently uses a deploy key, push will be denied. To allow push, use an SSH key attached to a GitHub user that has write permission.</p>
 <p>Set Git identity on the VM:</p>
 <div class="sourceCode" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> config <span class="at">--global</span> user.name <span class="st">"Assa Yeroslaviz"</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> config <span class="at">--global</span> user.email <span class="st">"yeroslaviz@biochem.mpg.de"</span></span>

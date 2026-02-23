@@ -139,12 +139,31 @@ chmod 600 ~/.ssh/config
 cat ~/.ssh/id_ed25519_bcfngs_vm.pub
 ```
 
+Copy the full output (public key) and paste it in GitHub.
+Do **not** paste the private key file.
+
 Choose one:
 
 1. **Deploy key (read-only)** on this repo: clone + pull only.
 2. **User/account SSH key (write access)**: clone + pull + push.
 
+Where to paste:
+
+- Deploy key: [GitHub repo `BCFNGS-project-management`](https://github.com/yeroslaviz/BCFNGS-project-management) -> `Settings` -> `Deploy keys` -> `Add deploy key`.
+- User key: GitHub account -> `Settings` -> `SSH and GPG keys` -> `New SSH key`.
+
 After choosing:
+
+( for bcf-vm, we choose only deploy key, since we don't plan to push changes from here.)
+
+```
+If we do make any local changes, we must run the following before pulling new changes (since they will probably fail)
+
+git stash push -m "vm-local"
+git pull --ff-only origin main
+git stash pop
+
+```
 
 - If you chose **Deploy key (read-only)**:
 
@@ -194,7 +213,7 @@ git ls-remote git@github.com:yeroslaviz/BCFNGS-project-management.git
 
 ## Enable push from the VM
 
-If the VM currently uses a deploy key, push will be denied.  
+If the VM currently uses a deploy key, push will be denied.
 To allow push, use an SSH key attached to a GitHub user that has write permission.
 
 Set Git identity on the VM:
