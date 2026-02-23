@@ -219,6 +219,8 @@ sudo systemctl restart shiny-server
 
 Create a vhost that redirects `:80` to `:443` and proxies to Shiny:
 
+Apache config file path for this step: `/etc/apache2/sites-available/bcf-vm.conf`
+
 ```apache
 <VirtualHost *:80>
     ServerName bcf-vm
@@ -241,6 +243,7 @@ Enable the site and restart Apache:
 
 ```bash
 sudo a2enmod ssl proxy proxy_http headers rewrite
+sudo a2ensite bcf-vm.conf # this creates symlink to sites-enabled
 sudo apache2ctl -t
 sudo systemctl restart apache2
 ```
@@ -249,7 +252,7 @@ sudo systemctl restart apache2
 
 ### 1) Keep legacy system on `:443`
 
-Leave the current `ngs-vm_01-main.conf` active for the Perl system.
+Leave the current `01-main.conf` active for the Perl system.
 
 ### 2) Add a parallel Shiny vhost on `:8443` (or `:1234`) {#ngs-parallel-shiny-vhost}
 
@@ -260,9 +263,9 @@ Create a new vhost file, for example `ngs-vm-shiny.conf`:
     ServerName ngs-vm.biochem.mpg.de
 
     SSLEngine on
-    SSLCertificateFile /etc/ssl/certs/2026_NGS_Cert.pem
+    SSLCertificateFile /etc/ssl/certs/ngs-cert.pem
     SSLCertificateKeyFile /etc/ssl/private/2026_private-key.pem
-    SSLCertificateChainFile /etc/apache2/certificate/2026/NGS_2026_Issuer_ChainFile.cer
+    SSLCertificateChainFile /etc/apache2/certificate/2026_Cert_binary.cer
 
     ProxyPreserveHost On
     ProxyPass / http://localhost:3838/sequencing-app/
@@ -284,6 +287,9 @@ sudo systemctl reload apache2
 curl -Ik https://ngs-vm.biochem.mpg.de:8443/
 curl -Ik -u USER https://ngs-vm.biochem.mpg.de:8443/sequencing-app/
 ```
+
+for connection refused error, restart apache2 `sudo systemctl restart apache2`
+
 
 ## Legacy data migration (perl-VM → shiny-VM)
 
