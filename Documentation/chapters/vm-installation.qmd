@@ -258,6 +258,10 @@ Leave the current `01-main.conf` active for the Perl system.
 
 Create a new vhost file, for example `ngs-vm-shiny.conf`:
 
+Apache config file path for this step:
+
+`/etc/apache2/sites-available/ngs-vm-shiny.conf`
+
 ```apache
 <VirtualHost *:8443>
     ServerName ngs-vm.biochem.mpg.de
@@ -268,17 +272,23 @@ Create a new vhost file, for example `ngs-vm-shiny.conf`:
     SSLCertificateChainFile /etc/apache2/certificate/2026_Cert_binary.cer
 
     ProxyPreserveHost On
-    ProxyPass / http://localhost:3838/sequencing-app/
-    ProxyPassReverse / http://localhost:3838/sequencing-app/
+    RequestHeader set X-Forwarded-Proto "https"
+
+    RedirectMatch 302 ^/$ /sequencing-app/
+
+    ProxyPass        /sequencing-app/  http://127.0.0.1:3838/sequencing-app/
+    ProxyPassReverse /sequencing-app/  http://127.0.0.1:3838/sequencing-app/
 </VirtualHost>
 ```
 
 Enable and reload:
 
 ```bash
+grep -q '^Listen 8443$' /etc/apache2/ports.conf || echo 'Listen 8443' | sudo tee -a /etc/apache2/ports.conf
+sudo a2enmod ssl proxy proxy_http headers rewrite ldap authnz_ldap
 sudo a2ensite ngs-vm-shiny.conf
 sudo apache2ctl -t
-sudo systemctl reload apache2
+sudo systemctl restart apache2
 ```
 
 ### 3) Validate parallel access
@@ -288,7 +298,22 @@ curl -Ik https://ngs-vm.biochem.mpg.de:8443/
 curl -Ik -u USER https://ngs-vm.biochem.mpg.de:8443/sequencing-app/
 ```
 
-for connection refused error, restart apache2 `sudo systemctl restart apache2`
+If hostname/port tests fail, validate locally against the vhost:
+
+```bash
+curl -kI -H 'Host: ngs-vm.biochem.mpg.de' https://127.0.0.1:8443/
+curl -kI -u USER -H 'Host: ngs-vm.biochem.mpg.de' https://127.0.0.1:8443/sequencing-app/
+```
+
+If the app returns HTTP 500 with `mailR/rJava` errors on ngs-vm, apply this runtime fix:
+
+```bash
+sudo apt-get install -y openjdk-17-jdk r-cran-rjava
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+sudo env JAVA_HOME="$JAVA_HOME" /usr/bin/R CMD javareconf
+sudo env JAVA_HOME="$JAVA_HOME" /usr/bin/Rscript --vanilla -e 'install.packages("mailR", repos="https://cloud.r-project.org", INSTALL_opts="--no-test-load")'
+sudo systemctl restart shiny-server
+```
 
 
 ## Legacy data migration (perl-VM → shiny-VM)

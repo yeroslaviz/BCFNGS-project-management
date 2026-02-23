@@ -375,97 +375,124 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 data-number="4.6.5" class="anchored" data-anchor-id="bcf-ldap-deps"><span class="header-section-number">4.6.5</span> 2d) LDAP packages (Ubuntu + R)</h3>
 <p>Install LDAP client tools and build dependencies:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt-get install <span class="at">-y</span> ldap-utils libldap2-dev libsasl2-dev ca-certificates</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Configure OpenLDAP client trust in <code>/etc/ldap/ldap.conf</code>:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tee /etc/ldap/ldap.conf <span class="op">&gt;</span>/dev/null <span class="op">&lt;&lt;'EOF'</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="st">BASE            dc=biochem,dc=mpg,dc=de</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="st">URI             ldaps://ldapserv1.biochem.mpg.de ldaps://ldapserv2.biochem.mpg.de ldaps://ldapserv3.biochem.mpg.de</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="st">TLS_REQCERT     hard</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="st">TLS_CACERTDIR   /etc/ssl/certs</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Install the R LDAP package:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'install.packages("ldapr", repos="https://cloud.r-project.org")'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'install.packages("ldapr", repos="https://cloud.r-project.org")'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Fallback if CRAN install is unavailable on this VM:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'if (!requireNamespace("remotes", quietly=TRUE)) install.packages("remotes", repos="https://cloud.r-project.org"); remotes::install_github("liamgilbey/ldapr")'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'if (!requireNamespace("remotes", quietly=TRUE)) install.packages("remotes", repos="https://cloud.r-project.org"); remotes::install_github("liamgilbey/ldapr")'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Quick checks:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ldapsearch</span> <span class="at">-x</span> <span class="at">-H</span> ldaps://ldapserv1.biochem.mpg.de:636 <span class="at">-b</span> <span class="st">"dc=biochem,dc=mpg,dc=de"</span> <span class="st">"(uid=&lt;user&gt;)"</span> mail</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'library(ldapr); cat("ldapr OK\n")'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ldapsearch</span> <span class="at">-x</span> <span class="at">-H</span> ldaps://ldapserv1.biochem.mpg.de:636 <span class="at">-b</span> <span class="st">"dc=biochem,dc=mpg,dc=de"</span> <span class="st">"(uid=&lt;user&gt;)"</span> mail</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'library(ldapr); cat("ldapr OK\n")'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>If <code>ldapsearch</code> only works with <code>LDAPTLS_REQCERT=never</code>, your <code>/etc/ldap/ldap.conf</code> trust settings are incomplete or incorrect.</p>
 </section>
 <section id="create-a-self-signed-certificate-test-only" class="level3" data-number="4.6.6">
 <h3 data-number="4.6.6" class="anchored" data-anchor-id="create-a-self-signed-certificate-test-only"><span class="header-section-number">4.6.6</span> 3) Create a self-signed certificate (test only)</h3>
-<div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /etc/ssl/localcerts</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> openssl req <span class="at">-x509</span> <span class="at">-nodes</span> <span class="at">-days</span> 365 <span class="dt">\</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-newkey</span> rsa:2048 <span class="dt">\</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-keyout</span> /etc/ssl/localcerts/bcf-vm.key <span class="dt">\</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">-out</span> /etc/ssl/localcerts/bcf-vm.crt</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /etc/ssl/localcerts</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> openssl req <span class="at">-x509</span> <span class="at">-nodes</span> <span class="at">-days</span> 365 <span class="dt">\</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-newkey</span> rsa:2048 <span class="dt">\</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-keyout</span> /etc/ssl/localcerts/bcf-vm.key <span class="dt">\</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">-out</span> /etc/ssl/localcerts/bcf-vm.crt</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="clone-repo-and-set-app-folder" class="level3" data-number="4.6.7">
 <h3 data-number="4.6.7" class="anchored" data-anchor-id="clone-repo-and-set-app-folder"><span class="header-section-number">4.6.7</span> 4) Clone repo and set app folder</h3>
-<div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>user<span class="op">&gt;</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone git@github.com:yeroslaviz/BCFNGS-project-management.git</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> rsync <span class="at">-av</span> /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management/sequencing-app/ /srv/shiny-server/sequencing-app/</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> shiny:shiny /srv/shiny-server/sequencing-app</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>user<span class="op">&gt;</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone git@github.com:yeroslaviz/BCFNGS-project-management.git</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> rsync <span class="at">-av</span> /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management/sequencing-app/ /srv/shiny-server/sequencing-app/</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> shiny:shiny /srv/shiny-server/sequencing-app</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="initialize-the-sqlite-db" class="level3" data-number="4.6.8">
 <h3 data-number="4.6.8" class="anchored" data-anchor-id="initialize-the-sqlite-db"><span class="header-section-number">4.6.8</span> 5) Initialize the SQLite DB</h3>
-<div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /srv/shiny-server/sequencing-app</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny Rscript setup_database.R</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /srv/shiny-server/sequencing-app</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny Rscript setup_database.R</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="bcf-configure-ldap-systemd" class="level3" data-number="4.6.9">
 <h3 data-number="4.6.9" class="anchored" data-anchor-id="bcf-configure-ldap-systemd"><span class="header-section-number">4.6.9</span> 6) Configure LDAP mode (systemd override)</h3>
-<div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl edit shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="sourceCode" id="cb17"><pre class="sourceCode ini code-with-copy"><code class="sourceCode ini"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[Service]</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">AUTH_MODE=ldap</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="sourceCode" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl edit shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode ini code-with-copy"><code class="sourceCode ini"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[Service]</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">AUTH_MODE=ldap</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="bcf-configure-apache-vhost" class="level3" data-number="4.6.10">
 <h3 data-number="4.6.10" class="anchored" data-anchor-id="bcf-configure-apache-vhost"><span class="header-section-number">4.6.10</span> 7) Configure Apache (test HTTPS redirect)</h3>
 <p>Create a vhost that redirects <code>:80</code> to <code>:443</code> and proxies to Shiny:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode apache code-with-copy"><code class="sourceCode apache"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;VirtualHost</span><span class="at"> *:80</span><span class="fu">&gt;</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    ServerName<span class="st"> bcf-vm</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    Redirect<span class="st"> permanent / https://bcf-vm/</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;/VirtualHost&gt;</span></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;VirtualHost</span><span class="at"> *:443</span><span class="fu">&gt;</span></span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    ServerName<span class="st"> bcf-vm</span></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLEngine</span><span class="ch"> </span><span class="kw">on</span></span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    SSLCertificateFile<span class="st"> /etc/ssl/localcerts/bcf-vm.crt</span></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    SSLCertificateKeyFile<span class="st"> /etc/ssl/localcerts/bcf-vm.key</span></span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ProxyPreserveHost</span><span class="ch"> </span><span class="kw">On</span></span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>    ProxyPass<span class="st"> / http://localhost:3838/sequencing-app/</span></span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>    ProxyPassReverse<span class="st"> / http://localhost:3838/sequencing-app/</span></span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;/VirtualHost&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Apache config file path for this step: <code>/etc/apache2/sites-available/bcf-vm.conf</code></p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode apache code-with-copy"><code class="sourceCode apache"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;VirtualHost</span><span class="at"> *:80</span><span class="fu">&gt;</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    ServerName<span class="st"> bcf-vm</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    Redirect<span class="st"> permanent / https://bcf-vm/</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;/VirtualHost&gt;</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;VirtualHost</span><span class="at"> *:443</span><span class="fu">&gt;</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    ServerName<span class="st"> bcf-vm</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLEngine</span><span class="ch"> </span><span class="kw">on</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    SSLCertificateFile<span class="st"> /etc/ssl/localcerts/bcf-vm.crt</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    SSLCertificateKeyFile<span class="st"> /etc/ssl/localcerts/bcf-vm.key</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ProxyPreserveHost</span><span class="ch"> </span><span class="kw">On</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>    ProxyPass<span class="st"> / http://localhost:3838/sequencing-app/</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>    ProxyPassReverse<span class="st"> / http://localhost:3838/sequencing-app/</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;/VirtualHost&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Enable the site and restart Apache:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod ssl proxy proxy_http headers rewrite</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod ssl proxy proxy_http headers rewrite</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite bcf-vm.conf <span class="co"># this creates symlink to sites-enabled</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 </section>
 <section id="ngs-vm-parallel-install-next-to-perl-system" class="level2" data-number="4.7">
 <h2 data-number="4.7" class="anchored" data-anchor-id="ngs-vm-parallel-install-next-to-perl-system"><span class="header-section-number">4.7</span> ngs-vm: parallel install next to perl system</h2>
 <section id="keep-legacy-system-on-443" class="level3" data-number="4.7.1">
 <h3 data-number="4.7.1" class="anchored" data-anchor-id="keep-legacy-system-on-443"><span class="header-section-number">4.7.1</span> 1) Keep legacy system on <code>:443</code></h3>
-<p>Leave the current <code>ngs-vm_01-main.conf</code> active for the Perl system.</p>
+<p>Leave the current <code>01-main.conf</code> active for the Perl system.</p>
 </section>
 <section id="ngs-parallel-shiny-vhost" class="level3" data-number="4.7.2">
 <h3 data-number="4.7.2" class="anchored" data-anchor-id="ngs-parallel-shiny-vhost"><span class="header-section-number">4.7.2</span> 2) Add a parallel Shiny vhost on <code>:8443</code> (or <code>:1234</code>)</h3>
 <p>Create a new vhost file, for example <code>ngs-vm-shiny.conf</code>:</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode apache code-with-copy"><code class="sourceCode apache"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;VirtualHost</span><span class="at"> *:8443</span><span class="fu">&gt;</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    ServerName<span class="st"> ngs-vm.biochem.mpg.de</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLEngine</span><span class="ch"> </span><span class="kw">on</span></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    SSLCertificateFile<span class="st"> /etc/ssl/certs/2026_NGS_Cert.pem</span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    SSLCertificateKeyFile<span class="st"> /etc/ssl/private/2026_private-key.pem</span></span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    SSLCertificateChainFile<span class="st"> /etc/apache2/certificate/2026/NGS_2026_Issuer_ChainFile.cer</span></span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ProxyPreserveHost</span><span class="ch"> </span><span class="kw">On</span></span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    ProxyPass<span class="st"> / http://localhost:3838/sequencing-app/</span></span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    ProxyPassReverse<span class="st"> / http://localhost:3838/sequencing-app/</span></span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;/VirtualHost&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Apache config file path for this step:</p>
+<p><code>/etc/apache2/sites-available/ngs-vm-shiny.conf</code></p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode apache code-with-copy"><code class="sourceCode apache"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;VirtualHost</span><span class="at"> *:8443</span><span class="fu">&gt;</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    ServerName<span class="st"> ngs-vm.biochem.mpg.de</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    <span class="ex">SSLEngine</span><span class="ch"> </span><span class="kw">on</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    SSLCertificateFile<span class="st"> /etc/ssl/certs/ngs-cert.pem</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    SSLCertificateKeyFile<span class="st"> /etc/ssl/private/2026_private-key.pem</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    SSLCertificateChainFile<span class="st"> /etc/apache2/certificate/2026_Cert_binary.cer</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    <span class="ex">ProxyPreserveHost</span><span class="ch"> </span><span class="kw">On</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>    RequestHeader<span class="st"> set X-Forwarded-Proto "https"</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>    RedirectMatch<span class="st"> 302 ^/$ /sequencing-app/</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>    ProxyPass<span class="st">        /sequencing-app/  http://127.0.0.1:3838/sequencing-app/</span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    ProxyPassReverse<span class="st"> /sequencing-app/  http://127.0.0.1:3838/sequencing-app/</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;/VirtualHost&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Enable and reload:</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite ngs-vm-shiny.conf</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl reload apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-q</span> <span class="st">'^Listen 8443$'</span> /etc/apache2/ports.conf <span class="kw">||</span> <span class="bu">echo</span> <span class="st">'Listen 8443'</span> <span class="kw">|</span> <span class="fu">sudo</span> tee <span class="at">-a</span> /etc/apache2/ports.conf</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod ssl proxy proxy_http headers rewrite ldap authnz_ldap</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite ngs-vm-shiny.conf</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="validate-parallel-access" class="level3" data-number="4.7.3">
 <h3 data-number="4.7.3" class="anchored" data-anchor-id="validate-parallel-access"><span class="header-section-number">4.7.3</span> 3) Validate parallel access</h3>
-<div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> https://ngs-vm.biochem.mpg.de:8443/</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> <span class="at">-u</span> USER https://ngs-vm.biochem.mpg.de:8443/sequencing-app/</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> https://ngs-vm.biochem.mpg.de:8443/</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> <span class="at">-u</span> USER https://ngs-vm.biochem.mpg.de:8443/sequencing-app/</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>If hostname/port tests fail, validate locally against the vhost:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-kI</span> <span class="at">-H</span> <span class="st">'Host: ngs-vm.biochem.mpg.de'</span> https://127.0.0.1:8443/</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-kI</span> <span class="at">-u</span> USER <span class="at">-H</span> <span class="st">'Host: ngs-vm.biochem.mpg.de'</span> https://127.0.0.1:8443/sequencing-app/</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>If the app returns HTTP 500 with <code>mailR/rJava</code> errors on ngs-vm, apply this runtime fix:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt-get install <span class="at">-y</span> openjdk-17-jdk r-cran-rjava</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">JAVA_HOME</span><span class="op">=</span>/usr/lib/jvm/java-17-openjdk-amd64</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> env JAVA_HOME=<span class="st">"</span><span class="va">$JAVA_HOME</span><span class="st">"</span> /usr/bin/R CMD javareconf</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> env JAVA_HOME=<span class="st">"</span><span class="va">$JAVA_HOME</span><span class="st">"</span> /usr/bin/Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'install.packages("mailR", repos="https://cloud.r-project.org", INSTALL_opts="--no-test-load")'</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 </section>
 <section id="legacy-data-migration-perl-vm-shiny-vm" class="level2" data-number="4.8">
@@ -487,7 +514,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="cutover-switch-public-hostname-to-shiny" class="level3" data-number="4.9.1">
 <h3 data-number="4.9.1" class="anchored" data-anchor-id="cutover-switch-public-hostname-to-shiny"><span class="header-section-number">4.9.1</span> Cutover (switch public hostname to Shiny)</h3>
 <p>Option A (redirect 443 to new port):</p>
-<div class="sourceCode" id="cb24"><pre class="sourceCode apache code-with-copy"><code class="sourceCode apache"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>Redirect<span class="st"> permanent / https://ngs-vm.biochem.mpg.de:8443/</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode apache code-with-copy"><code class="sourceCode apache"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>Redirect<span class="st"> permanent / https://ngs-vm.biochem.mpg.de:8443/</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Option B (replace the 443 vhost with the Shiny proxy):</p>
 <ul>
 <li>Disable legacy vhost.</li>
@@ -507,8 +534,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="post-install-verification" class="level2" data-number="4.10">
 <h2 data-number="4.10" class="anchored" data-anchor-id="post-install-verification"><span class="header-section-number">4.10</span> Post-install verification</h2>
 <p>Run these checks after install:</p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> https://<span class="op">&lt;</span>host<span class="op">&gt;</span>/</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> <span class="at">-u</span> USER https://<span class="op">&lt;</span>host<span class="op">&gt;</span>/sequencing-app/</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> https://<span class="op">&lt;</span>host<span class="op">&gt;</span>/</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> <span class="at">-u</span> USER https://<span class="op">&lt;</span>host<span class="op">&gt;</span>/sequencing-app/</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Confirm:</p>
 <ul>
 <li>LDAP prompt appears.</li>
