@@ -54,6 +54,7 @@ bash /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/check_
 Manual steps still required after package install:
 
 - Install Shiny Server from the `.deb` package (see [bcf-vm Step 2](#bcf-install-shiny-server)).
+- Install Java + R mail dependencies for email notifications (see [bcf-vm Step 2b](#bcf-java-mail)).
 - Configure Apache vhost, LDAP, and systemd environment (see [bcf-vm Step 6](#bcf-configure-ldap-systemd), [bcf-vm Step 7](#bcf-configure-apache-vhost), and [ngs-vm Step 2](#ngs-parallel-shiny-vhost)).
 
 ## GitHub connection on a fresh VM
@@ -93,6 +94,18 @@ sudo apt-get install -y gdebi-core
 wget https://download3.rstudio.org/ubuntu-20.04/x86_64/shiny-server-1.5.23.1030-amd64.deb
 sudo gdebi shiny-server-1.5.23.1030-amd64.deb
 ```
+
+### 2b) Configure Java + mail packages (required for email notifications) {#bcf-java-mail}
+
+The app sends emails via `mailR`, which requires Java / `rJava`.
+
+```bash
+sudo apt-get install -y default-jdk
+sudo R CMD javareconf
+sudo Rscript --vanilla -e 'install.packages(c("rJava","mailR"), repos="https://cloud.r-project.org")'
+```
+
+Apply the same on `ngs-vm` and `bcf-vm`.
 
 ### 3) Create a self-signed certificate (test only)
 
