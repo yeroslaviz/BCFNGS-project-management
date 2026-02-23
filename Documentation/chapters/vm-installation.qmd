@@ -51,10 +51,20 @@ Install missing apt packages:
 bash /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/check_requirements.sh --install
 ```
 
+Install missing R packages (including `rJava`):
+
+```bash
+bash /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/check_requirements.sh --install-r
+```
+
+The requirement check reports missing `rJava`/`mailR` and missing Java tools (`java`, `javac`) explicitly.
+
 Manual steps still required after package install:
 
 - Install Shiny Server from the `.deb` package (see [bcf-vm Step 2](#bcf-install-shiny-server)).
 - Install Java + R mail dependencies for email notifications (see [bcf-vm Step 2b](#bcf-java-mail)).
+- Install LDAP client/build dependencies + `ldapr` (see [bcf-vm Step 2d](#bcf-ldap-deps)).
+- Ensure the `shiny` user exists and app-folder permissions are correct (see [bcf-vm Step 2c](#bcf-shiny-user-perms)).
 - Configure Apache vhost, LDAP, and systemd environment (see [bcf-vm Step 6](#bcf-configure-ldap-systemd), [bcf-vm Step 7](#bcf-configure-apache-vhost), and [ngs-vm Step 2](#ngs-parallel-shiny-vhost)).
 
 ## GitHub connection on a fresh VM
@@ -98,6 +108,7 @@ sudo gdebi shiny-server-1.5.23.1030-amd64.deb
 ### 2b) Configure Java + mail packages (required for email notifications) {#bcf-java-mail}
 
 The app sends emails via `mailR`, which requires Java / `rJava`.
+This is for **email notifications**, not for LDAP auth itself.
 
 ```bash
 sudo apt-get install -y default-jdk
@@ -106,6 +117,60 @@ sudo Rscript --vanilla -e 'install.packages(c("rJava","mailR"), repos="https://c
 ```
 
 Apply the same on `ngs-vm` and `bcf-vm`.
+
+### 2c) Create `shiny` user + app-folder permissions {#bcf-shiny-user-perms}
+
+Shiny Server runs the app as the `shiny` service user.
+
+```bash
+getent passwd shiny || sudo useradd --system --home /var/lib/shiny-server --shell /usr/sbin/nologin shiny
+sudo mkdir -p /srv/shiny-server/sequencing-app
+sudo chown -R shiny:shiny /srv/shiny-server/sequencing-app
+sudo chmod 755 /srv/shiny-server /srv/shiny-server/sequencing-app
+sudo usermod -a -G shiny "$USER"
+```
+
+If you are configuring a different account, replace `"$USER"` with that username.
+
+### 2d) LDAP packages (Ubuntu + R) {#bcf-ldap-deps}
+
+Install LDAP client tools and build dependencies:
+
+```bash
+sudo apt-get install -y ldap-utils libldap2-dev libsasl2-dev ca-certificates
+```
+
+Configure OpenLDAP client trust in `/etc/ldap/ldap.conf`:
+
+```bash
+sudo tee /etc/ldap/ldap.conf >/dev/null <<'EOF'
+BASE            dc=biochem,dc=mpg,dc=de
+URI             ldaps://ldapserv1.biochem.mpg.de ldaps://ldapserv2.biochem.mpg.de ldaps://ldapserv3.biochem.mpg.de
+TLS_REQCERT     hard
+TLS_CACERTDIR   /etc/ssl/certs
+EOF
+```
+
+Install the R LDAP package:
+
+```bash
+sudo Rscript --vanilla -e 'install.packages("ldapr", repos="https://cloud.r-project.org")'
+```
+
+Fallback if CRAN install is unavailable on this VM:
+
+```bash
+sudo Rscript --vanilla -e 'if (!requireNamespace("remotes", quietly=TRUE)) install.packages("remotes", repos="https://cloud.r-project.org"); remotes::install_github("liamgilbey/ldapr")'
+```
+
+Quick checks:
+
+```bash
+ldapsearch -x -H ldaps://ldapserv1.biochem.mpg.de:636 -b "dc=biochem,dc=mpg,dc=de" "(uid=<user>)" mail
+sudo -u shiny Rscript --vanilla -e 'library(ldapr); cat("ldapr OK\n")'
+```
+
+If `ldapsearch` only works with `LDAPTLS_REQCERT=never`, your `/etc/ldap/ldap.conf` trust settings are incomplete or incorrect.
 
 ### 3) Create a self-signed certificate (test only)
 

@@ -10,8 +10,40 @@ execute:
 
 ### Contents
 
+- [Dependencies (Ubuntu + R)](#dependencies-ubuntu--r)
 - [LDAP Configuration](#ldap-configuration)
 - [LDAP Summary (2026-02-06)](#ldap-summary-2026-02-06)
+
+## Dependencies (Ubuntu + R)
+
+Install LDAP client tools and headers on Ubuntu:
+
+```bash
+sudo apt-get install -y ldap-utils libldap2-dev libsasl2-dev ca-certificates
+```
+
+Install `ldapr` in R:
+
+```bash
+sudo Rscript --vanilla -e 'install.packages("ldapr", repos="https://cloud.r-project.org")'
+```
+
+Fallback if CRAN install is unavailable:
+
+```bash
+sudo Rscript --vanilla -e 'if (!requireNamespace("remotes", quietly=TRUE)) install.packages("remotes", repos="https://cloud.r-project.org"); remotes::install_github("liamgilbey/ldapr")'
+```
+
+Verify:
+
+```bash
+ldapsearch -x -H ldaps://ldapserv1.biochem.mpg.de:636 -b "dc=biochem,dc=mpg,dc=de" "(uid=<user>)" mail
+sudo -u shiny Rscript --vanilla -e 'library(ldapr); cat("ldapr OK\n")'
+```
+
+Note:
+
+- Java / `rJava` / `mailR` are for email notifications, not required for LDAP itself.
 
 ## LDAP Configuration
 

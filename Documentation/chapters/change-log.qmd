@@ -10,6 +10,7 @@ execute:
 
 ### Contents
 
+- [Changes on 23.02.2026](#changes-on-23.02.2026)
 - [Changes on 20.02.2026](#changes-on-20.02.2026)
 - [Changes on 16.02.2026](#changes-on-16.02.2026)
 - [Changes on 13.02.2026](#changes-on-13.02.2026)
@@ -18,6 +19,16 @@ execute:
 - [Changes on 09.02.2026](#changes-on-09.02.2026)
 - [Changes on 06.02.2026](#changes-on-06.02.2026)
 - [Changes on 14.11.2026](#changes-on-14.11.2026)
+
+## Changes on 23.02.2026
+
+1.  Expanded VM installation documentation with explicit GitHub onboarding for fresh VMs (SSH key setup, deploy key vs user key decision, clone/pull/push workflow, and handling local changes on pull‑only VMs).
+2.  Added cross‑references in the VM prerequisites section so summary bullets link directly to the detailed install/config sections.
+3.  Added explicit Java and R mail dependency guidance (`default-jdk`, `rJava`, `mailR`) and clarified that Java is needed for email notifications, not LDAP authentication itself.
+4.  Added an explicit `shiny` service-user setup step with required permissions for `/srv/shiny-server/sequencing-app`.
+5.  Added LDAP dependency/install instructions to docs (Ubuntu packages + R `ldapr` install), including fallback install from GitHub via `remotes::install_github("liamgilbey/ldapr")`.
+6.  Updated `scripts/check_requirements.sh` to check/install LDAP build dependencies (`libldap2-dev`, `libsasl2-dev`), Java toolchain (`default-jdk`, `java`, `javac`), and `rJava` in the R package checks/installer.
+7.  Clarified deploy smoke-test guidance to use the canonical Apache template path `01-main.conf` in this repo.
 
 ## Changes on 20.02.2026
 
