@@ -225,17 +225,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#bcf-vm-clean-install" id="toc-bcf-vm-clean-install" class="nav-link" data-scroll-target="#bcf-vm-clean-install"><span class="header-section-number">4.6</span> bcf-vm: clean install</a>
   <ul class="collapse">
   <li><a href="#install-base-packages" id="toc-install-base-packages" class="nav-link" data-scroll-target="#install-base-packages"><span class="header-section-number">4.6.1</span> 1) Install base packages</a></li>
-  <li><a href="#install-shiny-server" id="toc-install-shiny-server" class="nav-link" data-scroll-target="#install-shiny-server"><span class="header-section-number">4.6.2</span> 2) Install Shiny Server</a></li>
+  <li><a href="#bcf-install-shiny-server" id="toc-bcf-install-shiny-server" class="nav-link" data-scroll-target="#bcf-install-shiny-server"><span class="header-section-number">4.6.2</span> 2) Install Shiny Server</a></li>
   <li><a href="#create-a-self-signed-certificate-test-only" id="toc-create-a-self-signed-certificate-test-only" class="nav-link" data-scroll-target="#create-a-self-signed-certificate-test-only"><span class="header-section-number">4.6.3</span> 3) Create a self-signed certificate (test only)</a></li>
   <li><a href="#clone-repo-and-set-app-folder" id="toc-clone-repo-and-set-app-folder" class="nav-link" data-scroll-target="#clone-repo-and-set-app-folder"><span class="header-section-number">4.6.4</span> 4) Clone repo and set app folder</a></li>
   <li><a href="#initialize-the-sqlite-db" id="toc-initialize-the-sqlite-db" class="nav-link" data-scroll-target="#initialize-the-sqlite-db"><span class="header-section-number">4.6.5</span> 5) Initialize the SQLite DB</a></li>
-  <li><a href="#configure-ldap-mode-systemd-override" id="toc-configure-ldap-mode-systemd-override" class="nav-link" data-scroll-target="#configure-ldap-mode-systemd-override"><span class="header-section-number">4.6.6</span> 6) Configure LDAP mode (systemd override)</a></li>
-  <li><a href="#configure-apache-test-https-redirect" id="toc-configure-apache-test-https-redirect" class="nav-link" data-scroll-target="#configure-apache-test-https-redirect"><span class="header-section-number">4.6.7</span> 7) Configure Apache (test HTTPS redirect)</a></li>
+  <li><a href="#bcf-configure-ldap-systemd" id="toc-bcf-configure-ldap-systemd" class="nav-link" data-scroll-target="#bcf-configure-ldap-systemd"><span class="header-section-number">4.6.6</span> 6) Configure LDAP mode (systemd override)</a></li>
+  <li><a href="#bcf-configure-apache-vhost" id="toc-bcf-configure-apache-vhost" class="nav-link" data-scroll-target="#bcf-configure-apache-vhost"><span class="header-section-number">4.6.7</span> 7) Configure Apache (test HTTPS redirect)</a></li>
   </ul></li>
   <li><a href="#ngs-vm-parallel-install-next-to-perl-system" id="toc-ngs-vm-parallel-install-next-to-perl-system" class="nav-link" data-scroll-target="#ngs-vm-parallel-install-next-to-perl-system"><span class="header-section-number">4.7</span> ngs-vm: parallel install next to perl system</a>
   <ul class="collapse">
   <li><a href="#keep-legacy-system-on-443" id="toc-keep-legacy-system-on-443" class="nav-link" data-scroll-target="#keep-legacy-system-on-443"><span class="header-section-number">4.7.1</span> 1) Keep legacy system on <code>:443</code></a></li>
-  <li><a href="#add-a-parallel-shiny-vhost-on-8443-or-1234" id="toc-add-a-parallel-shiny-vhost-on-8443-or-1234" class="nav-link" data-scroll-target="#add-a-parallel-shiny-vhost-on-8443-or-1234"><span class="header-section-number">4.7.2</span> 2) Add a parallel Shiny vhost on <code>:8443</code> (or <code>:1234</code>)</a></li>
+  <li><a href="#ngs-parallel-shiny-vhost" id="toc-ngs-parallel-shiny-vhost" class="nav-link" data-scroll-target="#ngs-parallel-shiny-vhost"><span class="header-section-number">4.7.2</span> 2) Add a parallel Shiny vhost on <code>:8443</code> (or <code>:1234</code>)</a></li>
   <li><a href="#validate-parallel-access" id="toc-validate-parallel-access" class="nav-link" data-scroll-target="#validate-parallel-access"><span class="header-section-number">4.7.3</span> 3) Validate parallel access</a></li>
   </ul></li>
   <li><a href="#legacy-data-migration-perl-vm-shiny-vm" id="toc-legacy-data-migration-perl-vm-shiny-vm" class="nav-link" data-scroll-target="#legacy-data-migration-perl-vm-shiny-vm"><span class="header-section-number">4.8</span> Legacy data migration (perl-VM → shiny-VM)</a></li>
@@ -312,8 +312,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bash</span> /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/check_requirements.sh <span class="at">--install</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Manual steps still required after package install:</p>
 <ul>
-<li>Install Shiny Server from the <code>.deb</code> package.</li>
-<li>Configure Apache vhost, LDAP, and systemd environment.</li>
+<li>Install Shiny Server from the <code>.deb</code> package (see <a href="#bcf-install-shiny-server">bcf-vm Step 2</a>).</li>
+<li>Configure Apache vhost, LDAP, and systemd environment (see <a href="#bcf-configure-ldap-systemd">bcf-vm Step 6</a>, <a href="#bcf-configure-apache-vhost">bcf-vm Step 7</a>, and <a href="#ngs-parallel-shiny-vhost">ngs-vm Step 2</a>).</li>
 </ul>
 </section>
 <section id="github-connection-on-a-fresh-vm" class="level2" data-number="4.5">
@@ -337,8 +337,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt-get install <span class="at">-y</span> git curl rsync apache2 apache2-utils openssl sqlite3 ldap-utils <span class="dt">\</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  build-essential libcurl4-openssl-dev libssl-dev libxml2-dev r-base</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="install-shiny-server" class="level3" data-number="4.6.2">
-<h3 data-number="4.6.2" class="anchored" data-anchor-id="install-shiny-server"><span class="header-section-number">4.6.2</span> 2) Install Shiny Server</h3>
+<section id="bcf-install-shiny-server" class="level3" data-number="4.6.2">
+<h3 data-number="4.6.2" class="anchored" data-anchor-id="bcf-install-shiny-server"><span class="header-section-number">4.6.2</span> 2) Install Shiny Server</h3>
 <p>Copy the <code>.deb</code> to the VM and install it:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt-get install <span class="at">-y</span> gdebi-core</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> gdebi shiny-server-1.5.23.1030-amd64.deb</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -363,8 +363,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /srv/shiny-server/sequencing-app</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny Rscript setup_database.R</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="configure-ldap-mode-systemd-override" class="level3" data-number="4.6.6">
-<h3 data-number="4.6.6" class="anchored" data-anchor-id="configure-ldap-mode-systemd-override"><span class="header-section-number">4.6.6</span> 6) Configure LDAP mode (systemd override)</h3>
+<section id="bcf-configure-ldap-systemd" class="level3" data-number="4.6.6">
+<h3 data-number="4.6.6" class="anchored" data-anchor-id="bcf-configure-ldap-systemd"><span class="header-section-number">4.6.6</span> 6) Configure LDAP mode (systemd override)</h3>
 <div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl edit shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="sourceCode" id="cb10"><pre class="sourceCode ini code-with-copy"><code class="sourceCode ini"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[Service]</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">AUTH_MODE=ldap</span></span>
@@ -372,8 +372,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="configure-apache-test-https-redirect" class="level3" data-number="4.6.7">
-<h3 data-number="4.6.7" class="anchored" data-anchor-id="configure-apache-test-https-redirect"><span class="header-section-number">4.6.7</span> 7) Configure Apache (test HTTPS redirect)</h3>
+<section id="bcf-configure-apache-vhost" class="level3" data-number="4.6.7">
+<h3 data-number="4.6.7" class="anchored" data-anchor-id="bcf-configure-apache-vhost"><span class="header-section-number">4.6.7</span> 7) Configure Apache (test HTTPS redirect)</h3>
 <p>Create a vhost that redirects <code>:80</code> to <code>:443</code> and proxies to Shiny:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode apache code-with-copy"><code class="sourceCode apache"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;VirtualHost</span><span class="at"> *:80</span><span class="fu">&gt;</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    ServerName<span class="st"> bcf-vm</span></span>
@@ -402,8 +402,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 data-number="4.7.1" class="anchored" data-anchor-id="keep-legacy-system-on-443"><span class="header-section-number">4.7.1</span> 1) Keep legacy system on <code>:443</code></h3>
 <p>Leave the current <code>ngs-vm_01-main.conf</code> active for the Perl system.</p>
 </section>
-<section id="add-a-parallel-shiny-vhost-on-8443-or-1234" class="level3" data-number="4.7.2">
-<h3 data-number="4.7.2" class="anchored" data-anchor-id="add-a-parallel-shiny-vhost-on-8443-or-1234"><span class="header-section-number">4.7.2</span> 2) Add a parallel Shiny vhost on <code>:8443</code> (or <code>:1234</code>)</h3>
+<section id="ngs-parallel-shiny-vhost" class="level3" data-number="4.7.2">
+<h3 data-number="4.7.2" class="anchored" data-anchor-id="ngs-parallel-shiny-vhost"><span class="header-section-number">4.7.2</span> 2) Add a parallel Shiny vhost on <code>:8443</code> (or <code>:1234</code>)</h3>
 <p>Create a new vhost file, for example <code>ngs-vm-shiny.conf</code>:</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode apache code-with-copy"><code class="sourceCode apache"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;VirtualHost</span><span class="at"> *:8443</span><span class="fu">&gt;</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    ServerName<span class="st"> ngs-vm.biochem.mpg.de</span></span>

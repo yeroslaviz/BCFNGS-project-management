@@ -53,8 +53,8 @@ bash /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/check_
 
 Manual steps still required after package install:
 
-- Install Shiny Server from the `.deb` package.
-- Configure Apache vhost, LDAP, and systemd environment.
+- Install Shiny Server from the `.deb` package (see [bcf-vm Step 2](#bcf-install-shiny-server)).
+- Configure Apache vhost, LDAP, and systemd environment (see [bcf-vm Step 6](#bcf-configure-ldap-systemd), [bcf-vm Step 7](#bcf-configure-apache-vhost), and [ngs-vm Step 2](#ngs-parallel-shiny-vhost)).
 
 ## GitHub connection on a fresh VM
 
@@ -84,7 +84,7 @@ sudo apt-get install -y git curl rsync apache2 apache2-utils openssl sqlite3 lda
   build-essential libcurl4-openssl-dev libssl-dev libxml2-dev r-base
 ```
 
-### 2) Install Shiny Server
+### 2) Install Shiny Server {#bcf-install-shiny-server}
 
 Copy the `.deb` to the VM and install it:
 
@@ -119,7 +119,7 @@ cd /srv/shiny-server/sequencing-app
 sudo -u shiny Rscript setup_database.R
 ```
 
-### 6) Configure LDAP mode (systemd override)
+### 6) Configure LDAP mode (systemd override) {#bcf-configure-ldap-systemd}
 
 ```bash
 sudo systemctl edit shiny-server
@@ -136,7 +136,7 @@ Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
 sudo systemctl restart shiny-server
 ```
 
-### 7) Configure Apache (test HTTPS redirect)
+### 7) Configure Apache (test HTTPS redirect) {#bcf-configure-apache-vhost}
 
 Create a vhost that redirects `:80` to `:443` and proxies to Shiny:
 
@@ -172,7 +172,7 @@ sudo systemctl restart apache2
 
 Leave the current `ngs-vm_01-main.conf` active for the Perl system.
 
-### 2) Add a parallel Shiny vhost on `:8443` (or `:1234`)
+### 2) Add a parallel Shiny vhost on `:8443` (or `:1234`) {#ngs-parallel-shiny-vhost}
 
 Create a new vhost file, for example `ngs-vm-shiny.conf`:
 

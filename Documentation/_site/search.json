@@ -102,7 +102,7 @@
     "href": "chapters/vm-installation.html#prerequisites-both-vms",
     "title": "4  VM Installation Guide (ngs-vm & bcf-vm)",
     "section": "4.4 Prerequisites (both VMs)",
-    "text": "4.4 Prerequisites (both VMs)\nRun the requirement check script:\nbash /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/check_requirements.sh\nInstall missing apt packages:\nbash /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/check_requirements.sh --install\nManual steps still required after package install:\n\nInstall Shiny Server from the .deb package.\nConfigure Apache vhost, LDAP, and systemd environment."
+    "text": "4.4 Prerequisites (both VMs)\nRun the requirement check script:\nbash /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/check_requirements.sh\nInstall missing apt packages:\nbash /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/check_requirements.sh --install\nManual steps still required after package install:\n\nInstall Shiny Server from the .deb package (see bcf-vm Step 2).\nConfigure Apache vhost, LDAP, and systemd environment (see bcf-vm Step 6, bcf-vm Step 7, and ngs-vm Step 2)."
   },
   {
     "objectID": "chapters/vm-installation.html#github-connection-on-a-fresh-vm",
