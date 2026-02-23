@@ -8,7 +8,9 @@
 # backup files and folders
 .backup/
 backup/
-mpiseq2/
+# Keep legacy tree ignored, but track the active Apache template.
+mpiseq2/*
+!mpiseq2/ngs-vm_01-main.conf
 etc/
 export/
 
