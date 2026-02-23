@@ -255,7 +255,7 @@ ldapsearch -x -H ldaps://ldapserv1.biochem.mpg.de:636 \
 Copy the repo Apache config and enable required modules:
 
 ```bash
-sudo cp /home/<your-user>/BCFNGS-project-management/01-main.conf /etc/apache2/sites-enabled/01-main.conf
+sudo cp /home/<your-user>/BCFNGS-project-management/mpiseq2/ngs-vm_01-main.conf /etc/apache2/sites-enabled/01-main.conf
 sudo a2enmod proxy proxy_http proxy_wstunnel rewrite ssl headers ldap authnz_ldap
 sudo apache2ctl -t
 sudo systemctl restart apache2

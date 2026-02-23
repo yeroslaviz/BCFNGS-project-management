@@ -17,7 +17,7 @@ execute:
 
 ## LDAP
 
-The app uses Apache LDAP authentication in front of Shiny. The Apache config template is in `01-main.conf`.
+The app uses Apache LDAP authentication in front of Shiny. The Apache config template in this repo is `mpiseq2/ngs-vm_01-main.conf`.
 
 Enable required Apache modules:
 
@@ -209,7 +209,7 @@ If multiple cost centers exist for the same PI, the first match is selected by d
 
 - `sequencing-app/app.R`
 - `scripts/deploy.sh`
-- `01-main.conf`
+- `mpiseq2/ngs-vm_01-main.conf`
 - `Server_preparations.qmd`
 - `.gitignore`
 - `sequencing-app/budget_holders.csv`
@@ -278,7 +278,7 @@ git pull
 
 ### LDAP on VM (when ready)
 
-1. Update Apache config (template in `01-main.conf`).
+1. Update Apache config (template in `mpiseq2/ngs-vm_01-main.conf`).
 2. Enable modules:
    ```bash
    sudo a2enmod ldap authnz_ldap headers

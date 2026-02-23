@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Documentation - 6&nbsp; LDAP Authentication</title>
+<title>Documentation - 7&nbsp; LDAP Authentication</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -113,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/ldap-authentication.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">LDAP Authentication</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/ldap-authentication.html"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">LDAP Authentication</span></a></li></ol></nav>
         <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
@@ -158,44 +158,50 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../chapters/vm-installation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">VM Installation Guide (ngs-vm &amp; bcf-vm)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../chapters/git-github.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Git &amp; GitHub</span></span></a>
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Git &amp; GitHub</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/deploy-operations.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Deploy &amp; Operations</span></span></a>
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Deploy &amp; Operations</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/ldap-authentication.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">LDAP Authentication</span></span></a>
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">LDAP Authentication</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/sql-handling.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">SQL Handling</span></span></a>
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">SQL Handling</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/troubleshooting.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">VM Troubleshooting Guide</span></span></a>
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">VM Troubleshooting Guide</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/change-log.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Change Log</span></span></a>
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Change Log</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/legacy-archive.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Legacy / Archive</span></span></a>
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Legacy / Archive</span></span></a>
   </div>
 </li>
     </ul>
@@ -208,34 +214,34 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#ldap-authentication" id="toc-ldap-authentication" class="nav-link active" data-scroll-target="#ldap-authentication"><span class="header-section-number">6.1</span> LDAP Authentication</a>
+  <li><a href="#ldap-authentication" id="toc-ldap-authentication" class="nav-link active" data-scroll-target="#ldap-authentication"><span class="header-section-number">7.1</span> LDAP Authentication</a>
   <ul class="collapse">
-  <li><a href="#contents" id="toc-contents" class="nav-link" data-scroll-target="#contents"><span class="header-section-number">6.1.1</span> Contents</a></li>
+  <li><a href="#contents" id="toc-contents" class="nav-link" data-scroll-target="#contents"><span class="header-section-number">7.1.1</span> Contents</a></li>
   </ul></li>
-  <li><a href="#ldap-configuration" id="toc-ldap-configuration" class="nav-link" data-scroll-target="#ldap-configuration"><span class="header-section-number">6.2</span> LDAP Configuration</a></li>
-  <li><a href="#ldap" id="toc-ldap" class="nav-link" data-scroll-target="#ldap"><span class="header-section-number">6.3</span> LDAP</a>
+  <li><a href="#ldap-configuration" id="toc-ldap-configuration" class="nav-link" data-scroll-target="#ldap-configuration"><span class="header-section-number">7.2</span> LDAP Configuration</a></li>
+  <li><a href="#ldap" id="toc-ldap" class="nav-link" data-scroll-target="#ldap"><span class="header-section-number">7.3</span> LDAP</a>
   <ul class="collapse">
-  <li><a href="#admin-access-in-ldap-mode-vm" id="toc-admin-access-in-ldap-mode-vm" class="nav-link" data-scroll-target="#admin-access-in-ldap-mode-vm"><span class="header-section-number">6.3.1</span> Admin access in LDAP mode (VM)</a></li>
-  <li><a href="#switch-between-ldap-and-local-modes-vm" id="toc-switch-between-ldap-and-local-modes-vm" class="nav-link" data-scroll-target="#switch-between-ldap-and-local-modes-vm"><span class="header-section-number">6.3.2</span> Switch between LDAP and local modes (VM)</a></li>
-  <li><a href="#local-dev-testing-ldap-mode" id="toc-local-dev-testing-ldap-mode" class="nav-link" data-scroll-target="#local-dev-testing-ldap-mode"><span class="header-section-number">6.3.3</span> Local dev testing (LDAP mode)</a></li>
-  <li><a href="#how-i-run-the-app-locally-my-notes" id="toc-how-i-run-the-app-locally-my-notes" class="nav-link" data-scroll-target="#how-i-run-the-app-locally-my-notes"><span class="header-section-number">6.3.4</span> How I run the app locally (my notes)</a></li>
-  <li><a href="#budget-holder-auto-assignment-first-login" id="toc-budget-holder-auto-assignment-first-login" class="nav-link" data-scroll-target="#budget-holder-auto-assignment-first-login"><span class="header-section-number">6.3.5</span> Budget holder auto-assignment (first login)</a></li>
+  <li><a href="#admin-access-in-ldap-mode-vm" id="toc-admin-access-in-ldap-mode-vm" class="nav-link" data-scroll-target="#admin-access-in-ldap-mode-vm"><span class="header-section-number">7.3.1</span> Admin access in LDAP mode (VM)</a></li>
+  <li><a href="#switch-between-ldap-and-local-modes-vm" id="toc-switch-between-ldap-and-local-modes-vm" class="nav-link" data-scroll-target="#switch-between-ldap-and-local-modes-vm"><span class="header-section-number">7.3.2</span> Switch between LDAP and local modes (VM)</a></li>
+  <li><a href="#local-dev-testing-ldap-mode" id="toc-local-dev-testing-ldap-mode" class="nav-link" data-scroll-target="#local-dev-testing-ldap-mode"><span class="header-section-number">7.3.3</span> Local dev testing (LDAP mode)</a></li>
+  <li><a href="#how-i-run-the-app-locally-my-notes" id="toc-how-i-run-the-app-locally-my-notes" class="nav-link" data-scroll-target="#how-i-run-the-app-locally-my-notes"><span class="header-section-number">7.3.4</span> How I run the app locally (my notes)</a></li>
+  <li><a href="#budget-holder-auto-assignment-first-login" id="toc-budget-holder-auto-assignment-first-login" class="nav-link" data-scroll-target="#budget-holder-auto-assignment-first-login"><span class="header-section-number">7.3.5</span> Budget holder auto-assignment (first login)</a></li>
   </ul></li>
-  <li><a href="#ldap-summary-2026-02-06" id="toc-ldap-summary-2026-02-06" class="nav-link" data-scroll-target="#ldap-summary-2026-02-06"><span class="header-section-number">6.4</span> LDAP Summary (2026-02-06)</a></li>
-  <li><a href="#ldap-project-management-app-summary-2026-02-06" id="toc-ldap-project-management-app-summary-2026-02-06" class="nav-link" data-scroll-target="#ldap-project-management-app-summary-2026-02-06"><span class="header-section-number">6.5</span> LDAP + Project Management App Summary (2026-02-06)</a>
+  <li><a href="#ldap-summary-2026-02-06" id="toc-ldap-summary-2026-02-06" class="nav-link" data-scroll-target="#ldap-summary-2026-02-06"><span class="header-section-number">7.4</span> LDAP Summary (2026-02-06)</a></li>
+  <li><a href="#ldap-project-management-app-summary-2026-02-06" id="toc-ldap-project-management-app-summary-2026-02-06" class="nav-link" data-scroll-target="#ldap-project-management-app-summary-2026-02-06"><span class="header-section-number">7.5</span> LDAP + Project Management App Summary (2026-02-06)</a>
   <ul class="collapse">
-  <li><a href="#what-changed" id="toc-what-changed" class="nav-link" data-scroll-target="#what-changed"><span class="header-section-number">6.5.1</span> What Changed</a></li>
-  <li><a href="#files-updated" id="toc-files-updated" class="nav-link" data-scroll-target="#files-updated"><span class="header-section-number">6.5.2</span> Files Updated</a></li>
-  <li><a href="#local-run-local-mode" id="toc-local-run-local-mode" class="nav-link" data-scroll-target="#local-run-local-mode"><span class="header-section-number">6.5.3</span> Local Run: Local Mode</a></li>
-  <li><a href="#local-run-ldap-mode-simulate-production" id="toc-local-run-ldap-mode-simulate-production" class="nav-link" data-scroll-target="#local-run-ldap-mode-simulate-production"><span class="header-section-number">6.5.4</span> Local Run: LDAP Mode (simulate production)</a></li>
-  <li><a href="#clear-dev-environment-variables" id="toc-clear-dev-environment-variables" class="nav-link" data-scroll-target="#clear-dev-environment-variables"><span class="header-section-number">6.5.5</span> Clear Dev Environment Variables</a></li>
-  <li><a href="#sql-handling-moved" id="toc-sql-handling-moved" class="nav-link" data-scroll-target="#sql-handling-moved"><span class="header-section-number">6.5.6</span> SQL handling (moved)</a></li>
-  <li><a href="#budget-holder-behavior" id="toc-budget-holder-behavior" class="nav-link" data-scroll-target="#budget-holder-behavior"><span class="header-section-number">6.5.7</span> Budget Holder Behavior</a></li>
-  <li><a href="#deploy-vm" id="toc-deploy-vm" class="nav-link" data-scroll-target="#deploy-vm"><span class="header-section-number">6.5.8</span> Deploy (VM)</a></li>
-  <li><a href="#ldap-on-vm-when-ready" id="toc-ldap-on-vm-when-ready" class="nav-link" data-scroll-target="#ldap-on-vm-when-ready"><span class="header-section-number">6.5.9</span> LDAP on VM (when ready)</a></li>
-  <li><a href="#switching-modes-on-vm" id="toc-switching-modes-on-vm" class="nav-link" data-scroll-target="#switching-modes-on-vm"><span class="header-section-number">6.5.10</span> Switching Modes on VM</a></li>
-  <li><a href="#why-db-files-are-ignored-moved" id="toc-why-db-files-are-ignored-moved" class="nav-link" data-scroll-target="#why-db-files-are-ignored-moved"><span class="header-section-number">6.5.11</span> Why DB Files Are Ignored (moved)</a></li>
-  <li><a href="#tools-needed" id="toc-tools-needed" class="nav-link" data-scroll-target="#tools-needed"><span class="header-section-number">6.5.12</span> Tools Needed</a></li>
+  <li><a href="#what-changed" id="toc-what-changed" class="nav-link" data-scroll-target="#what-changed"><span class="header-section-number">7.5.1</span> What Changed</a></li>
+  <li><a href="#files-updated" id="toc-files-updated" class="nav-link" data-scroll-target="#files-updated"><span class="header-section-number">7.5.2</span> Files Updated</a></li>
+  <li><a href="#local-run-local-mode" id="toc-local-run-local-mode" class="nav-link" data-scroll-target="#local-run-local-mode"><span class="header-section-number">7.5.3</span> Local Run: Local Mode</a></li>
+  <li><a href="#local-run-ldap-mode-simulate-production" id="toc-local-run-ldap-mode-simulate-production" class="nav-link" data-scroll-target="#local-run-ldap-mode-simulate-production"><span class="header-section-number">7.5.4</span> Local Run: LDAP Mode (simulate production)</a></li>
+  <li><a href="#clear-dev-environment-variables" id="toc-clear-dev-environment-variables" class="nav-link" data-scroll-target="#clear-dev-environment-variables"><span class="header-section-number">7.5.5</span> Clear Dev Environment Variables</a></li>
+  <li><a href="#sql-handling-moved" id="toc-sql-handling-moved" class="nav-link" data-scroll-target="#sql-handling-moved"><span class="header-section-number">7.5.6</span> SQL handling (moved)</a></li>
+  <li><a href="#budget-holder-behavior" id="toc-budget-holder-behavior" class="nav-link" data-scroll-target="#budget-holder-behavior"><span class="header-section-number">7.5.7</span> Budget Holder Behavior</a></li>
+  <li><a href="#deploy-vm" id="toc-deploy-vm" class="nav-link" data-scroll-target="#deploy-vm"><span class="header-section-number">7.5.8</span> Deploy (VM)</a></li>
+  <li><a href="#ldap-on-vm-when-ready" id="toc-ldap-on-vm-when-ready" class="nav-link" data-scroll-target="#ldap-on-vm-when-ready"><span class="header-section-number">7.5.9</span> LDAP on VM (when ready)</a></li>
+  <li><a href="#switching-modes-on-vm" id="toc-switching-modes-on-vm" class="nav-link" data-scroll-target="#switching-modes-on-vm"><span class="header-section-number">7.5.10</span> Switching Modes on VM</a></li>
+  <li><a href="#why-db-files-are-ignored-moved" id="toc-why-db-files-are-ignored-moved" class="nav-link" data-scroll-target="#why-db-files-are-ignored-moved"><span class="header-section-number">7.5.11</span> Why DB Files Are Ignored (moved)</a></li>
+  <li><a href="#tools-needed" id="toc-tools-needed" class="nav-link" data-scroll-target="#tools-needed"><span class="header-section-number">7.5.12</span> Tools Needed</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -245,7 +251,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">LDAP Authentication</span></h1>
+<h1 class="title"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">LDAP Authentication</span></h1>
 </div>
 
 
@@ -261,22 +267,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<section id="ldap-authentication" class="level2" data-number="6.1">
-<h2 data-number="6.1" class="anchored" data-anchor-id="ldap-authentication"><span class="header-section-number">6.1</span> LDAP Authentication</h2>
-<section id="contents" class="level3" data-number="6.1.1">
-<h3 data-number="6.1.1" class="anchored" data-anchor-id="contents"><span class="header-section-number">6.1.1</span> Contents</h3>
+<section id="ldap-authentication" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="ldap-authentication"><span class="header-section-number">7.1</span> LDAP Authentication</h2>
+<section id="contents" class="level3" data-number="7.1.1">
+<h3 data-number="7.1.1" class="anchored" data-anchor-id="contents"><span class="header-section-number">7.1.1</span> Contents</h3>
 <ul>
 <li><a href="#ldap-configuration">LDAP Configuration</a></li>
 <li><a href="#ldap-summary-2026-02-06">LDAP Summary (2026-02-06)</a></li>
 </ul>
 </section>
 </section>
-<section id="ldap-configuration" class="level2" data-number="6.2">
-<h2 data-number="6.2" class="anchored" data-anchor-id="ldap-configuration"><span class="header-section-number">6.2</span> LDAP Configuration</h2>
+<section id="ldap-configuration" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="ldap-configuration"><span class="header-section-number">7.2</span> LDAP Configuration</h2>
 </section>
-<section id="ldap" class="level2" data-number="6.3">
-<h2 data-number="6.3" class="anchored" data-anchor-id="ldap"><span class="header-section-number">6.3</span> LDAP</h2>
-<p>The app uses Apache LDAP authentication in front of Shiny. The Apache config template is in <code>01-main.conf</code>.</p>
+<section id="ldap" class="level2" data-number="7.3">
+<h2 data-number="7.3" class="anchored" data-anchor-id="ldap"><span class="header-section-number">7.3</span> LDAP</h2>
+<p>The app uses Apache LDAP authentication in front of Shiny. The Apache config template in this repo is <code>mpiseq2/ngs-vm_01-main.conf</code>.</p>
 <p>Enable required Apache modules:</p>
 <pre class="{bash}"><code>sudo a2enmod ldap authnz_ldap headers
 sudo systemctl reload apache2</code></pre>
@@ -312,12 +318,12 @@ Warning
 <p>Restart services after config changes:</p>
 <pre class="{bash}"><code>sudo systemctl restart apache2
 sudo systemctl restart shiny-server</code></pre>
-<section id="admin-access-in-ldap-mode-vm" class="level3" data-number="6.3.1">
-<h3 data-number="6.3.1" class="anchored" data-anchor-id="admin-access-in-ldap-mode-vm"><span class="header-section-number">6.3.1</span> Admin access in LDAP mode (VM)</h3>
+<section id="admin-access-in-ldap-mode-vm" class="level3" data-number="7.3.1">
+<h3 data-number="7.3.1" class="anchored" data-anchor-id="admin-access-in-ldap-mode-vm"><span class="header-section-number">7.3.1</span> Admin access in LDAP mode (VM)</h3>
 <p>Moved to <strong><code>notes/sql-handling.qmd</code></strong> (admin promotion and verification commands).</p>
 </section>
-<section id="switch-between-ldap-and-local-modes-vm" class="level3" data-number="6.3.2">
-<h3 data-number="6.3.2" class="anchored" data-anchor-id="switch-between-ldap-and-local-modes-vm"><span class="header-section-number">6.3.2</span> Switch between LDAP and local modes (VM)</h3>
+<section id="switch-between-ldap-and-local-modes-vm" class="level3" data-number="7.3.2">
+<h3 data-number="7.3.2" class="anchored" data-anchor-id="switch-between-ldap-and-local-modes-vm"><span class="header-section-number">7.3.2</span> Switch between LDAP and local modes (VM)</h3>
 <p>I switch auth modes by changing the <code>AUTH_MODE</code> environment variable for the <code>shiny-server</code> service and restarting it.</p>
 <p>Open the systemd override:</p>
 <pre class="{bash}"><code>sudo systemctl edit shiny-server</code></pre>
@@ -334,8 +340,8 @@ sudo systemctl restart shiny-server</code></pre>
 sudo systemctl show shiny-server --property=Environment</code></pre>
 <p>If I switch back to LDAP, I also remove any dev‑only variables like <code>DEV_REMOTE_USER</code>.</p>
 </section>
-<section id="local-dev-testing-ldap-mode" class="level3" data-number="6.3.3">
-<h3 data-number="6.3.3" class="anchored" data-anchor-id="local-dev-testing-ldap-mode"><span class="header-section-number">6.3.3</span> Local dev testing (LDAP mode)</h3>
+<section id="local-dev-testing-ldap-mode" class="level3" data-number="7.3.3">
+<h3 data-number="7.3.3" class="anchored" data-anchor-id="local-dev-testing-ldap-mode"><span class="header-section-number">7.3.3</span> Local dev testing (LDAP mode)</h3>
 <p>To test LDAP integration on your local machine without affecting production, run the app in dev mode and simulate the authenticated user. If LDAP attribute lookup is needed, provide a bind DN/password (personal credentials are OK for <strong>local testing only</strong>).</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">APP_ENV =</span> <span class="st">"dev"</span>,</span>
@@ -355,8 +361,8 @@ sudo systemctl show shiny-server --property=Environment</code></pre>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_URI"</span>, <span class="st">"LDAP_BASE_DN"</span>, <span class="st">"LDAP_DEBUG"</span></span>
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="how-i-run-the-app-locally-my-notes" class="level3" data-number="6.3.4">
-<h3 data-number="6.3.4" class="anchored" data-anchor-id="how-i-run-the-app-locally-my-notes"><span class="header-section-number">6.3.4</span> How I run the app locally (my notes)</h3>
+<section id="how-i-run-the-app-locally-my-notes" class="level3" data-number="7.3.4">
+<h3 data-number="7.3.4" class="anchored" data-anchor-id="how-i-run-the-app-locally-my-notes"><span class="header-section-number">7.3.4</span> How I run the app locally (my notes)</h3>
 <p>When I want the <strong>normal local login</strong>, I run:</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">APP_ENV =</span> <span class="st">"dev"</span>, <span class="at">AUTH_MODE =</span> <span class="st">"local"</span>)</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -383,21 +389,21 @@ sudo systemctl show shiny-server --property=Environment</code></pre>
 </ul>
 <p><strong>Dev badge:</strong> In dev mode, I see a small badge in the app header that shows <code>DEV · LDAP</code> or <code>DEV · LOCAL</code>, so I always know which mode I’m running.</p>
 </section>
-<section id="budget-holder-auto-assignment-first-login" class="level3" data-number="6.3.5">
-<h3 data-number="6.3.5" class="anchored" data-anchor-id="budget-holder-auto-assignment-first-login"><span class="header-section-number">6.3.5</span> Budget holder auto-assignment (first login)</h3>
+<section id="budget-holder-auto-assignment-first-login" class="level3" data-number="7.3.5">
+<h3 data-number="7.3.5" class="anchored" data-anchor-id="budget-holder-auto-assignment-first-login"><span class="header-section-number">7.3.5</span> Budget holder auto-assignment (first login)</h3>
 <p>On first LDAP login, the app attempts to map the user to a budget holder based on the LDAP <code>ou</code> value.<br>
 If the <code>ou</code> contains a group key in parentheses (e.g., <code>(... Cox)</code>), the app matches that key against <code>budget_holders</code> and stores the <strong>full PI name</strong> (e.g., <code>Cox Juergen</code>) in <code>users.research_group</code>.</p>
 <p>When a new project is created, this <code>research_group</code> value is used to auto‑select the budget holder (and thus the cost center).<br>
 If multiple cost centers exist for the same PI, the first match is selected by default and can be adjusted during project creation.</p>
 </section>
 </section>
-<section id="ldap-summary-2026-02-06" class="level2" data-number="6.4">
-<h2 data-number="6.4" class="anchored" data-anchor-id="ldap-summary-2026-02-06"><span class="header-section-number">6.4</span> LDAP Summary (2026-02-06)</h2>
+<section id="ldap-summary-2026-02-06" class="level2" data-number="7.4">
+<h2 data-number="7.4" class="anchored" data-anchor-id="ldap-summary-2026-02-06"><span class="header-section-number">7.4</span> LDAP Summary (2026-02-06)</h2>
 </section>
-<section id="ldap-project-management-app-summary-2026-02-06" class="level2" data-number="6.5">
-<h2 data-number="6.5" class="anchored" data-anchor-id="ldap-project-management-app-summary-2026-02-06"><span class="header-section-number">6.5</span> LDAP + Project Management App Summary (2026-02-06)</h2>
-<section id="what-changed" class="level3" data-number="6.5.1">
-<h3 data-number="6.5.1" class="anchored" data-anchor-id="what-changed"><span class="header-section-number">6.5.1</span> What Changed</h3>
+<section id="ldap-project-management-app-summary-2026-02-06" class="level2" data-number="7.5">
+<h2 data-number="7.5" class="anchored" data-anchor-id="ldap-project-management-app-summary-2026-02-06"><span class="header-section-number">7.5</span> LDAP + Project Management App Summary (2026-02-06)</h2>
+<section id="what-changed" class="level3" data-number="7.5.1">
+<h3 data-number="7.5.1" class="anchored" data-anchor-id="what-changed"><span class="header-section-number">7.5.1</span> What Changed</h3>
 <ul>
 <li>Added LDAP login flow with auto-login via <code>X-Remote-User</code> and local dev simulation via <code>DEV_REMOTE_USER</code>.</li>
 <li>LDAP attribute lookup now works without a bind account (anonymous bind), and falls back to <code>ldapsearch</code> for older <code>ldapr</code> versions.</li>
@@ -410,25 +416,25 @@ If multiple cost centers exist for the same PI, the first match is selected by d
 <li><code>.gitignore</code> updated to ignore DB files and backup folders.</li>
 </ul>
 </section>
-<section id="files-updated" class="level3" data-number="6.5.2">
-<h3 data-number="6.5.2" class="anchored" data-anchor-id="files-updated"><span class="header-section-number">6.5.2</span> Files Updated</h3>
+<section id="files-updated" class="level3" data-number="7.5.2">
+<h3 data-number="7.5.2" class="anchored" data-anchor-id="files-updated"><span class="header-section-number">7.5.2</span> Files Updated</h3>
 <ul>
 <li><code>sequencing-app/app.R</code></li>
 <li><code>scripts/deploy.sh</code></li>
-<li><code>01-main.conf</code></li>
+<li><code>mpiseq2/ngs-vm_01-main.conf</code></li>
 <li><code>Server_preparations.qmd</code></li>
 <li><code>.gitignore</code></li>
 <li><code>sequencing-app/budget_holders.csv</code></li>
 </ul>
 </section>
-<section id="local-run-local-mode" class="level3" data-number="6.5.3">
-<h3 data-number="6.5.3" class="anchored" data-anchor-id="local-run-local-mode"><span class="header-section-number">6.5.3</span> Local Run: Local Mode</h3>
+<section id="local-run-local-mode" class="level3" data-number="7.5.3">
+<h3 data-number="7.5.3" class="anchored" data-anchor-id="local-run-local-mode"><span class="header-section-number">7.5.3</span> Local Run: Local Mode</h3>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">APP_ENV =</span> <span class="st">"dev"</span>, <span class="at">AUTH_MODE =</span> <span class="st">"local"</span>)</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong>Implications</strong> - Uses SQLite users/passwords. - Shows normal login form. - Works offline.</p>
 </section>
-<section id="local-run-ldap-mode-simulate-production" class="level3" data-number="6.5.4">
-<h3 data-number="6.5.4" class="anchored" data-anchor-id="local-run-ldap-mode-simulate-production"><span class="header-section-number">6.5.4</span> Local Run: LDAP Mode (simulate production)</h3>
+<section id="local-run-ldap-mode-simulate-production" class="level3" data-number="7.5.4">
+<h3 data-number="7.5.4" class="anchored" data-anchor-id="local-run-ldap-mode-simulate-production"><span class="header-section-number">7.5.4</span> Local Run: LDAP Mode (simulate production)</h3>
 <div class="sourceCode" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">APP_ENV =</span> <span class="st">"dev"</span>,</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">AUTH_MODE =</span> <span class="st">"ldap"</span>,</span>
@@ -439,20 +445,20 @@ If multiple cost centers exist for the same PI, the first match is selected by d
 <span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>shiny<span class="sc">::</span><span class="fu">runApp</span>(<span class="st">"sequencing-app"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong>Implications</strong> - Auto-login (no local password). - Pulls <code>mail</code>, <code>telephoneNumber</code>, and <code>ou</code> via LDAP. - Auto-creates user in SQLite if missing. - Matches production behavior.</p>
 </section>
-<section id="clear-dev-environment-variables" class="level3" data-number="6.5.5">
-<h3 data-number="6.5.5" class="anchored" data-anchor-id="clear-dev-environment-variables"><span class="header-section-number">6.5.5</span> Clear Dev Environment Variables</h3>
+<section id="clear-dev-environment-variables" class="level3" data-number="7.5.5">
+<h3 data-number="7.5.5" class="anchored" data-anchor-id="clear-dev-environment-variables"><span class="header-section-number">7.5.5</span> Clear Dev Environment Variables</h3>
 <div class="sourceCode" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.unsetenv</span>(<span class="fu">c</span>(</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"APP_ENV"</span>, <span class="st">"AUTH_MODE"</span>, <span class="st">"DEV_REMOTE_USER"</span>,</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_BIND_DN"</span>, <span class="st">"LDAP_BIND_PW"</span>,</span>
 <span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDAP_URI"</span>, <span class="st">"LDAP_BASE_DN"</span>, <span class="st">"LDAP_DEBUG"</span></span>
 <span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="sql-handling-moved" class="level3" data-number="6.5.6">
-<h3 data-number="6.5.6" class="anchored" data-anchor-id="sql-handling-moved"><span class="header-section-number">6.5.6</span> SQL handling (moved)</h3>
+<section id="sql-handling-moved" class="level3" data-number="7.5.6">
+<h3 data-number="7.5.6" class="anchored" data-anchor-id="sql-handling-moved"><span class="header-section-number">7.5.6</span> SQL handling (moved)</h3>
 <p>All SQL database commands and explanations were moved to <strong><code>notes/sql-handling.qmd</code></strong>.</p>
 </section>
-<section id="budget-holder-behavior" class="level3" data-number="6.5.7">
-<h3 data-number="6.5.7" class="anchored" data-anchor-id="budget-holder-behavior"><span class="header-section-number">6.5.7</span> Budget Holder Behavior</h3>
+<section id="budget-holder-behavior" class="level3" data-number="7.5.7">
+<h3 data-number="7.5.7" class="anchored" data-anchor-id="budget-holder-behavior"><span class="header-section-number">7.5.7</span> Budget Holder Behavior</h3>
 <ul>
 <li>On first LDAP login, the app maps LDAP <code>ou</code> to a PI name in <code>budget_holders</code>.</li>
 <li>If multiple cost centers exist for a PI, the app displays a notice.</li>
@@ -460,17 +466,17 @@ If multiple cost centers exist for the same PI, the first match is selected by d
 <li>“Other / not listed” allows users to enter a new PI and inserts into <code>budget_holders</code> automatically.</li>
 </ul>
 </section>
-<section id="deploy-vm" class="level3" data-number="6.5.8">
-<h3 data-number="6.5.8" class="anchored" data-anchor-id="deploy-vm"><span class="header-section-number">6.5.8</span> Deploy (VM)</h3>
+<section id="deploy-vm" class="level3" data-number="7.5.8">
+<h3 data-number="7.5.8" class="anchored" data-anchor-id="deploy-vm"><span class="header-section-number">7.5.8</span> Deploy (VM)</h3>
 <div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/yeroslaviz/BCFNGS-project-management</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> pull</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><code>scripts/deploy.sh</code> uses <code>rsync</code> and <strong>does not overwrite</strong> the SQLite DB.</p>
 </section>
-<section id="ldap-on-vm-when-ready" class="level3" data-number="6.5.9">
-<h3 data-number="6.5.9" class="anchored" data-anchor-id="ldap-on-vm-when-ready"><span class="header-section-number">6.5.9</span> LDAP on VM (when ready)</h3>
+<section id="ldap-on-vm-when-ready" class="level3" data-number="7.5.9">
+<h3 data-number="7.5.9" class="anchored" data-anchor-id="ldap-on-vm-when-ready"><span class="header-section-number">7.5.9</span> LDAP on VM (when ready)</h3>
 <ol type="1">
-<li><p>Update Apache config (template in <code>01-main.conf</code>).</p></li>
+<li><p>Update Apache config (template in <code>mpiseq2/ngs-vm_01-main.conf</code>).</p></li>
 <li><p>Enable modules:</p>
 <div class="sourceCode" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod ldap authnz_ldap headers</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl reload apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div></li>
@@ -487,8 +493,8 @@ If multiple cost centers exist for the same PI, the first match is selected by d
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div></li>
 </ol>
 </section>
-<section id="switching-modes-on-vm" class="level3" data-number="6.5.10">
-<h3 data-number="6.5.10" class="anchored" data-anchor-id="switching-modes-on-vm"><span class="header-section-number">6.5.10</span> Switching Modes on VM</h3>
+<section id="switching-modes-on-vm" class="level3" data-number="7.5.10">
+<h3 data-number="7.5.10" class="anchored" data-anchor-id="switching-modes-on-vm"><span class="header-section-number">7.5.10</span> Switching Modes on VM</h3>
 <div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl edit shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <ul>
 <li>LDAP mode: <code>Environment=AUTH_MODE=ldap</code></li>
@@ -497,12 +503,12 @@ If multiple cost centers exist for the same PI, the first match is selected by d
 <p>Restart:</p>
 <div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="why-db-files-are-ignored-moved" class="level3" data-number="6.5.11">
-<h3 data-number="6.5.11" class="anchored" data-anchor-id="why-db-files-are-ignored-moved"><span class="header-section-number">6.5.11</span> Why DB Files Are Ignored (moved)</h3>
+<section id="why-db-files-are-ignored-moved" class="level3" data-number="7.5.11">
+<h3 data-number="7.5.11" class="anchored" data-anchor-id="why-db-files-are-ignored-moved"><span class="header-section-number">7.5.11</span> Why DB Files Are Ignored (moved)</h3>
 <p>See <strong><code>notes/sql-handling.qmd</code></strong> for the full rationale and git commands.</p>
 </section>
-<section id="tools-needed" class="level3" data-number="6.5.12">
-<h3 data-number="6.5.12" class="anchored" data-anchor-id="tools-needed"><span class="header-section-number">6.5.12</span> Tools Needed</h3>
+<section id="tools-needed" class="level3" data-number="7.5.12">
+<h3 data-number="7.5.12" class="anchored" data-anchor-id="tools-needed"><span class="header-section-number">7.5.12</span> Tools Needed</h3>
 <ul>
 <li><code>ldapsearch</code> is required for LDAP attribute fallback:
 <ul>
@@ -863,12 +869,12 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
       <a href="../chapters/deploy-operations.html" class="pagination-link">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Deploy &amp; Operations</span></span>
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Deploy &amp; Operations</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
       <a href="../chapters/sql-handling.html" class="pagination-link">
-        <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">SQL Handling</span></span> <i class="bi bi-arrow-right-short"></i>
+        <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">SQL Handling</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Documentation - 5&nbsp; Deploy &amp; Operations</title>
+<title>Documentation - 6&nbsp; Deploy &amp; Operations</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -113,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/deploy-operations.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Deploy &amp; Operations</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/deploy-operations.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Deploy &amp; Operations</span></a></li></ol></nav>
         <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
@@ -158,44 +158,50 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../chapters/vm-installation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">VM Installation Guide (ngs-vm &amp; bcf-vm)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../chapters/git-github.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Git &amp; GitHub</span></span></a>
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Git &amp; GitHub</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/deploy-operations.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Deploy &amp; Operations</span></span></a>
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Deploy &amp; Operations</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/ldap-authentication.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">LDAP Authentication</span></span></a>
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">LDAP Authentication</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/sql-handling.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">SQL Handling</span></span></a>
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">SQL Handling</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/troubleshooting.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">VM Troubleshooting Guide</span></span></a>
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">VM Troubleshooting Guide</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/change-log.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Change Log</span></span></a>
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Change Log</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/legacy-archive.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Legacy / Archive</span></span></a>
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Legacy / Archive</span></span></a>
   </div>
 </li>
     </ul>
@@ -208,35 +214,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#deploy-operations" id="toc-deploy-operations" class="nav-link active" data-scroll-target="#deploy-operations"><span class="header-section-number">5.1</span> Deploy &amp; Operations</a>
+  <li><a href="#deploy-operations" id="toc-deploy-operations" class="nav-link active" data-scroll-target="#deploy-operations"><span class="header-section-number">6.1</span> Deploy &amp; Operations</a>
   <ul class="collapse">
-  <li><a href="#contents" id="toc-contents" class="nav-link" data-scroll-target="#contents"><span class="header-section-number">5.1.1</span> Contents</a></li>
+  <li><a href="#contents" id="toc-contents" class="nav-link" data-scroll-target="#contents"><span class="header-section-number">6.1.1</span> Contents</a></li>
   </ul></li>
-  <li><a href="#project-deletion-permissions" id="toc-project-deletion-permissions" class="nav-link" data-scroll-target="#project-deletion-permissions"><span class="header-section-number">5.2</span> Project Deletion Permissions</a>
+  <li><a href="#project-deletion-permissions" id="toc-project-deletion-permissions" class="nav-link" data-scroll-target="#project-deletion-permissions"><span class="header-section-number">6.2</span> Project Deletion Permissions</a>
   <ul class="collapse">
-  <li><a href="#re-enable-delete-for-non-admin-users" id="toc-re-enable-delete-for-non-admin-users" class="nav-link" data-scroll-target="#re-enable-delete-for-non-admin-users"><span class="header-section-number">5.2.1</span> Re-enable delete for non-admin users</a></li>
+  <li><a href="#re-enable-delete-for-non-admin-users" id="toc-re-enable-delete-for-non-admin-users" class="nav-link" data-scroll-target="#re-enable-delete-for-non-admin-users"><span class="header-section-number">6.2.1</span> Re-enable delete for non-admin users</a></li>
   </ul></li>
-  <li><a href="#deploy-workflow" id="toc-deploy-workflow" class="nav-link" data-scroll-target="#deploy-workflow"><span class="header-section-number">5.3</span> Deploy Workflow</a>
+  <li><a href="#deploy-workflow" id="toc-deploy-workflow" class="nav-link" data-scroll-target="#deploy-workflow"><span class="header-section-number">6.3</span> Deploy Workflow</a>
   <ul class="collapse">
-  <li><a href="#production-rollout-checklist-quick-reference" id="toc-production-rollout-checklist-quick-reference" class="nav-link" data-scroll-target="#production-rollout-checklist-quick-reference"><span class="header-section-number">5.3.1</span> Production rollout checklist (quick reference)</a></li>
-  <li><a href="#vm-rollout-howto-git-deploy-safety" id="toc-vm-rollout-howto-git-deploy-safety" class="nav-link" data-scroll-target="#vm-rollout-howto-git-deploy-safety"><span class="header-section-number">5.3.2</span> VM rollout HOW‑TO (Git + deploy + safety)</a></li>
+  <li><a href="#production-rollout-checklist-quick-reference" id="toc-production-rollout-checklist-quick-reference" class="nav-link" data-scroll-target="#production-rollout-checklist-quick-reference"><span class="header-section-number">6.3.1</span> Production rollout checklist (quick reference)</a></li>
+  <li><a href="#vm-rollout-howto-git-deploy-safety" id="toc-vm-rollout-howto-git-deploy-safety" class="nav-link" data-scroll-target="#vm-rollout-howto-git-deploy-safety"><span class="header-section-number">6.3.2</span> VM rollout HOW‑TO (Git + deploy + safety)</a></li>
   </ul></li>
-  <li><a href="#ldap-deploy-smoke-tests" id="toc-ldap-deploy-smoke-tests" class="nav-link" data-scroll-target="#ldap-deploy-smoke-tests"><span class="header-section-number">5.4</span> LDAP Deploy Smoke Tests</a>
+  <li><a href="#ldap-deploy-smoke-tests" id="toc-ldap-deploy-smoke-tests" class="nav-link" data-scroll-target="#ldap-deploy-smoke-tests"><span class="header-section-number">6.4</span> LDAP Deploy Smoke Tests</a>
   <ul class="collapse">
-  <li><a href="#step-1-deploy-with-built-in-smoke-tests" id="toc-step-1-deploy-with-built-in-smoke-tests" class="nav-link" data-scroll-target="#step-1-deploy-with-built-in-smoke-tests"><span class="header-section-number">5.4.1</span> Step 1: Deploy with built-in smoke tests</a></li>
+  <li><a href="#step-1-deploy-with-built-in-smoke-tests" id="toc-step-1-deploy-with-built-in-smoke-tests" class="nav-link" data-scroll-target="#step-1-deploy-with-built-in-smoke-tests"><span class="header-section-number">6.4.1</span> Step 1: Deploy with built-in smoke tests</a></li>
   </ul></li>
-  <li><a href="#backups-summary" id="toc-backups-summary" class="nav-link" data-scroll-target="#backups-summary"><span class="header-section-number">5.5</span> Backups (summary)</a>
+  <li><a href="#backups-summary" id="toc-backups-summary" class="nav-link" data-scroll-target="#backups-summary"><span class="header-section-number">6.5</span> Backups (summary)</a>
   <ul class="collapse">
-  <li><a href="#step-2-non-interactive-usage-optional" id="toc-step-2-non-interactive-usage-optional" class="nav-link" data-scroll-target="#step-2-non-interactive-usage-optional"><span class="header-section-number">5.5.1</span> Step 2: Non-interactive usage (optional)</a></li>
+  <li><a href="#step-2-non-interactive-usage-optional" id="toc-step-2-non-interactive-usage-optional" class="nav-link" data-scroll-target="#step-2-non-interactive-usage-optional"><span class="header-section-number">6.5.1</span> Step 2: Non-interactive usage (optional)</a></li>
   </ul></li>
-  <li><a href="#vhost-cutover-perlvm-shinyvm" id="toc-vhost-cutover-perlvm-shinyvm" class="nav-link" data-scroll-target="#vhost-cutover-perlvm-shinyvm"><span class="header-section-number">5.6</span> VHost cutover (perl‑VM → shiny‑VM)</a>
+  <li><a href="#vhost-cutover-perlvm-shinyvm" id="toc-vhost-cutover-perlvm-shinyvm" class="nav-link" data-scroll-target="#vhost-cutover-perlvm-shinyvm"><span class="header-section-number">6.6</span> VHost cutover (perl‑VM → shiny‑VM)</a>
   <ul class="collapse">
-  <li><a href="#step-1-prepare-two-vhosts" id="toc-step-1-prepare-two-vhosts" class="nav-link" data-scroll-target="#step-1-prepare-two-vhosts"><span class="header-section-number">5.6.1</span> Step 1: Prepare two vhosts</a></li>
-  <li><a href="#step-2-optional-redirect-the-old-hostname" id="toc-step-2-optional-redirect-the-old-hostname" class="nav-link" data-scroll-target="#step-2-optional-redirect-the-old-hostname"><span class="header-section-number">5.6.2</span> Step 2: Optional: redirect the old hostname</a></li>
-  <li><a href="#step-3-switch-vhosts-script" id="toc-step-3-switch-vhosts-script" class="nav-link" data-scroll-target="#step-3-switch-vhosts-script"><span class="header-section-number">5.6.3</span> Step 3: Switch vhosts (script)</a></li>
-  <li><a href="#step-4-rollback-if-needed" id="toc-step-4-rollback-if-needed" class="nav-link" data-scroll-target="#step-4-rollback-if-needed"><span class="header-section-number">5.6.4</span> Step 4: Rollback (if needed)</a></li>
-  <li><a href="#step-3-baseline-environment-checks" id="toc-step-3-baseline-environment-checks" class="nav-link" data-scroll-target="#step-3-baseline-environment-checks"><span class="header-section-number">5.6.5</span> Step 3: Baseline environment checks</a></li>
-  <li><a href="#step-4-manual-curl-validation-reference" id="toc-step-4-manual-curl-validation-reference" class="nav-link" data-scroll-target="#step-4-manual-curl-validation-reference"><span class="header-section-number">5.6.6</span> Step 4: Manual curl validation (reference)</a></li>
+  <li><a href="#step-1-prepare-two-vhosts" id="toc-step-1-prepare-two-vhosts" class="nav-link" data-scroll-target="#step-1-prepare-two-vhosts"><span class="header-section-number">6.6.1</span> Step 1: Prepare two vhosts</a></li>
+  <li><a href="#step-2-optional-redirect-the-old-hostname" id="toc-step-2-optional-redirect-the-old-hostname" class="nav-link" data-scroll-target="#step-2-optional-redirect-the-old-hostname"><span class="header-section-number">6.6.2</span> Step 2: Optional: redirect the old hostname</a></li>
+  <li><a href="#step-3-switch-vhosts-script" id="toc-step-3-switch-vhosts-script" class="nav-link" data-scroll-target="#step-3-switch-vhosts-script"><span class="header-section-number">6.6.3</span> Step 3: Switch vhosts (script)</a></li>
+  <li><a href="#step-4-rollback-if-needed" id="toc-step-4-rollback-if-needed" class="nav-link" data-scroll-target="#step-4-rollback-if-needed"><span class="header-section-number">6.6.4</span> Step 4: Rollback (if needed)</a></li>
+  <li><a href="#step-3-baseline-environment-checks" id="toc-step-3-baseline-environment-checks" class="nav-link" data-scroll-target="#step-3-baseline-environment-checks"><span class="header-section-number">6.6.5</span> Step 3: Baseline environment checks</a></li>
+  <li><a href="#step-4-manual-curl-validation-reference" id="toc-step-4-manual-curl-validation-reference" class="nav-link" data-scroll-target="#step-4-manual-curl-validation-reference"><span class="header-section-number">6.6.6</span> Step 4: Manual curl validation (reference)</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -246,7 +252,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Deploy &amp; Operations</span></h1>
+<h1 class="title"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Deploy &amp; Operations</span></h1>
 </div>
 
 
@@ -262,10 +268,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<section id="deploy-operations" class="level2" data-number="5.1">
-<h2 data-number="5.1" class="anchored" data-anchor-id="deploy-operations"><span class="header-section-number">5.1</span> Deploy &amp; Operations</h2>
-<section id="contents" class="level3" data-number="5.1.1">
-<h3 data-number="5.1.1" class="anchored" data-anchor-id="contents"><span class="header-section-number">5.1.1</span> Contents</h3>
+<section id="deploy-operations" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="deploy-operations"><span class="header-section-number">6.1</span> Deploy &amp; Operations</h2>
+<section id="contents" class="level3" data-number="6.1.1">
+<h3 data-number="6.1.1" class="anchored" data-anchor-id="contents"><span class="header-section-number">6.1.1</span> Contents</h3>
 <ul>
 <li><a href="#project-deletion-permissions">Project Deletion Permissions</a></li>
 <li><a href="#deploy-workflow">Deploy Workflow</a></li>
@@ -275,16 +281,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ul>
 </section>
 </section>
-<section id="project-deletion-permissions" class="level2" data-number="5.2">
-<h2 data-number="5.2" class="anchored" data-anchor-id="project-deletion-permissions"><span class="header-section-number">5.2</span> Project Deletion Permissions</h2>
+<section id="project-deletion-permissions" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="project-deletion-permissions"><span class="header-section-number">6.2</span> Project Deletion Permissions</h2>
 <p>Deletion is <strong>admin-only</strong>:</p>
 <ul>
 <li>The Delete button is only shown when <code>user$is_admin</code> is true.</li>
 <li>The backend also enforces admin-only deletion.</li>
 <li>A delete performs a hard remove from the SQL DB: <code>DELETE FROM projects WHERE id = ?</code>.</li>
 </ul>
-<section id="re-enable-delete-for-non-admin-users" class="level3" data-number="5.2.1">
-<h3 data-number="5.2.1" class="anchored" data-anchor-id="re-enable-delete-for-non-admin-users"><span class="header-section-number">5.2.1</span> Re-enable delete for non-admin users</h3>
+<section id="re-enable-delete-for-non-admin-users" class="level3" data-number="6.2.1">
+<h3 data-number="6.2.1" class="anchored" data-anchor-id="re-enable-delete-for-non-admin-users"><span class="header-section-number">6.2.1</span> Re-enable delete for non-admin users</h3>
 <p>In <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R</code>:</p>
 <ol type="1">
 <li>In <code>output$user_interface</code>, render the button unconditionally (remove the <code>if (user$is_admin)</code> guard around <code>delete_project_btn</code>).</li>
@@ -299,10 +305,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Rebuild/redeploy after changes.</p>
 </section>
 </section>
-<section id="deploy-workflow" class="level2" data-number="5.3">
-<h2 data-number="5.3" class="anchored" data-anchor-id="deploy-workflow"><span class="header-section-number">5.3</span> Deploy Workflow</h2>
-<section id="production-rollout-checklist-quick-reference" class="level3" data-number="5.3.1">
-<h3 data-number="5.3.1" class="anchored" data-anchor-id="production-rollout-checklist-quick-reference"><span class="header-section-number">5.3.1</span> Production rollout checklist (quick reference)</h3>
+<section id="deploy-workflow" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="deploy-workflow"><span class="header-section-number">6.3</span> Deploy Workflow</h2>
+<section id="production-rollout-checklist-quick-reference" class="level3" data-number="6.3.1">
+<h3 data-number="6.3.1" class="anchored" data-anchor-id="production-rollout-checklist-quick-reference"><span class="header-section-number">6.3.1</span> Production rollout checklist (quick reference)</h3>
 <p>This is the short checklist I use on production. Details for each step are below in the VM rollout HOW‑TO section.</p>
 <ol type="1">
 <li>Confirm GitHub access and pull latest code.</li>
@@ -340,11 +346,11 @@ curl -Ik -u USER https://ngs-testing-vm.biochem.mpg.de/sequencing-app/</code></p
 sudo systemctl restart shiny-server
 sudo systemctl restart apache2</code></pre>
 </section>
-<section id="vm-rollout-howto-git-deploy-safety" class="level3" data-number="5.3.2">
-<h3 data-number="5.3.2" class="anchored" data-anchor-id="vm-rollout-howto-git-deploy-safety"><span class="header-section-number">5.3.2</span> VM rollout HOW‑TO (Git + deploy + safety)</h3>
+<section id="vm-rollout-howto-git-deploy-safety" class="level3" data-number="6.3.2">
+<h3 data-number="6.3.2" class="anchored" data-anchor-id="vm-rollout-howto-git-deploy-safety"><span class="header-section-number">6.3.2</span> VM rollout HOW‑TO (Git + deploy + safety)</h3>
 <p>This is the repeatable checklist I use when rolling out to a VM (first <code>ngs-testing-vm</code>, then <code>ngs-vm</code>).</p>
-<section id="step-1-make-sure-github-access-works-on-the-vm" class="level4" data-number="5.3.2.1">
-<h4 data-number="5.3.2.1" class="anchored" data-anchor-id="step-1-make-sure-github-access-works-on-the-vm"><span class="header-section-number">5.3.2.1</span> Step 1: Make sure GitHub access works on the VM</h4>
+<section id="step-1-make-sure-github-access-works-on-the-vm" class="level4" data-number="6.3.2.1">
+<h4 data-number="6.3.2.1" class="anchored" data-anchor-id="step-1-make-sure-github-access-works-on-the-vm"><span class="header-section-number">6.3.2.1</span> Step 1: Make sure GitHub access works on the VM</h4>
 <p>Check which remote is set:</p>
 <pre class="{bash}"><code>git -C /home/yeroslaviz/BCFNGS-project-management remote -v</code></pre>
 <p>If the remote is SSH (<code>git@github.com:...</code>), verify SSH access:</p>
@@ -353,8 +359,8 @@ sudo systemctl restart apache2</code></pre>
 <pre class="{bash}"><code>cat ~/.ssh/id_ed25519.pub</code></pre>
 <p>Then add that key in GitHub: <code>Repo → Settings → Deploy keys → Add deploy key</code> (read‑only is enough for pull).</p>
 </section>
-<section id="step-2-pull-latest-code" class="level4" data-number="5.3.2.2">
-<h4 data-number="5.3.2.2" class="anchored" data-anchor-id="step-2-pull-latest-code"><span class="header-section-number">5.3.2.2</span> Step 2: Pull latest code</h4>
+<section id="step-2-pull-latest-code" class="level4" data-number="6.3.2.2">
+<h4 data-number="6.3.2.2" class="anchored" data-anchor-id="step-2-pull-latest-code"><span class="header-section-number">6.3.2.2</span> Step 2: Pull latest code</h4>
 <pre class="{bash}"><code>cd /home/yeroslaviz/BCFNGS-project-management
 git pull origin main</code></pre>
 <p>If Git says <strong>divergent branches</strong>, I set merge as the default and pull again:</p>
@@ -366,36 +372,36 @@ git commit -m "Stop tracking local SQLite DB on VM"
 git pull origin main</code></pre>
 <p>This does <strong>not</strong> delete the local DB file. It just removes it from Git so future pulls work.</p>
 </section>
-<section id="step-3-production-safety-backups-fast-rollback" class="level4" data-number="5.3.2.3">
-<h4 data-number="5.3.2.3" class="anchored" data-anchor-id="step-3-production-safety-backups-fast-rollback"><span class="header-section-number">5.3.2.3</span> Step 3: Production safety backups (fast rollback)</h4>
+<section id="step-3-production-safety-backups-fast-rollback" class="level4" data-number="6.3.2.3">
+<h4 data-number="6.3.2.3" class="anchored" data-anchor-id="step-3-production-safety-backups-fast-rollback"><span class="header-section-number">6.3.2.3</span> Step 3: Production safety backups (fast rollback)</h4>
 <pre class="{bash}"><code>sudo rsync -av /srv/shiny-server/sequencing-app/ /srv/shiny-server/sequencing-app.backup_$(date +%Y%m%d_%H%M)/
 cp /srv/shiny-server/sequencing-app/sequencing_projects.db \
   /srv/shiny-server/sequencing-app/sequencing_projects.db.backup_$(date +%Y%m%d_%H%M)
 sudo cp /etc/apache2/sites-enabled/01-main.conf \
   /etc/apache2/sites-enabled/01-main.conf.backup_$(date +%Y%m%d_%H%M)</code></pre>
 </section>
-<section id="step-4-deploy" class="level4" data-number="5.3.2.4">
-<h4 data-number="5.3.2.4" class="anchored" data-anchor-id="step-4-deploy"><span class="header-section-number">5.3.2.4</span> Step 4: Deploy</h4>
+<section id="step-4-deploy" class="level4" data-number="6.3.2.4">
+<h4 data-number="6.3.2.4" class="anchored" data-anchor-id="step-4-deploy"><span class="header-section-number">6.3.2.4</span> Step 4: Deploy</h4>
 <pre class="{bash}"><code>./scripts/deploy.sh</code></pre>
 </section>
-<section id="step-5-restart-and-smoketest" class="level4" data-number="5.3.2.5">
-<h4 data-number="5.3.2.5" class="anchored" data-anchor-id="step-5-restart-and-smoketest"><span class="header-section-number">5.3.2.5</span> Step 5: Restart and smoke‑test</h4>
+<section id="step-5-restart-and-smoketest" class="level4" data-number="6.3.2.5">
+<h4 data-number="6.3.2.5" class="anchored" data-anchor-id="step-5-restart-and-smoketest"><span class="header-section-number">6.3.2.5</span> Step 5: Restart and smoke‑test</h4>
 <pre class="{bash}"><code>sudo systemctl restart shiny-server
 sudo systemctl restart apache2</code></pre>
 <p>Then open the app URL and verify: - LDAP prompt appears - login works - app loads</p>
 </section>
-<section id="step-6-rollback-if-needed" class="level4" data-number="5.3.2.6">
-<h4 data-number="5.3.2.6" class="anchored" data-anchor-id="step-6-rollback-if-needed"><span class="header-section-number">5.3.2.6</span> Step 6: Rollback (if needed)</h4>
+<section id="step-6-rollback-if-needed" class="level4" data-number="6.3.2.6">
+<h4 data-number="6.3.2.6" class="anchored" data-anchor-id="step-6-rollback-if-needed"><span class="header-section-number">6.3.2.6</span> Step 6: Rollback (if needed)</h4>
 <pre class="{bash}"><code>sudo rsync -av --delete /srv/shiny-server/sequencing-app.backup_YYYYMMDD_HHMM/ /srv/shiny-server/sequencing-app/
 sudo systemctl restart shiny-server
 sudo systemctl restart apache2</code></pre>
 </section>
 </section>
 </section>
-<section id="ldap-deploy-smoke-tests" class="level2" data-number="5.4">
-<h2 data-number="5.4" class="anchored" data-anchor-id="ldap-deploy-smoke-tests"><span class="header-section-number">5.4</span> LDAP Deploy Smoke Tests</h2>
-<section id="step-1-deploy-with-built-in-smoke-tests" class="level3" data-number="5.4.1">
-<h3 data-number="5.4.1" class="anchored" data-anchor-id="step-1-deploy-with-built-in-smoke-tests"><span class="header-section-number">5.4.1</span> Step 1: Deploy with built-in smoke tests</h3>
+<section id="ldap-deploy-smoke-tests" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="ldap-deploy-smoke-tests"><span class="header-section-number">6.4</span> LDAP Deploy Smoke Tests</h2>
+<section id="step-1-deploy-with-built-in-smoke-tests" class="level3" data-number="6.4.1">
+<h3 data-number="6.4.1" class="anchored" data-anchor-id="step-1-deploy-with-built-in-smoke-tests"><span class="header-section-number">6.4.1</span> Step 1: Deploy with built-in smoke tests</h3>
 <p>Run on VM:</p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/BCFNGS-project-management</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -413,8 +419,8 @@ sudo systemctl restart apache2</code></pre>
 <p>It exits with non-zero status and prints remediation hints if any check fails.</p>
 </section>
 </section>
-<section id="backups-summary" class="level2" data-number="5.5">
-<h2 data-number="5.5" class="anchored" data-anchor-id="backups-summary"><span class="header-section-number">5.5</span> Backups (summary)</h2>
+<section id="backups-summary" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="backups-summary"><span class="header-section-number">6.5</span> Backups (summary)</h2>
 <p>This project currently has three backup mechanisms:</p>
 <ol type="1">
 <li>Manual <strong>pre-deploy rollback backups</strong> (recommended before any deploy/maintenance): copy the app folder, the SQLite DB, and the Apache vhost config with a timestamp. See “Production safety backups (fast rollback)” above.</li>
@@ -425,8 +431,8 @@ sudo systemctl restart apache2</code></pre>
 <ul>
 <li><code>scripts/deploy.sh</code> syncs app code only. If you changed Apache config (<code>01-main.conf</code>), apply/restart Apache separately, then run the curl checks in section 4.</li>
 </ul>
-<section id="step-2-non-interactive-usage-optional" class="level3" data-number="5.5.1">
-<h3 data-number="5.5.1" class="anchored" data-anchor-id="step-2-non-interactive-usage-optional"><span class="header-section-number">5.5.1</span> Step 2: Non-interactive usage (optional)</h3>
+<section id="step-2-non-interactive-usage-optional" class="level3" data-number="6.5.1">
+<h3 data-number="6.5.1" class="anchored" data-anchor-id="step-2-non-interactive-usage-optional"><span class="header-section-number">6.5.1</span> Step 2: Non-interactive usage (optional)</h3>
 <p>If you do not want password prompts:</p>
 <div class="sourceCode" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="va">LDAP_TEST_USER</span><span class="op">=</span><span class="st">"yeroslaviz-test"</span> <span class="va">LDAP_TEST_PASSWORD</span><span class="op">=</span><span class="st">"YOUR_PASSWORD"</span> <span class="ex">./scripts/deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Skip smoke tests only when needed:</p>
@@ -435,24 +441,24 @@ sudo systemctl restart apache2</code></pre>
 <div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="va">PUBLIC_BASE_URL</span><span class="op">=</span><span class="st">"https://ngs-testing-vm.biochem.mpg.de"</span> <span class="ex">./scripts/deploy.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 </section>
-<section id="vhost-cutover-perlvm-shinyvm" class="level2" data-number="5.6">
-<h2 data-number="5.6" class="anchored" data-anchor-id="vhost-cutover-perlvm-shinyvm"><span class="header-section-number">5.6</span> VHost cutover (perl‑VM → shiny‑VM)</h2>
+<section id="vhost-cutover-perlvm-shinyvm" class="level2" data-number="6.6">
+<h2 data-number="6.6" class="anchored" data-anchor-id="vhost-cutover-perlvm-shinyvm"><span class="header-section-number">6.6</span> VHost cutover (perl‑VM → shiny‑VM)</h2>
 <p>This is the <strong>separate workflow</strong> for switching Apache from the perl‑VM app to the shiny‑VM app. Do <strong>not</strong> run this until shiny‑VM is fully validated.</p>
-<section id="step-1-prepare-two-vhosts" class="level3" data-number="5.6.1">
-<h3 data-number="5.6.1" class="anchored" data-anchor-id="step-1-prepare-two-vhosts"><span class="header-section-number">5.6.1</span> Step 1: Prepare two vhosts</h3>
+<section id="step-1-prepare-two-vhosts" class="level3" data-number="6.6.1">
+<h3 data-number="6.6.1" class="anchored" data-anchor-id="step-1-prepare-two-vhosts"><span class="header-section-number">6.6.1</span> Step 1: Prepare two vhosts</h3>
 <ul>
 <li><strong>perl vhost</strong> (legacy): <code>ngs-vm.biochem.mpg.de</code></li>
 <li><strong>shiny vhost</strong> (new): <code>ngs-vm-shiny.biochem.mpg.de</code></li>
 </ul>
 <p>Keep both configs on disk so you can roll back quickly. If the shiny hostname changes later, update it in the vhost file and in the script env vars below.</p>
 </section>
-<section id="step-2-optional-redirect-the-old-hostname" class="level3" data-number="5.6.2">
-<h3 data-number="5.6.2" class="anchored" data-anchor-id="step-2-optional-redirect-the-old-hostname"><span class="header-section-number">5.6.2</span> Step 2: Optional: redirect the old hostname</h3>
+<section id="step-2-optional-redirect-the-old-hostname" class="level3" data-number="6.6.2">
+<h3 data-number="6.6.2" class="anchored" data-anchor-id="step-2-optional-redirect-the-old-hostname"><span class="header-section-number">6.6.2</span> Step 2: Optional: redirect the old hostname</h3>
 <p>When you cut over, add a redirect in the perl vhost:</p>
 <div class="sourceCode" id="cb21"><pre class="sourceCode apache code-with-copy"><code class="sourceCode apache"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>Redirect<span class="st"> permanent / https://ngs-vm-shiny.biochem.mpg.de/</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="step-3-switch-vhosts-script" class="level3" data-number="5.6.3">
-<h3 data-number="5.6.3" class="anchored" data-anchor-id="step-3-switch-vhosts-script"><span class="header-section-number">5.6.3</span> Step 3: Switch vhosts (script)</h3>
+<section id="step-3-switch-vhosts-script" class="level3" data-number="6.6.3">
+<h3 data-number="6.6.3" class="anchored" data-anchor-id="step-3-switch-vhosts-script"><span class="header-section-number">6.6.3</span> Step 3: Switch vhosts (script)</h3>
 <p>The repo includes a switch script you can run later:</p>
 <div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ex">scripts/switch_vhosts.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>You can override hostnames or file names:</p>
@@ -462,16 +468,16 @@ sudo systemctl restart apache2</code></pre>
 <span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="va">REDIRECT_FROM</span><span class="op">=</span>ngs-vm.biochem.mpg.de <span class="dt">\</span></span>
 <span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="ex">scripts/switch_vhosts.sh</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="step-4-rollback-if-needed" class="level3" data-number="5.6.4">
-<h3 data-number="5.6.4" class="anchored" data-anchor-id="step-4-rollback-if-needed"><span class="header-section-number">5.6.4</span> Step 4: Rollback (if needed)</h3>
+<section id="step-4-rollback-if-needed" class="level3" data-number="6.6.4">
+<h3 data-number="6.6.4" class="anchored" data-anchor-id="step-4-rollback-if-needed"><span class="header-section-number">6.6.4</span> Step 4: Rollback (if needed)</h3>
 <div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2dissite ngs-vm-shiny.conf</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite ngs-vm.conf</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl reload apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="step-3-baseline-environment-checks" class="level3" data-number="5.6.5">
-<h3 data-number="5.6.5" class="anchored" data-anchor-id="step-3-baseline-environment-checks"><span class="header-section-number">5.6.5</span> Step 3: Baseline environment checks</h3>
-<section id="shiny-environment-must-include" class="level4" data-number="5.6.5.1">
-<h4 data-number="5.6.5.1" class="anchored" data-anchor-id="shiny-environment-must-include"><span class="header-section-number">5.6.5.1</span> Shiny environment must include:</h4>
+<section id="step-3-baseline-environment-checks" class="level3" data-number="6.6.5">
+<h3 data-number="6.6.5" class="anchored" data-anchor-id="step-3-baseline-environment-checks"><span class="header-section-number">6.6.5</span> Step 3: Baseline environment checks</h3>
+<section id="shiny-environment-must-include" class="level4" data-number="6.6.5.1">
+<h4 data-number="6.6.5.1" class="anchored" data-anchor-id="shiny-environment-must-include"><span class="header-section-number">6.6.5.1</span> Shiny environment must include:</h4>
 <div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl show shiny-server <span class="at">--property</span><span class="op">=</span>Environment</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Required values:</p>
 <ul>
@@ -485,8 +491,8 @@ sudo systemctl restart apache2</code></pre>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 </section>
-<section id="step-4-manual-curl-validation-reference" class="level3" data-number="5.6.6">
-<h3 data-number="5.6.6" class="anchored" data-anchor-id="step-4-manual-curl-validation-reference"><span class="header-section-number">5.6.6</span> Step 4: Manual curl validation (reference)</h3>
+<section id="step-4-manual-curl-validation-reference" class="level3" data-number="6.6.6">
+<h3 data-number="6.6.6" class="anchored" data-anchor-id="step-4-manual-curl-validation-reference"><span class="header-section-number">6.6.6</span> Step 4: Manual curl validation (reference)</h3>
 <p>These should match the smoke test behavior.</p>
 <div class="sourceCode" id="cb28"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-ki</span> <span class="at">-u</span> yeroslaviz-test <span class="st">"https://ngs-testing-vm.biochem.mpg.de/sequencing-app/"</span> <span class="kw">|</span> <span class="fu">sed</span> <span class="at">-n</span> <span class="st">'1,20p'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Expected:</p>
@@ -858,12 +864,12 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
       <a href="../chapters/git-github.html" class="pagination-link">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Git &amp; GitHub</span></span>
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Git &amp; GitHub</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
       <a href="../chapters/ldap-authentication.html" class="pagination-link">
-        <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">LDAP Authentication</span></span> <i class="bi bi-arrow-right-short"></i>
+        <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">LDAP Authentication</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

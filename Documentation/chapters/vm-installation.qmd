@@ -1,0 +1,258 @@
+---
+title: "VM Installation Guide (ngs-vm & bcf-vm)"
+execute:
+  eval: false
+  echo: true
+  warning: false
+---
+
+## VM Installation Guide (ngs-vm & bcf-vm)
+
+### Contents
+
+- [Scope](#scope)
+- [Port strategy (recommended)](#port-strategy-recommended)
+- [Prerequisites (both VMs)](#prerequisites-both-vms)
+- [GitHub connection on a fresh VM](#github-connection-on-a-fresh-vm)
+- [bcf-vm: clean install](#bcf-vm-clean-install)
+- [ngs-vm: parallel install next to perl system](#ngs-vm-parallel-install-next-to-perl-system)
+- [Legacy data migration (perl-VM → shiny-VM)](#legacy-data-migration-perl-vm--shiny-vm)
+- [Cutover and rollback](#cutover-and-rollback)
+- [Post-install verification](#post-install-verification)
+
+## Scope
+
+This guide covers a full installation of the Shiny app on two Ubuntu 24 VMs:
+
+- `bcf-vm`: clean install, no HTTPS cert (self-signed OK for testing).
+- `ngs-vm`: already running the legacy Perl system; install the Shiny app in parallel, then redirect the public hostname when ready.
+
+## Port strategy (recommended)
+
+Recommended for parallel operation on `ngs-vm`:
+
+- Shiny Server stays on `:3838` (default).
+- Apache vhost for the **new** system listens on `:8443` (HTTPS) or another high port (e.g. `:1234` if you prefer).
+- Existing legacy system remains on `:443`.
+
+Why `8443`: it is standard for HTTPS on alternate ports and avoids conflicts.
+
+## Prerequisites (both VMs)
+
+Run the requirement check script:
+
+```bash
+bash /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/check_requirements.sh
+```
+
+Install missing apt packages:
+
+```bash
+bash /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/check_requirements.sh --install
+```
+
+Manual steps still required after package install:
+
+- Install Shiny Server from the `.deb` package.
+- Configure Apache vhost, LDAP, and systemd environment.
+
+## GitHub connection on a fresh VM
+
+Before cloning on either VM, configure GitHub access.
+
+Use these sections in **Git & GitHub**:
+
+- [GitHub connection on VM (clone/pull/push)](git-github.qmd#github-connection-on-vm-clonepullpush)
+- [Enable push from the VM](git-github.qmd#enable-push-from-the-vm)
+- [Repo setup on the VM](git-github.qmd#repo-setup-on-the-vm)
+
+Minimum check before clone:
+
+```bash
+ssh -T git@github.com
+```
+
+If this fails, do not continue with clone/deploy until SSH access is fixed.
+
+## bcf-vm: clean install
+
+### 1) Install base packages
+
+```bash
+sudo apt-get update
+sudo apt-get install -y git curl rsync apache2 apache2-utils openssl sqlite3 ldap-utils \
+  build-essential libcurl4-openssl-dev libssl-dev libxml2-dev r-base
+```
+
+### 2) Install Shiny Server
+
+Copy the `.deb` to the VM and install it:
+
+```bash
+sudo apt-get install -y gdebi-core
+sudo gdebi shiny-server-1.5.23.1030-amd64.deb
+```
+
+### 3) Create a self-signed certificate (test only)
+
+```bash
+sudo mkdir -p /etc/ssl/localcerts
+sudo openssl req -x509 -nodes -days 365 \
+  -newkey rsa:2048 \
+  -keyout /etc/ssl/localcerts/bcf-vm.key \
+  -out /etc/ssl/localcerts/bcf-vm.crt
+```
+
+### 4) Clone repo and set app folder
+
+```bash
+cd /home/<user>
+git clone git@github.com:yeroslaviz/BCFNGS-project-management.git
+sudo rsync -av /home/<user>/BCFNGS-project-management/sequencing-app/ /srv/shiny-server/sequencing-app/
+sudo chown -R shiny:shiny /srv/shiny-server/sequencing-app
+```
+
+### 5) Initialize the SQLite DB
+
+```bash
+cd /srv/shiny-server/sequencing-app
+sudo -u shiny Rscript setup_database.R
+```
+
+### 6) Configure LDAP mode (systemd override)
+
+```bash
+sudo systemctl edit shiny-server
+```
+
+```ini
+[Service]
+Environment=AUTH_MODE=ldap
+Environment=LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
+Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
+```
+
+```bash
+sudo systemctl restart shiny-server
+```
+
+### 7) Configure Apache (test HTTPS redirect)
+
+Create a vhost that redirects `:80` to `:443` and proxies to Shiny:
+
+```apache
+<VirtualHost *:80>
+    ServerName bcf-vm
+    Redirect permanent / https://bcf-vm/
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName bcf-vm
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/localcerts/bcf-vm.crt
+    SSLCertificateKeyFile /etc/ssl/localcerts/bcf-vm.key
+
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:3838/sequencing-app/
+    ProxyPassReverse / http://localhost:3838/sequencing-app/
+</VirtualHost>
+```
+
+Enable the site and restart Apache:
+
+```bash
+sudo a2enmod ssl proxy proxy_http headers rewrite
+sudo apache2ctl -t
+sudo systemctl restart apache2
+```
+
+## ngs-vm: parallel install next to perl system
+
+### 1) Keep legacy system on `:443`
+
+Leave the current `ngs-vm_01-main.conf` active for the Perl system.
+
+### 2) Add a parallel Shiny vhost on `:8443` (or `:1234`)
+
+Create a new vhost file, for example `ngs-vm-shiny.conf`:
+
+```apache
+<VirtualHost *:8443>
+    ServerName ngs-vm.biochem.mpg.de
+
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/certs/2026_NGS_Cert.pem
+    SSLCertificateKeyFile /etc/ssl/private/2026_private-key.pem
+    SSLCertificateChainFile /etc/apache2/certificate/2026/NGS_2026_Issuer_ChainFile.cer
+
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:3838/sequencing-app/
+    ProxyPassReverse / http://localhost:3838/sequencing-app/
+</VirtualHost>
+```
+
+Enable and reload:
+
+```bash
+sudo a2ensite ngs-vm-shiny.conf
+sudo apache2ctl -t
+sudo systemctl reload apache2
+```
+
+### 3) Validate parallel access
+
+```bash
+curl -Ik https://ngs-vm.biochem.mpg.de:8443/
+curl -Ik -u USER https://ngs-vm.biochem.mpg.de:8443/sequencing-app/
+```
+
+## Legacy data migration (perl-VM → shiny-VM)
+
+Follow the SQL Handling chapter for the export/import workflow:
+
+- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/Documentation/chapters/sql-handling.qmd`
+
+This includes:
+
+- PostgreSQL export query
+- UTF‑8 normalization if needed
+- CSV transfer
+- SQLite import on the shiny-VM
+
+## Cutover and rollback
+
+### Cutover (switch public hostname to Shiny)
+
+Option A (redirect 443 to new port):
+
+```apache
+Redirect permanent / https://ngs-vm.biochem.mpg.de:8443/
+```
+
+Option B (replace the 443 vhost with the Shiny proxy):
+
+- Disable legacy vhost.
+- Enable Shiny vhost on `:443`.
+
+### Rollback
+
+To revert quickly:
+
+- Remove the redirect line or disable the Shiny vhost.
+- Re-enable the legacy `ngs-vm_01-main.conf`.
+- Reload Apache.
+
+## Post-install verification
+
+Run these checks after install:
+
+```bash
+curl -Ik https://<host>/
+curl -Ik -u USER https://<host>/sequencing-app/
+```
+
+Confirm:
+
+- LDAP prompt appears.
+- Login succeeds.
+- App loads and lists projects.

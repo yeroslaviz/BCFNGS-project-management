@@ -225,7 +225,7 @@ Lots of LDAP debug output in logs during normal use.
 
 **Fix (Apache)**
 
-In `01-main.conf`, use normal logging:
+In `mpiseq2/ngs-vm_01-main.conf`, use normal logging:
 
 ```
 LogLevel warn
@@ -439,7 +439,7 @@ Likely cause:
 Fix:
 
 ```bash
-sudo cp ~/BCFNGS-project-management/01-main.conf /etc/apache2/sites-available/01-main.conf
+sudo cp ~/BCFNGS-project-management/mpiseq2/ngs-vm_01-main.conf /etc/apache2/sites-available/01-main.conf
 sudo ln -sf /etc/apache2/sites-available/01-main.conf /etc/apache2/sites-enabled/01-main.conf
 sudo apache2ctl configtest
 sudo systemctl restart apache2
@@ -492,7 +492,7 @@ Expected fixed behavior:
 
 - tampered `auth_user` should always be rewritten to the authenticated LDAP username.
 
-If not fixed, re-apply `01-main.conf` from repo and restart Apache + Shiny (section 5A).
+If not fixed, re-apply `mpiseq2/ngs-vm_01-main.conf` from repo and restart Apache + Shiny (section 5A).
 
 
 ## Certificate warning note
