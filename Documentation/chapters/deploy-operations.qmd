@@ -308,7 +308,8 @@ grep -q '^Listen 9443$' /etc/apache2/ports.conf || echo 'Listen 9443' | sudo tee
 sudo a2enmod ssl proxy proxy_http proxy_wstunnel rewrite headers ldap authnz_ldap
 sudo a2ensite ngs-vm-shiny-443.conf
 sudo a2ensite ngs-vm-perl-9443.conf
-sudo a2dissite 02-testing.conf
+sudo a2dissite 02-testing.conf || true
+sudo a2dissite default-ssl.conf || true
 sudo apache2ctl -t
 sudo systemctl restart apache2
 ```
@@ -340,9 +341,17 @@ cd /home/yeroslaviz/BCFNGS-project-management
 ./scripts/cutover_ngs_vm_ports.sh cutover
 ```
 
+`cutover` automatically disables any enabled `:443` site that is not `ngs-vm-shiny-443.conf`.
+
 Rollback:
 
 ```bash
 cd /home/yeroslaviz/BCFNGS-project-management
 ./scripts/cutover_ngs_vm_ports.sh rollback
 ```
+
+`rollback` re-enables legacy `:443` in this priority:
+
+1. `PERL_443_SITE` (if set)
+2. `02-testing.conf`
+3. `default-ssl.conf`

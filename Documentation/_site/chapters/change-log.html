@@ -270,6 +270,7 @@ ul.task-list li input[type="checkbox"] {
 <li>LDAP works on <code>:8443</code> but not on <code>:443</code></li>
 </ul></li>
 <li>Marked <code>scripts/switch_vhosts.sh</code> as legacy (hostname-redirect strategy) and pointed to the new port-based cutover script.</li>
+<li>Improved <code>scripts/cutover_ngs_vm_ports.sh</code> to auto-disable competing <code>:443</code> sites (including <code>default-ssl.conf</code> when enabled) and made rollback re-enable the first available legacy <code>:443</code> site (<code>PERL_443_SITE</code> -&gt; <code>02-testing.conf</code> -&gt; <code>default-ssl.conf</code>).</li>
 </ol>
 </section>
 <section id="changes-on-23.02.2026" class="level2" data-number="10.3">

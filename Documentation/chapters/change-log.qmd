@@ -41,6 +41,7 @@ execute:
     - `:9443` fallback connection refused
     - LDAP works on `:8443` but not on `:443`
 7.  Marked `scripts/switch_vhosts.sh` as legacy (hostname-redirect strategy) and pointed to the new port-based cutover script.
+8.  Improved `scripts/cutover_ngs_vm_ports.sh` to auto-disable competing `:443` sites (including `default-ssl.conf` when enabled) and made rollback re-enable the first available legacy `:443` site (`PERL_443_SITE` -> `02-testing.conf` -> `default-ssl.conf`).
 
 ## Changes on 23.02.2026
 

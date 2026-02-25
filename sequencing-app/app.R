@@ -4308,24 +4308,50 @@ server <- function(input, output, session) {
   
   observeEvent(input$confirm_status_update_btn, {
     selected_row <- input$projects_table_rows_selected
-    project <- projects_data()[selected_row, ]
-    project_id <- project$id
-    
+    if (is.null(selected_row) || length(selected_row) == 0) {
+      showNotification("Please select a project before updating status", type = "warning")
+      return()
+    }
+
+    projects <- projects_data()
+    if (is.null(projects) || nrow(projects) < selected_row[1]) {
+      showNotification("Selected project is no longer available. Please reload the table.", type = "warning")
+      return()
+    }
+
+    project <- projects[selected_row[1], , drop = FALSE]
+    project_id <- project$id[[1]]
+    new_status <- input$new_project_status %||% ""
+
+    if (is.null(new_status) || !nzchar(new_status)) {
+      showNotification("Please choose a valid status", type = "warning")
+      return()
+    }
+
     con <- get_db_connection()
-    on.exit(dbDisconnect(con))
-    
-    dbExecute(con, "
-      UPDATE projects 
-      SET status = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    ", params = list(
-      input$new_project_status,
-      project_id
-    ))
-    
-    removeModal()
-    load_projects()
-    showNotification("Project status updated successfully!", type = "message")
+    on.exit(dbDisconnect(con), add = TRUE)
+
+    tryCatch({
+      dbExecute(con, "
+        UPDATE projects
+        SET status = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      ", params = list(
+        new_status,
+        project_id
+      ))
+
+      removeModal()
+      load_projects()
+      showNotification("Project status updated successfully!", type = "message")
+    }, error = function(e) {
+      cat("STATUS UPDATE ERROR:", conditionMessage(e), "\n", file = stderr())
+      showNotification(
+        paste("Failed to update project status:", conditionMessage(e)),
+        type = "error",
+        duration = 10
+      )
+    })
   })
   
   ##################################################################

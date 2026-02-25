@@ -40,6 +40,37 @@ restart_apache() {
   sudo systemctl restart apache2
 }
 
+disable_competing_443_sites() {
+  local conf site
+  local enabled_sites=(/etc/apache2/sites-enabled/*.conf)
+
+  for conf in "${enabled_sites[@]}"; do
+    [[ -f "${conf}" ]] || continue
+    if grep -Eq '^[[:space:]]*<VirtualHost[[:space:]]+\*:443>' "${conf}"; then
+      site="$(basename "${conf}")"
+      if [[ "${site}" != "${SHINY_443_SITE}" ]]; then
+        echo "[cutover] disabling competing :443 site: ${site}"
+        sudo a2dissite "${site}" >/dev/null || true
+      fi
+    fi
+  done
+}
+
+reenable_legacy_443_site() {
+  local site
+  local candidates=("${PERL_443_SITE}" "02-testing.conf" "default-ssl.conf")
+
+  for site in "${candidates[@]}"; do
+    if [[ -f "/etc/apache2/sites-available/${site}" ]]; then
+      echo "[rollback] re-enabling legacy :443 site: ${site}"
+      sudo a2ensite "${site}" >/dev/null || true
+      return
+    fi
+  done
+
+  echo "[rollback] warning: no legacy :443 site file found in /etc/apache2/sites-available" >&2
+}
+
 show_checks() {
   cat <<'EOF'
 
@@ -60,8 +91,10 @@ if [[ "${MODE}" == "cutover" ]]; then
   echo "[cutover] enabling Perl fallback on 9443: ${PERL_9443_SITE}"
   sudo a2ensite "${PERL_9443_SITE}" >/dev/null
 
-  echo "[cutover] disabling Perl on 443: ${PERL_443_SITE}"
+  echo "[cutover] disabling configured Perl on 443: ${PERL_443_SITE}"
   sudo a2dissite "${PERL_443_SITE}" >/dev/null || true
+
+  disable_competing_443_sites
 
   echo "[cutover] keeping 8443 site unchanged: ${SHINY_8443_SITE}"
   restart_apache
@@ -70,8 +103,7 @@ if [[ "${MODE}" == "cutover" ]]; then
   exit 0
 fi
 
-echo "[rollback] re-enabling Perl on 443: ${PERL_443_SITE}"
-sudo a2ensite "${PERL_443_SITE}" >/dev/null
+reenable_legacy_443_site
 echo "[rollback] disabling Shiny on 443: ${SHINY_443_SITE}"
 sudo a2dissite "${SHINY_443_SITE}" >/dev/null || true
 echo "[rollback] disabling Perl fallback on 9443: ${PERL_9443_SITE}"

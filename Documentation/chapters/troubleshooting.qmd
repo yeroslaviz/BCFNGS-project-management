@@ -395,9 +395,17 @@ Fix:
 
 ```bash
 sudo a2ensite ngs-vm-shiny-443.conf
-sudo a2dissite 02-testing.conf
+sudo a2dissite 02-testing.conf || true
+sudo a2dissite default-ssl.conf || true
 sudo apache2ctl -t
 sudo systemctl restart apache2
+```
+
+Or run the scripted cutover:
+
+```bash
+cd /home/yeroslaviz/BCFNGS-project-management
+./scripts/cutover_ngs_vm_ports.sh cutover
 ```
 
 ### Perl fallback on `:9443` returns connection refused
