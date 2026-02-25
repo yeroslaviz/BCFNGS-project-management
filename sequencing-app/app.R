@@ -1763,7 +1763,122 @@ server <- function(input, output, session) {
       cat("DEBUG: Error occurred:", e$message, "\n")
       return(list(success = FALSE, error = e$message))
     })
-  }  
+  }
+
+  # Send notification when a project status changes to "Data released"
+  send_data_released_email <- function(project_data) {
+    tryCatch({
+      con <- get_db_connection()
+      on.exit(dbDisconnect(con))
+
+      responsible_user <- trimws(project_data$responsible_user %||% "")
+      user_row <- data.frame()
+
+      if (users_has_full_name(con)) {
+        if (nzchar(responsible_user)) {
+          user_row <- dbGetQuery(
+            con,
+            "SELECT username, full_name, email FROM users WHERE username = ? LIMIT 1",
+            params = list(responsible_user)
+          )
+          if (nrow(user_row) == 0) {
+            user_row <- dbGetQuery(
+              con,
+              "SELECT username, full_name, email FROM users WHERE full_name = ? LIMIT 1",
+              params = list(responsible_user)
+            )
+          }
+        }
+
+        if (nrow(user_row) == 0 && !is.null(project_data$user_id) && !is.na(project_data$user_id)) {
+          user_row <- dbGetQuery(
+            con,
+            "SELECT username, full_name, email FROM users WHERE id = ? LIMIT 1",
+            params = list(as.numeric(project_data$user_id))
+          )
+        }
+      } else {
+        if (nzchar(responsible_user)) {
+          user_row <- dbGetQuery(
+            con,
+            "SELECT username, email FROM users WHERE username = ? LIMIT 1",
+            params = list(responsible_user)
+          )
+        }
+
+        if (nrow(user_row) == 0 && !is.null(project_data$user_id) && !is.na(project_data$user_id)) {
+          user_row <- dbGetQuery(
+            con,
+            "SELECT username, email FROM users WHERE id = ? LIMIT 1",
+            params = list(as.numeric(project_data$user_id))
+          )
+        }
+
+        if (!("full_name" %in% names(user_row))) {
+          user_row$full_name <- NA_character_
+        }
+      }
+
+      full_name <- responsible_user
+      responsible_email <- ""
+      if (nrow(user_row) > 0) {
+        resolved_name <- trimws(user_row$full_name[[1]] %||% "")
+        if (!nzchar(resolved_name)) resolved_name <- trimws(user_row$username[[1]] %||% "")
+        if (nzchar(resolved_name)) full_name <- resolved_name
+        responsible_email <- trimws(user_row$email[[1]] %||% "")
+      }
+
+      if (!nzchar(full_name)) full_name <- "User"
+
+      project_code <- trimws(project_data$project_code %||% "")
+      if (!nzchar(project_code) && !is.null(project_data$project_id) && !is.na(project_data$project_id)) {
+        project_code <- paste0("P", as.character(project_data$project_id))
+      }
+      if (!nzchar(project_code)) {
+        project_code <- as.character(project_data$project_id %||% "")
+      }
+      if (!nzchar(project_code)) project_code <- "project"
+
+      recipients <- unique(c(responsible_email, "omicsdesk@biochem.mpg.de"))
+      recipients <- recipients[!is.na(recipients) & recipients != ""]
+      if (length(recipients) == 0) {
+        return(list(success = FALSE, error = "No valid recipients found for status notification"))
+      }
+
+      subject <- paste0(project_code, " - Final sequencing results available")
+      email_body <- paste0(
+        "Dear ", full_name, ",\n\n",
+        "Please note that your final sequencing results (project ", project_code, ") are now available.\n\n",
+        "You can access the NGS data in your personal pool folder:\n\n",
+        "(Windows) \\\\samba-pool-dnaseq\\pool-dnaseq\\\n",
+        "(Mac) smb://samba-pool-dnaseq/pool-dnaseq/\n\n",
+        "or, via datashare - ask us for a link.\n\n",
+        "Best regards,\n",
+        "The NGS sequencing facility"
+      )
+
+      send.mail(
+        from = "ngs@biochem.mpg.de",
+        to = recipients,
+        encoding = "utf-8",
+        subject = subject,
+        body = email_body,
+        smtp = list(
+          host.name = "msx.biochem.mpg.de",
+          port = 25,
+          ssl = FALSE,
+          tls = FALSE,
+          authenticate = FALSE
+        ),
+        send = TRUE
+      )
+
+      return(list(success = TRUE, recipients = recipients))
+    }, error = function(e) {
+      cat("DATA RELEASE EMAIL ERROR:", e$message, "\n", file = stderr())
+      return(list(success = FALSE, error = e$message))
+    })
+  }
 
   # User registration modal
   observeEvent(input$show_register_btn, {
@@ -4178,6 +4293,12 @@ server <- function(input, output, session) {
       value[[1]]
     }
 
+    old_status <- scalar_text(project$status, "")
+    new_status_for_update <- scalar_text(input$edit_project_status, default = scalar_text(project$status, "Created"))
+    should_send_data_released_email <- user$is_admin &&
+      old_status != "Data released" &&
+      new_status_for_update == "Data released"
+
     kickoff_default <- suppressWarnings(as.numeric(project$kickoff_meeting[[1]]))
     if (length(kickoff_default) == 0 || is.na(kickoff_default) || !(kickoff_default %in% c(0, 1))) {
       kickoff_default <- 0
@@ -4228,7 +4349,7 @@ server <- function(input, output, session) {
         as.numeric(input$edit_sequencing_depth_id),
         as.numeric(input$edit_sequencing_cycles_id),
         kickoff_value,
-        scalar_text(input$edit_project_status, default = scalar_text(project$status, "Created")),
+        new_status_for_update,
         as.numeric(input$edit_type_id),
         total_cost,
         project_id
@@ -4263,6 +4384,30 @@ server <- function(input, output, session) {
     removeModal()
     load_projects()
     showNotification("Project updated successfully!", type = "message")
+
+    if (should_send_data_released_email) {
+      project_code <- ""
+      if (!is.null(project$project_id[[1]]) && !is.na(project$project_id[[1]])) {
+        project_code <- paste0("P", as.character(project$project_id[[1]]))
+      }
+
+      email_result <- send_data_released_email(list(
+        project_id = project$project_id[[1]],
+        project_code = project_code,
+        responsible_user = scalar_text(input$edit_responsible_user, scalar_text(project$responsible_user, "")),
+        user_id = project$user_id[[1]]
+      ))
+
+      if (isTRUE(email_result$success)) {
+        showNotification("Data released email sent to responsible user and omicsdesk.", type = "message")
+      } else {
+        showNotification(
+          paste("Status updated, but data released email failed:", email_result$error %||% "unknown error"),
+          type = "warning",
+          duration = 10
+        )
+      }
+    }
   })
   
   # === DELETE PROJECT ===
@@ -4360,6 +4505,7 @@ server <- function(input, output, session) {
     project <- projects[selected_row[1], , drop = FALSE]
     project_id <- project$id[[1]]
     new_status <- input$new_project_status %||% ""
+    old_status <- as.character(project$status[[1]] %||% "")
 
     if (is.null(new_status) || !nzchar(new_status)) {
       showNotification("Please choose a valid status", type = "warning")
@@ -4382,6 +4528,31 @@ server <- function(input, output, session) {
       removeModal()
       load_projects()
       showNotification("Project status updated successfully!", type = "message")
+
+      should_send_data_released_email <- old_status != "Data released" && new_status == "Data released"
+      if (should_send_data_released_email) {
+        project_code <- ""
+        if (!is.null(project$project_id[[1]]) && !is.na(project$project_id[[1]])) {
+          project_code <- paste0("P", as.character(project$project_id[[1]]))
+        }
+
+        email_result <- send_data_released_email(list(
+          project_id = project$project_id[[1]],
+          project_code = project_code,
+          responsible_user = as.character(project$responsible_user[[1]] %||% ""),
+          user_id = project$user_id[[1]]
+        ))
+
+        if (isTRUE(email_result$success)) {
+          showNotification("Data released email sent to responsible user and omicsdesk.", type = "message")
+        } else {
+          showNotification(
+            paste("Status updated, but data released email failed:", email_result$error %||% "unknown error"),
+            type = "warning",
+            duration = 10
+          )
+        }
+      }
     }, error = function(e) {
       cat("STATUS UPDATE ERROR:", conditionMessage(e), "\n", file = stderr())
       showNotification(
