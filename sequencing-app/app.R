@@ -4070,8 +4070,15 @@ server <- function(input, output, session) {
                            choices = get_all_usernames(),
                            selected = project$responsible_user),
                radioButtons("edit_kickoff_meeting", "Kick-off Meeting Required? *",
-                            choices = c("Yes" = 1, "No" = 0), 
-                            selected = as.character(project$kickoff_meeting), inline = TRUE)
+                            choices = c("Yes" = 1, "No" = 0),
+                            selected = {
+                              kickoff_selected <- suppressWarnings(as.numeric(project$kickoff_meeting[[1]]))
+                              if (length(kickoff_selected) == 0 || is.na(kickoff_selected) || !(kickoff_selected %in% c(0, 1))) {
+                                "0"
+                              } else {
+                                as.character(kickoff_selected)
+                              }
+                            }, inline = TRUE)
         )
       ),
       fluidRow(
@@ -4125,8 +4132,19 @@ server <- function(input, output, session) {
   # Update project
   observeEvent(input$update_project_btn, {
     selected_row <- input$projects_table_rows_selected
-    project <- projects_data()[selected_row, ]
-    project_id <- project$id
+    if (is.null(selected_row) || length(selected_row) == 0) {
+      showNotification("Please select a project to edit", type = "warning")
+      return()
+    }
+
+    projects <- projects_data()
+    if (is.null(projects) || nrow(projects) < selected_row[1]) {
+      showNotification("Selected project is no longer available. Please reload the table.", type = "warning")
+      return()
+    }
+
+    project <- projects[selected_row[1], , drop = FALSE]
+    project_id <- project$id[[1]]
     
     can_edit <- user$is_admin || 
       project$user_id == user$user_id || 
@@ -4145,6 +4163,26 @@ server <- function(input, output, session) {
         return()
       }
     }
+
+    # Normalize scalar values before DB bind (prevents length-0/length>1 parameter errors)
+    scalar_text <- function(x, default = "") {
+      if (is.null(x) || length(x) == 0) return(default)
+      value <- as.character(x[[1]])
+      if (is.na(value)) return(default)
+      value
+    }
+
+    scalar_numeric <- function(x, default = NA_real_) {
+      value <- suppressWarnings(as.numeric(scalar_text(x, "")))
+      if (length(value) == 0 || is.na(value)) return(default)
+      value[[1]]
+    }
+
+    kickoff_default <- suppressWarnings(as.numeric(project$kickoff_meeting[[1]]))
+    if (length(kickoff_default) == 0 || is.na(kickoff_default) || !(kickoff_default %in% c(0, 1))) {
+      kickoff_default <- 0
+    }
+    kickoff_value <- scalar_numeric(input$edit_kickoff_meeting, kickoff_default)
 
     # Calculate total cost
     total_cost <- calculate_total_cost(input$edit_num_samples, input$edit_service_type_id, 
@@ -4179,18 +4217,18 @@ server <- function(input, output, session) {
             type_id = ?, total_cost = ?
         WHERE id = ?
       ", params = list(
-        input$edit_project_name,
-        input$edit_reference_genome,
+        scalar_text(input$edit_project_name),
+        scalar_text(input$edit_reference_genome),
         as.numeric(input$edit_service_type_id),
         as.numeric(budget_id_value),
-        input$edit_responsible_user,
-        input$edit_project_description,
+        scalar_text(input$edit_responsible_user),
+        scalar_text(input$edit_project_description),
         input$edit_num_samples,
-        input$edit_sequencing_platform,
+        scalar_text(input$edit_sequencing_platform),
         as.numeric(input$edit_sequencing_depth_id),
         as.numeric(input$edit_sequencing_cycles_id),
-        as.numeric(input$edit_kickoff_meeting),
-        input$edit_project_status,
+        kickoff_value,
+        scalar_text(input$edit_project_status, default = scalar_text(project$status, "Created")),
         as.numeric(input$edit_type_id),
         total_cost,
         project_id
@@ -4205,17 +4243,17 @@ server <- function(input, output, session) {
             type_id = ?, total_cost = ?
         WHERE id = ?
       ", params = list(
-        input$edit_project_name,
-        input$edit_reference_genome,
+        scalar_text(input$edit_project_name),
+        scalar_text(input$edit_reference_genome),
         as.numeric(input$edit_service_type_id),
         as.numeric(budget_id_value),
-        input$edit_responsible_user,
-        input$edit_project_description,
+        scalar_text(input$edit_responsible_user),
+        scalar_text(input$edit_project_description),
         input$edit_num_samples,
-        input$edit_sequencing_platform,
+        scalar_text(input$edit_sequencing_platform),
         as.numeric(input$edit_sequencing_depth_id),
         as.numeric(input$edit_sequencing_cycles_id),
-        as.numeric(input$edit_kickoff_meeting),
+        kickoff_value,
         as.numeric(input$edit_type_id),
         total_cost,
         project_id
