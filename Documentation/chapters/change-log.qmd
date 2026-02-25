@@ -10,6 +10,7 @@ execute:
 
 ### Contents
 
+- [Changes on 25.02.2026](#changes-on-25.02.2026)
 - [Changes on 23.02.2026](#changes-on-23.02.2026)
 - [Changes on 20.02.2026](#changes-on-20.02.2026)
 - [Changes on 16.02.2026](#changes-on-16.02.2026)
@@ -19,6 +20,27 @@ execute:
 - [Changes on 09.02.2026](#changes-on-09.02.2026)
 - [Changes on 06.02.2026](#changes-on-06.02.2026)
 - [Changes on 14.11.2026](#changes-on-14.11.2026)
+
+## Changes on 25.02.2026
+
+1.  Added a production cutover runbook for `ngs-vm` with the final target routing:
+    - `https://ngs-vm.biochem.mpg.de` -> Shiny on `:443`
+    - `https://ngs-vm.biochem.mpg.de:9443` -> Perl fallback
+2.  Added new Apache templates for this routing model:
+    - `scripts/ngs-vm-shiny-443.conf`
+    - `scripts/ngs-vm-perl-9443.conf`
+3.  Added a dedicated cutover automation helper:
+    - `scripts/cutover_ngs_vm_ports.sh` (`cutover` / `rollback`)
+4.  Updated **Deploy & Operations** with explicit deploy scope:
+    - `scripts/deploy.sh` remains code-only (no rebuild/import)
+    - restart does not delete DB content
+    - snapshot/rebuild/restore runbook documented as separate maintenance flow
+5.  Updated **VM Installation Guide** with manual and scripted cutover steps, plus post-cutover validation and rollback commands.
+6.  Updated **Troubleshooting** with new cutover-specific checks:
+    - no-port URL still serving Perl
+    - `:9443` fallback connection refused
+    - LDAP works on `:8443` but not on `:443`
+7.  Marked `scripts/switch_vhosts.sh` as legacy (hostname-redirect strategy) and pointed to the new port-based cutover script.
 
 ## Changes on 23.02.2026
 

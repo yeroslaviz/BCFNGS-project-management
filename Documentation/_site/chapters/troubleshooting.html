@@ -243,51 +243,57 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#ldap-mode-configured-but-app-still-shows-local-page" id="toc-ldap-mode-configured-but-app-still-shows-local-page" class="nav-link" data-scroll-target="#ldap-mode-configured-but-app-still-shows-local-page"><span class="header-section-number">9.4.9</span> LDAP mode configured, but app still shows local page</a></li>
   <li><a href="#ldap-debug-error-onflushed-operation-not-allowed-without-an-active-reactive-context" id="toc-ldap-debug-error-onflushed-operation-not-allowed-without-an-active-reactive-context" class="nav-link" data-scroll-target="#ldap-debug-error-onflushed-operation-not-allowed-without-an-active-reactive-context"><span class="header-section-number">9.4.10</span> <code>LDAP DEBUG ERROR (onFlushed): Operation not allowed without an active reactive context</code></a></li>
   </ul></li>
-  <li><a href="#sql-moved" id="toc-sql-moved" class="nav-link" data-scroll-target="#sql-moved"><span class="header-section-number">9.5</span> SQL (moved)</a>
+  <li><a href="#ngs-vm-cutover-4439443" id="toc-ngs-vm-cutover-4439443" class="nav-link" data-scroll-target="#ngs-vm-cutover-4439443"><span class="header-section-number">9.5</span> ngs-vm Cutover (443/9443)</a>
   <ul class="collapse">
-  <li><a href="#sqlite-attempt-to-write-a-readonly-database" id="toc-sqlite-attempt-to-write-a-readonly-database" class="nav-link" data-scroll-target="#sqlite-attempt-to-write-a-readonly-database"><span class="header-section-number">9.5.1</span> SQLite: “attempt to write a readonly database”</a></li>
+  <li><a href="#main-url-still-serves-perl-after-cutover" id="toc-main-url-still-serves-perl-after-cutover" class="nav-link" data-scroll-target="#main-url-still-serves-perl-after-cutover"><span class="header-section-number">9.5.1</span> Main URL still serves Perl after cutover</a></li>
+  <li><a href="#perl-fallback-on-9443-returns-connection-refused" id="toc-perl-fallback-on-9443-returns-connection-refused" class="nav-link" data-scroll-target="#perl-fallback-on-9443-returns-connection-refused"><span class="header-section-number">9.5.2</span> Perl fallback on <code>:9443</code> returns connection refused</a></li>
+  <li><a href="#ldap-login-works-on-8443-but-fails-on-no-port-443" id="toc-ldap-login-works-on-8443-but-fails-on-no-port-443" class="nav-link" data-scroll-target="#ldap-login-works-on-8443-but-fails-on-no-port-443"><span class="header-section-number">9.5.3</span> LDAP login works on <code>:8443</code> but fails on no-port <code>:443</code></a></li>
   </ul></li>
-  <li><a href="#auth-mode-switching" id="toc-auth-mode-switching" class="nav-link" data-scroll-target="#auth-mode-switching"><span class="header-section-number">9.6</span> Auth mode switching</a></li>
-  <li><a href="#apache-proxy" id="toc-apache-proxy" class="nav-link" data-scroll-target="#apache-proxy"><span class="header-section-number">9.7</span> Apache proxy</a>
+  <li><a href="#sql-moved" id="toc-sql-moved" class="nav-link" data-scroll-target="#sql-moved"><span class="header-section-number">9.6</span> SQL (moved)</a>
   <ul class="collapse">
-  <li><a href="#sequencing-app-returns-404" id="toc-sequencing-app-returns-404" class="nav-link" data-scroll-target="#sequencing-app-returns-404"><span class="header-section-number">9.7.1</span> <code>/sequencing-app/</code> returns 404</a></li>
-  <li><a href="#redirect-to-shows-no-ui-defined" id="toc-redirect-to-shows-no-ui-defined" class="nav-link" data-scroll-target="#redirect-to-shows-no-ui-defined"><span class="header-section-number">9.7.2</span> Redirect to <code>/</code> shows “No UI defined”</a></li>
+  <li><a href="#sqlite-attempt-to-write-a-readonly-database" id="toc-sqlite-attempt-to-write-a-readonly-database" class="nav-link" data-scroll-target="#sqlite-attempt-to-write-a-readonly-database"><span class="header-section-number">9.6.1</span> SQLite: “attempt to write a readonly database”</a></li>
   </ul></li>
-  <li><a href="#shiny" id="toc-shiny" class="nav-link" data-scroll-target="#shiny"><span class="header-section-number">9.8</span> Shiny</a>
+  <li><a href="#auth-mode-switching" id="toc-auth-mode-switching" class="nav-link" data-scroll-target="#auth-mode-switching"><span class="header-section-number">9.7</span> Auth mode switching</a></li>
+  <li><a href="#apache-proxy" id="toc-apache-proxy" class="nav-link" data-scroll-target="#apache-proxy"><span class="header-section-number">9.8</span> Apache proxy</a>
   <ul class="collapse">
-  <li><a href="#app-works-locally-but-fails-via-apache" id="toc-app-works-locally-but-fails-via-apache" class="nav-link" data-scroll-target="#app-works-locally-but-fails-via-apache"><span class="header-section-number">9.8.1</span> App works locally but fails via Apache</a></li>
-  <li><a href="#ldap-mode-enabled-but-no-user" id="toc-ldap-mode-enabled-but-no-user" class="nav-link" data-scroll-target="#ldap-mode-enabled-but-no-user"><span class="header-section-number">9.8.2</span> LDAP mode enabled but no user</a></li>
-  <li><a href="#missing-environment-variables-in-shiny" id="toc-missing-environment-variables-in-shiny" class="nav-link" data-scroll-target="#missing-environment-variables-in-shiny"><span class="header-section-number">9.8.3</span> Missing environment variables in Shiny</a></li>
+  <li><a href="#sequencing-app-returns-404" id="toc-sequencing-app-returns-404" class="nav-link" data-scroll-target="#sequencing-app-returns-404"><span class="header-section-number">9.8.1</span> <code>/sequencing-app/</code> returns 404</a></li>
+  <li><a href="#redirect-to-shows-no-ui-defined" id="toc-redirect-to-shows-no-ui-defined" class="nav-link" data-scroll-target="#redirect-to-shows-no-ui-defined"><span class="header-section-number">9.8.2</span> Redirect to <code>/</code> shows “No UI defined”</a></li>
   </ul></li>
-  <li><a href="#deployment" id="toc-deployment" class="nav-link" data-scroll-target="#deployment"><span class="header-section-number">9.9</span> Deployment</a>
+  <li><a href="#shiny" id="toc-shiny" class="nav-link" data-scroll-target="#shiny"><span class="header-section-number">9.9</span> Shiny</a>
   <ul class="collapse">
-  <li><a href="#deploy-script-ran-but-app-unchanged" id="toc-deploy-script-ran-but-app-unchanged" class="nav-link" data-scroll-target="#deploy-script-ran-but-app-unchanged"><span class="header-section-number">9.9.1</span> Deploy script ran but app unchanged</a></li>
-  <li><a href="#database-overwritten" id="toc-database-overwritten" class="nav-link" data-scroll-target="#database-overwritten"><span class="header-section-number">9.9.2</span> Database overwritten</a></li>
+  <li><a href="#app-works-locally-but-fails-via-apache" id="toc-app-works-locally-but-fails-via-apache" class="nav-link" data-scroll-target="#app-works-locally-but-fails-via-apache"><span class="header-section-number">9.9.1</span> App works locally but fails via Apache</a></li>
+  <li><a href="#ldap-mode-enabled-but-no-user" id="toc-ldap-mode-enabled-but-no-user" class="nav-link" data-scroll-target="#ldap-mode-enabled-but-no-user"><span class="header-section-number">9.9.2</span> LDAP mode enabled but no user</a></li>
+  <li><a href="#missing-environment-variables-in-shiny" id="toc-missing-environment-variables-in-shiny" class="nav-link" data-scroll-target="#missing-environment-variables-in-shiny"><span class="header-section-number">9.9.3</span> Missing environment variables in Shiny</a></li>
   </ul></li>
-  <li><a href="#quick-validation-commands" id="toc-quick-validation-commands" class="nav-link" data-scroll-target="#quick-validation-commands"><span class="header-section-number">9.10</span> Quick validation commands</a></li>
-  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">9.11</span> References</a></li>
-  <li><a href="#ldap-deploy-troubleshooting-by-symptom" id="toc-ldap-deploy-troubleshooting-by-symptom" class="nav-link" data-scroll-target="#ldap-deploy-troubleshooting-by-symptom"><span class="header-section-number">9.12</span> LDAP Deploy Troubleshooting (by symptom)</a></li>
-  <li><a href="#troubleshooting-by-symptom" id="toc-troubleshooting-by-symptom" class="nav-link" data-scroll-target="#troubleshooting-by-symptom"><span class="header-section-number">9.13</span> Troubleshooting by symptom</a>
+  <li><a href="#deployment" id="toc-deployment" class="nav-link" data-scroll-target="#deployment"><span class="header-section-number">9.10</span> Deployment</a>
   <ul class="collapse">
-  <li><a href="#err_too_many_redirects" id="toc-err_too_many_redirects" class="nav-link" data-scroll-target="#err_too_many_redirects"><span class="header-section-number">9.13.1</span> <code>ERR_TOO_MANY_REDIRECTS</code></a></li>
-  <li><a href="#app-shows-local-login-page-ldap-mode-enabled-but-no-authenticated-user-found" id="toc-app-shows-local-login-page-ldap-mode-enabled-but-no-authenticated-user-found" class="nav-link" data-scroll-target="#app-shows-local-login-page-ldap-mode-enabled-but-no-authenticated-user-found"><span class="header-section-number">9.13.2</span> App shows local login page + <code>LDAP mode enabled but no authenticated user found</code></a></li>
-  <li><a href="#disconnected-from-the-server.-reload" id="toc-disconnected-from-the-server.-reload" class="nav-link" data-scroll-target="#disconnected-from-the-server.-reload"><span class="header-section-number">9.13.3</span> <code>Disconnected from the server. Reload</code></a></li>
-  <li><a href="#user-can-impersonate-another-user-via-url-query" id="toc-user-can-impersonate-another-user-via-url-query" class="nav-link" data-scroll-target="#user-can-impersonate-another-user-via-url-query"><span class="header-section-number">9.13.4</span> User can impersonate another user via URL query</a></li>
+  <li><a href="#deploy-script-ran-but-app-unchanged" id="toc-deploy-script-ran-but-app-unchanged" class="nav-link" data-scroll-target="#deploy-script-ran-but-app-unchanged"><span class="header-section-number">9.10.1</span> Deploy script ran but app unchanged</a></li>
+  <li><a href="#database-overwritten" id="toc-database-overwritten" class="nav-link" data-scroll-target="#database-overwritten"><span class="header-section-number">9.10.2</span> Database overwritten</a></li>
   </ul></li>
-  <li><a href="#certificate-warning-note" id="toc-certificate-warning-note" class="nav-link" data-scroll-target="#certificate-warning-note"><span class="header-section-number">9.14</span> Certificate warning note</a></li>
-  <li><a href="#vm-ldap-rollout-errors-from-server-preparations" id="toc-vm-ldap-rollout-errors-from-server-preparations" class="nav-link" data-scroll-target="#vm-ldap-rollout-errors-from-server-preparations"><span class="header-section-number">9.15</span> VM LDAP Rollout Errors (from Server Preparations)</a></li>
-  <li><a href="#possible-errors-and-fixes-vm-ldap-rollout" id="toc-possible-errors-and-fixes-vm-ldap-rollout" class="nav-link" data-scroll-target="#possible-errors-and-fixes-vm-ldap-rollout"><span class="header-section-number">9.16</span> Possible errors and fixes (VM LDAP rollout)</a>
+  <li><a href="#quick-validation-commands" id="toc-quick-validation-commands" class="nav-link" data-scroll-target="#quick-validation-commands"><span class="header-section-number">9.11</span> Quick validation commands</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">9.12</span> References</a></li>
+  <li><a href="#ldap-deploy-troubleshooting-by-symptom" id="toc-ldap-deploy-troubleshooting-by-symptom" class="nav-link" data-scroll-target="#ldap-deploy-troubleshooting-by-symptom"><span class="header-section-number">9.13</span> LDAP Deploy Troubleshooting (by symptom)</a></li>
+  <li><a href="#troubleshooting-by-symptom" id="toc-troubleshooting-by-symptom" class="nav-link" data-scroll-target="#troubleshooting-by-symptom"><span class="header-section-number">9.14</span> Troubleshooting by symptom</a>
   <ul class="collapse">
-  <li><a href="#apache-wont-restart-after-ldap-change-1" id="toc-apache-wont-restart-after-ldap-change-1" class="nav-link" data-scroll-target="#apache-wont-restart-after-ldap-change-1"><span class="header-section-number">9.16.1</span> Apache won’t restart after LDAP change</a></li>
-  <li><a href="#ldaptls_cacertdir-breaks-apache" id="toc-ldaptls_cacertdir-breaks-apache" class="nav-link" data-scroll-target="#ldaptls_cacertdir-breaks-apache"><span class="header-section-number">9.16.2</span> <code>LDAPTLS_CACERTDIR</code> breaks Apache</a></li>
-  <li><a href="#ldap-login-shows-500-internal-server-error" id="toc-ldap-login-shows-500-internal-server-error" class="nav-link" data-scroll-target="#ldap-login-shows-500-internal-server-error"><span class="header-section-number">9.16.3</span> LDAP login shows 500 Internal Server Error</a></li>
-  <li><a href="#shiny-app-runs-locally-but-crashes-via-apache" id="toc-shiny-app-runs-locally-but-crashes-via-apache" class="nav-link" data-scroll-target="#shiny-app-runs-locally-but-crashes-via-apache"><span class="header-section-number">9.16.4</span> Shiny app runs locally but crashes via Apache</a></li>
+  <li><a href="#err_too_many_redirects" id="toc-err_too_many_redirects" class="nav-link" data-scroll-target="#err_too_many_redirects"><span class="header-section-number">9.14.1</span> <code>ERR_TOO_MANY_REDIRECTS</code></a></li>
+  <li><a href="#app-shows-local-login-page-ldap-mode-enabled-but-no-authenticated-user-found" id="toc-app-shows-local-login-page-ldap-mode-enabled-but-no-authenticated-user-found" class="nav-link" data-scroll-target="#app-shows-local-login-page-ldap-mode-enabled-but-no-authenticated-user-found"><span class="header-section-number">9.14.2</span> App shows local login page + <code>LDAP mode enabled but no authenticated user found</code></a></li>
+  <li><a href="#disconnected-from-the-server.-reload" id="toc-disconnected-from-the-server.-reload" class="nav-link" data-scroll-target="#disconnected-from-the-server.-reload"><span class="header-section-number">9.14.3</span> <code>Disconnected from the server. Reload</code></a></li>
+  <li><a href="#user-can-impersonate-another-user-via-url-query" id="toc-user-can-impersonate-another-user-via-url-query" class="nav-link" data-scroll-target="#user-can-impersonate-another-user-via-url-query"><span class="header-section-number">9.14.4</span> User can impersonate another user via URL query</a></li>
   </ul></li>
-  <li><a href="#vibe-coding" id="toc-vibe-coding" class="nav-link" data-scroll-target="#vibe-coding"><span class="header-section-number">9.17</span> Vibe Coding</a>
+  <li><a href="#certificate-warning-note" id="toc-certificate-warning-note" class="nav-link" data-scroll-target="#certificate-warning-note"><span class="header-section-number">9.15</span> Certificate warning note</a></li>
+  <li><a href="#vm-ldap-rollout-errors-from-server-preparations" id="toc-vm-ldap-rollout-errors-from-server-preparations" class="nav-link" data-scroll-target="#vm-ldap-rollout-errors-from-server-preparations"><span class="header-section-number">9.16</span> VM LDAP Rollout Errors (from Server Preparations)</a></li>
+  <li><a href="#possible-errors-and-fixes-vm-ldap-rollout" id="toc-possible-errors-and-fixes-vm-ldap-rollout" class="nav-link" data-scroll-target="#possible-errors-and-fixes-vm-ldap-rollout"><span class="header-section-number">9.17</span> Possible errors and fixes (VM LDAP rollout)</a>
   <ul class="collapse">
-  <li><a href="#ai-session-restart-quick-resume" id="toc-ai-session-restart-quick-resume" class="nav-link" data-scroll-target="#ai-session-restart-quick-resume"><span class="header-section-number">9.17.1</span> AI session restart (quick resume)</a></li>
+  <li><a href="#apache-wont-restart-after-ldap-change-1" id="toc-apache-wont-restart-after-ldap-change-1" class="nav-link" data-scroll-target="#apache-wont-restart-after-ldap-change-1"><span class="header-section-number">9.17.1</span> Apache won’t restart after LDAP change</a></li>
+  <li><a href="#ldaptls_cacertdir-breaks-apache" id="toc-ldaptls_cacertdir-breaks-apache" class="nav-link" data-scroll-target="#ldaptls_cacertdir-breaks-apache"><span class="header-section-number">9.17.2</span> <code>LDAPTLS_CACERTDIR</code> breaks Apache</a></li>
+  <li><a href="#ldap-login-shows-500-internal-server-error" id="toc-ldap-login-shows-500-internal-server-error" class="nav-link" data-scroll-target="#ldap-login-shows-500-internal-server-error"><span class="header-section-number">9.17.3</span> LDAP login shows 500 Internal Server Error</a></li>
+  <li><a href="#shiny-app-runs-locally-but-crashes-via-apache" id="toc-shiny-app-runs-locally-but-crashes-via-apache" class="nav-link" data-scroll-target="#shiny-app-runs-locally-but-crashes-via-apache"><span class="header-section-number">9.17.4</span> Shiny app runs locally but crashes via Apache</a></li>
   </ul></li>
-  <li><a href="#comprehensive-errorchecking-checklist" id="toc-comprehensive-errorchecking-checklist" class="nav-link" data-scroll-target="#comprehensive-errorchecking-checklist"><span class="header-section-number">9.18</span> Comprehensive Error‑Checking Checklist</a></li>
+  <li><a href="#vibe-coding" id="toc-vibe-coding" class="nav-link" data-scroll-target="#vibe-coding"><span class="header-section-number">9.18</span> Vibe Coding</a>
+  <ul class="collapse">
+  <li><a href="#ai-session-restart-quick-resume" id="toc-ai-session-restart-quick-resume" class="nav-link" data-scroll-target="#ai-session-restart-quick-resume"><span class="header-section-number">9.18.1</span> AI session restart (quick resume)</a></li>
+  </ul></li>
+  <li><a href="#comprehensive-errorchecking-checklist" id="toc-comprehensive-errorchecking-checklist" class="nav-link" data-scroll-target="#comprehensive-errorchecking-checklist"><span class="header-section-number">9.19</span> Comprehensive Error‑Checking Checklist</a></li>
   </ul>
 </nav>
     </div>
@@ -320,6 +326,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><a href="#documentation">Documentation</a></li>
 <li><a href="#git--github">Git / GitHub</a></li>
 <li><a href="#apache--ldap">Apache / LDAP</a></li>
+<li><a href="#ngs-vm-cutover-4439443">ngs-vm Cutover (443/9443)</a></li>
 <li><a href="#sql-moved">SQL (moved)</a></li>
 <li><a href="#auth-mode-switching">Auth mode switching</a></li>
 <li><a href="#apache-proxy">Apache proxy</a></li>
@@ -584,26 +591,67 @@ curl -vk https://bcf-vm.biochem.mpg.de/</code></pre>
 </ul>
 </section>
 </section>
-<section id="sql-moved" class="level2" data-number="9.5">
-<h2 data-number="9.5" class="anchored" data-anchor-id="sql-moved"><span class="header-section-number">9.5</span> SQL (moved)</h2>
+<section id="ngs-vm-cutover-4439443" class="level2" data-number="9.5">
+<h2 data-number="9.5" class="anchored" data-anchor-id="ngs-vm-cutover-4439443"><span class="header-section-number">9.5</span> ngs-vm Cutover (443/9443)</h2>
+<section id="main-url-still-serves-perl-after-cutover" class="level3" data-number="9.5.1">
+<h3 data-number="9.5.1" class="anchored" data-anchor-id="main-url-still-serves-perl-after-cutover"><span class="header-section-number">9.5.1</span> Main URL still serves Perl after cutover</h3>
+<p>Check active vhosts:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-S</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Fix:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite ngs-vm-shiny-443.conf</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2dissite 02-testing.conf</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="perl-fallback-on-9443-returns-connection-refused" class="level3" data-number="9.5.2">
+<h3 data-number="9.5.2" class="anchored" data-anchor-id="perl-fallback-on-9443-returns-connection-refused"><span class="header-section-number">9.5.2</span> Perl fallback on <code>:9443</code> returns connection refused</h3>
+<p>Common causes:</p>
+<ul>
+<li><code>Listen 9443</code> missing in <code>/etc/apache2/ports.conf</code></li>
+<li>fallback site not enabled</li>
+</ul>
+<p>Fix:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-q</span> <span class="st">'^Listen 9443$'</span> /etc/apache2/ports.conf <span class="kw">||</span> <span class="bu">echo</span> <span class="st">'Listen 9443'</span> <span class="kw">|</span> <span class="fu">sudo</span> tee <span class="at">-a</span> /etc/apache2/ports.conf</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite ngs-vm-perl-9443.conf</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="ldap-login-works-on-8443-but-fails-on-no-port-443" class="level3" data-number="9.5.3">
+<h3 data-number="9.5.3" class="anchored" data-anchor-id="ldap-login-works-on-8443-but-fails-on-no-port-443"><span class="header-section-number">9.5.3</span> LDAP login works on <code>:8443</code> but fails on no-port <code>:443</code></h3>
+<p>Cause:</p>
+<ul>
+<li><code>ngs-vm-shiny-443.conf</code> is missing LDAP <code>&lt;Location /sequencing-app/&gt;</code> auth block or is not the active <code>:443</code> vhost.</li>
+</ul>
+<p>Fix:</p>
+<ul>
+<li>Copy from repo template and re-enable:</li>
+</ul>
+<div class="sourceCode" id="cb35"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/yeroslaviz/BCFNGS-project-management/scripts/ngs-vm-shiny-443.conf /etc/apache2/sites-available/ngs-vm-shiny-443.conf</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite ngs-vm-shiny-443.conf</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+<section id="sql-moved" class="level2" data-number="9.6">
+<h2 data-number="9.6" class="anchored" data-anchor-id="sql-moved"><span class="header-section-number">9.6</span> SQL (moved)</h2>
 <p>All SQL database commands and explanations are documented in the <strong>SQL Handling</strong> chapter (<code>Documentation/chapters/sql-handling.qmd</code>).<br>
 This includes admin promotion in LDAP mode, SQLite inspection commands, budget holder updates, and the legacy import workflow.</p>
-<section id="sqlite-attempt-to-write-a-readonly-database" class="level3" data-number="9.5.1">
-<h3 data-number="9.5.1" class="anchored" data-anchor-id="sqlite-attempt-to-write-a-readonly-database"><span class="header-section-number">9.5.1</span> SQLite: “attempt to write a readonly database”</h3>
+<section id="sqlite-attempt-to-write-a-readonly-database" class="level3" data-number="9.6.1">
+<h3 data-number="9.6.1" class="anchored" data-anchor-id="sqlite-attempt-to-write-a-readonly-database"><span class="header-section-number">9.6.1</span> SQLite: “attempt to write a readonly database”</h3>
 <p>If you see <code>sqlite3.OperationalError: attempt to write a readonly database</code> when running setup/import scripts, you are usually running as the wrong user.</p>
 <ul>
 <li>On the VM, the live DB under <code>/srv/shiny-server/sequencing-app/</code> is typically owned by <code>shiny</code>.</li>
 <li>Stop Shiny Server, run the command as <code>shiny</code>, then start it again:</li>
 </ul>
-<div class="sourceCode" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny <span class="op">&lt;</span>your command here<span class="op">&gt;</span></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb36"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny <span class="op">&lt;</span>your command here<span class="op">&gt;</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>If it still fails, check DB ownership/permissions:</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-l</span> /srv/shiny-server/sequencing-app/sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb37"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-l</span> /srv/shiny-server/sequencing-app/sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 </section>
-<section id="auth-mode-switching" class="level2" data-number="9.6">
-<h2 data-number="9.6" class="anchored" data-anchor-id="auth-mode-switching"><span class="header-section-number">9.6</span> Auth mode switching</h2>
+<section id="auth-mode-switching" class="level2" data-number="9.7">
+<h2 data-number="9.7" class="anchored" data-anchor-id="auth-mode-switching"><span class="header-section-number">9.7</span> Auth mode switching</h2>
 <p><strong>LDAP mode (preferred: app <code>.Renviron</code>)</strong></p>
 <pre><code>sudo sed -i 's/^AUTH_MODE=.*/AUTH_MODE=ldap/' /srv/shiny-server/sequencing-app/.Renviron
 sudo systemctl restart shiny-server</code></pre>
@@ -614,10 +662,10 @@ sudo systemctl restart shiny-server</code></pre>
 <pre><code>sudo systemctl edit shiny-server</code></pre>
 <p>Then set <code>Environment=AUTH_MODE=...</code> and restart.</p>
 </section>
-<section id="apache-proxy" class="level2" data-number="9.7">
-<h2 data-number="9.7" class="anchored" data-anchor-id="apache-proxy"><span class="header-section-number">9.7</span> Apache proxy</h2>
-<section id="sequencing-app-returns-404" class="level3" data-number="9.7.1">
-<h3 data-number="9.7.1" class="anchored" data-anchor-id="sequencing-app-returns-404"><span class="header-section-number">9.7.1</span> <code>/sequencing-app/</code> returns 404</h3>
+<section id="apache-proxy" class="level2" data-number="9.8">
+<h2 data-number="9.8" class="anchored" data-anchor-id="apache-proxy"><span class="header-section-number">9.8</span> Apache proxy</h2>
+<section id="sequencing-app-returns-404" class="level3" data-number="9.8.1">
+<h3 data-number="9.8.1" class="anchored" data-anchor-id="sequencing-app-returns-404"><span class="header-section-number">9.8.1</span> <code>/sequencing-app/</code> returns 404</h3>
 <p>Symptoms:</p>
 <ul>
 <li><code>curl -Ik -u USER https://host/sequencing-app/</code> returns 404</li>
@@ -638,26 +686,26 @@ ProxyPassReverse /sequencing-app/ http://localhost:3838/sequencing-app/</code></
 <pre><code>sudo apache2ctl -t
 sudo systemctl restart apache2</code></pre>
 </section>
-<section id="redirect-to-shows-no-ui-defined" class="level3" data-number="9.7.2">
-<h3 data-number="9.7.2" class="anchored" data-anchor-id="redirect-to-shows-no-ui-defined"><span class="header-section-number">9.7.2</span> Redirect to <code>/</code> shows “No UI defined”</h3>
+<section id="redirect-to-shows-no-ui-defined" class="level3" data-number="9.8.2">
+<h3 data-number="9.8.2" class="anchored" data-anchor-id="redirect-to-shows-no-ui-defined"><span class="header-section-number">9.8.2</span> Redirect to <code>/</code> shows “No UI defined”</h3>
 <p>Cause:</p>
 <p>Root path is not proxied correctly.</p>
 <p>Fix:</p>
 <p>Use <code>/sequencing-app/</code> as the app path and update redirects accordingly.</p>
 </section>
 </section>
-<section id="shiny" class="level2" data-number="9.8">
-<h2 data-number="9.8" class="anchored" data-anchor-id="shiny"><span class="header-section-number">9.8</span> Shiny</h2>
-<section id="app-works-locally-but-fails-via-apache" class="level3" data-number="9.8.1">
-<h3 data-number="9.8.1" class="anchored" data-anchor-id="app-works-locally-but-fails-via-apache"><span class="header-section-number">9.8.1</span> App works locally but fails via Apache</h3>
+<section id="shiny" class="level2" data-number="9.9">
+<h2 data-number="9.9" class="anchored" data-anchor-id="shiny"><span class="header-section-number">9.9</span> Shiny</h2>
+<section id="app-works-locally-but-fails-via-apache" class="level3" data-number="9.9.1">
+<h3 data-number="9.9.1" class="anchored" data-anchor-id="app-works-locally-but-fails-via-apache"><span class="header-section-number">9.9.1</span> App works locally but fails via Apache</h3>
 <p>Check:</p>
 <ul>
 <li>Apache logs for LDAP errors</li>
 <li>Shiny logs for app startup errors</li>
 </ul>
 </section>
-<section id="ldap-mode-enabled-but-no-user" class="level3" data-number="9.8.2">
-<h3 data-number="9.8.2" class="anchored" data-anchor-id="ldap-mode-enabled-but-no-user"><span class="header-section-number">9.8.2</span> LDAP mode enabled but no user</h3>
+<section id="ldap-mode-enabled-but-no-user" class="level3" data-number="9.9.2">
+<h3 data-number="9.9.2" class="anchored" data-anchor-id="ldap-mode-enabled-but-no-user"><span class="header-section-number">9.9.2</span> LDAP mode enabled but no user</h3>
 <p>Cause:</p>
 <p>Shiny does not receive a user identity.</p>
 <p>Fix:</p>
@@ -666,26 +714,26 @@ sudo systemctl restart apache2</code></pre>
 <li>Confirm redirect works with <code>curl -Ik -u USER https://host/</code>.</li>
 </ul>
 </section>
-<section id="missing-environment-variables-in-shiny" class="level3" data-number="9.8.3">
-<h3 data-number="9.8.3" class="anchored" data-anchor-id="missing-environment-variables-in-shiny"><span class="header-section-number">9.8.3</span> Missing environment variables in Shiny</h3>
+<section id="missing-environment-variables-in-shiny" class="level3" data-number="9.9.3">
+<h3 data-number="9.9.3" class="anchored" data-anchor-id="missing-environment-variables-in-shiny"><span class="header-section-number">9.9.3</span> Missing environment variables in Shiny</h3>
 <p>Check:</p>
 <pre><code>sudo systemctl show shiny-server --property=Environment</code></pre>
 <p>Restart after changes:</p>
 <pre><code>sudo systemctl restart shiny-server</code></pre>
 </section>
 </section>
-<section id="deployment" class="level2" data-number="9.9">
-<h2 data-number="9.9" class="anchored" data-anchor-id="deployment"><span class="header-section-number">9.9</span> Deployment</h2>
-<section id="deploy-script-ran-but-app-unchanged" class="level3" data-number="9.9.1">
-<h3 data-number="9.9.1" class="anchored" data-anchor-id="deploy-script-ran-but-app-unchanged"><span class="header-section-number">9.9.1</span> Deploy script ran but app unchanged</h3>
+<section id="deployment" class="level2" data-number="9.10">
+<h2 data-number="9.10" class="anchored" data-anchor-id="deployment"><span class="header-section-number">9.10</span> Deployment</h2>
+<section id="deploy-script-ran-but-app-unchanged" class="level3" data-number="9.10.1">
+<h3 data-number="9.10.1" class="anchored" data-anchor-id="deploy-script-ran-but-app-unchanged"><span class="header-section-number">9.10.1</span> Deploy script ran but app unchanged</h3>
 <p>Fix:</p>
 <ul>
 <li>Verify <code>scripts/deploy.sh</code> ran successfully.</li>
 <li>Confirm files in <code>/srv/shiny-server/sequencing-app/</code> updated.</li>
 </ul>
 </section>
-<section id="database-overwritten" class="level3" data-number="9.9.2">
-<h3 data-number="9.9.2" class="anchored" data-anchor-id="database-overwritten"><span class="header-section-number">9.9.2</span> Database overwritten</h3>
+<section id="database-overwritten" class="level3" data-number="9.10.2">
+<h3 data-number="9.10.2" class="anchored" data-anchor-id="database-overwritten"><span class="header-section-number">9.10.2</span> Database overwritten</h3>
 <p>Fix:</p>
 <ul>
 <li>Ensure <code>scripts/deploy.sh</code> excludes <code>sequencing_projects.db</code>.</li>
@@ -693,8 +741,8 @@ sudo systemctl restart apache2</code></pre>
 </ul>
 </section>
 </section>
-<section id="quick-validation-commands" class="level2" data-number="9.10">
-<h2 data-number="9.10" class="anchored" data-anchor-id="quick-validation-commands"><span class="header-section-number">9.10</span> Quick validation commands</h2>
+<section id="quick-validation-commands" class="level2" data-number="9.11">
+<h2 data-number="9.11" class="anchored" data-anchor-id="quick-validation-commands"><span class="header-section-number">9.11</span> Quick validation commands</h2>
 <pre><code># Apache
 sudo apache2ctl -t
 sudo apache2ctl -S
@@ -709,63 +757,63 @@ curl -Ik -u USER https://ngs-testing-vm.biochem.mpg.de/sequencing-app/
 # App (backend)
 curl -I http://localhost:3838/sequencing-app/</code></pre>
 </section>
-<section id="references" class="level2" data-number="9.11">
-<h2 data-number="9.11" class="anchored" data-anchor-id="references"><span class="header-section-number">9.11</span> References</h2>
+<section id="references" class="level2" data-number="9.12">
+<h2 data-number="9.12" class="anchored" data-anchor-id="references"><span class="header-section-number">9.12</span> References</h2>
 <ul>
 <li><code>Server_preparations.qmd</code></li>
 <li><code>notes/sql-handling.qmd</code></li>
 <li><code>notes/ubuntu-bare-server-setup-howto.qmd</code></li>
 </ul>
 </section>
-<section id="ldap-deploy-troubleshooting-by-symptom" class="level2" data-number="9.12">
-<h2 data-number="9.12" class="anchored" data-anchor-id="ldap-deploy-troubleshooting-by-symptom"><span class="header-section-number">9.12</span> LDAP Deploy Troubleshooting (by symptom)</h2>
+<section id="ldap-deploy-troubleshooting-by-symptom" class="level2" data-number="9.13">
+<h2 data-number="9.13" class="anchored" data-anchor-id="ldap-deploy-troubleshooting-by-symptom"><span class="header-section-number">9.13</span> LDAP Deploy Troubleshooting (by symptom)</h2>
 </section>
-<section id="troubleshooting-by-symptom" class="level2" data-number="9.13">
-<h2 data-number="9.13" class="anchored" data-anchor-id="troubleshooting-by-symptom"><span class="header-section-number">9.13</span> Troubleshooting by symptom</h2>
-<section id="err_too_many_redirects" class="level3" data-number="9.13.1">
-<h3 data-number="9.13.1" class="anchored" data-anchor-id="err_too_many_redirects"><span class="header-section-number">9.13.1</span> <code>ERR_TOO_MANY_REDIRECTS</code></h3>
+<section id="troubleshooting-by-symptom" class="level2" data-number="9.14">
+<h2 data-number="9.14" class="anchored" data-anchor-id="troubleshooting-by-symptom"><span class="header-section-number">9.14</span> Troubleshooting by symptom</h2>
+<section id="err_too_many_redirects" class="level3" data-number="9.14.1">
+<h3 data-number="9.14.1" class="anchored" data-anchor-id="err_too_many_redirects"><span class="header-section-number">9.14.1</span> <code>ERR_TOO_MANY_REDIRECTS</code></h3>
 <p>Likely cause:</p>
 <ul>
 <li>Apache rewrite rule loop in <code>/etc/apache2/sites-enabled/01-main.conf</code>.</li>
 </ul>
 <p>Fix:</p>
-<div class="sourceCode" id="cb42"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp ~/BCFNGS-project-management/mpiseq2/ngs-vm_01-main.conf /etc/apache2/sites-available/01-main.conf</span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-sf</span> /etc/apache2/sites-available/01-main.conf /etc/apache2/sites-enabled/01-main.conf</span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl configtest</span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span>
-<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb46"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp ~/BCFNGS-project-management/mpiseq2/ngs-vm_01-main.conf /etc/apache2/sites-available/01-main.conf</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-sf</span> /etc/apache2/sites-available/01-main.conf /etc/apache2/sites-enabled/01-main.conf</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl configtest</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Then re-run curl checks from section 4.</p>
 </section>
-<section id="app-shows-local-login-page-ldap-mode-enabled-but-no-authenticated-user-found" class="level3" data-number="9.13.2">
-<h3 data-number="9.13.2" class="anchored" data-anchor-id="app-shows-local-login-page-ldap-mode-enabled-but-no-authenticated-user-found"><span class="header-section-number">9.13.2</span> App shows local login page + <code>LDAP mode enabled but no authenticated user found</code></h3>
+<section id="app-shows-local-login-page-ldap-mode-enabled-but-no-authenticated-user-found" class="level3" data-number="9.14.2">
+<h3 data-number="9.14.2" class="anchored" data-anchor-id="app-shows-local-login-page-ldap-mode-enabled-but-no-authenticated-user-found"><span class="header-section-number">9.14.2</span> App shows local login page + <code>LDAP mode enabled but no authenticated user found</code></h3>
 <p>Likely cause:</p>
 <ul>
 <li>Shiny is in LDAP mode, but proxy trust/query fallback settings are missing.</li>
 </ul>
 <p>Checks:</p>
-<div class="sourceCode" id="cb43"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl show shiny-server <span class="at">--property</span><span class="op">=</span>Environment</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb47"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl show shiny-server <span class="at">--property</span><span class="op">=</span>Environment</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Required:</p>
 <ul>
 <li><code>AUTH_MODE=ldap</code></li>
 <li><code>TRUST_PROXY_AUTH_USER_QUERY=1</code></li>
 </ul>
 </section>
-<section id="disconnected-from-the-server.-reload" class="level3" data-number="9.13.3">
-<h3 data-number="9.13.3" class="anchored" data-anchor-id="disconnected-from-the-server.-reload"><span class="header-section-number">9.13.3</span> <code>Disconnected from the server. Reload</code></h3>
+<section id="disconnected-from-the-server.-reload" class="level3" data-number="9.14.3">
+<h3 data-number="9.14.3" class="anchored" data-anchor-id="disconnected-from-the-server.-reload"><span class="header-section-number">9.14.3</span> <code>Disconnected from the server. Reload</code></h3>
 <p>Likely causes:</p>
 <ul>
 <li>Shiny worker restarted/terminated</li>
 <li>Apache websocket/proxy path mismatch</li>
 </ul>
 <p>Checks:</p>
-<div class="sourceCode" id="cb44"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> journalctl <span class="at">-u</span> shiny-server <span class="at">-n</span> 200 <span class="at">--no-pager</span></span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-n</span> 200 /var/log/shiny-server/<span class="va">$(</span><span class="fu">sudo</span> ls <span class="at">-t</span> /var/log/shiny-server <span class="kw">|</span> <span class="fu">head</span> <span class="at">-n</span> 1<span class="va">)</span></span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-n</span> 200 /var/log/apache2/sequencing-app-ssl-error.log</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb48"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> journalctl <span class="at">-u</span> shiny-server <span class="at">-n</span> 200 <span class="at">--no-pager</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-n</span> 200 /var/log/shiny-server/<span class="va">$(</span><span class="fu">sudo</span> ls <span class="at">-t</span> /var/log/shiny-server <span class="kw">|</span> <span class="fu">head</span> <span class="at">-n</span> 1<span class="va">)</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-n</span> 200 /var/log/apache2/sequencing-app-ssl-error.log</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Also ensure Apache modules are enabled:</p>
-<div class="sourceCode" id="cb45"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-M</span> <span class="kw">|</span> <span class="fu">egrep</span> <span class="st">'headers_module|rewrite_module|proxy_module|proxy_http_module|proxy_wstunnel_module|ldap_module|authnz_ldap_module'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb49"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-M</span> <span class="kw">|</span> <span class="fu">egrep</span> <span class="st">'headers_module|rewrite_module|proxy_module|proxy_http_module|proxy_wstunnel_module|ldap_module|authnz_ldap_module'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="user-can-impersonate-another-user-via-url-query" class="level3" data-number="9.13.4">
-<h3 data-number="9.13.4" class="anchored" data-anchor-id="user-can-impersonate-another-user-via-url-query"><span class="header-section-number">9.13.4</span> User can impersonate another user via URL query</h3>
+<section id="user-can-impersonate-another-user-via-url-query" class="level3" data-number="9.14.4">
+<h3 data-number="9.14.4" class="anchored" data-anchor-id="user-can-impersonate-another-user-via-url-query"><span class="header-section-number">9.14.4</span> User can impersonate another user via URL query</h3>
 <p>Expected fixed behavior:</p>
 <ul>
 <li>tampered <code>auth_user</code> should always be rewritten to the authenticated LDAP username.</li>
@@ -773,22 +821,22 @@ curl -I http://localhost:3838/sequencing-app/</code></pre>
 <p>If not fixed, re-apply <code>mpiseq2/ngs-vm_01-main.conf</code> from repo and restart Apache + Shiny (section 5A).</p>
 </section>
 </section>
-<section id="certificate-warning-note" class="level2" data-number="9.14">
-<h2 data-number="9.14" class="anchored" data-anchor-id="certificate-warning-note"><span class="header-section-number">9.14</span> Certificate warning note</h2>
+<section id="certificate-warning-note" class="level2" data-number="9.15">
+<h2 data-number="9.15" class="anchored" data-anchor-id="certificate-warning-note"><span class="header-section-number">9.15</span> Certificate warning note</h2>
 <p>If Apache restart shows:</p>
 <ul>
 <li><code>AH01909: server certificate does NOT include an ID which matches the server name</code></li>
 </ul>
 <p>This is a certificate/SAN mismatch warning for host naming. It is separate from LDAP auth logic and redirect rewrite behavior.</p>
 </section>
-<section id="vm-ldap-rollout-errors-from-server-preparations" class="level2" data-number="9.15">
-<h2 data-number="9.15" class="anchored" data-anchor-id="vm-ldap-rollout-errors-from-server-preparations"><span class="header-section-number">9.15</span> VM LDAP Rollout Errors (from Server Preparations)</h2>
+<section id="vm-ldap-rollout-errors-from-server-preparations" class="level2" data-number="9.16">
+<h2 data-number="9.16" class="anchored" data-anchor-id="vm-ldap-rollout-errors-from-server-preparations"><span class="header-section-number">9.16</span> VM LDAP Rollout Errors (from Server Preparations)</h2>
 </section>
-<section id="possible-errors-and-fixes-vm-ldap-rollout" class="level2" data-number="9.16">
-<h2 data-number="9.16" class="anchored" data-anchor-id="possible-errors-and-fixes-vm-ldap-rollout"><span class="header-section-number">9.16</span> Possible errors and fixes (VM LDAP rollout)</h2>
+<section id="possible-errors-and-fixes-vm-ldap-rollout" class="level2" data-number="9.17">
+<h2 data-number="9.17" class="anchored" data-anchor-id="possible-errors-and-fixes-vm-ldap-rollout"><span class="header-section-number">9.17</span> Possible errors and fixes (VM LDAP rollout)</h2>
 <p>This section captures the real errors I hit during the VM rollout and the fixes that worked. It is meant as a troubleshooting reference.</p>
-<section id="apache-wont-restart-after-ldap-change-1" class="level3" data-number="9.16.1">
-<h3 data-number="9.16.1" class="anchored" data-anchor-id="apache-wont-restart-after-ldap-change-1"><span class="header-section-number">9.16.1</span> Apache won’t restart after LDAP change</h3>
+<section id="apache-wont-restart-after-ldap-change-1" class="level3" data-number="9.17.1">
+<h3 data-number="9.17.1" class="anchored" data-anchor-id="apache-wont-restart-after-ldap-change-1"><span class="header-section-number">9.17.1</span> Apache won’t restart after LDAP change</h3>
 <p><strong>Symptom</strong></p>
 <pre><code>AH00526: Syntax error ... Bad LDAP URL while parsing.</code></pre>
 <p><strong>Cause</strong></p>
@@ -798,8 +846,8 @@ curl -I http://localhost:3838/sequencing-app/</code></pre>
 <pre><code>AuthLDAPURL "ldaps://ldapserv1.biochem.mpg.de:636/dc=biochem,dc=mpg,dc=de?uid?sub?(objectClass=posixAccount)"</code></pre>
 <p>If the multi‑server line fails, I keep one server and fall back manually if needed.</p>
 </section>
-<section id="ldaptls_cacertdir-breaks-apache" class="level3" data-number="9.16.2">
-<h3 data-number="9.16.2" class="anchored" data-anchor-id="ldaptls_cacertdir-breaks-apache"><span class="header-section-number">9.16.2</span> <code>LDAPTLS_CACERTDIR</code> breaks Apache</h3>
+<section id="ldaptls_cacertdir-breaks-apache" class="level3" data-number="9.17.2">
+<h3 data-number="9.17.2" class="anchored" data-anchor-id="ldaptls_cacertdir-breaks-apache"><span class="header-section-number">9.17.2</span> <code>LDAPTLS_CACERTDIR</code> breaks Apache</h3>
 <p><strong>Symptom</strong></p>
 <pre><code>Invalid command 'LDAPTLS_CACERTDIR'</code></pre>
 <p><strong>Cause</strong></p>
@@ -807,8 +855,8 @@ curl -I http://localhost:3838/sequencing-app/</code></pre>
 <p><strong>Fix</strong></p>
 <p>Remove it from Apache. If I need TLS trust, I configure it in <code>/etc/ldap/ldap.conf</code> instead.</p>
 </section>
-<section id="ldap-login-shows-500-internal-server-error" class="level3" data-number="9.16.3">
-<h3 data-number="9.16.3" class="anchored" data-anchor-id="ldap-login-shows-500-internal-server-error"><span class="header-section-number">9.16.3</span> LDAP login shows 500 Internal Server Error</h3>
+<section id="ldap-login-shows-500-internal-server-error" class="level3" data-number="9.17.3">
+<h3 data-number="9.17.3" class="anchored" data-anchor-id="ldap-login-shows-500-internal-server-error"><span class="header-section-number">9.17.3</span> LDAP login shows 500 Internal Server Error</h3>
 <p><strong>Symptom</strong></p>
 <ul>
 <li>Browser shows <code>Internal Server Error</code></li>
@@ -840,8 +888,8 @@ curl -I http://localhost:3838/sequencing-app/</code></pre>
 <p>Then restart Apache:</p>
 <pre><code>sudo systemctl restart apache2</code></pre>
 </section>
-<section id="shiny-app-runs-locally-but-crashes-via-apache" class="level3" data-number="9.16.4">
-<h3 data-number="9.16.4" class="anchored" data-anchor-id="shiny-app-runs-locally-but-crashes-via-apache"><span class="header-section-number">9.16.4</span> Shiny app runs locally but crashes via Apache</h3>
+<section id="shiny-app-runs-locally-but-crashes-via-apache" class="level3" data-number="9.17.4">
+<h3 data-number="9.17.4" class="anchored" data-anchor-id="shiny-app-runs-locally-but-crashes-via-apache"><span class="header-section-number">9.17.4</span> Shiny app runs locally but crashes via Apache</h3>
 <p><strong>Symptom</strong></p>
 <ul>
 <li>App works with <code>shiny::runApp()</code></li>
@@ -850,10 +898,10 @@ curl -I http://localhost:3838/sequencing-app/</code></pre>
 <p><strong>Cause</strong></p>
 </section>
 </section>
-<section id="vibe-coding" class="level2" data-number="9.17">
-<h2 data-number="9.17" class="anchored" data-anchor-id="vibe-coding"><span class="header-section-number">9.17</span> Vibe Coding</h2>
-<section id="ai-session-restart-quick-resume" class="level3" data-number="9.17.1">
-<h3 data-number="9.17.1" class="anchored" data-anchor-id="ai-session-restart-quick-resume"><span class="header-section-number">9.17.1</span> AI session restart (quick resume)</h3>
+<section id="vibe-coding" class="level2" data-number="9.18">
+<h2 data-number="9.18" class="anchored" data-anchor-id="vibe-coding"><span class="header-section-number">9.18</span> Vibe Coding</h2>
+<section id="ai-session-restart-quick-resume" class="level3" data-number="9.18.1">
+<h3 data-number="9.18.1" class="anchored" data-anchor-id="ai-session-restart-quick-resume"><span class="header-section-number">9.18.1</span> AI session restart (quick resume)</h3>
 <p>If I need to resume work in a new AI session, I point it to:</p>
 <ol type="1">
 <li><strong>Quick Start</strong> — how to run locally/VM, and environment variables.</li>
@@ -868,8 +916,8 @@ curl -I http://localhost:3838/sequencing-app/</code></pre>
 <p>Check Apache log for <code>authnz_ldap</code> errors and fix TLS trust as above.</p>
 </section>
 </section>
-<section id="comprehensive-errorchecking-checklist" class="level2" data-number="9.18">
-<h2 data-number="9.18" class="anchored" data-anchor-id="comprehensive-errorchecking-checklist"><span class="header-section-number">9.18</span> Comprehensive Error‑Checking Checklist</h2>
+<section id="comprehensive-errorchecking-checklist" class="level2" data-number="9.19">
+<h2 data-number="9.19" class="anchored" data-anchor-id="comprehensive-errorchecking-checklist"><span class="header-section-number">9.19</span> Comprehensive Error‑Checking Checklist</h2>
 <p>When something breaks, I run through this list in order:</p>
 <ol type="1">
 <li><strong>Apache syntax</strong></li>

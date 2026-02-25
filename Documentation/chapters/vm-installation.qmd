@@ -272,7 +272,7 @@ sudo systemctl restart apache2
 
 ### 1) Keep legacy system on `:443`
 
-Leave the current `01-main.conf` active for the Perl system.
+Leave the currently active Perl `:443` site enabled (on our VM this is `02-testing.conf`).
 
 ### 2) Add a parallel Shiny vhost on `:8443` (or `:1234`) {#ngs-parallel-shiny-vhost}
 
@@ -358,51 +358,234 @@ sudo tail -n 80 "$LATEST"
 
 ## Legacy data migration (perl-VM → shiny-VM)
 
-Follow the SQL Handling chapter for the export/import workflow:
+Use this workflow to export legacy projects from the perl system on `ngs-vm` and import into either `bcf-vm` or `ngs-vm` (Shiny DB).
 
-- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/Documentation/chapters/sql-handling.qmd`
+### Step 1) Export CSV on ngs-vm (perl PostgreSQL)
 
-This includes:
+```bash
+psql -U letunic -h 127.0.0.1 -d mpiseq2_db -c "\
+\\copy (\
+  SELECT \
+    p.id AS legacy_id, \
+    p.name AS project_name, \
+    m.login AS login, \
+    m.name AS user_full_name, \
+    l.name AS group_name, \
+    COALESCE(p.ref_genome_legacy, rg.genome) AS reference_genome, \
+    COALESCE(p.sample_type_legacy, st.type) AS sample_type, \
+    t.type AS type_label, \
+    p.sequencing_length AS sequencing_length, \
+    COALESCE(p.budget_group_legacy, bg.budget) AS budget_group, \
+    p.sequencing_platform AS sequencing_platform, \
+    COALESCE(p.sequencing_kit_legacy, p.sequencing_kit) AS sequencing_kit, \
+    p.sequencing_index AS sequencing_index, \
+    p.note AS note \
+  FROM project.project p \
+  LEFT JOIN people.member m ON p.user_id = m.id \
+  LEFT JOIN people.lab l ON m.lab_id = l.id \
+  LEFT JOIN project.ref_genome rg ON p.ref_genome_id = rg.id \
+  LEFT JOIN project.sample_type st ON p.sample_type_id = st.id \
+  LEFT JOIN project.type t ON p.type_id = t.id \
+  LEFT JOIN project.budget_group bg ON p.budget_group_id = bg.id \
+  ORDER BY p.id\
+) TO '/www/mpiseq2/exports/legacy_projects.csv' CSV HEADER"
+```
 
-- PostgreSQL export query
-- UTF‑8 normalization if needed
-- CSV transfer
-- SQLite import on the shiny-VM
+### Step 2) Normalize UTF-8 (recommended)
+
+```bash
+sudo python3 - <<'PY'
+src = "/www/mpiseq2/exports/legacy_projects.csv"
+dst = "/www/mpiseq2/exports/legacy_projects.utf8.csv"
+with open(src, "r", encoding="utf-8", errors="ignore") as f, \
+     open(dst, "w", encoding="utf-8") as out:
+    for line in f:
+        if "Ã" in line or "Â" in line:
+            line = line.encode("latin1", errors="ignore").decode("utf-8", errors="ignore")
+        out.write(line)
+PY
+```
+
+### Step 3) Move CSV to the target VM
+
+If importing into `bcf-vm`:
+
+```bash
+# run on bcf-vm once
+mkdir -p /home/yeroslaviz/BCFNGS-project-management/exports/
+
+# run on ngs-vm (source)
+scp /www/mpiseq2/exports/legacy_projects.utf8.csv \
+  yeroslaviz@bcf-vm:/home/yeroslaviz/BCFNGS-project-management/exports/
+```
+
+If importing into Shiny on `ngs-vm` (same host as perl system):
+
+```bash
+cp -R /www/mpiseq2/exports/ /home/yeroslaviz/BCFNGS-project-management/
+```
+
+### Step 4) Import into Shiny SQLite DB
+
+```bash
+sudo systemctl stop shiny-server
+cd /srv/shiny-server/sequencing-app
+```
+
+If `/home/yeroslaviz` is not traversable by `shiny` (permission denied), either:
+
+- quick fix:
+
+```bash
+sudo chmod o+x /home/yeroslaviz
+```
+
+- safer fix (preferred): copy script + CSV to a service-owned path and run from there.
+
+Then run import:
+
+```bash
+sudo -u shiny python3 /home/yeroslaviz/BCFNGS-project-management/scripts/import_legacy_projects.py \
+  --db /srv/shiny-server/sequencing-app/sequencing_projects.db \
+  --csv /home/yeroslaviz/BCFNGS-project-management/exports/legacy_projects.utf8.csv
+
+sudo systemctl start shiny-server
+```
+
+### Step 5) Verify import
+
+```bash
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"SELECT COUNT(*) FROM projects WHERE status='Legacy project';"
+
+sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+"SELECT project_id, project_name, responsible_user, status FROM projects WHERE status='Legacy project' ORDER BY project_id LIMIT 5;"
+```
+
+Notes:
+
+- Rebuild is not required for regular imports; new `legacy_id` rows are inserted, already imported IDs are skipped.
+- If you need a full refresh of legacy rows, rebuild or delete legacy rows first, then re-import.
+- Detailed SQL notes remain in `Documentation/chapters/sql-handling.qmd`.
 
 ## Cutover and rollback
 
-### Cutover (switch public hostname to Shiny)
+### Cutover target
 
-Option A (redirect 443 to new port):
+After cutover:
 
-```apache
-Redirect permanent / https://ngs-vm.biochem.mpg.de:8443/
+- `https://ngs-vm.biochem.mpg.de` serves **Shiny** on `:443` (no port in URL).
+- Perl fallback stays available on `https://ngs-vm.biochem.mpg.de:9443`.
+
+### 1) Pre-cutover safety backup
+
+```bash
+sudo mkdir -p /root/apache-backup-$(date +%F-%H%M)
+sudo cp -a /etc/apache2/sites-available /root/apache-backup-$(date +%F-%H%M)/
+sudo cp -a /etc/apache2/sites-enabled /root/apache-backup-$(date +%F-%H%M)/
 ```
 
-Option B (replace the 443 vhost with the Shiny proxy):
+### 2) Prepare vhost files
 
-- Disable legacy vhost.
-- Enable Shiny vhost on `:443`.
+Use the versioned templates from the repo:
 
-### Rollback
+- `scripts/ngs-vm-shiny-443.conf` -> `/etc/apache2/sites-available/ngs-vm-shiny-443.conf`
+- `scripts/ngs-vm-perl-9443.conf` -> `/etc/apache2/sites-available/ngs-vm-perl-9443.conf`
 
-To revert quickly:
+```bash
+sudo cp /home/<user>/BCFNGS-project-management/scripts/ngs-vm-shiny-443.conf /etc/apache2/sites-available/ngs-vm-shiny-443.conf
+sudo cp /home/<user>/BCFNGS-project-management/scripts/ngs-vm-perl-9443.conf /etc/apache2/sites-available/ngs-vm-perl-9443.conf
+```
 
-- Remove the redirect line or disable the Shiny vhost.
-- Re-enable the legacy `ngs-vm_01-main.conf`.
-- Reload Apache.
+### 3) Enable the cutover routing
+
+```bash
+grep -q '^Listen 9443$' /etc/apache2/ports.conf || echo 'Listen 9443' | sudo tee -a /etc/apache2/ports.conf
+sudo a2enmod ssl proxy proxy_http proxy_wstunnel rewrite headers ldap authnz_ldap
+sudo a2ensite ngs-vm-shiny-443.conf
+sudo a2ensite ngs-vm-perl-9443.conf
+sudo a2dissite 02-testing.conf
+sudo apache2ctl -t
+sudo systemctl restart apache2
+```
+
+### 4) Automated switch/rollback script (optional)
+
+You can use:
+
+- `scripts/cutover_ngs_vm_ports.sh`
+
+Cutover:
+
+```bash
+cd /home/<user>/BCFNGS-project-management
+./scripts/cutover_ngs_vm_ports.sh cutover
+```
+
+Rollback:
+
+```bash
+cd /home/<user>/BCFNGS-project-management
+./scripts/cutover_ngs_vm_ports.sh rollback
+```
+
+### Rollback (manual)
+
+```bash
+sudo a2ensite 02-testing.conf
+sudo a2dissite ngs-vm-shiny-443.conf
+sudo a2dissite ngs-vm-perl-9443.conf
+sudo apache2ctl -t
+sudo systemctl restart apache2
+```
+
+### DB lifecycle policy (important)
+
+- `scripts/deploy.sh` is code-only deployment and does **not** recreate `sequencing_projects.db`.
+- Restarting `shiny-server` does **not** delete DB content.
+- Rebuild is manual and only when intentionally running `/srv/shiny-server/sequencing-app/setup_database.R`.
+- Keep legacy CSV import as a separate operation, not part of deploy.
+
+### DB snapshot / rebuild / restore runbook
+
+Snapshot:
+
+```bash
+sudo systemctl stop shiny-server
+sudo cp /srv/shiny-server/sequencing-app/sequencing_projects.db /srv/shiny-server/sequencing-app/sequencing_projects.db.bak.$(date +%F-%H%M%S)
+sudo systemctl start shiny-server
+```
+
+Optional rebuild:
+
+```bash
+cd /srv/shiny-server/sequencing-app
+sudo systemctl stop shiny-server
+sudo -u shiny Rscript setup_database.R
+sudo systemctl start shiny-server
+```
+
+Restore snapshot:
+
+```bash
+sudo systemctl stop shiny-server
+sudo cp /srv/shiny-server/sequencing-app/sequencing_projects.db.bak.<timestamp> /srv/shiny-server/sequencing-app/sequencing_projects.db
+sudo chown shiny:shiny /srv/shiny-server/sequencing-app/sequencing_projects.db
+sudo systemctl start shiny-server
+```
 
 ## Post-install verification
 
 Run these checks after install:
 
 ```bash
-curl -Ik https://<host>/
-curl -Ik -u USER https://<host>/sequencing-app/
+curl -Ik https://ngs-vm.biochem.mpg.de/
+curl -Ik -u USER https://ngs-vm.biochem.mpg.de/sequencing-app/
+curl -Ik https://ngs-vm.biochem.mpg.de:9443/
 ```
 
 Confirm:
 
-- LDAP prompt appears.
-- Login succeeds.
-- App loads and lists projects.
+- no-port hostname opens Shiny.
+- LDAP prompt appears and login succeeds.
+- Perl fallback is reachable on `:9443`.

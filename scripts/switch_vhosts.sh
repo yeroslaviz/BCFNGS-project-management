@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Switch Apache vhosts from perl-VM to shiny-VM.
-# This script assumes both vhost files already exist in /etc/apache2/sites-available.
-# Customize names/hostnames via env vars below.
+# Legacy switch helper (hostname-based strategy).
+# This script keeps the older flow (perl hostname -> shiny hostname redirect).
+# Current production cutover for ngs-vm uses:
+#   scripts/cutover_ngs_vm_ports.sh
+# with Shiny on :443 and Perl fallback on :9443.
 
 PERL_SITE="${PERL_SITE:-ngs-vm.conf}"
 SHINY_SITE="${SHINY_SITE:-ngs-vm-shiny.conf}"

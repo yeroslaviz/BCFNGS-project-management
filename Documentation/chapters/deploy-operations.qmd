@@ -12,9 +12,10 @@ execute:
 
 - [Project Deletion Permissions](#project-deletion-permissions)
 - [Deploy Workflow](#deploy-workflow)
+- [Deploy Scope and DB Behavior](#deploy-scope-and-db-behavior)
 - [LDAP Deploy Smoke Tests](#ldap-deploy-smoke-tests)
 - [Backups (summary)](#backups-summary)
-- [VHost cutover (perl‑VM → shiny‑VM)](#vhost-cutover-perlvm--shinyvm)
+- [ngs-vm Cutover (443/9443)](#ngs-vm-cutover-4439443)
 
 ## Project Deletion Permissions
 
@@ -176,6 +177,51 @@ sudo systemctl restart shiny-server
 sudo systemctl restart apache2
 ```
 
+## Deploy Scope and DB Behavior
+
+`scripts/deploy.sh` is **code deployment only**:
+
+- syncs app files from repo -> `/srv/shiny-server/sequencing-app/`
+- excludes `sequencing_projects.db`
+- restarts `shiny-server`
+- runs LDAP smoke tests (unless `SKIP_SMOKE_TEST=1`)
+
+It does **not**:
+
+- rebuild the DB
+- import legacy CSV
+- run `setup_database.R`
+
+### When to run deploy
+
+Run deploy after changes to app code/config in:
+
+- `/home/yeroslaviz/BCFNGS-project-management/sequencing-app/`
+
+Do not use deploy for Apache-only changes; apply Apache config separately.
+
+### Restart vs rebuild
+
+- Restarting `shiny-server` does not remove DB content.
+- Rebuild is a manual, explicit action (`setup_database.R`) and should be done only when needed.
+
+### Safe DB snapshot around risky maintenance
+
+```bash
+sudo systemctl stop shiny-server
+sudo cp /srv/shiny-server/sequencing-app/sequencing_projects.db /srv/shiny-server/sequencing-app/sequencing_projects.db.bak.$(date +%F-%H%M%S)
+sudo systemctl start shiny-server
+```
+
+Restore snapshot:
+
+```bash
+sudo systemctl stop shiny-server
+sudo cp /srv/shiny-server/sequencing-app/sequencing_projects.db.bak.<timestamp> /srv/shiny-server/sequencing-app/sequencing_projects.db
+sudo chown shiny:shiny /srv/shiny-server/sequencing-app/sequencing_projects.db
+sudo systemctl start shiny-server
+```
+
 
 ## LDAP Deploy Smoke Tests
 
@@ -209,7 +255,7 @@ This project currently has three backup mechanisms:
 
 Note:
 
-- `scripts/deploy.sh` syncs app code only. If you changed Apache config (`01-main.conf`), apply/restart Apache separately, then run the curl checks in section 4.
+- `scripts/deploy.sh` syncs app code only. If you changed Apache config, apply/restart Apache separately, then run curl checks.
 
 
 ### Step 2: Non-interactive usage (optional)
@@ -229,110 +275,74 @@ SKIP_SMOKE_TEST=1 ./scripts/deploy.sh
 Override target base URL:
 
 ```bash
-PUBLIC_BASE_URL="https://ngs-testing-vm.biochem.mpg.de" ./scripts/deploy.sh
+PUBLIC_BASE_URL="https://ngs-vm.biochem.mpg.de" ./scripts/deploy.sh
 ```
 
-## VHost cutover (perl‑VM → shiny‑VM)
+## ngs-vm Cutover (443/9443)
 
-This is the **separate workflow** for switching Apache from the perl‑VM app to the shiny‑VM app.
-Do **not** run this until shiny‑VM is fully validated.
+Target state:
 
-### Step 1: Prepare two vhosts
+- `https://ngs-vm.biochem.mpg.de` -> Shiny on `:443`
+- `https://ngs-vm.biochem.mpg.de:9443` -> Perl fallback
 
-- **perl vhost** (legacy): `ngs-vm.biochem.mpg.de`
-- **shiny vhost** (new): `ngs-vm-shiny.biochem.mpg.de`  
+This avoids TLS hostname mismatch (same hostname for both endpoints).
 
-Keep both configs on disk so you can roll back quickly.
-If the shiny hostname changes later, update it in the vhost file and in the script env vars below.
+### Step 1: Prepare vhost templates
 
-### Step 2: Optional: redirect the old hostname
+Use these repo templates:
 
-When you cut over, add a redirect in the perl vhost:
+- `scripts/ngs-vm-shiny-443.conf`
+- `scripts/ngs-vm-perl-9443.conf`
 
-```apache
-Redirect permanent / https://ngs-vm-shiny.biochem.mpg.de/
-```
-
-### Step 3: Switch vhosts (script)
-
-The repo includes a switch script you can run later:
+Copy to Apache:
 
 ```bash
-scripts/switch_vhosts.sh
+sudo cp /home/yeroslaviz/BCFNGS-project-management/scripts/ngs-vm-shiny-443.conf /etc/apache2/sites-available/ngs-vm-shiny-443.conf
+sudo cp /home/yeroslaviz/BCFNGS-project-management/scripts/ngs-vm-perl-9443.conf /etc/apache2/sites-available/ngs-vm-perl-9443.conf
 ```
 
-You can override hostnames or file names:
+### Step 2: Enable routing and switch traffic
 
 ```bash
-PERL_SITE=ngs-vm.conf \
-SHINY_SITE=ngs-vm-shiny.conf \
-SHINY_HOSTNAME=ngs-vm-shiny.biochem.mpg.de \
-REDIRECT_FROM=ngs-vm.biochem.mpg.de \
-scripts/switch_vhosts.sh
+grep -q '^Listen 9443$' /etc/apache2/ports.conf || echo 'Listen 9443' | sudo tee -a /etc/apache2/ports.conf
+sudo a2enmod ssl proxy proxy_http proxy_wstunnel rewrite headers ldap authnz_ldap
+sudo a2ensite ngs-vm-shiny-443.conf
+sudo a2ensite ngs-vm-perl-9443.conf
+sudo a2dissite 02-testing.conf
+sudo apache2ctl -t
+sudo systemctl restart apache2
 ```
 
-### Step 4: Rollback (if needed)
+### Step 3: Validate
 
 ```bash
-sudo a2dissite ngs-vm-shiny.conf
-sudo a2ensite ngs-vm.conf
-sudo systemctl reload apache2
+curl -kI https://ngs-vm.biochem.mpg.de/
+curl -kI -u USER https://ngs-vm.biochem.mpg.de/sequencing-app/
+curl -kI https://ngs-vm.biochem.mpg.de:9443/
 ```
 
-
-### Step 3: Baseline environment checks
-
-#### Shiny environment must include:
+### Step 4: Rollback
 
 ```bash
-sudo systemctl show shiny-server --property=Environment
+sudo a2ensite 02-testing.conf
+sudo a2dissite ngs-vm-shiny-443.conf
+sudo a2dissite ngs-vm-perl-9443.conf
+sudo apache2ctl -t
+sudo systemctl restart apache2
 ```
 
-Required values:
+### Step 5: Scripted switch (optional)
 
-- `AUTH_MODE=ldap`
-- `TRUST_PROXY_AUTH_USER_QUERY=1`
-
-If missing, update:
+Use:
 
 ```bash
-sudo systemctl edit shiny-server
+cd /home/yeroslaviz/BCFNGS-project-management
+./scripts/cutover_ngs_vm_ports.sh cutover
 ```
 
-Then restart:
+Rollback:
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl restart shiny-server
+cd /home/yeroslaviz/BCFNGS-project-management
+./scripts/cutover_ngs_vm_ports.sh rollback
 ```
-
-
-### Step 4: Manual curl validation (reference)
-
-These should match the smoke test behavior.
-
-```bash
-curl -ki -u yeroslaviz-test "https://ngs-testing-vm.biochem.mpg.de/sequencing-app/" | sed -n '1,20p'
-```
-
-Expected:
-
-- `HTTP/1.1 302 Found`
-- `Location: .../sequencing-app/?auth_user=yeroslaviz-test`
-
-```bash
-curl -ki -u yeroslaviz-test "https://ngs-testing-vm.biochem.mpg.de/sequencing-app/?auth_user=yeroslaviz" | sed -n '1,20p'
-```
-
-Expected:
-
-- `HTTP/1.1 302 Found`
-- `Location: .../sequencing-app/?auth_user=yeroslaviz-test`
-
-```bash
-curl -k -L -u yeroslaviz-test -o /dev/null -s -w "%{http_code}\n" "https://ngs-testing-vm.biochem.mpg.de/sequencing-app/"
-```
-
-Expected:
-
-- `200`

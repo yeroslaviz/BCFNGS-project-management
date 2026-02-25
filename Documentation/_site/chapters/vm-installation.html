@@ -243,11 +243,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#validate-parallel-access" id="toc-validate-parallel-access" class="nav-link" data-scroll-target="#validate-parallel-access"><span class="header-section-number">4.7.3</span> 3) Validate parallel access</a></li>
   <li><a href="#switch-between-ldap-and-local-modes-on-vm" id="toc-switch-between-ldap-and-local-modes-on-vm" class="nav-link" data-scroll-target="#switch-between-ldap-and-local-modes-on-vm"><span class="header-section-number">4.7.4</span> 4) Switch between LDAP and local modes on VM</a></li>
   </ul></li>
-  <li><a href="#legacy-data-migration-perl-vm-shiny-vm" id="toc-legacy-data-migration-perl-vm-shiny-vm" class="nav-link" data-scroll-target="#legacy-data-migration-perl-vm-shiny-vm"><span class="header-section-number">4.8</span> Legacy data migration (perl-VM → shiny-VM)</a></li>
+  <li><a href="#legacy-data-migration-perl-vm-shiny-vm" id="toc-legacy-data-migration-perl-vm-shiny-vm" class="nav-link" data-scroll-target="#legacy-data-migration-perl-vm-shiny-vm"><span class="header-section-number">4.8</span> Legacy data migration (perl-VM → shiny-VM)</a>
+  <ul class="collapse">
+  <li><a href="#step-1-export-csv-on-ngs-vm-perl-postgresql" id="toc-step-1-export-csv-on-ngs-vm-perl-postgresql" class="nav-link" data-scroll-target="#step-1-export-csv-on-ngs-vm-perl-postgresql"><span class="header-section-number">4.8.1</span> Step 1) Export CSV on ngs-vm (perl PostgreSQL)</a></li>
+  <li><a href="#step-2-normalize-utf-8-recommended" id="toc-step-2-normalize-utf-8-recommended" class="nav-link" data-scroll-target="#step-2-normalize-utf-8-recommended"><span class="header-section-number">4.8.2</span> Step 2) Normalize UTF-8 (recommended)</a></li>
+  <li><a href="#step-3-move-csv-to-the-target-vm" id="toc-step-3-move-csv-to-the-target-vm" class="nav-link" data-scroll-target="#step-3-move-csv-to-the-target-vm"><span class="header-section-number">4.8.3</span> Step 3) Move CSV to the target VM</a></li>
+  <li><a href="#step-4-import-into-shiny-sqlite-db" id="toc-step-4-import-into-shiny-sqlite-db" class="nav-link" data-scroll-target="#step-4-import-into-shiny-sqlite-db"><span class="header-section-number">4.8.4</span> Step 4) Import into Shiny SQLite DB</a></li>
+  <li><a href="#step-5-verify-import" id="toc-step-5-verify-import" class="nav-link" data-scroll-target="#step-5-verify-import"><span class="header-section-number">4.8.5</span> Step 5) Verify import</a></li>
+  </ul></li>
   <li><a href="#cutover-and-rollback" id="toc-cutover-and-rollback" class="nav-link" data-scroll-target="#cutover-and-rollback"><span class="header-section-number">4.9</span> Cutover and rollback</a>
   <ul class="collapse">
-  <li><a href="#cutover-switch-public-hostname-to-shiny" id="toc-cutover-switch-public-hostname-to-shiny" class="nav-link" data-scroll-target="#cutover-switch-public-hostname-to-shiny"><span class="header-section-number">4.9.1</span> Cutover (switch public hostname to Shiny)</a></li>
-  <li><a href="#rollback" id="toc-rollback" class="nav-link" data-scroll-target="#rollback"><span class="header-section-number">4.9.2</span> Rollback</a></li>
+  <li><a href="#cutover-target" id="toc-cutover-target" class="nav-link" data-scroll-target="#cutover-target"><span class="header-section-number">4.9.1</span> Cutover target</a></li>
+  <li><a href="#pre-cutover-safety-backup" id="toc-pre-cutover-safety-backup" class="nav-link" data-scroll-target="#pre-cutover-safety-backup"><span class="header-section-number">4.9.2</span> 1) Pre-cutover safety backup</a></li>
+  <li><a href="#prepare-vhost-files" id="toc-prepare-vhost-files" class="nav-link" data-scroll-target="#prepare-vhost-files"><span class="header-section-number">4.9.3</span> 2) Prepare vhost files</a></li>
+  <li><a href="#enable-the-cutover-routing" id="toc-enable-the-cutover-routing" class="nav-link" data-scroll-target="#enable-the-cutover-routing"><span class="header-section-number">4.9.4</span> 3) Enable the cutover routing</a></li>
+  <li><a href="#automated-switchrollback-script-optional" id="toc-automated-switchrollback-script-optional" class="nav-link" data-scroll-target="#automated-switchrollback-script-optional"><span class="header-section-number">4.9.5</span> 4) Automated switch/rollback script (optional)</a></li>
+  <li><a href="#rollback-manual" id="toc-rollback-manual" class="nav-link" data-scroll-target="#rollback-manual"><span class="header-section-number">4.9.6</span> Rollback (manual)</a></li>
+  <li><a href="#db-lifecycle-policy-important" id="toc-db-lifecycle-policy-important" class="nav-link" data-scroll-target="#db-lifecycle-policy-important"><span class="header-section-number">4.9.7</span> DB lifecycle policy (important)</a></li>
+  <li><a href="#db-snapshot-rebuild-restore-runbook" id="toc-db-snapshot-rebuild-restore-runbook" class="nav-link" data-scroll-target="#db-snapshot-rebuild-restore-runbook"><span class="header-section-number">4.9.8</span> DB snapshot / rebuild / restore runbook</a></li>
   </ul></li>
   <li><a href="#post-install-verification" id="toc-post-install-verification" class="nav-link" data-scroll-target="#post-install-verification"><span class="header-section-number">4.10</span> Post-install verification</a></li>
   </ul>
@@ -469,7 +482,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 data-number="4.7" class="anchored" data-anchor-id="ngs-vm-parallel-install-next-to-perl-system"><span class="header-section-number">4.7</span> ngs-vm: parallel install next to perl system</h2>
 <section id="keep-legacy-system-on-443" class="level3" data-number="4.7.1">
 <h3 data-number="4.7.1" class="anchored" data-anchor-id="keep-legacy-system-on-443"><span class="header-section-number">4.7.1</span> 1) Keep legacy system on <code>:443</code></h3>
-<p>Leave the current <code>01-main.conf</code> active for the Perl system.</p>
+<p>Leave the currently active Perl <code>:443</code> site enabled (on our VM this is <code>02-testing.conf</code>).</p>
 </section>
 <section id="ngs-parallel-shiny-vhost" class="level3" data-number="4.7.2">
 <h3 data-number="4.7.2" class="anchored" data-anchor-id="ngs-parallel-shiny-vhost"><span class="header-section-number">4.7.2</span> 2) Add a parallel Shiny vhost on <code>:8443</code> (or <code>:1234</code>)</h3>
@@ -526,50 +539,190 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="legacy-data-migration-perl-vm-shiny-vm" class="level2" data-number="4.8">
 <h2 data-number="4.8" class="anchored" data-anchor-id="legacy-data-migration-perl-vm-shiny-vm"><span class="header-section-number">4.8</span> Legacy data migration (perl-VM → shiny-VM)</h2>
-<p>Follow the SQL Handling chapter for the export/import workflow:</p>
+<p>Use this workflow to export legacy projects from the perl system on <code>ngs-vm</code> and import into either <code>bcf-vm</code> or <code>ngs-vm</code> (Shiny DB).</p>
+<section id="step-1-export-csv-on-ngs-vm-perl-postgresql" class="level3" data-number="4.8.1">
+<h3 data-number="4.8.1" class="anchored" data-anchor-id="step-1-export-csv-on-ngs-vm-perl-postgresql"><span class="header-section-number">4.8.1</span> Step 1) Export CSV on ngs-vm (perl PostgreSQL)</h3>
+<div class="sourceCode" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="ex">psql</span> <span class="at">-U</span> letunic <span class="at">-h</span> 127.0.0.1 <span class="at">-d</span> mpiseq2_db <span class="at">-c</span> <span class="st">"</span><span class="dt">\</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="dt">\\</span><span class="st">copy (</span><span class="dt">\</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT </span><span class="dt">\</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="st">    p.id AS legacy_id, </span><span class="dt">\</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="st">    p.name AS project_name, </span><span class="dt">\</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="st">    m.login AS login, </span><span class="dt">\</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="st">    m.name AS user_full_name, </span><span class="dt">\</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a><span class="st">    l.name AS group_name, </span><span class="dt">\</span></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="st">    COALESCE(p.ref_genome_legacy, rg.genome) AS reference_genome, </span><span class="dt">\</span></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a><span class="st">    COALESCE(p.sample_type_legacy, st.type) AS sample_type, </span><span class="dt">\</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a><span class="st">    t.type AS type_label, </span><span class="dt">\</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a><span class="st">    p.sequencing_length AS sequencing_length, </span><span class="dt">\</span></span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a><span class="st">    COALESCE(p.budget_group_legacy, bg.budget) AS budget_group, </span><span class="dt">\</span></span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a><span class="st">    p.sequencing_platform AS sequencing_platform, </span><span class="dt">\</span></span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a><span class="st">    COALESCE(p.sequencing_kit_legacy, p.sequencing_kit) AS sequencing_kit, </span><span class="dt">\</span></span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a><span class="st">    p.sequencing_index AS sequencing_index, </span><span class="dt">\</span></span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a><span class="st">    p.note AS note </span><span class="dt">\</span></span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM project.project p </span><span class="dt">\</span></span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN people.member m ON p.user_id = m.id </span><span class="dt">\</span></span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN people.lab l ON m.lab_id = l.id </span><span class="dt">\</span></span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN project.ref_genome rg ON p.ref_genome_id = rg.id </span><span class="dt">\</span></span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN project.sample_type st ON p.sample_type_id = st.id </span><span class="dt">\</span></span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN project.type t ON p.type_id = t.id </span><span class="dt">\</span></span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN project.budget_group bg ON p.budget_group_id = bg.id </span><span class="dt">\</span></span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a><span class="st">  ORDER BY p.id</span><span class="dt">\</span></span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a><span class="st">) TO '/www/mpiseq2/exports/legacy_projects.csv' CSV HEADER"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="step-2-normalize-utf-8-recommended" class="level3" data-number="4.8.2">
+<h3 data-number="4.8.2" class="anchored" data-anchor-id="step-2-normalize-utf-8-recommended"><span class="header-section-number">4.8.2</span> Step 2) Normalize UTF-8 (recommended)</h3>
+<div class="sourceCode" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> python3 <span class="at">-</span> <span class="op">&lt;&lt;'PY'</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="st">src = "/www/mpiseq2/exports/legacy_projects.csv"</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="st">dst = "/www/mpiseq2/exports/legacy_projects.utf8.csv"</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="st">with open(src, "r", encoding="utf-8", errors="ignore") as f, \</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="st">     open(dst, "w", encoding="utf-8") as out:</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="st">    for line in f:</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="st">        if "Ã" in line or "Â" in line:</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="st">            line = line.encode("latin1", errors="ignore").decode("utf-8", errors="ignore")</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="st">        out.write(line)</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="op">PY</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="step-3-move-csv-to-the-target-vm" class="level3" data-number="4.8.3">
+<h3 data-number="4.8.3" class="anchored" data-anchor-id="step-3-move-csv-to-the-target-vm"><span class="header-section-number">4.8.3</span> Step 3) Move CSV to the target VM</h3>
+<p>If importing into <code>bcf-vm</code>:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># run on bcf-vm once</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> /home/yeroslaviz/BCFNGS-project-management/exports/</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="co"># run on ngs-vm (source)</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="fu">scp</span> /www/mpiseq2/exports/legacy_projects.utf8.csv <span class="dt">\</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>  yeroslaviz@bcf-vm:/home/yeroslaviz/BCFNGS-project-management/exports/</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>If importing into Shiny on <code>ngs-vm</code> (same host as perl system):</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="at">-R</span> /www/mpiseq2/exports/ /home/yeroslaviz/BCFNGS-project-management/</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="step-4-import-into-shiny-sqlite-db" class="level3" data-number="4.8.4">
+<h3 data-number="4.8.4" class="anchored" data-anchor-id="step-4-import-into-shiny-sqlite-db"><span class="header-section-number">4.8.4</span> Step 4) Import into Shiny SQLite DB</h3>
+<div class="sourceCode" id="cb35"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /srv/shiny-server/sequencing-app</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>If <code>/home/yeroslaviz</code> is not traversable by <code>shiny</code> (permission denied), either:</p>
 <ul>
-<li><code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/Documentation/chapters/sql-handling.qmd</code></li>
+<li>quick fix:</li>
 </ul>
-<p>This includes:</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chmod o+x /home/yeroslaviz</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <ul>
-<li>PostgreSQL export query</li>
-<li>UTF‑8 normalization if needed</li>
-<li>CSV transfer</li>
-<li>SQLite import on the shiny-VM</li>
+<li>safer fix (preferred): copy script + CSV to a service-owned path and run from there.</li>
 </ul>
+<p>Then run import:</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny python3 /home/yeroslaviz/BCFNGS-project-management/scripts/import_legacy_projects.py <span class="dt">\</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--db</span> /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--csv</span> /home/yeroslaviz/BCFNGS-project-management/exports/legacy_projects.utf8.csv</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="step-5-verify-import" class="level3" data-number="4.8.5">
+<h3 data-number="4.8.5" class="anchored" data-anchor-id="step-5-verify-import"><span class="header-section-number">4.8.5</span> Step 5) Verify import</h3>
+<div class="sourceCode" id="cb38"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="st">"SELECT COUNT(*) FROM projects WHERE status='Legacy project';"</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="st">"SELECT project_id, project_name, responsible_user, status FROM projects WHERE status='Legacy project' ORDER BY project_id LIMIT 5;"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Notes:</p>
+<ul>
+<li>Rebuild is not required for regular imports; new <code>legacy_id</code> rows are inserted, already imported IDs are skipped.</li>
+<li>If you need a full refresh of legacy rows, rebuild or delete legacy rows first, then re-import.</li>
+<li>Detailed SQL notes remain in <code>Documentation/chapters/sql-handling.qmd</code>.</li>
+</ul>
+</section>
 </section>
 <section id="cutover-and-rollback" class="level2" data-number="4.9">
 <h2 data-number="4.9" class="anchored" data-anchor-id="cutover-and-rollback"><span class="header-section-number">4.9</span> Cutover and rollback</h2>
-<section id="cutover-switch-public-hostname-to-shiny" class="level3" data-number="4.9.1">
-<h3 data-number="4.9.1" class="anchored" data-anchor-id="cutover-switch-public-hostname-to-shiny"><span class="header-section-number">4.9.1</span> Cutover (switch public hostname to Shiny)</h3>
-<p>Option A (redirect 443 to new port):</p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode apache code-with-copy"><code class="sourceCode apache"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>Redirect<span class="st"> permanent / https://ngs-vm.biochem.mpg.de:8443/</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Option B (replace the 443 vhost with the Shiny proxy):</p>
+<section id="cutover-target" class="level3" data-number="4.9.1">
+<h3 data-number="4.9.1" class="anchored" data-anchor-id="cutover-target"><span class="header-section-number">4.9.1</span> Cutover target</h3>
+<p>After cutover:</p>
 <ul>
-<li>Disable legacy vhost.</li>
-<li>Enable Shiny vhost on <code>:443</code>.</li>
+<li><code>https://ngs-vm.biochem.mpg.de</code> serves <strong>Shiny</strong> on <code>:443</code> (no port in URL).</li>
+<li>Perl fallback stays available on <code>https://ngs-vm.biochem.mpg.de:9443</code>.</li>
 </ul>
 </section>
-<section id="rollback" class="level3" data-number="4.9.2">
-<h3 data-number="4.9.2" class="anchored" data-anchor-id="rollback"><span class="header-section-number">4.9.2</span> Rollback</h3>
-<p>To revert quickly:</p>
+<section id="pre-cutover-safety-backup" class="level3" data-number="4.9.2">
+<h3 data-number="4.9.2" class="anchored" data-anchor-id="pre-cutover-safety-backup"><span class="header-section-number">4.9.2</span> 1) Pre-cutover safety backup</h3>
+<div class="sourceCode" id="cb39"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /root/apache-backup-<span class="va">$(</span><span class="fu">date</span> +%F-%H%M<span class="va">)</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp <span class="at">-a</span> /etc/apache2/sites-available /root/apache-backup-<span class="va">$(</span><span class="fu">date</span> +%F-%H%M<span class="va">)</span>/</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp <span class="at">-a</span> /etc/apache2/sites-enabled /root/apache-backup-<span class="va">$(</span><span class="fu">date</span> +%F-%H%M<span class="va">)</span>/</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="prepare-vhost-files" class="level3" data-number="4.9.3">
+<h3 data-number="4.9.3" class="anchored" data-anchor-id="prepare-vhost-files"><span class="header-section-number">4.9.3</span> 2) Prepare vhost files</h3>
+<p>Use the versioned templates from the repo:</p>
 <ul>
-<li>Remove the redirect line or disable the Shiny vhost.</li>
-<li>Re-enable the legacy <code>ngs-vm_01-main.conf</code>.</li>
-<li>Reload Apache.</li>
+<li><code>scripts/ngs-vm-shiny-443.conf</code> -&gt; <code>/etc/apache2/sites-available/ngs-vm-shiny-443.conf</code></li>
+<li><code>scripts/ngs-vm-perl-9443.conf</code> -&gt; <code>/etc/apache2/sites-available/ngs-vm-perl-9443.conf</code></li>
 </ul>
+<div class="sourceCode" id="cb40"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management/scripts/ngs-vm-shiny-443.conf /etc/apache2/sites-available/ngs-vm-shiny-443.conf</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management/scripts/ngs-vm-perl-9443.conf /etc/apache2/sites-available/ngs-vm-perl-9443.conf</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="enable-the-cutover-routing" class="level3" data-number="4.9.4">
+<h3 data-number="4.9.4" class="anchored" data-anchor-id="enable-the-cutover-routing"><span class="header-section-number">4.9.4</span> 3) Enable the cutover routing</h3>
+<div class="sourceCode" id="cb41"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-q</span> <span class="st">'^Listen 9443$'</span> /etc/apache2/ports.conf <span class="kw">||</span> <span class="bu">echo</span> <span class="st">'Listen 9443'</span> <span class="kw">|</span> <span class="fu">sudo</span> tee <span class="at">-a</span> /etc/apache2/ports.conf</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod ssl proxy proxy_http proxy_wstunnel rewrite headers ldap authnz_ldap</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite ngs-vm-shiny-443.conf</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite ngs-vm-perl-9443.conf</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2dissite 02-testing.conf</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="automated-switchrollback-script-optional" class="level3" data-number="4.9.5">
+<h3 data-number="4.9.5" class="anchored" data-anchor-id="automated-switchrollback-script-optional"><span class="header-section-number">4.9.5</span> 4) Automated switch/rollback script (optional)</h3>
+<p>You can use:</p>
+<ul>
+<li><code>scripts/cutover_ngs_vm_ports.sh</code></li>
+</ul>
+<p>Cutover:</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/cutover_ngs_vm_ports.sh</span> cutover</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Rollback:</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/cutover_ngs_vm_ports.sh</span> rollback</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="rollback-manual" class="level3" data-number="4.9.6">
+<h3 data-number="4.9.6" class="anchored" data-anchor-id="rollback-manual"><span class="header-section-number">4.9.6</span> Rollback (manual)</h3>
+<div class="sourceCode" id="cb44"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite 02-testing.conf</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2dissite ngs-vm-shiny-443.conf</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2dissite ngs-vm-perl-9443.conf</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="db-lifecycle-policy-important" class="level3" data-number="4.9.7">
+<h3 data-number="4.9.7" class="anchored" data-anchor-id="db-lifecycle-policy-important"><span class="header-section-number">4.9.7</span> DB lifecycle policy (important)</h3>
+<ul>
+<li><code>scripts/deploy.sh</code> is code-only deployment and does <strong>not</strong> recreate <code>sequencing_projects.db</code>.</li>
+<li>Restarting <code>shiny-server</code> does <strong>not</strong> delete DB content.</li>
+<li>Rebuild is manual and only when intentionally running <code>/srv/shiny-server/sequencing-app/setup_database.R</code>.</li>
+<li>Keep legacy CSV import as a separate operation, not part of deploy.</li>
+</ul>
+</section>
+<section id="db-snapshot-rebuild-restore-runbook" class="level3" data-number="4.9.8">
+<h3 data-number="4.9.8" class="anchored" data-anchor-id="db-snapshot-rebuild-restore-runbook"><span class="header-section-number">4.9.8</span> DB snapshot / rebuild / restore runbook</h3>
+<p>Snapshot:</p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /srv/shiny-server/sequencing-app/sequencing_projects.db /srv/shiny-server/sequencing-app/sequencing_projects.db.bak.<span class="va">$(</span><span class="fu">date</span> +%F-%H%M%S<span class="va">)</span></span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Optional rebuild:</p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /srv/shiny-server/sequencing-app</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny Rscript setup_database.R</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Restore snapshot:</p>
+<div class="sourceCode" id="cb47"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /srv/shiny-server/sequencing-app/sequencing_projects.db.bak.<span class="op">&lt;</span>timestamp<span class="op">&gt;</span> /srv/shiny-server/sequencing-app/sequencing_projects.db</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown shiny:shiny /srv/shiny-server/sequencing-app/sequencing_projects.db</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 </section>
 <section id="post-install-verification" class="level2" data-number="4.10">
 <h2 data-number="4.10" class="anchored" data-anchor-id="post-install-verification"><span class="header-section-number">4.10</span> Post-install verification</h2>
 <p>Run these checks after install:</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> https://<span class="op">&lt;</span>host<span class="op">&gt;</span>/</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> <span class="at">-u</span> USER https://<span class="op">&lt;</span>host<span class="op">&gt;</span>/sequencing-app/</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb48"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> https://ngs-vm.biochem.mpg.de/</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> <span class="at">-u</span> USER https://ngs-vm.biochem.mpg.de/sequencing-app/</span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> https://ngs-vm.biochem.mpg.de:9443/</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Confirm:</p>
 <ul>
-<li>LDAP prompt appears.</li>
-<li>Login succeeds.</li>
-<li>App loads and lists projects.</li>
+<li>no-port hostname opens Shiny.</li>
+<li>LDAP prompt appears and login succeeds.</li>
+<li>Perl fallback is reachable on <code>:9443</code>.</li>
 </ul>
 
 

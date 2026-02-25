@@ -33,17 +33,14 @@ APP_DB="${APP_TARGET}sequencing_projects.db"
 PUBLIC_BASE_URL="${PUBLIC_BASE_URL:-https://ngs-testing-vm.biochem.mpg.de}"
 APP_PATH="/sequencing-app/"
 APP_URL="${PUBLIC_BASE_URL%/}${APP_PATH}"
-REPO_ROOT="/home/yeroslaviz/BCFNGS-project-management"
-APACHE_TEMPLATE="${REPO_ROOT}/01-main.conf"
 
 smoke_fail() {
   local message="$1"
   echo
   echo "LDAP smoke test failed: ${message}" >&2
   echo "Suggested checks:" >&2
-  echo "1) Sync and apply Apache config, then restart services:" >&2
-  echo "   sudo cp ${APACHE_TEMPLATE} /etc/apache2/sites-available/01-main.conf" >&2
-  echo "   sudo ln -sf /etc/apache2/sites-available/01-main.conf /etc/apache2/sites-enabled/01-main.conf" >&2
+  echo "1) Verify the active Apache vhost for ${APP_URL} serves /sequencing-app/ with LDAP auth:" >&2
+  echo "   sudo apache2ctl -S" >&2
   echo "   sudo apache2ctl configtest && sudo systemctl restart apache2 && sudo systemctl restart shiny-server" >&2
   echo "2) Verify Shiny environment:" >&2
   echo "   sudo systemctl show shiny-server --property=Environment" >&2

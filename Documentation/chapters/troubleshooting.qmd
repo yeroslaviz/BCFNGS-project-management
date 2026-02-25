@@ -13,6 +13,7 @@ execute:
 - [Documentation](#documentation)
 - [Git / GitHub](#git--github)
 - [Apache / LDAP](#apache--ldap)
+- [ngs-vm Cutover (443/9443)](#ngs-vm-cutover-4439443)
 - [SQL (moved)](#sql-moved)
 - [Auth mode switching](#auth-mode-switching)
 - [Apache proxy](#apache-proxy)
@@ -379,6 +380,58 @@ After confirmation, remove `LDAP_DEBUG=1` and restart again.
 
 - Safe to ignore while `LDAP_DEBUG=1` is enabled.
 - Disable debug in production (`LDAP_DEBUG` unset) to stop this message.
+
+## ngs-vm Cutover (443/9443)
+
+### Main URL still serves Perl after cutover
+
+Check active vhosts:
+
+```bash
+sudo apache2ctl -S
+```
+
+Fix:
+
+```bash
+sudo a2ensite ngs-vm-shiny-443.conf
+sudo a2dissite 02-testing.conf
+sudo apache2ctl -t
+sudo systemctl restart apache2
+```
+
+### Perl fallback on `:9443` returns connection refused
+
+Common causes:
+
+- `Listen 9443` missing in `/etc/apache2/ports.conf`
+- fallback site not enabled
+
+Fix:
+
+```bash
+grep -q '^Listen 9443$' /etc/apache2/ports.conf || echo 'Listen 9443' | sudo tee -a /etc/apache2/ports.conf
+sudo a2ensite ngs-vm-perl-9443.conf
+sudo apache2ctl -t
+sudo systemctl restart apache2
+```
+
+### LDAP login works on `:8443` but fails on no-port `:443`
+
+Cause:
+
+- `ngs-vm-shiny-443.conf` is missing LDAP `<Location /sequencing-app/>` auth block or is not the active `:443` vhost.
+
+Fix:
+
+- Copy from repo template and re-enable:
+
+```bash
+sudo cp /home/yeroslaviz/BCFNGS-project-management/scripts/ngs-vm-shiny-443.conf /etc/apache2/sites-available/ngs-vm-shiny-443.conf
+sudo a2ensite ngs-vm-shiny-443.conf
+sudo apache2ctl -t
+sudo systemctl restart apache2
+```
 
 ## SQL (moved)
 
