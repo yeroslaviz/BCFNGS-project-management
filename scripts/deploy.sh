@@ -10,6 +10,7 @@ set -euo pipefail
 #     - Target: /srv/shiny-server/sequencing-app/
 #     - Uses --delete to remove files in the target that no longer exist in the source.
 #     - Excludes sequencing_projects.db so the production DB is not overwritten.
+#     - Excludes .Renviron so VM runtime auth/env settings are preserved.
 #
 # 2. Fixes ownership of the deployed folder:
 #
@@ -144,7 +145,7 @@ EOF
 
 echo "Deploying Shiny app..."
 
-if sudo rsync -av --delete --exclude 'sequencing_projects.db' "${APP_SOURCE}" "${APP_TARGET}"; then
+if sudo rsync -av --delete --exclude 'sequencing_projects.db' --exclude '.Renviron' "${APP_SOURCE}" "${APP_TARGET}"; then
   sudo chown -R shiny:shiny "${APP_TARGET}"
   if [ -f "${APP_DB}" ]; then
     sudo chmod 666 "${APP_DB}"
