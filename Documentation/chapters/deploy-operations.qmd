@@ -191,6 +191,7 @@ It does **not**:
 - rebuild the DB
 - import legacy CSV
 - run `setup_database.R`
+- overwrite landing text content (`announcement_panels` / `announcement_items`)
 
 ### When to run deploy
 
@@ -204,6 +205,7 @@ Do not use deploy for Apache-only changes; apply Apache config separately.
 
 - Restarting `shiny-server` does not remove DB content.
 - Rebuild is a manual, explicit action (`setup_database.R`) and should be done only when needed.
+- Landing text edited via **Manage Landing Text** is DB-backed and survives deploy/restart.
 
 ### Safe DB snapshot around risky maintenance
 

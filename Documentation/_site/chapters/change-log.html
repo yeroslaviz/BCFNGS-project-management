@@ -271,6 +271,20 @@ ul.task-list li input[type="checkbox"] {
 </ul></li>
 <li>Marked <code>scripts/switch_vhosts.sh</code> as legacy (hostname-redirect strategy) and pointed to the new port-based cutover script.</li>
 <li>Improved <code>scripts/cutover_ngs_vm_ports.sh</code> to auto-disable competing <code>:443</code> sites (including <code>default-ssl.conf</code> when enabled) and made rollback re-enable the first available legacy <code>:443</code> site (<code>PERL_443_SITE</code> -&gt; <code>02-testing.conf</code> -&gt; <code>default-ssl.conf</code>).</li>
+<li>Added admin-editable landing text management for post-login panels:
+<ul>
+<li>new DB tables: <code>announcement_panels</code>, <code>announcement_items</code></li>
+<li>admin UI: <code>Manage Landing Text</code> (add/edit/delete/reorder boxes)</li>
+<li>markdown-lite support in each white box (<code>**bold**</code>, lists, links)</li>
+</ul></li>
+<li>Replaced hardcoded landing text rendering in <code>sequencing-app/app.R</code> with DB-backed rendering and safe markdown-lite parsing.</li>
+<li>Added automatic table creation + default seeding for landing text on app startup (no manual DB rebuild needed).</li>
+<li>Updated <code>setup_database.R</code> to create/seed announcement tables during full DB rebuild.</li>
+<li>Updated documentation:
+<ul>
+<li><strong>Setup &amp; Infrastructure</strong>: how admins edit landing text + markdown syntax</li>
+<li><strong>Deploy &amp; Operations</strong>: landing text persistence across deploy/restart</li>
+</ul></li>
 </ol>
 </section>
 <section id="changes-on-23.02.2026" class="level2" data-number="10.3">

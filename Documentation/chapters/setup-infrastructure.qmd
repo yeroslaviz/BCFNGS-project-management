@@ -20,14 +20,42 @@ execute:
 
 ## Modify Text (Announcements)
 
-The **post‑login announcement/service blocks** (shown in both local and LDAP modes) are defined in:
+The post-login landing text is now **admin-editable in the app UI** (no code edit needed for content changes):
 
-- `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R`
-- Function: `announcement_blocks()`
-- Styles: `.announcement-panel`, `.service-panel`, `.info-box` in the top `tags$style` block
+1. Log in as admin.
+2. Open `Administer Projects` -> `Manage Landing Text`.
+3. Select the panel:
+   - `Announcement`
+   - `service_info` (service/instructions panel)
+4. Add/Edit/Delete/Reorder white text boxes.
+5. Changes are published immediately and stored in SQLite.
 
-These blocks replace the old “New Projects” instruction list.  
-After editing, redeploy the app (or restart Shiny Server on the VM) so the UI updates.
+### Markdown-lite syntax
+
+Use these formats in each box:
+
+- Bold: `**important text**`
+- Bullet list:
+  - `- first item`
+  - `- second item`
+- Numbered list:
+  - `1. first`
+  - `2. second`
+- Link: `[@NGS](mailto:ngs@biochem.mpg.de)`
+
+### Where it is stored
+
+- DB tables:
+  - `announcement_panels`
+  - `announcement_items`
+- App render + admin handlers:
+  - `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R`
+- Style classes (unchanged):
+  - `.announcement-panel`
+  - `.service-panel`
+  - `.info-box`
+
+If tables are missing, the app auto-creates them and seeds default content on startup.
 
 ### SQL handling (moved)
 

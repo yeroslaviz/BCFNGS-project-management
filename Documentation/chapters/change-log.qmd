@@ -42,6 +42,16 @@ execute:
     - LDAP works on `:8443` but not on `:443`
 7.  Marked `scripts/switch_vhosts.sh` as legacy (hostname-redirect strategy) and pointed to the new port-based cutover script.
 8.  Improved `scripts/cutover_ngs_vm_ports.sh` to auto-disable competing `:443` sites (including `default-ssl.conf` when enabled) and made rollback re-enable the first available legacy `:443` site (`PERL_443_SITE` -> `02-testing.conf` -> `default-ssl.conf`).
+9.  Added admin-editable landing text management for post-login panels:
+    - new DB tables: `announcement_panels`, `announcement_items`
+    - admin UI: `Manage Landing Text` (add/edit/delete/reorder boxes)
+    - markdown-lite support in each white box (`**bold**`, lists, links)
+10. Replaced hardcoded landing text rendering in `sequencing-app/app.R` with DB-backed rendering and safe markdown-lite parsing.
+11. Added automatic table creation + default seeding for landing text on app startup (no manual DB rebuild needed).
+12. Updated `setup_database.R` to create/seed announcement tables during full DB rebuild.
+13. Updated documentation:
+    - **Setup & Infrastructure**: how admins edit landing text + markdown syntax
+    - **Deploy & Operations**: landing text persistence across deploy/restart
 
 ## Changes on 23.02.2026
 

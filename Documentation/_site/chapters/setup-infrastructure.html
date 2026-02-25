@@ -221,9 +221,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#server-infrastructure" id="toc-server-infrastructure" class="nav-link" data-scroll-target="#server-infrastructure"><span class="header-section-number">3.2</span> Server Infrastructure</a></li>
   <li><a href="#modify-text-announcements" id="toc-modify-text-announcements" class="nav-link" data-scroll-target="#modify-text-announcements"><span class="header-section-number">3.3</span> Modify Text (Announcements)</a>
   <ul class="collapse">
-  <li><a href="#sql-handling-moved" id="toc-sql-handling-moved" class="nav-link" data-scroll-target="#sql-handling-moved"><span class="header-section-number">3.3.1</span> SQL handling (moved)</a></li>
-  <li><a href="#changing-hostname-to-fit-the-apache2-config-file" id="toc-changing-hostname-to-fit-the-apache2-config-file" class="nav-link" data-scroll-target="#changing-hostname-to-fit-the-apache2-config-file"><span class="header-section-number">3.3.2</span> Changing hostname to fit the apache2 config file</a></li>
-  <li><a href="#automatic-start-up" id="toc-automatic-start-up" class="nav-link" data-scroll-target="#automatic-start-up"><span class="header-section-number">3.3.3</span> Automatic start-up</a></li>
+  <li><a href="#markdown-lite-syntax" id="toc-markdown-lite-syntax" class="nav-link" data-scroll-target="#markdown-lite-syntax"><span class="header-section-number">3.3.1</span> Markdown-lite syntax</a></li>
+  <li><a href="#where-it-is-stored" id="toc-where-it-is-stored" class="nav-link" data-scroll-target="#where-it-is-stored"><span class="header-section-number">3.3.2</span> Where it is stored</a></li>
+  <li><a href="#sql-handling-moved" id="toc-sql-handling-moved" class="nav-link" data-scroll-target="#sql-handling-moved"><span class="header-section-number">3.3.3</span> SQL handling (moved)</a></li>
+  <li><a href="#changing-hostname-to-fit-the-apache2-config-file" id="toc-changing-hostname-to-fit-the-apache2-config-file" class="nav-link" data-scroll-target="#changing-hostname-to-fit-the-apache2-config-file"><span class="header-section-number">3.3.4</span> Changing hostname to fit the apache2 config file</a></li>
+  <li><a href="#automatic-start-up" id="toc-automatic-start-up" class="nav-link" data-scroll-target="#automatic-start-up"><span class="header-section-number">3.3.5</span> Automatic start-up</a></li>
   </ul></li>
   <li><a href="#bare-server-setup-ubuntu" id="toc-bare-server-setup-ubuntu" class="nav-link" data-scroll-target="#bare-server-setup-ubuntu"><span class="header-section-number">3.4</span> Bare Server Setup (Ubuntu)</a></li>
   <li><a href="#ubuntu-bare-server-setup-howto-shiny-ldap" id="toc-ubuntu-bare-server-setup-howto-shiny-ldap" class="nav-link" data-scroll-target="#ubuntu-bare-server-setup-howto-shiny-ldap"><span class="header-section-number">3.5</span> Ubuntu Bare Server Setup HOWTO (Shiny + LDAP)</a>
@@ -291,16 +293,59 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="modify-text-announcements" class="level2" data-number="3.3">
 <h2 data-number="3.3" class="anchored" data-anchor-id="modify-text-announcements"><span class="header-section-number">3.3</span> Modify Text (Announcements)</h2>
-<p>The <strong>post‑login announcement/service blocks</strong> (shown in both local and LDAP modes) are defined in:</p>
+<p>The post-login landing text is now <strong>admin-editable in the app UI</strong> (no code edit needed for content changes):</p>
+<ol type="1">
+<li>Log in as admin.</li>
+<li>Open <code>Administer Projects</code> -&gt; <code>Manage Landing Text</code>.</li>
+<li>Select the panel:
+<ul>
+<li><code>Announcement</code></li>
+<li><code>service_info</code> (service/instructions panel)</li>
+</ul></li>
+<li>Add/Edit/Delete/Reorder white text boxes.</li>
+<li>Changes are published immediately and stored in SQLite.</li>
+</ol>
+<section id="markdown-lite-syntax" class="level3" data-number="3.3.1">
+<h3 data-number="3.3.1" class="anchored" data-anchor-id="markdown-lite-syntax"><span class="header-section-number">3.3.1</span> Markdown-lite syntax</h3>
+<p>Use these formats in each box:</p>
+<ul>
+<li>Bold: <code>**important text**</code></li>
+<li>Bullet list:
+<ul>
+<li><code>- first item</code></li>
+<li><code>- second item</code></li>
+</ul></li>
+<li>Numbered list:
+<ul>
+<li><code>1. first</code></li>
+<li><code>2. second</code></li>
+</ul></li>
+<li>Link: <code>[@NGS](mailto:ngs@biochem.mpg.de)</code></li>
+</ul>
+</section>
+<section id="where-it-is-stored" class="level3" data-number="3.3.2">
+<h3 data-number="3.3.2" class="anchored" data-anchor-id="where-it-is-stored"><span class="header-section-number">3.3.2</span> Where it is stored</h3>
+<ul>
+<li>DB tables:
+<ul>
+<li><code>announcement_panels</code></li>
+<li><code>announcement_items</code></li>
+</ul></li>
+<li>App render + admin handlers:
 <ul>
 <li><code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R</code></li>
-<li>Function: <code>announcement_blocks()</code></li>
-<li>Styles: <code>.announcement-panel</code>, <code>.service-panel</code>, <code>.info-box</code> in the top <code>tags$style</code> block</li>
+</ul></li>
+<li>Style classes (unchanged):
+<ul>
+<li><code>.announcement-panel</code></li>
+<li><code>.service-panel</code></li>
+<li><code>.info-box</code></li>
+</ul></li>
 </ul>
-<p>These blocks replace the old “New Projects” instruction list.<br>
-After editing, redeploy the app (or restart Shiny Server on the VM) so the UI updates.</p>
-<section id="sql-handling-moved" class="level3" data-number="3.3.1">
-<h3 data-number="3.3.1" class="anchored" data-anchor-id="sql-handling-moved"><span class="header-section-number">3.3.1</span> SQL handling (moved)</h3>
+<p>If tables are missing, the app auto-creates them and seeds default content on startup.</p>
+</section>
+<section id="sql-handling-moved" class="level3" data-number="3.3.3">
+<h3 data-number="3.3.3" class="anchored" data-anchor-id="sql-handling-moved"><span class="header-section-number">3.3.3</span> SQL handling (moved)</h3>
 <p>All SQL database commands and explanations were moved to <strong><code>notes/sql-handling.qmd</code></strong>.<br>
 This includes:</p>
 <ul>
@@ -313,8 +358,8 @@ This includes:</p>
 sudo apt install -y libssl-dev libxml2-dev libcurl4-openssl-dev libudunits2-dev libgdal-dev
 </code></pre>
 </section>
-<section id="changing-hostname-to-fit-the-apache2-config-file" class="level3" data-number="3.3.2">
-<h3 data-number="3.3.2" class="anchored" data-anchor-id="changing-hostname-to-fit-the-apache2-config-file"><span class="header-section-number">3.3.2</span> Changing hostname to fit the apache2 config file</h3>
+<section id="changing-hostname-to-fit-the-apache2-config-file" class="level3" data-number="3.3.4">
+<h3 data-number="3.3.4" class="anchored" data-anchor-id="changing-hostname-to-fit-the-apache2-config-file"><span class="header-section-number">3.3.4</span> Changing hostname to fit the apache2 config file</h3>
 <pre class="{bash}"><code>
 # Change the hostname
 sudo hostnamectl set-hostname ngs-testing-vm.biochem.mpg.de
@@ -338,8 +383,8 @@ PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
 sudo systemctl restart apache2
 </code></pre>
 </section>
-<section id="automatic-start-up" class="level3" data-number="3.3.3">
-<h3 data-number="3.3.3" class="anchored" data-anchor-id="automatic-start-up"><span class="header-section-number">3.3.3</span> Automatic start-up</h3>
+<section id="automatic-start-up" class="level3" data-number="3.3.5">
+<h3 data-number="3.3.5" class="anchored" data-anchor-id="automatic-start-up"><span class="header-section-number">3.3.5</span> Automatic start-up</h3>
 <pre class="{bash}"><code>
 sudo systemctl enable apache2
 sudo systemctl enable shiny-server

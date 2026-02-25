@@ -106,6 +106,34 @@ setup_complete_database <- function() {
     )
   ")
 
+  # Landing text panels (post-login announcement/service blocks)
+  dbExecute(con, "
+    CREATE TABLE IF NOT EXISTS announcement_panels (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      panel_key TEXT UNIQUE NOT NULL,
+      title TEXT,
+      subtitle TEXT,
+      display_order INTEGER NOT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_by TEXT
+    )
+  ")
+
+  # Landing text items (one white box per row, markdown-lite content)
+  dbExecute(con, "
+    CREATE TABLE IF NOT EXISTS announcement_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      panel_id INTEGER NOT NULL,
+      display_order INTEGER NOT NULL,
+      markdown_text TEXT NOT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_by TEXT,
+      FOREIGN KEY (panel_id) REFERENCES announcement_panels (id)
+    )
+  ")
+
   # Email templates table
   dbExecute(con, "
     CREATE TABLE IF NOT EXISTS email_templates (
@@ -403,6 +431,86 @@ setup_complete_database <- function() {
     ))
   }
 
+  # Insert default landing text panels and boxes
+  dbExecute(con, "
+    INSERT OR IGNORE INTO announcement_panels (panel_key, title, subtitle, display_order, is_active, updated_by)
+    VALUES (?, ?, ?, ?, 1, ?)
+  ", params = list("announcement", "Announcement", "**Updated February 2026**", 1, "setup_database.R"))
+
+  dbExecute(con, "
+    INSERT OR IGNORE INTO announcement_panels (panel_key, title, subtitle, display_order, is_active, updated_by)
+    VALUES (?, ?, ?, ?, 1, ?)
+  ", params = list("service_info", "", "", 2, "setup_database.R"))
+
+  announcement_panel_id <- dbGetQuery(
+    con,
+    "SELECT id FROM announcement_panels WHERE panel_key = 'announcement'"
+  )$id[1]
+
+  service_panel_id <- dbGetQuery(
+    con,
+    "SELECT id FROM announcement_panels WHERE panel_key = 'service_info'"
+  )$id[1]
+
+  default_announcement_items <- c(
+    "**QC submission**: Everyday **9:00 - 11:00**, Result will be available **13:00-15:00** in your datashare folder or ask a link.",
+    "**8-strip tube**: If you submit more than **(>=) 4 samples for Qubit**, please use 8-strip PCR tube.",
+    paste(
+      "**NGS data in your personal pool folder:**",
+      "(Windows) \\\\samba-pool-dnaseq\\pool-dnaseq\\",
+      "(Mac) smb://samba-pool-dnaseq/pool-dnaseq/",
+      "or, via datashare - ask a link.",
+      sep = "\n"
+    ),
+    "**NGS Facility will not store your samples and data.** Please submit **aliquot** of your sample and **back-up** the data in your group storage space. We will discard the sample and data every two weeks."
+  )
+
+  default_service_items <- c(
+    paste(
+      "The NGS lab of the Core Facility is providing sequencing as a service. We highly recommend to contact us before the start of your experiment. In collaboration with the Bioinformatics Core Facility, we provide:",
+      "",
+      "- Assistance with experimental design of the studies (required number of samples and replicates)",
+      "- Assistance with the use of NGS open source analysis tools",
+      "- Data analysis on collaborative basis",
+      sep = "\n"
+    ),
+    "If you have any further questions, please do not hesitate to contact us @ [**@NGS**](mailto:ngs@biochem.mpg.de) !",
+    paste(
+      "- To start, Click on **'Create New Project'**.",
+      "- For better overview, we recommend keeping the project Name to this preferred format - **YYYYMMDD_AB_CD** - AB-Groupleader's initial, CD-Researcher's initial)",
+      "- After creating the project an email will be sent to you as well as your group leader for approval. The NGS facility will also get a copy of this mail notifying them of a new project.",
+      sep = "\n"
+    )
+  )
+
+  existing_announcement_items <- dbGetQuery(
+    con,
+    "SELECT COUNT(*) AS n FROM announcement_items WHERE panel_id = ?",
+    params = list(announcement_panel_id)
+  )$n[1]
+  if (existing_announcement_items == 0) {
+    for (i in seq_along(default_announcement_items)) {
+      dbExecute(con, "
+        INSERT INTO announcement_items (panel_id, display_order, markdown_text, is_active, updated_by)
+        VALUES (?, ?, ?, 1, ?)
+      ", params = list(announcement_panel_id, i, default_announcement_items[i], "setup_database.R"))
+    }
+  }
+
+  existing_service_items <- dbGetQuery(
+    con,
+    "SELECT COUNT(*) AS n FROM announcement_items WHERE panel_id = ?",
+    params = list(service_panel_id)
+  )$n[1]
+  if (existing_service_items == 0) {
+    for (i in seq_along(default_service_items)) {
+      dbExecute(con, "
+        INSERT INTO announcement_items (panel_id, display_order, markdown_text, is_active, updated_by)
+        VALUES (?, ?, ?, 1, ?)
+      ", params = list(service_panel_id, i, default_service_items[i], "setup_database.R"))
+    }
+  }
+
   # Insert some sample projects
   sample_projects <- data.frame(
     project_name = c('Test Project 1', 'Test Project 2'),
@@ -456,6 +564,7 @@ setup_complete_database <- function() {
   message("Service types table with costs per sample")
   message("Sequencing depth table with cost calculations")
   message("Email templates table for notifications")
+  message("Announcement panels and markdown text boxes initialized")
   message("Index type and read lengths tables removed")
 }
 

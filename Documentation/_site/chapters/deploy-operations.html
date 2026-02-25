@@ -418,6 +418,7 @@ sudo systemctl restart apache2</code></pre>
 <li>rebuild the DB</li>
 <li>import legacy CSV</li>
 <li>run <code>setup_database.R</code></li>
+<li>overwrite landing text content (<code>announcement_panels</code> / <code>announcement_items</code>)</li>
 </ul>
 <section id="when-to-run-deploy" class="level3" data-number="6.4.1">
 <h3 data-number="6.4.1" class="anchored" data-anchor-id="when-to-run-deploy"><span class="header-section-number">6.4.1</span> When to run deploy</h3>
@@ -432,6 +433,7 @@ sudo systemctl restart apache2</code></pre>
 <ul>
 <li>Restarting <code>shiny-server</code> does not remove DB content.</li>
 <li>Rebuild is a manual, explicit action (<code>setup_database.R</code>) and should be done only when needed.</li>
+<li>Landing text edited via <strong>Manage Landing Text</strong> is DB-backed and survives deploy/restart.</li>
 </ul>
 </section>
 <section id="safe-db-snapshot-around-risky-maintenance" class="level3" data-number="6.4.3">

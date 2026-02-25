@@ -10,81 +10,230 @@ library(mailR)
 library(ldapr)
 
 # Shared announcement/service blocks (shown after login in both local + LDAP modes)
-announcement_blocks <- function() {
-  tagList(
-    div(
-      class = "announcement-panel",
-      div(class = "panel-title", "Announcement"),
-      div(class = "panel-updated", tags$strong("Updated February 2026")),
-      div(
-        class = "info-box",
-        tags$strong("QC submission"),
-        ": Everyday ",
-        tags$strong("9:00 - 11:00"),
-        ", Result will be available ",
-        tags$strong("13:00-15:00"),
-        " in your datashare folder or ask a link."
-      ),
-      div(
-        class = "info-box",
-        tags$strong("8-strip tube"),
-        ": If you submit more than ",
-        tags$strong("(>=) 4 samples for Qubit"),
-        ", please use 8-strip PCR tube."
-      ),
-      div(
-        class = "info-box",
-        tags$strong("NGS data in your personal pool folder:"),
-        tags$br(),
-        "(Windows) \\\\samba-pool-dnaseq\\pool-dnaseq\\",
-        tags$br(),
-        "(Mac) smb://samba-pool-dnaseq/pool-dnaseq/",
-        tags$br(),
-        "or, via datashare - ask a link."
-      ),
-      div(
-        class = "info-box",
-        tags$strong("NGS Facility will not store your samples and data."),
-        " Please submit ",
-        tags$strong("aliquot"),
-        " of your sample and ",
-        tags$strong("back-up"),
-        " the data in your group storage space. We will discard the sample and data every two weeks."
+# Content lives in SQLite and is editable by admins via the UI.
+default_announcement_seed <- function() {
+  list(
+    list(
+      panel_key = "announcement",
+      title = "Announcement",
+      subtitle = "**Updated February 2026**",
+      display_order = 1L,
+      items = c(
+        "**QC submission**: Everyday **9:00 - 11:00**, Result will be available **13:00-15:00** in your datashare folder or ask a link.",
+        "**8-strip tube**: If you submit more than **(>=) 4 samples for Qubit**, please use 8-strip PCR tube.",
+        paste(
+          "**NGS data in your personal pool folder:**",
+          "(Windows) \\\\samba-pool-dnaseq\\pool-dnaseq\\",
+          "(Mac) smb://samba-pool-dnaseq/pool-dnaseq/",
+          "or, via datashare - ask a link.",
+          sep = "\n"
+        ),
+        "**NGS Facility will not store your samples and data.** Please submit **aliquot** of your sample and **back-up** the data in your group storage space. We will discard the sample and data every two weeks."
       )
     ),
-    div(
-      class = "service-panel",
-      div(
-        class = "info-box",
-        tags$p(
-          "The NGS lab of the Core Facility is providing sequencing as a service. We highly recommend to contact us before the start of your experiment. In collaboration with the Bioinformatics Core Facility, we provide:"
+    list(
+      panel_key = "service_info",
+      title = "",
+      subtitle = "",
+      display_order = 2L,
+      items = c(
+        paste(
+          "The NGS lab of the Core Facility is providing sequencing as a service. We highly recommend to contact us before the start of your experiment. In collaboration with the Bioinformatics Core Facility, we provide:",
+          "",
+          "- Assistance with experimental design of the studies (required number of samples and replicates)",
+          "- Assistance with the use of NGS open source analysis tools",
+          "- Data analysis on collaborative basis",
+          sep = "\n"
         ),
-        tags$ul(
-          tags$li("Assistance with experimental design of the studies (required number of samples and replicates)"),
-          tags$li("Assistance with the use of NGS open source analysis tools"),
-          tags$li("Data analysis on collaborative basis")
-        )
-      ),
-      div(
-        class = "info-box",
-        "If you have any further questions, please do not hesitate to contact us @ ",
-        tags$a(href = "mailto:ngs@biochem.mpg.de", tags$strong("@NGS")),
-        "!"
-      ),
-      div(
-        class = "info-box",
-        tags$ul(
-          tags$li(tagList("To start, Click on ", tags$strong("'Create New Project'"), ".")),
-          tags$li(tagList(
-            "For better overview, we recommend keeping the project Name to this preferred format - ",
-            tags$strong("YYYYMMDD_AB_CD"),
-            " - AB-Groupleader's initial, CD-Researcher's initial)"
-          )),
-          tags$li("After creating the project an email will be sent to you as well as your group leader for approval. The NGS facility will also get a copy of this mail notifying them of a new project.")
+        "If you have any further questions, please do not hesitate to contact us @ [**@NGS**](mailto:ngs@biochem.mpg.de) !",
+        paste(
+          "- To start, Click on **'Create New Project'**.",
+          "- For better overview, we recommend keeping the project Name to this preferred format - **YYYYMMDD_AB_CD** - AB-Groupleader's initial, CD-Researcher's initial)",
+          "- After creating the project an email will be sent to you as well as your group leader for approval. The NGS facility will also get a copy of this mail notifying them of a new project.",
+          sep = "\n"
         )
       )
     )
   )
+}
+
+is_safe_markdown_href <- function(href) {
+  href <- trimws(tolower(href))
+  grepl("^(https?://|mailto:|smb://)", href)
+}
+
+escape_inline_markdown <- function(text) {
+  escaped <- htmltools::htmlEscape(ifelse(is.null(text) || is.na(text), "", as.character(text)))
+  gsub("\\*\\*([^*]+)\\*\\*", "<strong>\\1</strong>", escaped, perl = TRUE)
+}
+
+render_inline_markdown <- function(text) {
+  if (is.null(text) || is.na(text)) return("")
+
+  remaining <- as.character(text)
+  out <- character()
+  pattern <- "\\[([^\\]]+)\\]\\(([^)]+)\\)"
+
+  while (nchar(remaining) > 0) {
+    match_pos <- regexec(pattern, remaining, perl = TRUE)
+    match_vals <- regmatches(remaining, match_pos)[[1]]
+
+    if (length(match_vals) == 0) {
+      out <- c(out, escape_inline_markdown(remaining))
+      break
+    }
+
+    start <- as.integer(match_pos[[1]][1])
+    len <- attr(match_pos[[1]], "match.length")[1]
+
+    if (start > 1) {
+      out <- c(out, escape_inline_markdown(substr(remaining, 1, start - 1)))
+    }
+
+    label <- match_vals[2]
+    href <- trimws(match_vals[3])
+
+    if (is_safe_markdown_href(href)) {
+      out <- c(
+        out,
+        paste0(
+          '<a href="',
+          htmltools::htmlEscape(href, attribute = TRUE),
+          '">',
+          escape_inline_markdown(label),
+          "</a>"
+        )
+      )
+    } else {
+      out <- c(out, escape_inline_markdown(match_vals[1]))
+    }
+
+    next_start <- start + len
+    remaining <- if (next_start <= nchar(remaining)) {
+      substr(remaining, next_start, nchar(remaining))
+    } else {
+      ""
+    }
+  }
+
+  paste(out, collapse = "")
+}
+
+markdown_lite_to_html <- function(markdown_text) {
+  if (is.null(markdown_text) || is.na(markdown_text)) return("")
+
+  markdown_text <- gsub("\r\n?", "\n", as.character(markdown_text))
+  if (trimws(markdown_text) == "") return("")
+
+  lines <- strsplit(markdown_text, "\n", fixed = TRUE)[[1]]
+  html_parts <- character()
+  paragraph_buffer <- character()
+  list_buffer <- character()
+  list_type <- NULL
+
+  flush_paragraph <- function() {
+    if (length(paragraph_buffer) == 0) return()
+    paragraph_html <- paste(
+      vapply(paragraph_buffer, render_inline_markdown, character(1)),
+      collapse = "<br/>"
+    )
+    html_parts <<- c(html_parts, paste0("<p>", paragraph_html, "</p>"))
+    paragraph_buffer <<- character()
+  }
+
+  flush_list <- function() {
+    if (length(list_buffer) == 0) return()
+    tag_name <- if (identical(list_type, "ol")) "ol" else "ul"
+    item_html <- vapply(list_buffer, function(item_text) {
+      paste0("<li>", render_inline_markdown(item_text), "</li>")
+    }, character(1))
+    html_parts <<- c(
+      html_parts,
+      paste0("<", tag_name, ">", paste(item_html, collapse = ""), "</", tag_name, ">")
+    )
+    list_buffer <<- character()
+    list_type <<- NULL
+  }
+
+  for (line in lines) {
+    trimmed <- trimws(line)
+
+    if (trimmed == "") {
+      flush_paragraph()
+      flush_list()
+      next
+    }
+
+    if (grepl("^[-*+]\\s+", trimmed)) {
+      flush_paragraph()
+      if (!is.null(list_type) && !identical(list_type, "ul")) {
+        flush_list()
+      }
+      list_type <- "ul"
+      list_buffer <- c(list_buffer, sub("^[-*+]\\s+", "", trimmed))
+      next
+    }
+
+    if (grepl("^[0-9]+\\.\\s+", trimmed)) {
+      flush_paragraph()
+      if (!is.null(list_type) && !identical(list_type, "ol")) {
+        flush_list()
+      }
+      list_type <- "ol"
+      list_buffer <- c(list_buffer, sub("^[0-9]+\\.\\s+", "", trimmed))
+      next
+    }
+
+    flush_list()
+    paragraph_buffer <- c(paragraph_buffer, trimmed)
+  }
+
+  flush_paragraph()
+  flush_list()
+
+  paste(html_parts, collapse = "\n")
+}
+
+announcement_blocks <- function(announcement_data) {
+  if (length(announcement_data) == 0) return(NULL)
+
+  tagList(lapply(announcement_data, function(entry) {
+    panel <- entry$panel
+    panel_items <- entry$items
+
+    panel_class <- if (!is.null(panel$panel_key) && panel$panel_key == "announcement") {
+      "announcement-panel"
+    } else {
+      "service-panel"
+    }
+
+    content_nodes <- list()
+
+    if (!is.null(panel$title) && !is.na(panel$title) && trimws(panel$title) != "") {
+      content_nodes <- c(content_nodes, list(div(class = "panel-title", panel$title)))
+    }
+
+    if (!is.null(panel$subtitle) && !is.na(panel$subtitle) && trimws(panel$subtitle) != "") {
+      content_nodes <- c(content_nodes, list(
+        div(class = "panel-updated", HTML(markdown_lite_to_html(panel$subtitle)))
+      ))
+    }
+
+    if (nrow(panel_items) == 0) {
+      content_nodes <- c(content_nodes, list(div(class = "info-box", tags$em("No content configured."))))
+    } else {
+      for (i in seq_len(nrow(panel_items))) {
+        content_nodes <- c(content_nodes, list(
+          div(
+            class = "info-box",
+            HTML(markdown_lite_to_html(panel_items$markdown_text[i]))
+          )
+        ))
+      }
+    }
+
+    do.call(div, c(list(class = panel_class), content_nodes))
+  }))
 }
 
 # UI definition
@@ -557,6 +706,128 @@ server <- function(input, output, session) {
       flush.console()
     }, once = TRUE)
   }
+
+  ##################################################################
+  # ANNOUNCEMENT STORAGE HELPERS
+  ##################################################################
+
+  ensure_announcement_tables <- function(con) {
+    dbExecute(con, "
+      CREATE TABLE IF NOT EXISTS announcement_panels (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        panel_key TEXT UNIQUE NOT NULL,
+        title TEXT,
+        subtitle TEXT,
+        display_order INTEGER NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_by TEXT
+      )
+    ")
+
+    dbExecute(con, "
+      CREATE TABLE IF NOT EXISTS announcement_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        panel_id INTEGER NOT NULL,
+        display_order INTEGER NOT NULL,
+        markdown_text TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_by TEXT,
+        FOREIGN KEY (panel_id) REFERENCES announcement_panels(id)
+      )
+    ")
+  }
+
+  seed_announcement_defaults <- function(con, updated_by = "system") {
+    seed <- default_announcement_seed()
+    if (length(seed) == 0) return(invisible(NULL))
+
+    existing_panels <- dbGetQuery(
+      con,
+      "SELECT id, panel_key FROM announcement_panels"
+    )
+
+    for (panel in seed) {
+      panel_key <- panel$panel_key
+      panel_row <- existing_panels[existing_panels$panel_key == panel_key, , drop = FALSE]
+      inserted_panel <- FALSE
+
+      if (nrow(panel_row) == 0) {
+        dbExecute(con, "
+          INSERT INTO announcement_panels (panel_key, title, subtitle, display_order, is_active, updated_by)
+          VALUES (?, ?, ?, ?, 1, ?)
+        ", params = list(
+          panel_key,
+          panel$title,
+          panel$subtitle,
+          as.integer(panel$display_order),
+          updated_by
+        ))
+
+        panel_id <- dbGetQuery(
+          con,
+          "SELECT id FROM announcement_panels WHERE panel_key = ?",
+          params = list(panel_key)
+        )$id[1]
+        inserted_panel <- TRUE
+      } else {
+        panel_id <- panel_row$id[1]
+      }
+
+      if (isTRUE(inserted_panel) && length(panel$items) > 0) {
+        for (idx in seq_along(panel$items)) {
+          dbExecute(con, "
+            INSERT INTO announcement_items (panel_id, display_order, markdown_text, is_active, updated_by)
+            VALUES (?, ?, ?, 1, ?)
+          ", params = list(
+            panel_id,
+            as.integer(idx),
+            panel$items[[idx]],
+            updated_by
+          ))
+        }
+      }
+    }
+  }
+
+  load_announcement_content <- function(con = NULL, active_only = TRUE) {
+    close_con <- FALSE
+    if (is.null(con)) {
+      con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
+      close_con <- TRUE
+    }
+    on.exit(if (close_con) dbDisconnect(con), add = TRUE)
+
+    ensure_announcement_tables(con)
+    seed_announcement_defaults(con)
+
+    panel_query <- "
+      SELECT id, panel_key, title, subtitle, display_order, is_active
+      FROM announcement_panels
+    "
+    item_query <- "
+      SELECT id, panel_id, display_order, markdown_text, is_active
+      FROM announcement_items
+    "
+
+    if (isTRUE(active_only)) {
+      panel_query <- paste(panel_query, "WHERE is_active = 1")
+      item_query <- paste(item_query, "WHERE is_active = 1")
+    }
+
+    panel_query <- paste(panel_query, "ORDER BY display_order, id")
+    item_query <- paste(item_query, "ORDER BY display_order, id")
+
+    panels <- dbGetQuery(con, panel_query)
+    items <- dbGetQuery(con, item_query)
+
+    lapply(seq_len(nrow(panels)), function(i) {
+      panel_row <- panels[i, , drop = FALSE]
+      panel_items <- items[items$panel_id == panel_row$id[1], , drop = FALSE]
+      list(panel = panel_row, items = panel_items)
+    })
+  }
   
   ##################################################################
   # DATABASE VALIDATION AND REPAIR FUNCTIONS
@@ -566,11 +837,16 @@ server <- function(input, output, session) {
   validate_and_repair_database <- function() {
     tryCatch({
       con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
+      on.exit(dbDisconnect(con), add = TRUE)
+
+      ensure_announcement_tables(con)
+      seed_announcement_defaults(con)
       
       # Check if all essential tables exist
       required_tables <- c("users", "projects", "budget_holders", "service_types", 
                            "sequencing_depths", "sequencing_cycles", "types",
-                           "sequencing_platforms", "reference_genomes")
+                           "sequencing_platforms", "reference_genomes",
+                           "announcement_panels", "announcement_items")
       
       existing_tables <- dbListTables(con)
       missing_tables <- setdiff(required_tables, existing_tables)
@@ -579,14 +855,12 @@ server <- function(input, output, session) {
         showNotification(paste("Missing tables detected:", paste(missing_tables, collapse = ", ")), 
                          type = "warning", duration = 10)
         # Don't auto-recreate, just warn the admin
-        dbDisconnect(con)
         return(FALSE)
       }
       
       # Test basic query
-      test_query <- dbGetQuery(con, "SELECT 1 as test")
-      
-      dbDisconnect(con)
+      dbGetQuery(con, "SELECT 1 as test")
+
       return(TRUE)
       
     }, error = function(e) {
@@ -653,6 +927,10 @@ server <- function(input, output, session) {
     is_admin = FALSE
   )
   projects_data <- reactiveVal()
+  announcement_refresh <- reactiveVal(0)
+  announcement_items_current <- reactiveVal(data.frame())
+  announcement_editing_item_id <- reactiveVal(NULL)
+  max_announcement_chars <- 4000L
   
   # Reactive values for admin management
   admin_data <- reactiveValues(
@@ -1539,6 +1817,110 @@ server <- function(input, output, session) {
       "full_name" %in% dbGetQuery(con, "PRAGMA table_info(users)")$name
     }, error = function(e) FALSE)
   }
+
+  refresh_announcements <- function() {
+    announcement_refresh(announcement_refresh() + 1)
+  }
+
+  get_announcement_panels <- function(con = NULL, active_only = FALSE) {
+    close_con <- FALSE
+    if (is.null(con)) {
+      con <- get_db_connection()
+      close_con <- TRUE
+    }
+    on.exit(if (close_con) dbDisconnect(con), add = TRUE)
+
+    ensure_announcement_tables(con)
+    seed_announcement_defaults(con)
+
+    query <- "
+      SELECT id, panel_key, title, subtitle, display_order, is_active
+      FROM announcement_panels
+    "
+    if (isTRUE(active_only)) {
+      query <- paste(query, "WHERE is_active = 1")
+    }
+    query <- paste(query, "ORDER BY display_order, id")
+    dbGetQuery(con, query)
+  }
+
+  get_announcement_items_for_panel <- function(panel_key, con = NULL, active_only = FALSE) {
+    close_con <- FALSE
+    if (is.null(con)) {
+      con <- get_db_connection()
+      close_con <- TRUE
+    }
+    on.exit(if (close_con) dbDisconnect(con), add = TRUE)
+
+    ensure_announcement_tables(con)
+    seed_announcement_defaults(con)
+
+    panel <- dbGetQuery(
+      con,
+      "SELECT id FROM announcement_panels WHERE panel_key = ?",
+      params = list(panel_key)
+    )
+    if (nrow(panel) == 0) return(data.frame())
+
+    query <- "
+      SELECT id, panel_id, display_order, markdown_text, is_active
+      FROM announcement_items
+      WHERE panel_id = ?
+    "
+    if (isTRUE(active_only)) {
+      query <- paste(query, "AND is_active = 1")
+    }
+    query <- paste(query, "ORDER BY display_order, id")
+    dbGetQuery(con, query, params = list(panel$id[1]))
+  }
+
+  normalize_announcement_item_order <- function(con, panel_id) {
+    rows <- dbGetQuery(
+      con,
+      "SELECT id FROM announcement_items WHERE panel_id = ? ORDER BY display_order, id",
+      params = list(panel_id)
+    )
+    if (nrow(rows) == 0) return(invisible(NULL))
+
+    for (idx in seq_len(nrow(rows))) {
+      dbExecute(
+        con,
+        "UPDATE announcement_items SET display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        params = list(as.integer(idx), rows$id[idx])
+      )
+    }
+    invisible(NULL)
+  }
+
+  validate_announcement_markdown <- function(markdown_text) {
+    markdown_text <- as.character(markdown_text %||% "")
+    if (trimws(markdown_text) == "") {
+      return("Content cannot be empty.")
+    }
+    if (nchar(markdown_text) > max_announcement_chars) {
+      return(paste0("Content is too long (max ", max_announcement_chars, " characters)."))
+    }
+    NULL
+  }
+
+  selected_announcement_item <- function() {
+    selected_row <- input$announcement_items_table_admin_rows_selected
+    items <- announcement_items_current()
+    if (length(selected_row) == 0 || nrow(items) == 0) return(NULL)
+    idx <- selected_row[1]
+    if (idx < 1 || idx > nrow(items)) return(NULL)
+    items[idx, , drop = FALSE]
+  }
+
+  tryCatch({
+    con_init <- get_db_connection()
+    on.exit(dbDisconnect(con_init), add = TRUE)
+    ensure_announcement_tables(con_init)
+    seed_announcement_defaults(con_init)
+  }, error = function(e) {
+    cat("ANNOUNCEMENT INIT ERROR:", e$message, "\n", file = stderr())
+    flush.console()
+  })
   
   # Get all usernames for responsible user dropdown
   get_all_usernames <- function() {
@@ -2280,6 +2662,17 @@ server <- function(input, output, session) {
       paste("Welcome,", user$username, if(user$is_admin) "(Admin)" else "")
     }
   })
+
+  output$announcement_blocks_ui <- renderUI({
+    req(user$logged_in)
+    announcement_refresh()
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+
+    announcement_data <- load_announcement_content(con = con, active_only = TRUE)
+    announcement_blocks(announcement_data)
+  })
   
   # Main content with tabs for admins
   output$main_content <- renderUI({
@@ -2319,7 +2712,7 @@ server <- function(input, output, session) {
         ),
         tabPanel(
           "Apply for Projects",
-          announcement_blocks(),
+          uiOutput("announcement_blocks_ui"),
           uiOutput("user_interface")
         ),
         tabPanel(
@@ -2329,7 +2722,7 @@ server <- function(input, output, session) {
       )
     } else {
       tagList(
-        announcement_blocks(),
+        uiOutput("announcement_blocks_ui"),
         uiOutput("user_interface")
       )
     }
@@ -2470,6 +2863,12 @@ server <- function(input, output, session) {
                wellPanel(
                  h4("Sequencing Platforms"),
                  actionButton("manage_sequencing_platforms_btn", "Manage Platforms", class = "btn-primary")
+               )
+        ),
+        column(4,
+               wellPanel(
+                 h4("Landing Text"),
+                 actionButton("manage_announcements_btn", "Manage Landing Text", class = "btn-primary")
                )
         )
       ),
@@ -3166,8 +3565,101 @@ server <- function(input, output, session) {
       )
     ))
   })
+
+  observeEvent(input$manage_announcements_btn, {
+    if (!isTRUE(user$is_admin)) {
+      showNotification("Admin permissions required.", type = "error")
+      return()
+    }
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+    panels <- get_announcement_panels(con = con, active_only = FALSE)
+
+    if (nrow(panels) == 0) {
+      showNotification("No announcement panels are configured.", type = "error")
+      return()
+    }
+
+    panel_labels <- ifelse(
+      is.na(panels$title) | trimws(panels$title) == "",
+      panels$panel_key,
+      panels$title
+    )
+    panel_choices <- setNames(panels$panel_key, panel_labels)
+
+    showModal(modalDialog(
+      title = "Landing Text Management",
+      size = "l",
+      footer = modalButton("Close"),
+      selectInput(
+        "announcement_panel_select",
+        "Panel",
+        choices = panel_choices,
+        selected = panels$panel_key[1]
+      ),
+      tags$p(
+        tags$strong("Markdown-lite syntax:"),
+        " use **bold**, bullet lists (- item), numbered lists (1. item), and links like [@NGS](mailto:ngs@biochem.mpg.de)."
+      ),
+      DTOutput("announcement_items_table_admin"),
+      div(
+        class = "action-buttons",
+        actionButton("announcement_add_btn", "Add Box", class = "btn-primary"),
+        actionButton("announcement_edit_btn", "Edit Selected", class = "btn-warning"),
+        actionButton("announcement_move_up_btn", "Move Up", class = "btn-info"),
+        actionButton("announcement_move_down_btn", "Move Down", class = "btn-info"),
+        actionButton("announcement_delete_btn", "Delete Selected", class = "btn-danger")
+      )
+    ))
+  })
   
   # === ADMIN TABLES RENDERING ===
+
+  output$announcement_items_table_admin <- renderDT({
+    req(user$logged_in, user$is_admin, input$announcement_panel_select)
+    announcement_refresh()
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+
+    items <- get_announcement_items_for_panel(
+      panel_key = input$announcement_panel_select,
+      con = con,
+      active_only = FALSE
+    )
+    announcement_items_current(items)
+
+    if (nrow(items) == 0) {
+      return(datatable(
+        data.frame(Message = "No text boxes configured for this panel."),
+        options = list(dom = "t"),
+        rownames = FALSE
+      ))
+    }
+
+    preview <- gsub("[\r\n]+", " ", items$markdown_text)
+    preview <- trimws(gsub("\\s+", " ", preview))
+    preview <- ifelse(
+      nchar(preview) > 140,
+      paste0(substr(preview, 1, 137), "..."),
+      preview
+    )
+
+    display <- data.frame(
+      Order = items$display_order,
+      Active = ifelse(items$is_active == 1, "Yes", "No"),
+      Content = preview,
+      stringsAsFactors = FALSE
+    )
+
+    datatable(
+      display,
+      selection = "single",
+      options = list(pageLength = 10),
+      rownames = FALSE
+    )
+  })
   
   output$budget_holders_table_admin <- renderDT({
     datatable(
@@ -3266,6 +3758,289 @@ server <- function(input, output, session) {
       rownames = FALSE,
       colnames = c("ID", "Platform Name")
     )
+  })
+
+  observeEvent(input$announcement_add_btn, {
+    if (!isTRUE(user$is_admin)) {
+      showNotification("Admin permissions required.", type = "error")
+      return()
+    }
+
+    req(input$announcement_panel_select)
+    announcement_editing_item_id(NULL)
+
+    showModal(modalDialog(
+      title = "Add Text Box",
+      size = "m",
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton("save_announcement_item_btn", "Save", class = "btn-primary")
+      ),
+      checkboxInput("item_active", "Active", value = TRUE),
+      textAreaInput(
+        "item_markdown_text",
+        "Content (Markdown-lite)",
+        value = "",
+        rows = 10,
+        placeholder = "Example:\n**QC submission**: Everyday **9:00 - 11:00**\n- Result will be available **13:00-15:00**\n- Ask us for a datashare link"
+      ),
+      tags$small(paste0("Maximum length: ", max_announcement_chars, " characters."))
+    ))
+  })
+
+  observeEvent(input$save_announcement_item_btn, {
+    if (!isTRUE(user$is_admin)) {
+      showNotification("Admin permissions required.", type = "error")
+      return()
+    }
+
+    req(input$announcement_panel_select)
+    validation_error <- validate_announcement_markdown(input$item_markdown_text)
+    if (!is.null(validation_error)) {
+      showNotification(validation_error, type = "error")
+      return()
+    }
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+
+    panel <- dbGetQuery(
+      con,
+      "SELECT id FROM announcement_panels WHERE panel_key = ?",
+      params = list(input$announcement_panel_select)
+    )
+    if (nrow(panel) == 0) {
+      showNotification("Selected panel does not exist.", type = "error")
+      return()
+    }
+
+    next_order <- dbGetQuery(
+      con,
+      "SELECT COALESCE(MAX(display_order), 0) + 1 AS next_order FROM announcement_items WHERE panel_id = ?",
+      params = list(panel$id[1])
+    )$next_order[1]
+
+    dbExecute(con, "
+      INSERT INTO announcement_items (panel_id, display_order, markdown_text, is_active, updated_by)
+      VALUES (?, ?, ?, ?, ?)
+    ", params = list(
+      panel$id[1],
+      as.integer(next_order),
+      as.character(input$item_markdown_text),
+      as.integer(isTRUE(input$item_active)),
+      user$username %||% "admin"
+    ))
+
+    removeModal()
+    refresh_announcements()
+    showNotification("Landing text box added.", type = "message")
+  })
+
+  observeEvent(input$announcement_edit_btn, {
+    if (!isTRUE(user$is_admin)) {
+      showNotification("Admin permissions required.", type = "error")
+      return()
+    }
+
+    item <- selected_announcement_item()
+    if (is.null(item)) {
+      showNotification("Please select a text box to edit.", type = "warning")
+      return()
+    }
+
+    announcement_editing_item_id(item$id[1])
+
+    showModal(modalDialog(
+      title = "Edit Text Box",
+      size = "m",
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton("update_announcement_item_btn", "Update", class = "btn-primary")
+      ),
+      checkboxInput("item_active", "Active", value = as.logical(item$is_active[1])),
+      textAreaInput(
+        "item_markdown_text",
+        "Content (Markdown-lite)",
+        value = item$markdown_text[1],
+        rows = 10
+      ),
+      tags$small(paste0("Maximum length: ", max_announcement_chars, " characters."))
+    ))
+  })
+
+  observeEvent(input$update_announcement_item_btn, {
+    if (!isTRUE(user$is_admin)) {
+      showNotification("Admin permissions required.", type = "error")
+      return()
+    }
+
+    item_id <- announcement_editing_item_id()
+    if (is.null(item_id)) {
+      showNotification("No announcement item selected.", type = "error")
+      return()
+    }
+
+    validation_error <- validate_announcement_markdown(input$item_markdown_text)
+    if (!is.null(validation_error)) {
+      showNotification(validation_error, type = "error")
+      return()
+    }
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+
+    dbExecute(con, "
+      UPDATE announcement_items
+      SET markdown_text = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
+      WHERE id = ?
+    ", params = list(
+      as.character(input$item_markdown_text),
+      as.integer(isTRUE(input$item_active)),
+      user$username %||% "admin",
+      as.integer(item_id)
+    ))
+
+    announcement_editing_item_id(NULL)
+    removeModal()
+    refresh_announcements()
+    showNotification("Landing text box updated.", type = "message")
+  })
+
+  observeEvent(input$announcement_delete_btn, {
+    if (!isTRUE(user$is_admin)) {
+      showNotification("Admin permissions required.", type = "error")
+      return()
+    }
+
+    item <- selected_announcement_item()
+    if (is.null(item)) {
+      showNotification("Please select a text box to delete.", type = "warning")
+      return()
+    }
+
+    showModal(modalDialog(
+      title = "Confirm Delete",
+      paste("Delete selected text box (order", item$display_order[1], ")?"),
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton("confirm_delete_announcement_item_btn", "Delete", class = "btn-danger")
+      )
+    ))
+  })
+
+  observeEvent(input$confirm_delete_announcement_item_btn, {
+    if (!isTRUE(user$is_admin)) {
+      showNotification("Admin permissions required.", type = "error")
+      return()
+    }
+
+    item <- selected_announcement_item()
+    if (is.null(item)) {
+      showNotification("Please select a text box to delete.", type = "warning")
+      return()
+    }
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+
+    dbExecute(con, "DELETE FROM announcement_items WHERE id = ?", params = list(as.integer(item$id[1])))
+    normalize_announcement_item_order(con, panel_id = as.integer(item$panel_id[1]))
+
+    removeModal()
+    refresh_announcements()
+    showNotification("Landing text box deleted.", type = "message")
+  })
+
+  observeEvent(input$announcement_move_up_btn, {
+    if (!isTRUE(user$is_admin)) {
+      showNotification("Admin permissions required.", type = "error")
+      return()
+    }
+
+    selected_row <- input$announcement_items_table_admin_rows_selected
+    items <- announcement_items_current()
+    if (length(selected_row) == 0 || nrow(items) == 0) {
+      showNotification("Please select a text box to move.", type = "warning")
+      return()
+    }
+
+    idx <- selected_row[1]
+    if (idx <= 1) {
+      showNotification("Selected text box is already at the top.", type = "message")
+      return()
+    }
+
+    current_item <- items[idx, , drop = FALSE]
+    previous_item <- items[idx - 1, , drop = FALSE]
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+
+    dbExecute(con, "
+      UPDATE announcement_items SET display_order = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
+      WHERE id = ?
+    ", params = list(
+      as.integer(previous_item$display_order[1]),
+      user$username %||% "admin",
+      as.integer(current_item$id[1])
+    ))
+    dbExecute(con, "
+      UPDATE announcement_items SET display_order = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
+      WHERE id = ?
+    ", params = list(
+      as.integer(current_item$display_order[1]),
+      user$username %||% "admin",
+      as.integer(previous_item$id[1])
+    ))
+
+    refresh_announcements()
+    showNotification("Text box moved up.", type = "message")
+  })
+
+  observeEvent(input$announcement_move_down_btn, {
+    if (!isTRUE(user$is_admin)) {
+      showNotification("Admin permissions required.", type = "error")
+      return()
+    }
+
+    selected_row <- input$announcement_items_table_admin_rows_selected
+    items <- announcement_items_current()
+    if (length(selected_row) == 0 || nrow(items) == 0) {
+      showNotification("Please select a text box to move.", type = "warning")
+      return()
+    }
+
+    idx <- selected_row[1]
+    if (idx >= nrow(items)) {
+      showNotification("Selected text box is already at the bottom.", type = "message")
+      return()
+    }
+
+    current_item <- items[idx, , drop = FALSE]
+    next_item <- items[idx + 1, , drop = FALSE]
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+
+    dbExecute(con, "
+      UPDATE announcement_items SET display_order = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
+      WHERE id = ?
+    ", params = list(
+      as.integer(next_item$display_order[1]),
+      user$username %||% "admin",
+      as.integer(current_item$id[1])
+    ))
+    dbExecute(con, "
+      UPDATE announcement_items SET display_order = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
+      WHERE id = ?
+    ", params = list(
+      as.integer(current_item$display_order[1]),
+      user$username %||% "admin",
+      as.integer(next_item$id[1])
+    ))
+
+    refresh_announcements()
+    showNotification("Text box moved down.", type = "message")
   })
   
   # === ADD NEW ITEMS HANDLERS ===
