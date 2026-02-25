@@ -233,11 +233,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#apache-ldap" id="toc-apache-ldap" class="nav-link" data-scroll-target="#apache-ldap"><span class="header-section-number">9.4</span> Apache / LDAP</a>
   <ul class="collapse">
   <li><a href="#apache-wont-restart-after-ldap-change" id="toc-apache-wont-restart-after-ldap-change" class="nav-link" data-scroll-target="#apache-wont-restart-after-ldap-change"><span class="header-section-number">9.4.1</span> Apache won’t restart after LDAP change</a></li>
-  <li><a href="#invalid-command-ldaptls_cacertdir" id="toc-invalid-command-ldaptls_cacertdir" class="nav-link" data-scroll-target="#invalid-command-ldaptls_cacertdir"><span class="header-section-number">9.4.2</span> Invalid command <code>LDAPTLS_CACERTDIR</code></a></li>
-  <li><a href="#ldap_simple_bind-failed-cant-contact-ldap-server" id="toc-ldap_simple_bind-failed-cant-contact-ldap-server" class="nav-link" data-scroll-target="#ldap_simple_bind-failed-cant-contact-ldap-server"><span class="header-section-number">9.4.3</span> <code>ldap_simple_bind()</code> failed: Can’t contact LDAP server</a></li>
-  <li><a href="#ldaptrustedglobalcert-error" id="toc-ldaptrustedglobalcert-error" class="nav-link" data-scroll-target="#ldaptrustedglobalcert-error"><span class="header-section-number">9.4.4</span> <code>LDAPTrustedGlobalCert</code> error</a></li>
-  <li><a href="#ldap-works-but-sequencing-app-returns-404" id="toc-ldap-works-but-sequencing-app-returns-404" class="nav-link" data-scroll-target="#ldap-works-but-sequencing-app-returns-404"><span class="header-section-number">9.4.5</span> LDAP works, but <code>/sequencing-app/</code> returns 404</a></li>
-  <li><a href="#debug-logging-too-noisy-apache-or-shiny" id="toc-debug-logging-too-noisy-apache-or-shiny" class="nav-link" data-scroll-target="#debug-logging-too-noisy-apache-or-shiny"><span class="header-section-number">9.4.6</span> Debug logging too noisy (Apache or Shiny)</a></li>
+  <li><a href="#invalid-command-requestheader" id="toc-invalid-command-requestheader" class="nav-link" data-scroll-target="#invalid-command-requestheader"><span class="header-section-number">9.4.2</span> <code>Invalid command 'RequestHeader'</code></a></li>
+  <li><a href="#invalid-command-ldaptls_cacertdir" id="toc-invalid-command-ldaptls_cacertdir" class="nav-link" data-scroll-target="#invalid-command-ldaptls_cacertdir"><span class="header-section-number">9.4.3</span> Invalid command <code>LDAPTLS_CACERTDIR</code></a></li>
+  <li><a href="#ldap_simple_bind-failed-cant-contact-ldap-server" id="toc-ldap_simple_bind-failed-cant-contact-ldap-server" class="nav-link" data-scroll-target="#ldap_simple_bind-failed-cant-contact-ldap-server"><span class="header-section-number">9.4.4</span> <code>ldap_simple_bind()</code> failed: Can’t contact LDAP server</a></li>
+  <li><a href="#ldaptrustedglobalcert-error" id="toc-ldaptrustedglobalcert-error" class="nav-link" data-scroll-target="#ldaptrustedglobalcert-error"><span class="header-section-number">9.4.5</span> <code>LDAPTrustedGlobalCert</code> error</a></li>
+  <li><a href="#ldap-works-but-sequencing-app-returns-404" id="toc-ldap-works-but-sequencing-app-returns-404" class="nav-link" data-scroll-target="#ldap-works-but-sequencing-app-returns-404"><span class="header-section-number">9.4.6</span> LDAP works, but <code>/sequencing-app/</code> returns 404</a></li>
+  <li><a href="#err_ssl_protocol_error-for-httpsbcf-vm" id="toc-err_ssl_protocol_error-for-httpsbcf-vm" class="nav-link" data-scroll-target="#err_ssl_protocol_error-for-httpsbcf-vm"><span class="header-section-number">9.4.7</span> <code>ERR_SSL_PROTOCOL_ERROR</code> for <code>https://bcf-vm/</code></a></li>
+  <li><a href="#debug-logging-too-noisy-apache-or-shiny" id="toc-debug-logging-too-noisy-apache-or-shiny" class="nav-link" data-scroll-target="#debug-logging-too-noisy-apache-or-shiny"><span class="header-section-number">9.4.8</span> Debug logging too noisy (Apache or Shiny)</a></li>
+  <li><a href="#ldap-mode-configured-but-app-still-shows-local-page" id="toc-ldap-mode-configured-but-app-still-shows-local-page" class="nav-link" data-scroll-target="#ldap-mode-configured-but-app-still-shows-local-page"><span class="header-section-number">9.4.9</span> LDAP mode configured, but app still shows local page</a></li>
+  <li><a href="#ldap-debug-error-onflushed-operation-not-allowed-without-an-active-reactive-context" id="toc-ldap-debug-error-onflushed-operation-not-allowed-without-an-active-reactive-context" class="nav-link" data-scroll-target="#ldap-debug-error-onflushed-operation-not-allowed-without-an-active-reactive-context"><span class="header-section-number">9.4.10</span> <code>LDAP DEBUG ERROR (onFlushed): Operation not allowed without an active reactive context</code></a></li>
   </ul></li>
   <li><a href="#sql-moved" id="toc-sql-moved" class="nav-link" data-scroll-target="#sql-moved"><span class="header-section-number">9.5</span> SQL (moved)</a>
   <ul class="collapse">
@@ -407,15 +411,24 @@ git checkout --theirs &lt;file&gt;</code></pre>
 <p>Use a single, complete LDAP URL:</p>
 <pre><code>AuthLDAPURL "ldaps://ldapserv1.biochem.mpg.de:636/dc=biochem,dc=mpg,dc=de?uid?sub?(objectClass=posixAccount)"</code></pre>
 </section>
-<section id="invalid-command-ldaptls_cacertdir" class="level3" data-number="9.4.2">
-<h3 data-number="9.4.2" class="anchored" data-anchor-id="invalid-command-ldaptls_cacertdir"><span class="header-section-number">9.4.2</span> Invalid command <code>LDAPTLS_CACERTDIR</code></h3>
+<section id="invalid-command-requestheader" class="level3" data-number="9.4.2">
+<h3 data-number="9.4.2" class="anchored" data-anchor-id="invalid-command-requestheader"><span class="header-section-number">9.4.2</span> <code>Invalid command 'RequestHeader'</code></h3>
+<p>Symptoms:</p>
+<pre><code>Invalid command 'RequestHeader', perhaps misspelled or defined by a module not included</code></pre>
+<p>Fix:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod headers</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="invalid-command-ldaptls_cacertdir" class="level3" data-number="9.4.3">
+<h3 data-number="9.4.3" class="anchored" data-anchor-id="invalid-command-ldaptls_cacertdir"><span class="header-section-number">9.4.3</span> Invalid command <code>LDAPTLS_CACERTDIR</code></h3>
 <p>Cause:</p>
 <p><code>LDAPTLS_CACERTDIR</code> is <strong>not</strong> an Apache directive.</p>
 <p>Fix:</p>
 <p>Remove from Apache config. Put TLS trust in <code>/etc/ldap/ldap.conf</code> instead.</p>
 </section>
-<section id="ldap_simple_bind-failed-cant-contact-ldap-server" class="level3" data-number="9.4.3">
-<h3 data-number="9.4.3" class="anchored" data-anchor-id="ldap_simple_bind-failed-cant-contact-ldap-server"><span class="header-section-number">9.4.3</span> <code>ldap_simple_bind()</code> failed: Can’t contact LDAP server</h3>
+<section id="ldap_simple_bind-failed-cant-contact-ldap-server" class="level3" data-number="9.4.4">
+<h3 data-number="9.4.4" class="anchored" data-anchor-id="ldap_simple_bind-failed-cant-contact-ldap-server"><span class="header-section-number">9.4.4</span> <code>ldap_simple_bind()</code> failed: Can’t contact LDAP server</h3>
 <p>Fix:</p>
 <ol type="1">
 <li>Check port:</li>
@@ -431,15 +444,15 @@ git checkout --theirs &lt;file&gt;</code></pre>
 </ol>
 <pre><code>TLS_CACERTDIR /etc/ssl/certs</code></pre>
 </section>
-<section id="ldaptrustedglobalcert-error" class="level3" data-number="9.4.4">
-<h3 data-number="9.4.4" class="anchored" data-anchor-id="ldaptrustedglobalcert-error"><span class="header-section-number">9.4.4</span> <code>LDAPTrustedGlobalCert</code> error</h3>
+<section id="ldaptrustedglobalcert-error" class="level3" data-number="9.4.5">
+<h3 data-number="9.4.5" class="anchored" data-anchor-id="ldaptrustedglobalcert-error"><span class="header-section-number">9.4.5</span> <code>LDAPTrustedGlobalCert</code> error</h3>
 <p>Symptoms:</p>
 <pre><code>LDAPTrustedGlobalCert cannot occur within &lt;VirtualHost&gt; section</code></pre>
 <p>Fix:</p>
 <p>Move it to a global Apache config or comment it out (if not needed).</p>
 </section>
-<section id="ldap-works-but-sequencing-app-returns-404" class="level3" data-number="9.4.5">
-<h3 data-number="9.4.5" class="anchored" data-anchor-id="ldap-works-but-sequencing-app-returns-404"><span class="header-section-number">9.4.5</span> LDAP works, but <code>/sequencing-app/</code> returns 404</h3>
+<section id="ldap-works-but-sequencing-app-returns-404" class="level3" data-number="9.4.6">
+<h3 data-number="9.4.6" class="anchored" data-anchor-id="ldap-works-but-sequencing-app-returns-404"><span class="header-section-number">9.4.6</span> LDAP works, but <code>/sequencing-app/</code> returns 404</h3>
 <p><strong>Symptom</strong></p>
 <ul>
 <li><code>curl -Ik -u USER https://host/sequencing-app/</code> returns <strong>404</strong></li>
@@ -460,8 +473,53 @@ ProxyPassReverse /sequencing-app/ http://localhost:3838/sequencing-app/</code></
 <pre><code>sudo apache2ctl -t
 sudo systemctl restart apache2</code></pre>
 </section>
-<section id="debug-logging-too-noisy-apache-or-shiny" class="level3" data-number="9.4.6">
-<h3 data-number="9.4.6" class="anchored" data-anchor-id="debug-logging-too-noisy-apache-or-shiny"><span class="header-section-number">9.4.6</span> Debug logging too noisy (Apache or Shiny)</h3>
+<section id="err_ssl_protocol_error-for-httpsbcf-vm" class="level3" data-number="9.4.7">
+<h3 data-number="9.4.7" class="anchored" data-anchor-id="err_ssl_protocol_error-for-httpsbcf-vm"><span class="header-section-number">9.4.7</span> <code>ERR_SSL_PROTOCOL_ERROR</code> for <code>https://bcf-vm/</code></h3>
+<p><strong>Symptom</strong></p>
+<ul>
+<li>Browser shows: <code>This site can’t provide a secure connection</code> / <code>ERR_SSL_PROTOCOL_ERROR</code></li>
+<li>Usually appears while testing the new <code>bcf-vm</code> host over HTTPS.</li>
+</ul>
+<p><strong>Common causes</strong></p>
+<ul>
+<li>Hostname is not mapped on your local machine (<code>/etc/hosts</code> missing).</li>
+<li>Apache default site (<code>000-default.conf</code>) is still active and interferes on <code>:80</code>.</li>
+<li>SSL vhost/modules are not fully enabled.</li>
+</ul>
+<p><strong>Fix</strong></p>
+<ol type="1">
+<li>On your <strong>local machine</strong>, map VM IP to hostnames:</li>
+</ol>
+<pre><code>sudo sh -c 'echo "10.33.0.55 bcf-vm bcf-vm.biochem.mpg.de" &gt;&gt; /etc/hosts'
+sudo dscacheutil -flushcache
+sudo killall -HUP mDNSResponder</code></pre>
+<ol start="2" type="1">
+<li>On <code>bcf-vm</code>, keep only the intended site active and enable SSL:</li>
+</ol>
+<pre><code>sudo a2dissite 000-default.conf
+sudo a2ensite bcf-vm.conf
+sudo a2enmod ssl headers rewrite proxy proxy_http
+sudo apache2ctl -t
+sudo systemctl restart apache2</code></pre>
+<ol start="3" type="1">
+<li>Verify listeners/vhosts:</li>
+</ol>
+<pre><code>sudo ss -ltnp | grep -E ':80|:443'
+sudo apache2ctl -S</code></pre>
+<ol start="4" type="1">
+<li>Validate with curl:</li>
+</ol>
+<pre><code>curl -vk https://bcf-vm/
+curl -vk https://bcf-vm.biochem.mpg.de/</code></pre>
+<p>If needed, test locally on VM with explicit host header:</p>
+<pre><code>curl -kI -H 'Host: bcf-vm.biochem.mpg.de' https://127.0.0.1/</code></pre>
+<p><strong>Config path used</strong></p>
+<ul>
+<li><code>/etc/apache2/sites-available/bcf-vm.conf</code></li>
+</ul>
+</section>
+<section id="debug-logging-too-noisy-apache-or-shiny" class="level3" data-number="9.4.8">
+<h3 data-number="9.4.8" class="anchored" data-anchor-id="debug-logging-too-noisy-apache-or-shiny"><span class="header-section-number">9.4.8</span> Debug logging too noisy (Apache or Shiny)</h3>
 <p><strong>Symptom</strong></p>
 <p>Lots of LDAP debug output in logs during normal use.</p>
 <p><strong>Fix (Apache)</strong></p>
@@ -469,21 +527,61 @@ sudo systemctl restart apache2</code></pre>
 <pre><code>LogLevel warn
 # LogLevel authnz_ldap:debug ldap:debug   # enable only when debugging</code></pre>
 <p><strong>Fix (Shiny app)</strong></p>
-<p>The app only prints LDAP debug logs when <strong>both</strong> are set:</p>
+<p>The app prints LDAP debug logs when:</p>
 <ul>
-<li><code>APP_ENV=dev</code></li>
 <li><code>LDAP_DEBUG=1</code></li>
 </ul>
 <p>So for production:</p>
 <ul>
-<li>Remove <code>LDAP_DEBUG=1</code> from <code>/home/shiny/.Renviron</code> (or set it to <code>0</code>).</li>
+<li>Remove <code>LDAP_DEBUG=1</code> from <code>/srv/shiny-server/sequencing-app/.Renviron</code> (or set it to <code>0</code>).</li>
 <li>Restart Shiny:</li>
 </ul>
 <pre><code>sudo systemctl restart shiny-server</code></pre>
 <p>If I need debugging later, I can temporarily set:</p>
-<pre><code>APP_ENV=dev
-LDAP_DEBUG=1</code></pre>
+<pre><code>LDAP_DEBUG=1</code></pre>
 <p>and restart the service again.</p>
+</section>
+<section id="ldap-mode-configured-but-app-still-shows-local-page" class="level3" data-number="9.4.9">
+<h3 data-number="9.4.9" class="anchored" data-anchor-id="ldap-mode-configured-but-app-still-shows-local-page"><span class="header-section-number">9.4.9</span> LDAP mode configured, but app still shows local page</h3>
+<p><strong>Symptom</strong></p>
+<ul>
+<li>Apache LDAP prompt appears and credentials are accepted.</li>
+<li>App opens, but shows local login / local-mode content.</li>
+</ul>
+<p><strong>Cause</strong></p>
+<p><code>AUTH_MODE=ldap</code> exists in systemd override, but those env vars are not reliably visible inside the Shiny R worker.</p>
+<p><strong>Fix</strong></p>
+<p>Set LDAP env in app-local <code>.Renviron</code> (runtime source used by R):</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tee /srv/shiny-server/sequencing-app/.Renviron <span class="op">&gt;</span>/dev/null <span class="op">&lt;&lt;'EOF'</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="st">AUTH_MODE=ldap</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="st">LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="st">LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="st">TRUST_PROXY_AUTH_USER_QUERY=1</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a><span class="st">LDAP_DEBUG=1</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown shiny:shiny /srv/shiny-server/sequencing-app/.Renviron</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chmod 640 /srv/shiny-server/sequencing-app/.Renviron</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Verify in Shiny log:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="va">LATEST</span><span class="op">=</span><span class="va">$(</span><span class="fu">sudo</span> ls <span class="at">-1t</span> /var/log/shiny-server/sequencing-app-shiny-<span class="pp">*</span>.log <span class="kw">|</span> <span class="fu">head</span> <span class="at">-n1</span><span class="va">)</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-n</span> 120 <span class="st">"</span><span class="va">$LATEST</span><span class="st">"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Expected:</p>
+<ul>
+<li><code>LDAP DEBUG: startup env AUTH_MODE= ldap ...</code></li>
+</ul>
+<p>After confirmation, remove <code>LDAP_DEBUG=1</code> and restart again.</p>
+</section>
+<section id="ldap-debug-error-onflushed-operation-not-allowed-without-an-active-reactive-context" class="level3" data-number="9.4.10">
+<h3 data-number="9.4.10" class="anchored" data-anchor-id="ldap-debug-error-onflushed-operation-not-allowed-without-an-active-reactive-context"><span class="header-section-number">9.4.10</span> <code>LDAP DEBUG ERROR (onFlushed): Operation not allowed without an active reactive context</code></h3>
+<p><strong>Meaning</strong></p>
+<ul>
+<li>This is a debug-only logging issue, not an LDAP login failure.</li>
+</ul>
+<p><strong>Action</strong></p>
+<ul>
+<li>Safe to ignore while <code>LDAP_DEBUG=1</code> is enabled.</li>
+<li>Disable debug in production (<code>LDAP_DEBUG</code> unset) to stop this message.</li>
+</ul>
 </section>
 </section>
 <section id="sql-moved" class="level2" data-number="9.5">
@@ -497,27 +595,24 @@ This includes admin promotion in LDAP mode, SQLite inspection commands, budget h
 <li>On the VM, the live DB under <code>/srv/shiny-server/sequencing-app/</code> is typically owned by <code>shiny</code>.</li>
 <li>Stop Shiny Server, run the command as <code>shiny</code>, then start it again:</li>
 </ul>
-<div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny <span class="op">&lt;</span>your command here<span class="op">&gt;</span></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny <span class="op">&lt;</span>your command here<span class="op">&gt;</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>If it still fails, check DB ownership/permissions:</p>
-<div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-l</span> /srv/shiny-server/sequencing-app/sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-l</span> /srv/shiny-server/sequencing-app/sequencing_projects.db</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 </section>
 <section id="auth-mode-switching" class="level2" data-number="9.6">
 <h2 data-number="9.6" class="anchored" data-anchor-id="auth-mode-switching"><span class="header-section-number">9.6</span> Auth mode switching</h2>
-<p><strong>LDAP mode</strong></p>
+<p><strong>LDAP mode (preferred: app <code>.Renviron</code>)</strong></p>
+<pre><code>sudo sed -i 's/^AUTH_MODE=.*/AUTH_MODE=ldap/' /srv/shiny-server/sequencing-app/.Renviron
+sudo systemctl restart shiny-server</code></pre>
+<p><strong>Local mode (preferred: app <code>.Renviron</code>)</strong></p>
+<pre><code>sudo sed -i 's/^AUTH_MODE=.*/AUTH_MODE=local/' /srv/shiny-server/sequencing-app/.Renviron
+sudo systemctl restart shiny-server</code></pre>
+<p>Alternative (systemd override) is still valid:</p>
 <pre><code>sudo systemctl edit shiny-server</code></pre>
-<pre><code>[Service]
-Environment=AUTH_MODE=ldap
-Environment=LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
-Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de</code></pre>
-<p><strong>Local mode</strong></p>
-<pre><code>[Service]
-Environment=AUTH_MODE=local</code></pre>
-<p>Apply changes:</p>
-<pre><code>sudo systemctl restart shiny-server
-sudo systemctl show shiny-server --property=Environment</code></pre>
+<p>Then set <code>Environment=AUTH_MODE=...</code> and restart.</p>
 </section>
 <section id="apache-proxy" class="level2" data-number="9.7">
 <h2 data-number="9.7" class="anchored" data-anchor-id="apache-proxy"><span class="header-section-number">9.7</span> Apache proxy</h2>
@@ -634,11 +729,11 @@ curl -I http://localhost:3838/sequencing-app/</code></pre>
 <li>Apache rewrite rule loop in <code>/etc/apache2/sites-enabled/01-main.conf</code>.</li>
 </ul>
 <p>Fix:</p>
-<div class="sourceCode" id="cb34"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp ~/BCFNGS-project-management/mpiseq2/ngs-vm_01-main.conf /etc/apache2/sites-available/01-main.conf</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-sf</span> /etc/apache2/sites-available/01-main.conf /etc/apache2/sites-enabled/01-main.conf</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl configtest</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb42"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp ~/BCFNGS-project-management/mpiseq2/ngs-vm_01-main.conf /etc/apache2/sites-available/01-main.conf</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> ln <span class="at">-sf</span> /etc/apache2/sites-available/01-main.conf /etc/apache2/sites-enabled/01-main.conf</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl configtest</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Then re-run curl checks from section 4.</p>
 </section>
 <section id="app-shows-local-login-page-ldap-mode-enabled-but-no-authenticated-user-found" class="level3" data-number="9.13.2">
@@ -648,7 +743,7 @@ curl -I http://localhost:3838/sequencing-app/</code></pre>
 <li>Shiny is in LDAP mode, but proxy trust/query fallback settings are missing.</li>
 </ul>
 <p>Checks:</p>
-<div class="sourceCode" id="cb35"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl show shiny-server <span class="at">--property</span><span class="op">=</span>Environment</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb43"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl show shiny-server <span class="at">--property</span><span class="op">=</span>Environment</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Required:</p>
 <ul>
 <li><code>AUTH_MODE=ldap</code></li>
@@ -663,11 +758,11 @@ curl -I http://localhost:3838/sequencing-app/</code></pre>
 <li>Apache websocket/proxy path mismatch</li>
 </ul>
 <p>Checks:</p>
-<div class="sourceCode" id="cb36"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> journalctl <span class="at">-u</span> shiny-server <span class="at">-n</span> 200 <span class="at">--no-pager</span></span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-n</span> 200 /var/log/shiny-server/<span class="va">$(</span><span class="fu">sudo</span> ls <span class="at">-t</span> /var/log/shiny-server <span class="kw">|</span> <span class="fu">head</span> <span class="at">-n</span> 1<span class="va">)</span></span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-n</span> 200 /var/log/apache2/sequencing-app-ssl-error.log</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb44"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> journalctl <span class="at">-u</span> shiny-server <span class="at">-n</span> 200 <span class="at">--no-pager</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-n</span> 200 /var/log/shiny-server/<span class="va">$(</span><span class="fu">sudo</span> ls <span class="at">-t</span> /var/log/shiny-server <span class="kw">|</span> <span class="fu">head</span> <span class="at">-n</span> 1<span class="va">)</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-n</span> 200 /var/log/apache2/sequencing-app-ssl-error.log</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Also ensure Apache modules are enabled:</p>
-<div class="sourceCode" id="cb37"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-M</span> <span class="kw">|</span> <span class="fu">egrep</span> <span class="st">'headers_module|rewrite_module|proxy_module|proxy_http_module|proxy_wstunnel_module|ldap_module|authnz_ldap_module'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb45"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-M</span> <span class="kw">|</span> <span class="fu">egrep</span> <span class="st">'headers_module|rewrite_module|proxy_module|proxy_http_module|proxy_wstunnel_module|ldap_module|authnz_ldap_module'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="user-can-impersonate-another-user-via-url-query" class="level3" data-number="9.13.4">
 <h3 data-number="9.13.4" class="anchored" data-anchor-id="user-can-impersonate-another-user-via-url-query"><span class="header-section-number">9.13.4</span> User can impersonate another user via URL query</h3>

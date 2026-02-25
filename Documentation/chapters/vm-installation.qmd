@@ -209,40 +209,60 @@ sudo systemctl edit shiny-server
 Environment=AUTH_MODE=ldap
 Environment=LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
 Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
+Environment=TRUST_PROXY_AUTH_USER_QUERY=1
 ```
 
 ```bash
+sudo systemctl daemon-reload
 sudo systemctl restart shiny-server
 ```
 
+### 6b) Ensure app runtime env is loaded (`.Renviron`) {#bcf-app-renviron}
+
+On `bcf-vm` and `ngs-vm`, we observed that LDAP worked reliably only after setting app env in:
+
+- `/srv/shiny-server/sequencing-app/.Renviron`
+
+Create/update this file:
+
+```bash
+sudo tee /srv/shiny-server/sequencing-app/.Renviron >/dev/null <<'EOF'
+AUTH_MODE=ldap
+LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
+LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
+TRUST_PROXY_AUTH_USER_QUERY=1
+# LDAP_DEBUG=1   # only while debugging
+EOF
+sudo chown shiny:shiny /srv/shiny-server/sequencing-app/.Renviron
+sudo chmod 640 /srv/shiny-server/sequencing-app/.Renviron
+sudo systemctl restart shiny-server
+```
+
+This prevents the app from falling back to local-mode UI when systemd env is present but not visible inside the R worker.
+
 ### 7) Configure Apache (test HTTPS redirect) {#bcf-configure-apache-vhost}
 
-Create a vhost that redirects `:80` to `:443` and proxies to Shiny:
+Use the versioned template from the repo:
 
-Apache config file path for this step: `/etc/apache2/sites-available/bcf-vm.conf`
+- `scripts/bcf.vm.conf`
 
-```apache
-<VirtualHost *:80>
-    ServerName bcf-vm
-    Redirect permanent / https://bcf-vm/
-</VirtualHost>
+Copy it on VM:
 
-<VirtualHost *:443>
-    ServerName bcf-vm
-    SSLEngine on
-    SSLCertificateFile /etc/ssl/localcerts/bcf-vm.crt
-    SSLCertificateKeyFile /etc/ssl/localcerts/bcf-vm.key
-
-    ProxyPreserveHost On
-    ProxyPass / http://localhost:3838/sequencing-app/
-    ProxyPassReverse / http://localhost:3838/sequencing-app/
-</VirtualHost>
+```bash
+sudo cp /home/<user>/BCFNGS-project-management/scripts/bcf.vm.conf /etc/apache2/sites-available/bcf-vm.conf
 ```
+
+Template includes:
+
+- HTTP→HTTPS redirect (`:80` → `:443`)
+- Scoped proxy to `/sequencing-app/`
+- LDAP `<Location /sequencing-app/>` auth block
+- Canonical `auth_user` rewrite and websocket rule
 
 Enable the site and restart Apache:
 
 ```bash
-sudo a2enmod ssl proxy proxy_http headers rewrite
+sudo a2enmod ssl proxy proxy_http proxy_wstunnel headers rewrite ldap authnz_ldap
 sudo a2ensite bcf-vm.conf # this creates symlink to sites-enabled
 sudo apache2ctl -t
 sudo systemctl restart apache2
@@ -256,30 +276,21 @@ Leave the current `01-main.conf` active for the Perl system.
 
 ### 2) Add a parallel Shiny vhost on `:8443` (or `:1234`) {#ngs-parallel-shiny-vhost}
 
-Create a new vhost file, for example `ngs-vm-shiny.conf`:
+Use the versioned template from the repo:
 
-Apache config file path for this step:
+- `scripts/ngs-vm-shiny.conf`
 
-`/etc/apache2/sites-available/ngs-vm-shiny.conf`
+Copy it on VM:
 
-```apache
-<VirtualHost *:8443>
-    ServerName ngs-vm.biochem.mpg.de
-
-    SSLEngine on
-    SSLCertificateFile /etc/ssl/certs/ngs-cert.pem
-    SSLCertificateKeyFile /etc/ssl/private/2026_private-key.pem
-    SSLCertificateChainFile /etc/apache2/certificate/2026_Cert_binary.cer
-
-    ProxyPreserveHost On
-    RequestHeader set X-Forwarded-Proto "https"
-
-    RedirectMatch 302 ^/$ /sequencing-app/
-
-    ProxyPass        /sequencing-app/  http://127.0.0.1:3838/sequencing-app/
-    ProxyPassReverse /sequencing-app/  http://127.0.0.1:3838/sequencing-app/
-</VirtualHost>
+```bash
+sudo cp /home/<user>/BCFNGS-project-management/scripts/ngs-vm-shiny.conf /etc/apache2/sites-available/ngs-vm-shiny.conf
 ```
+
+Keep certificate paths unchanged in this file:
+
+- `SSLCertificateFile /etc/ssl/certs/ngs-cert.pem`
+- `SSLCertificateKeyFile /etc/ssl/private/2026_private-key.pem`
+- `SSLCertificateChainFile /etc/apache2/certificate/2026_Cert_binary.cer`
 
 Enable and reload:
 
@@ -313,6 +324,35 @@ export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 sudo env JAVA_HOME="$JAVA_HOME" /usr/bin/R CMD javareconf
 sudo env JAVA_HOME="$JAVA_HOME" /usr/bin/Rscript --vanilla -e 'install.packages("mailR", repos="https://cloud.r-project.org", INSTALL_opts="--no-test-load")'
 sudo systemctl restart shiny-server
+```
+
+### 4) Switch between LDAP and local modes on VM
+
+Primary reference: [LDAP chapter - switch between LDAP and local modes](ldap-authentication.qmd#switch-between-ldap-and-local-modes-vm)
+
+In production, switch modes by editing:
+
+- `/srv/shiny-server/sequencing-app/.Renviron`
+
+Set LDAP mode:
+
+```bash
+sudo sed -i 's/^AUTH_MODE=.*/AUTH_MODE=ldap/' /srv/shiny-server/sequencing-app/.Renviron
+sudo systemctl restart shiny-server
+```
+
+Set local mode:
+
+```bash
+sudo sed -i 's/^AUTH_MODE=.*/AUTH_MODE=local/' /srv/shiny-server/sequencing-app/.Renviron
+sudo systemctl restart shiny-server
+```
+
+Verify effective runtime mode from app logs:
+
+```bash
+LATEST=$(sudo ls -1t /var/log/shiny-server/sequencing-app-shiny-*.log | head -n1)
+sudo tail -n 80 "$LATEST"
 ```
 
 

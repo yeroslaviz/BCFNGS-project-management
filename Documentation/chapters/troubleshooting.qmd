@@ -144,6 +144,22 @@ Use a single, complete LDAP URL:
 AuthLDAPURL "ldaps://ldapserv1.biochem.mpg.de:636/dc=biochem,dc=mpg,dc=de?uid?sub?(objectClass=posixAccount)"
 ```
 
+### `Invalid command 'RequestHeader'`
+
+Symptoms:
+
+```
+Invalid command 'RequestHeader', perhaps misspelled or defined by a module not included
+```
+
+Fix:
+
+```bash
+sudo a2enmod headers
+sudo apache2ctl -t
+sudo systemctl restart apache2
+```
+
 ### Invalid command `LDAPTLS_CACERTDIR`
 
 Cause:
@@ -217,6 +233,63 @@ sudo apache2ctl -t
 sudo systemctl restart apache2
 ```
 
+### `ERR_SSL_PROTOCOL_ERROR` for `https://bcf-vm/`
+
+**Symptom**
+
+- Browser shows: `This site can’t provide a secure connection` / `ERR_SSL_PROTOCOL_ERROR`
+- Usually appears while testing the new `bcf-vm` host over HTTPS.
+
+**Common causes**
+
+- Hostname is not mapped on your local machine (`/etc/hosts` missing).
+- Apache default site (`000-default.conf`) is still active and interferes on `:80`.
+- SSL vhost/modules are not fully enabled.
+
+**Fix**
+
+1.  On your **local machine**, map VM IP to hostnames:
+
+```
+sudo sh -c 'echo "10.33.0.55 bcf-vm bcf-vm.biochem.mpg.de" >> /etc/hosts'
+sudo dscacheutil -flushcache
+sudo killall -HUP mDNSResponder
+```
+
+2.  On `bcf-vm`, keep only the intended site active and enable SSL:
+
+```
+sudo a2dissite 000-default.conf
+sudo a2ensite bcf-vm.conf
+sudo a2enmod ssl headers rewrite proxy proxy_http
+sudo apache2ctl -t
+sudo systemctl restart apache2
+```
+
+3.  Verify listeners/vhosts:
+
+```
+sudo ss -ltnp | grep -E ':80|:443'
+sudo apache2ctl -S
+```
+
+4.  Validate with curl:
+
+```
+curl -vk https://bcf-vm/
+curl -vk https://bcf-vm.biochem.mpg.de/
+```
+
+If needed, test locally on VM with explicit host header:
+
+```
+curl -kI -H 'Host: bcf-vm.biochem.mpg.de' https://127.0.0.1/
+```
+
+**Config path used**
+
+- `/etc/apache2/sites-available/bcf-vm.conf`
+
 ### Debug logging too noisy (Apache or Shiny)
 
 **Symptom**
@@ -234,14 +307,13 @@ LogLevel warn
 
 **Fix (Shiny app)**
 
-The app only prints LDAP debug logs when **both** are set:
+The app prints LDAP debug logs when:
 
-- `APP_ENV=dev`
 - `LDAP_DEBUG=1`
 
 So for production:
 
-- Remove `LDAP_DEBUG=1` from `/home/shiny/.Renviron` (or set it to `0`).
+- Remove `LDAP_DEBUG=1` from `/srv/shiny-server/sequencing-app/.Renviron` (or set it to `0`).
 - Restart Shiny:
 
 ```
@@ -251,11 +323,62 @@ sudo systemctl restart shiny-server
 If I need debugging later, I can temporarily set:
 
 ```
-APP_ENV=dev
 LDAP_DEBUG=1
 ```
 
 and restart the service again.
+
+### LDAP mode configured, but app still shows local page
+
+**Symptom**
+
+- Apache LDAP prompt appears and credentials are accepted.
+- App opens, but shows local login / local-mode content.
+
+**Cause**
+
+`AUTH_MODE=ldap` exists in systemd override, but those env vars are not reliably visible inside the Shiny R worker.
+
+**Fix**
+
+Set LDAP env in app-local `.Renviron` (runtime source used by R):
+
+```bash
+sudo tee /srv/shiny-server/sequencing-app/.Renviron >/dev/null <<'EOF'
+AUTH_MODE=ldap
+LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
+LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
+TRUST_PROXY_AUTH_USER_QUERY=1
+LDAP_DEBUG=1
+EOF
+sudo chown shiny:shiny /srv/shiny-server/sequencing-app/.Renviron
+sudo chmod 640 /srv/shiny-server/sequencing-app/.Renviron
+sudo systemctl restart shiny-server
+```
+
+Verify in Shiny log:
+
+```bash
+LATEST=$(sudo ls -1t /var/log/shiny-server/sequencing-app-shiny-*.log | head -n1)
+sudo tail -n 120 "$LATEST"
+```
+
+Expected:
+
+- `LDAP DEBUG: startup env AUTH_MODE= ldap ...`
+
+After confirmation, remove `LDAP_DEBUG=1` and restart again.
+
+### `LDAP DEBUG ERROR (onFlushed): Operation not allowed without an active reactive context`
+
+**Meaning**
+
+- This is a debug-only logging issue, not an LDAP login failure.
+
+**Action**
+
+- Safe to ignore while `LDAP_DEBUG=1` is enabled.
+- Disable debug in production (`LDAP_DEBUG` unset) to stop this message.
 
 ## SQL (moved)
 
@@ -283,32 +406,27 @@ ls -l /srv/shiny-server/sequencing-app/sequencing_projects.db
 
 ## Auth mode switching
 
-**LDAP mode**
+**LDAP mode (preferred: app `.Renviron`)**
+
+```
+sudo sed -i 's/^AUTH_MODE=.*/AUTH_MODE=ldap/' /srv/shiny-server/sequencing-app/.Renviron
+sudo systemctl restart shiny-server
+```
+
+**Local mode (preferred: app `.Renviron`)**
+
+```
+sudo sed -i 's/^AUTH_MODE=.*/AUTH_MODE=local/' /srv/shiny-server/sequencing-app/.Renviron
+sudo systemctl restart shiny-server
+```
+
+Alternative (systemd override) is still valid:
 
 ```
 sudo systemctl edit shiny-server
 ```
 
-```
-[Service]
-Environment=AUTH_MODE=ldap
-Environment=LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
-Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
-```
-
-**Local mode**
-
-```
-[Service]
-Environment=AUTH_MODE=local
-```
-
-Apply changes:
-
-```
-sudo systemctl restart shiny-server
-sudo systemctl show shiny-server --property=Environment
-```
+Then set `Environment=AUTH_MODE=...` and restart.
 
 ## Apache proxy
 

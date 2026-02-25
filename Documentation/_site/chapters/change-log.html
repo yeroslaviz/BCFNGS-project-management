@@ -247,6 +247,10 @@ ul.task-list li input[type="checkbox"] {
 <li>Added LDAP dependency/install instructions to docs (Ubuntu packages + R <code>ldapr</code> install), including fallback install from GitHub via <code>remotes::install_github("liamgilbey/ldapr")</code>.</li>
 <li>Updated <code>scripts/check_requirements.sh</code> to check/install LDAP build dependencies (<code>libldap2-dev</code>, <code>libsasl2-dev</code>), Java toolchain (<code>default-jdk</code>, <code>java</code>, <code>javac</code>), and <code>rJava</code> in the R package checks/installer.</li>
 <li>Clarified deploy smoke-test guidance to use the canonical Apache template path <code>01-main.conf</code> in this repo.</li>
+<li>Expanded ngs-vm Apache parallel-vhost instructions for <code>:8443</code>, including the concrete config file path (<code>/etc/apache2/sites-available/ngs-vm-shiny.conf</code>), <code>RequestHeader set X-Forwarded-Proto</code>, root redirect to <code>/sequencing-app/</code>, and scoped <code>ProxyPass</code> rules for <code>/sequencing-app/</code>.</li>
+<li>Added missing Apache activation steps for ngs-vm rollout (<code>Listen 8443</code> in <code>ports.conf</code>, required modules including <code>headers</code>, and site enable/restart sequence).</li>
+<li>Added host-header based local validation commands (<code>curl -kI -H 'Host: ...' https://127.0.0.1:8443/...</code>) for diagnosing vhost routing issues before DNS/firewall checks.</li>
+<li>Added ngs-vm runtime recovery notes for <code>mailR</code>/<code>rJava</code> startup failures (HTTP 500), including JDK alignment and explicit reinstall guidance to restore Shiny startup.</li>
 </ol>
 </section>
 <section id="changes-on-20.02.2026" class="level2" data-number="10.3">
