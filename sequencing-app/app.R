@@ -2837,8 +2837,8 @@ server <- function(input, output, session) {
         ),
         column(4,
                wellPanel(
-                 h4("Project Types"),
-                 actionButton("manage_types_btn", "Manage Types", class = "btn-primary")
+                 h4("Sample Types"),
+                 actionButton("manage_types_btn", "Manage Sample Types", class = "btn-primary")
                )
         ),
         column(4,
@@ -2923,11 +2923,11 @@ server <- function(input, output, session) {
                            } else {
                              c("No service types available" = "")
                            }),
-               selectInput("type_id", "Project Type *",
+               selectInput("type_id", "Sample Type *",
                            choices = if(!is.null(admin_data$types) && nrow(admin_data$types) > 0) {
                              setNames(admin_data$types$id, admin_data$types$name)
                            } else {
-                             c("No types available" = "")
+                             c("No sample types available" = "")
                            })
         ),
         column(6,
@@ -3237,7 +3237,7 @@ server <- function(input, output, session) {
     # Define column names
     column_names <- c(
       "Project ID", "Project Name", "Samples", "Platform", "Reference", 
-      "Service Type", "Project Type", "Sequencing Depth", "Sequencing Cycles",
+      "Service Type", "Sample Type", "Sequencing Depth", "Sequencing Cycles",
       "Budget Holder", "Responsible User", "Kick-off Meeting", "Total Cost", "Status"
     )
     
@@ -3258,7 +3258,7 @@ server <- function(input, output, session) {
       list(targets = 3, width = "110px"),  # Platform
       list(targets = 4, width = "140px"),  # Reference
       list(targets = 5, width = "170px"),  # Service Type
-      list(targets = 6, width = "190px"),  # Project Type
+      list(targets = 6, width = "190px"),  # Sample Type
       list(targets = 7, width = "150px"),  # Sequencing Depth
       list(targets = 8, width = "130px"),  # Sequencing Cycles
       list(targets = 9, width = "180px"),  # Budget Holder
@@ -3516,26 +3516,26 @@ server <- function(input, output, session) {
   
   observeEvent(input$manage_types_btn, {
     showModal(modalDialog(
-      title = "Project Types Management",
+      title = "Sample Types Management",
       size = "m",
       footer = modalButton("Close"),
       
-      h4("Add New Project Type"),
+      h4("Add New Sample Type"),
       fluidRow(
         column(8,
-               textInput("new_type_name", "Type Name", placeholder = "Enter project type name")
+               textInput("new_type_name", "Sample Type Name", placeholder = "Enter sample type name")
         ),
         column(4,
-               actionButton("add_type_btn", "Add Type", class = "btn-primary")
+               actionButton("add_type_btn", "Add Sample Type", class = "btn-primary")
         )
       ),
       
       hr(),
-      h4("Current Project Types"),
+      h4("Current Sample Types"),
       DTOutput("types_table_admin"),
       div(
         actionButton("edit_type_btn", "Edit Selected", class = "btn-warning"),
-        actionButton("delete_type_btn", "Delete Selected Type", class = "btn-danger")
+        actionButton("delete_type_btn", "Delete Selected Sample Type", class = "btn-danger")
       )
     ))
   })
@@ -3742,7 +3742,7 @@ server <- function(input, output, session) {
       selection = 'single',
       options = list(pageLength = 10),
       rownames = FALSE,
-      colnames = c("ID", "Type Name")
+      colnames = c("ID", "Sample Type Name")
     )
   })
   
@@ -4264,24 +4264,24 @@ server <- function(input, output, session) {
     showNotification("Reference genome updated successfully!", type = "message")
   })
 
-  # Edit Project Type
+  # Edit Sample Type
   observeEvent(input$edit_type_btn, {
     selected_row <- input$types_table_admin_rows_selected
     if (length(selected_row) == 0) {
-      showNotification("Please select a type to edit", type = "warning")
+      showNotification("Please select a sample type to edit", type = "warning")
       return()
     }
 
     type_to_edit <- admin_data$types[selected_row, ]
 
     showModal(modalDialog(
-      title = "Edit Project Type",
+      title = "Edit Sample Type",
       size = "m",
       footer = tagList(
         modalButton("Cancel"),
-        actionButton("update_type_btn", "Update Type", class = "btn-primary")
+        actionButton("update_type_btn", "Update Sample Type", class = "btn-primary")
       ),
-      textInput("edit_type_name", "Type Name", value = type_to_edit$name)
+      textInput("edit_type_name", "Sample Type Name", value = type_to_edit$name)
     ))
   })
 
@@ -4294,7 +4294,7 @@ server <- function(input, output, session) {
     new_name <- trimws(input$edit_type_name)
 
     if (new_name == "") {
-      showNotification("Please enter a type name", type = "error")
+      showNotification("Please enter a sample type name", type = "error")
       return()
     }
     if (new_name %in% admin_data$types$name && new_name != type_to_edit$name) {
@@ -4308,7 +4308,7 @@ server <- function(input, output, session) {
 
     removeModal()
     admin_data$types <- load_types()
-    showNotification("Type updated successfully!", type = "message")
+    showNotification("Sample type updated successfully!", type = "message")
   })
 
   # Edit Sequencing Platform
@@ -4567,7 +4567,7 @@ server <- function(input, output, session) {
     req(input$new_type_name)
     
     if(input$new_type_name == "") {
-      showNotification("Please enter a type name", type = "error")
+      showNotification("Please enter a sample type name", type = "error")
       return()
     }
     
@@ -4582,7 +4582,7 @@ server <- function(input, output, session) {
     dbExecute(con, "INSERT INTO types (name) VALUES (?)", params = list(input$new_type_name))
     admin_data$types <- load_types()
     updateTextInput(session, "new_type_name", value = "")
-    showNotification("Type added successfully!", type = "message")
+    showNotification("Sample type added successfully!", type = "message")
   })
   
   # Add new sequencing platform
@@ -4823,7 +4823,7 @@ server <- function(input, output, session) {
   observeEvent(input$delete_type_btn, {
     selected_row <- input$types_table_admin_rows_selected
     if(length(selected_row) == 0) {
-      showNotification("Please select a type to delete", type = "warning")
+      showNotification("Please select a sample type to delete", type = "warning")
       return()
     }
     
@@ -4831,7 +4831,7 @@ server <- function(input, output, session) {
     
     showModal(modalDialog(
       title = "Confirm Delete",
-      paste("Are you sure you want to delete type:", type_to_delete, "?"),
+      paste("Are you sure you want to delete sample type:", type_to_delete, "?"),
       footer = tagList(
         modalButton("Cancel"),
         actionButton("confirm_delete_type_btn", "Delete", class = "btn-danger")
@@ -4850,7 +4850,7 @@ server <- function(input, output, session) {
     
     removeModal()
     admin_data$types <- load_types()
-    showNotification("Type deleted successfully!", type = "message")
+    showNotification("Sample type deleted successfully!", type = "message")
   })
   
   # Delete sequencing platform
@@ -4929,7 +4929,7 @@ server <- function(input, output, session) {
                                               paste(admin_data$service_types$service_type, 
                                                     "- €", admin_data$service_types$costs_per_sample, "/sample")),
                            selected = project$service_type_id),
-               selectInput("edit_type_id", "Project Type *",
+               selectInput("edit_type_id", "Sample Type *",
                            choices = setNames(admin_data$types$id, admin_data$types$name),
                            selected = project$type_id)
         ),
