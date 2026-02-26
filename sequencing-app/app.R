@@ -4924,14 +4924,14 @@ server <- function(input, output, session) {
                selectInput("edit_sequencing_platform", "Sequencing Platform *",
                            choices = admin_data$sequencing_platforms$name,
                            selected = project$sequencing_platform),
+               selectInput("edit_type_id", "Sample Type *",
+                           choices = setNames(admin_data$types$id, admin_data$types$name),
+                           selected = project$type_id),
                selectInput("edit_service_type_id", "Service Type *",
                            choices = setNames(admin_data$service_types$id, 
                                               paste(admin_data$service_types$service_type, 
                                                     "- €", admin_data$service_types$costs_per_sample, "/sample")),
-                           selected = project$service_type_id),
-               selectInput("edit_type_id", "Sample Type *",
-                           choices = setNames(admin_data$types$id, admin_data$types$name),
-                           selected = project$type_id)
+                           selected = project$service_type_id)
         ),
         column(6,
                selectInput("edit_reference_genome", "Reference Genome *", 
