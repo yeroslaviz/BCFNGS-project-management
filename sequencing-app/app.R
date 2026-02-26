@@ -453,13 +453,13 @@ ui <- fluidPage(
   }
   .app-footer {
     flex-shrink: 0;
-    padding: 8px 20px 14px 20px;
+    padding: 10px 20px 18px 20px;
     text-align: left;
   }
   .footer-logo {
-    height: 52px;
+    height: 104px;
     width: auto;
-    max-width: 360px;
+    max-width: 720px;
   }
   .institute-name {
     color: white !important;
