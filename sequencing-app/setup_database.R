@@ -403,9 +403,19 @@ setup_complete_database <- function() {
   }
 
   # Insert default reference genomes
-  default_genomes <- c("Hsp.GRCh38", "Mmu.GrCm38", "Cel.WBcel235", "Sce.R64-1-1",
-                       "Dme.BDGP6.28", "Dps.3.0.49", "Dre.GRCz11", "Eco.HUSEC2011CHR1",
-                       "Others or Mixed", "Custom")
+  default_genomes <- c(
+    "Homo sapiens",
+    "Mus musculus",
+    "Caenorhabditis elegans",
+    "Saccharomyces cerevisiae - yeast",
+    "Drosophila melanogaster",
+    "Drosophila pseudoobscura",
+    "Danio rerio - Zebrafish",
+    "Escherichia coli",
+    "Gallus gallus",
+    "Others or Mixed",
+    "Custom"
+  )
   for(genome in default_genomes) {
     dbExecute(con, "
       INSERT OR IGNORE INTO reference_genomes (name)
