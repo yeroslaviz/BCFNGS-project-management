@@ -3221,7 +3221,7 @@ server <- function(input, output, session) {
     
     # Define the columns we want to show (project_id is numeric; we render the P-prefix at display-time)
     display_columns <- c("project_id", "project_name", "num_samples", "sequencing_platform", 
-                         "reference_genome", "service_type", "type_name", 
+                         "reference_genome", "type_name", "service_type", 
                          "depth_description", "cycles_description", "budget_display",
                          "responsible_user", "kickoff_meeting", "total_cost", "status")
     
@@ -3239,7 +3239,7 @@ server <- function(input, output, session) {
     # Define column names
     column_names <- c(
       "Project ID", "Project Name", "Samples", "Platform", "Reference", 
-      "Service Type", "Sample Type", "Sequencing Depth", "Sequencing Cycles",
+      "Sample Type", "Service Type", "Sequencing Depth", "Sequencing Cycles",
       "Budget Holder", "Responsible User", "Kick-off Meeting", "Total Cost", "Status"
     )
     
@@ -3259,8 +3259,8 @@ server <- function(input, output, session) {
       list(targets = 2, width = "70px"),   # Samples
       list(targets = 3, width = "110px"),  # Platform
       list(targets = 4, width = "140px"),  # Reference
-      list(targets = 5, width = "170px"),  # Service Type
-      list(targets = 6, width = "190px"),  # Sample Type
+      list(targets = 5, width = "190px"),  # Sample Type
+      list(targets = 6, width = "170px"),  # Service Type
       list(targets = 7, width = "150px"),  # Sequencing Depth
       list(targets = 8, width = "130px"),  # Sequencing Cycles
       list(targets = 9, width = "180px"),  # Budget Holder

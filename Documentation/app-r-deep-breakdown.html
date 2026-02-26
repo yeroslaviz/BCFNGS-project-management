@@ -1,0 +1,3853 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.315">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>app.R Deep Breakdown</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="app-r-deep-breakdown_files/libs/clipboard/clipboard.min.js"></script>
+<script src="app-r-deep-breakdown_files/libs/quarto-html/quarto.js"></script>
+<script src="app-r-deep-breakdown_files/libs/quarto-html/popper.min.js"></script>
+<script src="app-r-deep-breakdown_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="app-r-deep-breakdown_files/libs/quarto-html/anchor.min.js"></script>
+<link href="app-r-deep-breakdown_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="app-r-deep-breakdown_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="app-r-deep-breakdown_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="app-r-deep-breakdown_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="app-r-deep-breakdown_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">app.R Deep Breakdown</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+<section id="app.r-deep-breakdown" class="level1">
+<h1>app.R Deep Breakdown</h1>
+<p>This file is a comprehensive companion to <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R</code> (currently ~5,490 lines). It is intentionally verbose and written for readers with limited R/Shiny background.</p>
+<section id="how-to-use-this-companion" class="level2">
+<h2 class="anchored" data-anchor-id="how-to-use-this-companion">How to Use This Companion</h2>
+<ol type="1">
+<li>Read <strong>Top-level execution map</strong> first to understand architecture.</li>
+<li>Use <strong>UI &lt;-&gt; Server wiring maps</strong> to trace where each button/input/output is connected.</li>
+<li>Use <strong>Function catalog</strong> and <strong>Event catalog</strong> for behavior details and side-effects.</li>
+<li>Open <code>app.R</code> side-by-side and jump to line numbers noted here.</li>
+</ol>
+</section>
+<section id="top-level-execution-map" class="level2">
+<h2 class="anchored" data-anchor-id="top-level-execution-map">Top-Level Execution Map</h2>
+<table class="table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Line range</th>
+<th>Block</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>1-238</code></td>
+<td>Global libraries + markdown/announcement rendering helpers</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+<tr class="even">
+<td><code>239-656</code></td>
+<td>UI definition (login screen, main app shell, CSS, JS helpers)</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+<tr class="odd">
+<td><code>658-709</code></td>
+<td>Server bootstrap + LDAP debug logging</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+<tr class="even">
+<td><code>710-831</code></td>
+<td>Announcement storage helpers (schema creation/seed/load)</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+<tr class="odd">
+<td><code>832-919</code></td>
+<td>Database validation and debug modal utilities</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+<tr class="even">
+<td><code>921-946</code></td>
+<td>Reactive state containers</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+<tr class="odd">
+<td><code>947-1779</code></td>
+<td>Authentication and LDAP helper stack</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+<tr class="even">
+<td><code>1781-2259</code></td>
+<td>Status config, DB access helpers, pricing + email functions</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+<tr class="odd">
+<td><code>2265-2605</code></td>
+<td>Registration and LDAP auto-login orchestration</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+<tr class="even">
+<td><code>2607-2894</code></td>
+<td>Login/logout flow and high-level UI output renderers</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+<tr class="odd">
+<td><code>2902-3318</code></td>
+<td>Create project workflow + project table rendering</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+<tr class="even">
+<td><code>3321-4047</code></td>
+<td>Admin modals + landing text management + admin table renderers</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+<tr class="odd">
+<td><code>4048-4889</code></td>
+<td>Admin CRUD handlers for all reference tables</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+<tr class="even">
+<td><code>4892-5343</code></td>
+<td>Edit/delete/update project workflows + status updates</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+<tr class="odd">
+<td><code>5345-5487</code></td>
+<td>Backup/restore and optional auto-backup block (commented)</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+<tr class="even">
+<td><code>5490-5490</code></td>
+<td>Application entrypoint (<code>shinyApp(ui, server)</code>)</td>
+<td>High-level block in app startup/runtime path.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="ui---server-wiring-outputs" class="level2">
+<h2 class="anchored" data-anchor-id="ui---server-wiring-outputs">UI &lt;-&gt; Server Wiring (Outputs)</h2>
+<p>Each row below connects an output placeholder declared in UI (<code>uiOutput</code>, <code>DTOutput</code>, <code>textOutput</code>, etc.) with the matching server renderer (<code>renderUI</code>, <code>renderDT</code>, <code>renderText</code>, <code>downloadHandler</code>).</p>
+<table class="table">
+<colgroup>
+<col style="width: 23%">
+<col style="width: 30%">
+<col style="width: 23%">
+<col style="width: 23%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Output ID</th>
+<th style="text-align: right;">UI declaration line(s)</th>
+<th>Server renderer line(s)</th>
+<th>Relationship summary</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>admin_interface</code></td>
+<td style="text-align: right;">2720</td>
+<td>2813 (renderUI)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="even">
+<td><code>admin_projects_table</code></td>
+<td style="text-align: right;">2897</td>
+<td>-</td>
+<td>UI placeholder exists but no renderer found in this file (likely pending/legacy).</td>
+</tr>
+<tr class="odd">
+<td><code>announcement_blocks_ui</code></td>
+<td style="text-align: right;">2715, 2725</td>
+<td>2666 (renderUI)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="even">
+<td><code>announcement_items_table_admin</code></td>
+<td style="text-align: right;">3607</td>
+<td>3621 (renderDT)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="odd">
+<td><code>budget_holder_notice</code></td>
+<td style="text-align: right;">2964</td>
+<td>2507 (renderUI)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="even">
+<td><code>budget_holder_other_fields</code></td>
+<td style="text-align: right;">2965</td>
+<td>2511 (renderUI)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="odd">
+<td><code>budget_holders_table_admin</code></td>
+<td style="text-align: right;">3353</td>
+<td>3666 (renderDT)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="even">
+<td><code>cost_calculation_display</code></td>
+<td style="text-align: right;">2989</td>
+<td>3035 (renderUI)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="odd">
+<td><code>dev_login_ui</code></td>
+<td style="text-align: right;">614</td>
+<td>2483 (renderUI)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="even">
+<td><code>dev_mode_badge</code></td>
+<td style="text-align: right;">644</td>
+<td>2500 (renderUI)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="odd">
+<td><code>dev_tools_ui</code></td>
+<td style="text-align: right;">613</td>
+<td>2440 (renderUI)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="even">
+<td><code>download_db_btn</code></td>
+<td style="text-align: right;">2884</td>
+<td>5357 (downloadHandler)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="odd">
+<td><code>edit_budget_holder_notice</code></td>
+<td style="text-align: right;">4961</td>
+<td>2519 (renderUI)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="even">
+<td><code>edit_budget_holder_other_fields</code></td>
+<td style="text-align: right;">4962</td>
+<td>2523 (renderUI)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="odd">
+<td><code>edit_cost_calculation_display</code></td>
+<td style="text-align: right;">4989</td>
+<td>5006 (renderUI)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="even">
+<td><code>genomes_table_admin</code></td>
+<td style="text-align: right;">3511</td>
+<td>3726 (renderDT)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="odd">
+<td><code>login_error</code></td>
+<td style="text-align: right;">-</td>
+<td>2628 (renderText)</td>
+<td>Server output exists; placeholder is created dynamically in modal or nested UI.</td>
+</tr>
+<tr class="even">
+<td><code>main_content</code></td>
+<td style="text-align: right;">652</td>
+<td>2678 (renderUI)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="odd">
+<td><code>projects_table</code></td>
+<td style="text-align: right;">2807</td>
+<td>3189 (renderDT)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="even">
+<td><code>sequencing_cycles_table_admin</code></td>
+<td style="text-align: right;">3450</td>
+<td>3696 (renderDT)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="odd">
+<td><code>sequencing_depths_table_admin</code></td>
+<td style="text-align: right;">3422</td>
+<td>3686 (renderDT)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="even">
+<td><code>sequencing_platforms_table_admin</code></td>
+<td style="text-align: right;">3563</td>
+<td>3751 (renderDT)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="odd">
+<td><code>service_types_table_admin</code></td>
+<td style="text-align: right;">3388</td>
+<td>3676 (renderDT)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="even">
+<td><code>types_table_admin</code></td>
+<td style="text-align: right;">3537</td>
+<td>3737 (renderDT)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="odd">
+<td><code>user_interface</code></td>
+<td style="text-align: right;">2716, 2726</td>
+<td>2781 (renderUI)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="even">
+<td><code>users_table_admin</code></td>
+<td style="text-align: right;">3488</td>
+<td>3710 (renderDT)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+<tr class="odd">
+<td><code>welcome_user</code></td>
+<td style="text-align: right;">643</td>
+<td>2660 (renderText)</td>
+<td>UI placeholder waits for server-calculated content.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="ui---server-wiring-inputs" class="level2">
+<h2 class="anchored" data-anchor-id="ui---server-wiring-inputs">UI &lt;-&gt; Server Wiring (Inputs)</h2>
+<p>This table maps every detected UI input control ID to where it is referenced in server logic. When a line appears multiple times, it usually means validation + DB action + notifications all happen for the same control.</p>
+<table class="table">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 25%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Input ID</th>
+<th style="text-align: right;">Declared line(s)</th>
+<th>Control type(s)</th>
+<th>Server reference line(s)</th>
+<th>Main panel/area</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>add_budget_holder_btn</code></td>
+<td style="text-align: right;">3347</td>
+<td>actionButton</td>
+<td>4051</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="even">
+<td><code>add_genome_btn</code></td>
+<td style="text-align: right;">3505</td>
+<td>actionButton</td>
+<td>4541</td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+</tr>
+<tr class="odd">
+<td><code>add_sequencing_cycles_btn</code></td>
+<td style="text-align: right;">3444</td>
+<td>actionButton</td>
+<td>4468</td>
+<td>Administer Projects -&gt; Sequencing Cycles</td>
+</tr>
+<tr class="even">
+<td><code>add_sequencing_depth_btn</code></td>
+<td style="text-align: right;">3416</td>
+<td>actionButton</td>
+<td>4387</td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+</tr>
+<tr class="odd">
+<td><code>add_sequencing_platform_btn</code></td>
+<td style="text-align: right;">3557</td>
+<td>actionButton</td>
+<td>4591</td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+</tr>
+<tr class="even">
+<td><code>add_service_type_btn</code></td>
+<td style="text-align: right;">3382</td>
+<td>actionButton</td>
+<td>4096</td>
+<td>Administer Projects -&gt; Service Types</td>
+</tr>
+<tr class="odd">
+<td><code>add_type_btn</code></td>
+<td style="text-align: right;">3531</td>
+<td>actionButton</td>
+<td>4568</td>
+<td>Administer Projects -&gt; Sample Types</td>
+</tr>
+<tr class="even">
+<td><code>add_user_admin_btn</code></td>
+<td style="text-align: right;">3482</td>
+<td>actionButton</td>
+<td>4495</td>
+<td>Administer Projects -&gt; Users</td>
+</tr>
+<tr class="odd">
+<td><code>announcement_add_btn</code></td>
+<td style="text-align: right;">3610</td>
+<td>actionButton</td>
+<td>3765</td>
+<td>Administer Projects -&gt; Landing Text</td>
+</tr>
+<tr class="even">
+<td><code>announcement_delete_btn</code></td>
+<td style="text-align: right;">3614</td>
+<td>actionButton</td>
+<td>3911</td>
+<td>Administer Projects -&gt; Landing Text</td>
+</tr>
+<tr class="odd">
+<td><code>announcement_edit_btn</code></td>
+<td style="text-align: right;">3611</td>
+<td>actionButton</td>
+<td>3841</td>
+<td>Administer Projects -&gt; Landing Text</td>
+</tr>
+<tr class="even">
+<td><code>announcement_move_down_btn</code></td>
+<td style="text-align: right;">3613</td>
+<td>actionButton</td>
+<td>4002</td>
+<td>Administer Projects -&gt; Landing Text</td>
+</tr>
+<tr class="odd">
+<td><code>announcement_move_up_btn</code></td>
+<td style="text-align: right;">3612</td>
+<td>actionButton</td>
+<td>3956</td>
+<td>Administer Projects -&gt; Landing Text</td>
+</tr>
+<tr class="even">
+<td><code>budget_id</code></td>
+<td style="text-align: right;">2952</td>
+<td>selectInput</td>
+<td>2508, 2512, 3095, 3111</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="odd">
+<td><code>confirm_delete_announcement_item_btn</code></td>
+<td style="text-align: right;">3928</td>
+<td>actionButton</td>
+<td>3933</td>
+<td>Administer Projects -&gt; Landing Text</td>
+</tr>
+<tr class="even">
+<td><code>confirm_delete_btn</code></td>
+<td style="text-align: right;">5215</td>
+<td>actionButton</td>
+<td>5220</td>
+<td>General / Shared</td>
+</tr>
+<tr class="odd">
+<td><code>confirm_delete_budget_holder_btn</code></td>
+<td style="text-align: right;">4630</td>
+<td>actionButton</td>
+<td>4635</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="even">
+<td><code>confirm_delete_genome_btn</code></td>
+<td style="text-align: right;">4805</td>
+<td>actionButton</td>
+<td>4810</td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+</tr>
+<tr class="odd">
+<td><code>confirm_delete_sequencing_cycles_btn</code></td>
+<td style="text-align: right;">4732</td>
+<td>actionButton</td>
+<td>4737</td>
+<td>Administer Projects -&gt; Sequencing Cycles</td>
+</tr>
+<tr class="even">
+<td><code>confirm_delete_sequencing_depth_btn</code></td>
+<td style="text-align: right;">4698</td>
+<td>actionButton</td>
+<td>4703</td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+</tr>
+<tr class="odd">
+<td><code>confirm_delete_sequencing_platform_btn</code></td>
+<td style="text-align: right;">4873</td>
+<td>actionButton</td>
+<td>4878</td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+</tr>
+<tr class="even">
+<td><code>confirm_delete_service_type_btn</code></td>
+<td style="text-align: right;">4664</td>
+<td>actionButton</td>
+<td>4669</td>
+<td>Administer Projects -&gt; Service Types</td>
+</tr>
+<tr class="odd">
+<td><code>confirm_delete_type_btn</code></td>
+<td style="text-align: right;">4839</td>
+<td>actionButton</td>
+<td>4844</td>
+<td>Administer Projects -&gt; Sample Types</td>
+</tr>
+<tr class="even">
+<td><code>confirm_delete_user_btn</code></td>
+<td style="text-align: right;">4771</td>
+<td>actionButton</td>
+<td>4776</td>
+<td>Administer Projects -&gt; Users</td>
+</tr>
+<tr class="odd">
+<td><code>confirm_restore_btn</code></td>
+<td style="text-align: right;">5409</td>
+<td>actionButton</td>
+<td>5414</td>
+<td>Administer Projects -&gt; Database Management</td>
+</tr>
+<tr class="even">
+<td><code>confirm_status_update_btn</code></td>
+<td style="text-align: right;">5255</td>
+<td>actionButton</td>
+<td>5271</td>
+<td>Apply for Projects / Projects table</td>
+</tr>
+<tr class="odd">
+<td><code>create_project_btn</code></td>
+<td style="text-align: right;">2909</td>
+<td>actionButton</td>
+<td>3079</td>
+<td>Apply for Projects / Projects table</td>
+</tr>
+<tr class="even">
+<td><code>debug_db_btn</code></td>
+<td style="text-align: right;">882</td>
+<td>actionButton</td>
+<td>891</td>
+<td>Administer Projects -&gt; Database Management</td>
+</tr>
+<tr class="odd">
+<td><code>delete_budget_holder_btn</code></td>
+<td style="text-align: right;">3356</td>
+<td>actionButton</td>
+<td>4616</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="even">
+<td><code>delete_genome_btn</code></td>
+<td style="text-align: right;">3514</td>
+<td>actionButton</td>
+<td>4791</td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+</tr>
+<tr class="odd">
+<td><code>delete_project_btn</code></td>
+<td style="text-align: right;">2792</td>
+<td>actionButton</td>
+<td>5194</td>
+<td>Apply for Projects / Projects table</td>
+</tr>
+<tr class="even">
+<td><code>delete_sequencing_cycles_btn</code></td>
+<td style="text-align: right;">3451</td>
+<td>actionButton</td>
+<td>4718</td>
+<td>Administer Projects -&gt; Sequencing Cycles</td>
+</tr>
+<tr class="odd">
+<td><code>delete_sequencing_depth_btn</code></td>
+<td style="text-align: right;">3425</td>
+<td>actionButton</td>
+<td>4684</td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+</tr>
+<tr class="even">
+<td><code>delete_sequencing_platform_btn</code></td>
+<td style="text-align: right;">3566</td>
+<td>actionButton</td>
+<td>4859</td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+</tr>
+<tr class="odd">
+<td><code>delete_service_type_btn</code></td>
+<td style="text-align: right;">3391</td>
+<td>actionButton</td>
+<td>4650</td>
+<td>Administer Projects -&gt; Service Types</td>
+</tr>
+<tr class="even">
+<td><code>delete_type_btn</code></td>
+<td style="text-align: right;">3540</td>
+<td>actionButton</td>
+<td>4825</td>
+<td>Administer Projects -&gt; Sample Types</td>
+</tr>
+<tr class="odd">
+<td><code>delete_user_admin_btn</code></td>
+<td style="text-align: right;">3489</td>
+<td>actionButton</td>
+<td>4752</td>
+<td>Administer Projects -&gt; Users</td>
+</tr>
+<tr class="even">
+<td><code>dev_auth_mode</code></td>
+<td style="text-align: right;">2446</td>
+<td>radioButtons</td>
+<td>2454, 2455, 2456</td>
+<td>Authentication / Login area</td>
+</tr>
+<tr class="odd">
+<td><code>dev_login_btn</code></td>
+<td style="text-align: right;">2495</td>
+<td>actionButton</td>
+<td>2531</td>
+<td>Authentication / Login area</td>
+</tr>
+<tr class="even">
+<td><code>dev_login_username</code></td>
+<td style="text-align: right;">2494</td>
+<td>textInput</td>
+<td>2533, 2534, 2535, 2536</td>
+<td>Authentication / Login area</td>
+</tr>
+<tr class="odd">
+<td><code>edit_bh_cost_center</code></td>
+<td style="text-align: right;">4171</td>
+<td>textInput</td>
+<td>4181, 4185, 4197, 4211</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="even">
+<td><code>edit_bh_email</code></td>
+<td style="text-align: right;">4172</td>
+<td>textInput</td>
+<td>4181, 4186, 4212</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="odd">
+<td><code>edit_bh_name</code></td>
+<td style="text-align: right;">4169</td>
+<td>textInput</td>
+<td>4181, 4183, 4209</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="even">
+<td><code>edit_bh_surname</code></td>
+<td style="text-align: right;">4170</td>
+<td>textInput</td>
+<td>4181, 4184, 4210</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="odd">
+<td><code>edit_budget_holder_btn</code></td>
+<td style="text-align: right;">3355</td>
+<td>actionButton</td>
+<td>4153</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="even">
+<td><code>edit_budget_id</code></td>
+<td style="text-align: right;">4952</td>
+<td>selectInput</td>
+<td>2520, 2524, 5053, 5094</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="odd">
+<td><code>edit_depth_cost_150</code></td>
+<td style="text-align: right;">4438</td>
+<td>numericInput</td>
+<td>4457, 4457</td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+</tr>
+<tr class="even">
+<td><code>edit_depth_cost_300</code></td>
+<td style="text-align: right;">4439</td>
+<td>numericInput</td>
+<td>4458, 4458</td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+</tr>
+<tr class="odd">
+<td><code>edit_depth_description</code></td>
+<td style="text-align: right;">4437</td>
+<td>textInput</td>
+<td>4456</td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+</tr>
+<tr class="even">
+<td><code>edit_genome_btn</code></td>
+<td style="text-align: right;">3513</td>
+<td>actionButton</td>
+<td>4222</td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+</tr>
+<tr class="odd">
+<td><code>edit_genome_name</code></td>
+<td style="text-align: right;">4238</td>
+<td>textInput</td>
+<td>4247, 4248</td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+</tr>
+<tr class="even">
+<td><code>edit_kickoff_meeting</code></td>
+<td style="text-align: right;">4966</td>
+<td>radioButtons</td>
+<td>5085</td>
+<td>General / Shared</td>
+</tr>
+<tr class="odd">
+<td><code>edit_num_samples</code></td>
+<td style="text-align: right;">4925</td>
+<td>numericInput</td>
+<td>5007, 5013, 5088, 5126, 5152</td>
+<td>General / Shared</td>
+</tr>
+<tr class="even">
+<td><code>edit_project_btn</code></td>
+<td style="text-align: right;">2789</td>
+<td>actionButton</td>
+<td>4895</td>
+<td>Apply for Projects / Projects table</td>
+</tr>
+<tr class="odd">
+<td><code>edit_project_description</code></td>
+<td style="text-align: right;">4980</td>
+<td>textAreaInput</td>
+<td>5125, 5151</td>
+<td>Apply for Projects / Projects table</td>
+</tr>
+<tr class="even">
+<td><code>edit_project_name</code></td>
+<td style="text-align: right;">4924</td>
+<td>textInput</td>
+<td>5120, 5146</td>
+<td>Apply for Projects / Projects table</td>
+</tr>
+<tr class="odd">
+<td><code>edit_project_status</code></td>
+<td style="text-align: right;">4996</td>
+<td>selectInput</td>
+<td>5076</td>
+<td>Apply for Projects / Projects table</td>
+</tr>
+<tr class="even">
+<td><code>edit_reference_genome</code></td>
+<td style="text-align: right;">4939</td>
+<td>selectInput</td>
+<td>5121, 5147</td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+</tr>
+<tr class="odd">
+<td><code>edit_responsible_user</code></td>
+<td style="text-align: right;">4963</td>
+<td>selectInput</td>
+<td>5124, 5150, 5176</td>
+<td>Administer Projects -&gt; Users</td>
+</tr>
+<tr class="even">
+<td><code>edit_sequencing_cycles_id</code></td>
+<td style="text-align: right;">4947</td>
+<td>selectInput</td>
+<td>5008, 5089, 5129, 5155</td>
+<td>Administer Projects -&gt; Sequencing Cycles</td>
+</tr>
+<tr class="odd">
+<td><code>edit_sequencing_depth_btn</code></td>
+<td style="text-align: right;">3424</td>
+<td>actionButton</td>
+<td>4420</td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+</tr>
+<tr class="even">
+<td><code>edit_sequencing_depth_id</code></td>
+<td style="text-align: right;">4942</td>
+<td>selectInput</td>
+<td>5008, 5011, 5089, 5128, 5154</td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+</tr>
+<tr class="odd">
+<td><code>edit_sequencing_platform</code></td>
+<td style="text-align: right;">4926</td>
+<td>selectInput</td>
+<td>5127, 5153</td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+</tr>
+<tr class="even">
+<td><code>edit_sequencing_platform_btn</code></td>
+<td style="text-align: right;">3565</td>
+<td>actionButton</td>
+<td>4317</td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+</tr>
+<tr class="odd">
+<td><code>edit_sequencing_platform_name2</code></td>
+<td style="text-align: right;">4333</td>
+<td>textInput</td>
+<td>4342, 4343</td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+</tr>
+<tr class="even">
+<td><code>edit_service_cost</code></td>
+<td style="text-align: right;">4148</td>
+<td>numericInput</td>
+<td>4378</td>
+<td>Administer Projects -&gt; Service Types</td>
+</tr>
+<tr class="odd">
+<td><code>edit_service_kit</code></td>
+<td style="text-align: right;">4147</td>
+<td>textInput</td>
+<td>4377</td>
+<td>Administer Projects -&gt; Service Types</td>
+</tr>
+<tr class="even">
+<td><code>edit_service_type</code></td>
+<td style="text-align: right;">4146</td>
+<td>textInput</td>
+<td>4376</td>
+<td>Administer Projects -&gt; Service Types</td>
+</tr>
+<tr class="odd">
+<td><code>edit_service_type_btn</code></td>
+<td style="text-align: right;">3390</td>
+<td>actionButton</td>
+<td>4129</td>
+<td>Administer Projects -&gt; Service Types</td>
+</tr>
+<tr class="even">
+<td><code>edit_service_type_id</code></td>
+<td style="text-align: right;">4932</td>
+<td>selectInput</td>
+<td>5007, 5010, 5088, 5122, 5148</td>
+<td>Administer Projects -&gt; Service Types</td>
+</tr>
+<tr class="odd">
+<td><code>edit_type_btn</code></td>
+<td style="text-align: right;">3539</td>
+<td>actionButton</td>
+<td>4270</td>
+<td>Administer Projects -&gt; Sample Types</td>
+</tr>
+<tr class="even">
+<td><code>edit_type_id</code></td>
+<td style="text-align: right;">4929</td>
+<td>selectInput</td>
+<td>5132, 5157</td>
+<td>Administer Projects -&gt; Sample Types</td>
+</tr>
+<tr class="odd">
+<td><code>edit_type_name</code></td>
+<td style="text-align: right;">4286</td>
+<td>textInput</td>
+<td>4295, 4296</td>
+<td>Administer Projects -&gt; Sample Types</td>
+</tr>
+<tr class="even">
+<td><code>item_active</code></td>
+<td style="text-align: right;">3781, 3862</td>
+<td>checkboxInput</td>
+<td>3832, 3900</td>
+<td>General / Shared</td>
+</tr>
+<tr class="odd">
+<td><code>kickoff_meeting</code></td>
+<td style="text-align: right;">2971</td>
+<td>radioButtons</td>
+<td>3146</td>
+<td>General / Shared</td>
+</tr>
+<tr class="even">
+<td><code>ldap_profile_cancel_btn</code></td>
+<td style="text-align: right;">1611</td>
+<td>actionButton</td>
+<td>2589</td>
+<td>Authentication / Login area</td>
+</tr>
+<tr class="odd">
+<td><code>ldap_profile_email</code></td>
+<td style="text-align: right;">1614</td>
+<td>textInput</td>
+<td>2542, 2542, 2550</td>
+<td>Authentication / Login area</td>
+</tr>
+<tr class="even">
+<td><code>ldap_profile_group</code></td>
+<td style="text-align: right;">1616</td>
+<td>textInput</td>
+<td>2552</td>
+<td>Authentication / Login area</td>
+</tr>
+<tr class="odd">
+<td><code>ldap_profile_phone</code></td>
+<td style="text-align: right;">1615</td>
+<td>textInput</td>
+<td>2551</td>
+<td>Authentication / Login area</td>
+</tr>
+<tr class="even">
+<td><code>ldap_profile_save_btn</code></td>
+<td style="text-align: right;">1612</td>
+<td>actionButton</td>
+<td>2539</td>
+<td>Authentication / Login area</td>
+</tr>
+<tr class="odd">
+<td><code>login_btn</code></td>
+<td style="text-align: right;">607</td>
+<td>actionButton</td>
+<td>2608</td>
+<td>Authentication / Login area</td>
+</tr>
+<tr class="even">
+<td><code>login_password</code></td>
+<td style="text-align: right;">606</td>
+<td>passwordInput</td>
+<td>2614, 2624</td>
+<td>Authentication / Login area</td>
+</tr>
+<tr class="odd">
+<td><code>login_username</code></td>
+<td style="text-align: right;">605</td>
+<td>textInput</td>
+<td>2614, 2621</td>
+<td>Authentication / Login area</td>
+</tr>
+<tr class="even">
+<td><code>logout_btn</code></td>
+<td style="text-align: right;">645</td>
+<td>actionButton</td>
+<td>2633</td>
+<td>General / Shared</td>
+</tr>
+<tr class="odd">
+<td><code>manage_announcements_btn</code></td>
+<td style="text-align: right;">2871</td>
+<td>actionButton</td>
+<td>3571</td>
+<td>Administer Projects -&gt; Landing Text</td>
+</tr>
+<tr class="even">
+<td><code>manage_budget_holders_btn</code></td>
+<td style="text-align: right;">2829</td>
+<td>actionButton</td>
+<td>3324</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="odd">
+<td><code>manage_genomes_btn</code></td>
+<td style="text-align: right;">2835</td>
+<td>actionButton</td>
+<td>3493</td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+</tr>
+<tr class="even">
+<td><code>manage_sequencing_cycles_btn</code></td>
+<td style="text-align: right;">2859</td>
+<td>actionButton</td>
+<td>3432</td>
+<td>Administer Projects -&gt; Sequencing Cycles</td>
+</tr>
+<tr class="odd">
+<td><code>manage_sequencing_depths_btn</code></td>
+<td style="text-align: right;">2853</td>
+<td>actionButton</td>
+<td>3398</td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+</tr>
+<tr class="even">
+<td><code>manage_sequencing_platforms_btn</code></td>
+<td style="text-align: right;">2865</td>
+<td>actionButton</td>
+<td>3545</td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+</tr>
+<tr class="odd">
+<td><code>manage_service_types_btn</code></td>
+<td style="text-align: right;">2847</td>
+<td>actionButton</td>
+<td>3362</td>
+<td>Administer Projects -&gt; Service Types</td>
+</tr>
+<tr class="even">
+<td><code>manage_types_btn</code></td>
+<td style="text-align: right;">2841</td>
+<td>actionButton</td>
+<td>3519</td>
+<td>Administer Projects -&gt; Sample Types</td>
+</tr>
+<tr class="odd">
+<td><code>manage_users_btn</code></td>
+<td style="text-align: right;">2823</td>
+<td>actionButton</td>
+<td>3456</td>
+<td>Administer Projects -&gt; Users</td>
+</tr>
+<tr class="even">
+<td><code>new_bh_cost_center</code></td>
+<td style="text-align: right;">3339</td>
+<td>textInput</td>
+<td>4052, 4054, 4065, 4079</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="odd">
+<td><code>new_bh_email</code></td>
+<td style="text-align: right;">3342</td>
+<td>textInput</td>
+<td>4052, 4054, 4080</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="even">
+<td><code>new_bh_name</code></td>
+<td style="text-align: right;">3333</td>
+<td>textInput</td>
+<td>4052, 4054, 4077</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="odd">
+<td><code>new_bh_surname</code></td>
+<td style="text-align: right;">3336</td>
+<td>textInput</td>
+<td>4052, 4054, 4078</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="even">
+<td><code>new_cycles_description</code></td>
+<td style="text-align: right;">3441</td>
+<td>textInput</td>
+<td>4469, 4471, 4476, 4487</td>
+<td>Administer Projects -&gt; Sequencing Cycles</td>
+</tr>
+<tr class="odd">
+<td><code>new_depth_cost_150</code></td>
+<td style="text-align: right;">3410</td>
+<td>numericInput</td>
+<td>4408, 4408</td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+</tr>
+<tr class="even">
+<td><code>new_depth_cost_300</code></td>
+<td style="text-align: right;">3413</td>
+<td>numericInput</td>
+<td>4409, 4409</td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+</tr>
+<tr class="odd">
+<td><code>new_depth_description</code></td>
+<td style="text-align: right;">3407</td>
+<td>textInput</td>
+<td>4388, 4390, 4395, 4407</td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+</tr>
+<tr class="even">
+<td><code>new_genome_name</code></td>
+<td style="text-align: right;">3502</td>
+<td>textInput</td>
+<td>4542, 4544, 4549, 4560</td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+</tr>
+<tr class="odd">
+<td><code>new_project_btn</code></td>
+<td style="text-align: right;">2787</td>
+<td>actionButton</td>
+<td>2903</td>
+<td>Apply for Projects / Projects table</td>
+</tr>
+<tr class="even">
+<td><code>new_project_status</code></td>
+<td style="text-align: right;">5261</td>
+<td>selectInput</td>
+<td>5286</td>
+<td>Apply for Projects / Projects table</td>
+</tr>
+<tr class="odd">
+<td><code>new_sequencing_platform_name</code></td>
+<td style="text-align: right;">3554</td>
+<td>textInput</td>
+<td>4592, 4594, 4599, 4607</td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+</tr>
+<tr class="even">
+<td><code>new_service_cost</code></td>
+<td style="text-align: right;">3377</td>
+<td>numericInput</td>
+<td>4097, 4118</td>
+<td>Administer Projects -&gt; Service Types</td>
+</tr>
+<tr class="odd">
+<td><code>new_service_kit</code></td>
+<td style="text-align: right;">3374</td>
+<td>textInput</td>
+<td>4097, 4117</td>
+<td>Administer Projects -&gt; Service Types</td>
+</tr>
+<tr class="even">
+<td><code>new_service_type</code></td>
+<td style="text-align: right;">3371</td>
+<td>textInput</td>
+<td>4097, 4099, 4104, 4116</td>
+<td>Administer Projects -&gt; Service Types</td>
+</tr>
+<tr class="odd">
+<td><code>new_type_name</code></td>
+<td style="text-align: right;">3528</td>
+<td>textInput</td>
+<td>4569, 4571, 4576, 4584</td>
+<td>Administer Projects -&gt; Sample Types</td>
+</tr>
+<tr class="even">
+<td><code>new_user_admin</code></td>
+<td style="text-align: right;">3481</td>
+<td>checkboxInput</td>
+<td>4527</td>
+<td>Administer Projects -&gt; Users</td>
+</tr>
+<tr class="odd">
+<td><code>new_user_confirm_password</code></td>
+<td style="text-align: right;">3476</td>
+<td>passwordInput</td>
+<td>4498</td>
+<td>Administer Projects -&gt; Users</td>
+</tr>
+<tr class="even">
+<td><code>new_user_email</code></td>
+<td style="text-align: right;">3468</td>
+<td>textInput</td>
+<td>4496, 4526</td>
+<td>Administer Projects -&gt; Users</td>
+</tr>
+<tr class="odd">
+<td><code>new_user_password</code></td>
+<td style="text-align: right;">3473</td>
+<td>passwordInput</td>
+<td>4496, 4498, 4503, 4525</td>
+<td>Administer Projects -&gt; Users</td>
+</tr>
+<tr class="even">
+<td><code>new_user_username</code></td>
+<td style="text-align: right;">3465</td>
+<td>textInput</td>
+<td>4496, 4513, 4524</td>
+<td>Administer Projects -&gt; Users</td>
+</tr>
+<tr class="odd">
+<td><code>num_samples</code></td>
+<td style="text-align: right;">2915</td>
+<td>numericInput</td>
+<td>3036, 3042, 3104, 3142, 3169</td>
+<td>General / Shared</td>
+</tr>
+<tr class="even">
+<td><code>project_description</code></td>
+<td style="text-align: right;">2978</td>
+<td>textAreaInput</td>
+<td>3141, 3167</td>
+<td>Apply for Projects / Projects table</td>
+</tr>
+<tr class="odd">
+<td><code>project_name</code></td>
+<td style="text-align: right;">2914</td>
+<td>textInput</td>
+<td>3135, 3166</td>
+<td>Apply for Projects / Projects table</td>
+</tr>
+<tr class="even">
+<td><code>reference_genome</code></td>
+<td style="text-align: right;">2934</td>
+<td>selectInput</td>
+<td>3138</td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+</tr>
+<tr class="odd">
+<td><code>reg_confirm_password</code></td>
+<td style="text-align: right;">2286</td>
+<td>passwordInput</td>
+<td>2298, 2300</td>
+<td>General / Shared</td>
+</tr>
+<tr class="even">
+<td><code>reg_email</code></td>
+<td style="text-align: right;">2284</td>
+<td>textInput</td>
+<td>2298, 2343, 2354</td>
+<td>General / Shared</td>
+</tr>
+<tr class="odd">
+<td><code>reg_full_name</code></td>
+<td style="text-align: right;">2283</td>
+<td>textInput</td>
+<td>2330</td>
+<td>General / Shared</td>
+</tr>
+<tr class="even">
+<td><code>reg_group</code></td>
+<td style="text-align: right;">2288</td>
+<td>selectInput</td>
+<td>2310, 2310, 2345, 2356</td>
+<td>General / Shared</td>
+</tr>
+<tr class="odd">
+<td><code>reg_password</code></td>
+<td style="text-align: right;">2285</td>
+<td>passwordInput</td>
+<td>2298, 2300, 2305, 2342, 2353</td>
+<td>General / Shared</td>
+</tr>
+<tr class="even">
+<td><code>reg_phone</code></td>
+<td style="text-align: right;">2287</td>
+<td>textInput</td>
+<td>2344, 2355</td>
+<td>General / Shared</td>
+</tr>
+<tr class="odd">
+<td><code>reg_username</code></td>
+<td style="text-align: right;">2282</td>
+<td>textInput</td>
+<td>2298, 2321, 2332, 2340, 2352</td>
+<td>Administer Projects -&gt; Users</td>
+</tr>
+<tr class="even">
+<td><code>register_btn</code></td>
+<td style="text-align: right;">2279</td>
+<td>actionButton</td>
+<td>2297</td>
+<td>Authentication / Login area</td>
+</tr>
+<tr class="odd">
+<td><code>responsible_user</code></td>
+<td style="text-align: right;">2966</td>
+<td>selectInput</td>
+<td>3137, 3168</td>
+<td>Administer Projects -&gt; Users</td>
+</tr>
+<tr class="even">
+<td><code>restore_db_btn</code></td>
+<td style="text-align: right;">2886</td>
+<td>fileInput</td>
+<td>5395, 5396, 5403, 5423</td>
+<td>Administer Projects -&gt; Database Management</td>
+</tr>
+<tr class="odd">
+<td><code>save_announcement_item_btn</code></td>
+<td style="text-align: right;">3779</td>
+<td>actionButton</td>
+<td>3793</td>
+<td>Administer Projects -&gt; Landing Text</td>
+</tr>
+<tr class="even">
+<td><code>sequencing_cycles_id</code></td>
+<td style="text-align: right;">2944</td>
+<td>selectInput</td>
+<td>3037, 3105, 3145</td>
+<td>Administer Projects -&gt; Sequencing Cycles</td>
+</tr>
+<tr class="odd">
+<td><code>sequencing_depth_id</code></td>
+<td style="text-align: right;">2936</td>
+<td>selectInput</td>
+<td>3037, 3040, 3105, 3144, 3171</td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+</tr>
+<tr class="even">
+<td><code>sequencing_platform</code></td>
+<td style="text-align: right;">2916</td>
+<td>selectInput</td>
+<td>3143</td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+</tr>
+<tr class="odd">
+<td><code>service_type_id</code></td>
+<td style="text-align: right;">2924</td>
+<td>selectInput</td>
+<td>3036, 3039, 3104, 3139, 3170</td>
+<td>Administer Projects -&gt; Service Types</td>
+</tr>
+<tr class="even">
+<td><code>show_register_btn</code></td>
+<td style="text-align: right;">610</td>
+<td>actionLink</td>
+<td>2266</td>
+<td>Authentication / Login area</td>
+</tr>
+<tr class="odd">
+<td><code>status_notes</code></td>
+<td style="text-align: right;">5265</td>
+<td>textAreaInput</td>
+<td>-</td>
+<td>Apply for Projects / Projects table</td>
+</tr>
+<tr class="even">
+<td><code>type_id</code></td>
+<td style="text-align: right;">2918</td>
+<td>selectInput</td>
+<td>3147</td>
+<td>Administer Projects -&gt; Sample Types</td>
+</tr>
+<tr class="odd">
+<td><code>update_announcement_item_btn</code></td>
+<td style="text-align: right;">3860</td>
+<td>actionButton</td>
+<td>3873</td>
+<td>Administer Projects -&gt; Landing Text</td>
+</tr>
+<tr class="even">
+<td><code>update_budget_holder_btn</code></td>
+<td style="text-align: right;">4167</td>
+<td>actionButton</td>
+<td>4176</td>
+<td>Administer Projects -&gt; Budget Holders</td>
+</tr>
+<tr class="odd">
+<td><code>update_genome_btn</code></td>
+<td style="text-align: right;">4236</td>
+<td>actionButton</td>
+<td>4242</td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+</tr>
+<tr class="even">
+<td><code>update_project_btn</code></td>
+<td style="text-align: right;">4919</td>
+<td>actionButton</td>
+<td>5027</td>
+<td>Apply for Projects / Projects table</td>
+</tr>
+<tr class="odd">
+<td><code>update_sequencing_depth_btn</code></td>
+<td style="text-align: right;">4434</td>
+<td>actionButton</td>
+<td>4444</td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+</tr>
+<tr class="even">
+<td><code>update_sequencing_platform_update_btn</code></td>
+<td style="text-align: right;">4331</td>
+<td>actionButton</td>
+<td>4337</td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+</tr>
+<tr class="odd">
+<td><code>update_service_type_btn</code></td>
+<td style="text-align: right;">4143</td>
+<td>actionButton</td>
+<td>4364</td>
+<td>Administer Projects -&gt; Service Types</td>
+</tr>
+<tr class="even">
+<td><code>update_status_btn</code></td>
+<td style="text-align: right;">2800</td>
+<td>actionButton</td>
+<td>5236</td>
+<td>Apply for Projects / Projects table</td>
+</tr>
+<tr class="odd">
+<td><code>update_type_btn</code></td>
+<td style="text-align: right;">4284</td>
+<td>actionButton</td>
+<td>4290</td>
+<td>Administer Projects -&gt; Sample Types</td>
+</tr>
+<tr class="even">
+<td><code>validate_db_btn</code></td>
+<td style="text-align: right;">2887</td>
+<td>actionButton</td>
+<td>5350</td>
+<td>Administer Projects -&gt; Database Management</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="function-catalog-all-detected-functions" class="level2">
+<h2 class="anchored" data-anchor-id="function-catalog-all-detected-functions">Function Catalog (All Detected Functions)</h2>
+<p>For each function: <strong>purpose</strong>, <strong>key behavior</strong>, and <strong>where it is called</strong>.</p>
+<section id="fn-default-announcement-seed" class="level3">
+<h3 class="anchored" data-anchor-id="fn-default-announcement-seed"><code>default_announcement_seed</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:14</code></li>
+<li><strong>Signature line:</strong> <code>default_announcement_seed &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Returns the default two-panel landing-page content (Announcement + service info) used for first-time DB seeding.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-is-safe-markdown-href" class="level3">
+<h3 class="anchored" data-anchor-id="fn-is-safe-markdown-href"><code>is_safe_markdown_href</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:60</code></li>
+<li><strong>Signature line:</strong> <code>is_safe_markdown_href &lt;- function(href) {</code></li>
+<li><strong>Purpose:</strong> Allows only safe link protocols in markdown links (<code>http</code>, <code>https</code>, <code>mailto</code>, <code>smb</code>).</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-escape-inline-markdown" class="level3">
+<h3 class="anchored" data-anchor-id="fn-escape-inline-markdown"><code>escape_inline_markdown</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:65</code></li>
+<li><strong>Signature line:</strong> <code>escape_inline_markdown &lt;- function(text) {</code></li>
+<li><strong>Purpose:</strong> HTML-escapes plain text and then converts <code>**bold**</code> markup into <code>&lt;strong&gt;</code> safely.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-render-inline-markdown" class="level3">
+<h3 class="anchored" data-anchor-id="fn-render-inline-markdown"><code>render_inline_markdown</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:70</code></li>
+<li><strong>Signature line:</strong> <code>render_inline_markdown &lt;- function(text) {</code></li>
+<li><strong>Purpose:</strong> Parses one inline text fragment, converts markdown links, and safely escapes all other text.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-markdown-lite-to-html" class="level3">
+<h3 class="anchored" data-anchor-id="fn-markdown-lite-to-html"><code>markdown_lite_to_html</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:122</code></li>
+<li><strong>Signature line:</strong> <code>markdown_lite_to_html &lt;- function(markdown_text) {</code></li>
+<li><strong>Purpose:</strong> Converts simplified markdown (paragraphs, lists, bold, links) into safe HTML for info boxes.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-flush-paragraph" class="level3">
+<h3 class="anchored" data-anchor-id="fn-flush-paragraph"><code>flush_paragraph</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:134</code></li>
+<li><strong>Signature line:</strong> <code>flush_paragraph &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Internal helper: finalizes accumulated paragraph lines during markdown parsing.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-flush-list" class="level3">
+<h3 class="anchored" data-anchor-id="fn-flush-list"><code>flush_list</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:144</code></li>
+<li><strong>Signature line:</strong> <code>flush_list &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Internal helper: finalizes accumulated list items (ordered/unordered) during markdown parsing.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-announcement-blocks" class="level3">
+<h3 class="anchored" data-anchor-id="fn-announcement-blocks"><code>announcement_blocks</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:197</code></li>
+<li><strong>Signature line:</strong> <code>announcement_blocks &lt;- function(announcement_data) {</code></li>
+<li><strong>Purpose:</strong> Builds landing-page panels from DB data and renders each row as one <code>.info-box</code>.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-server" class="level3">
+<h3 class="anchored" data-anchor-id="fn-server"><code>server</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:658</code></li>
+<li><strong>Signature line:</strong> <code>server &lt;- function(input, output, session) {</code></li>
+<li><strong>Purpose:</strong> Main Shiny server function: owns all reactive state, auth, DB operations, outputs, and event handlers.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-ensure-announcement-tables" class="level3">
+<h3 class="anchored" data-anchor-id="fn-ensure-announcement-tables"><code>ensure_announcement_tables</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:714</code></li>
+<li><strong>Signature line:</strong> <code>ensure_announcement_tables &lt;- function(con) {</code></li>
+<li><strong>Purpose:</strong> Creates <code>announcement_panels</code> and <code>announcement_items</code> tables when missing.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-seed-announcement-defaults" class="level3">
+<h3 class="anchored" data-anchor-id="fn-seed-announcement-defaults"><code>seed_announcement_defaults</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:742</code></li>
+<li><strong>Signature line:</strong> <code>seed_announcement_defaults &lt;- function(con, updated_by = "system") {</code></li>
+<li><strong>Purpose:</strong> Seeds default landing text only for newly inserted panel keys (non-destructive for existing panels).</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-load-announcement-content" class="level3">
+<h3 class="anchored" data-anchor-id="fn-load-announcement-content"><code>load_announcement_content</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:794</code></li>
+<li><strong>Signature line:</strong> <code>load_announcement_content &lt;- function(con = NULL, active_only = TRUE) {</code></li>
+<li><strong>Purpose:</strong> Loads panel metadata + ordered rows from DB, optionally active-only.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-validate-and-repair-database" class="level3">
+<h3 class="anchored" data-anchor-id="fn-validate-and-repair-database"><code>validate_and_repair_database</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:837</code></li>
+<li><strong>Signature line:</strong> <code>validate_and_repair_database &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Checks critical table presence and minimal DB readability; shows diagnostics when unhealthy.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-get-auth-mode" class="level3">
+<h3 class="anchored" data-anchor-id="fn-get-auth-mode"><code>get_auth_mode</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:956</code></li>
+<li><strong>Signature line:</strong> <code>get_auth_mode &lt;- function() auth_mode_val()</code></li>
+<li><strong>Purpose:</strong> Returns current auth mode (<code>local</code> or <code>ldap</code>) from reactive value.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-to-bool" class="level3">
+<h3 class="anchored" data-anchor-id="fn-to-bool"><code>to_bool</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:958</code></li>
+<li><strong>Signature line:</strong> <code>to_bool &lt;- function(x) {</code></li>
+<li><strong>Purpose:</strong> Normalizes env-flag style strings (1/true/yes/on) to logical.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-or-null-operator" class="level3">
+<h3 class="anchored" data-anchor-id="fn-or-null-operator"><code>%||%</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:983</code></li>
+<li><strong>Signature line:</strong> `<code>%||%</code> &lt;- function(x, y) {`</li>
+<li><strong>Purpose:</strong> Null/empty fallback operator used heavily for robust text handling.</li>
+<li><strong>Called/referenced at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:697, 698, 699, 997, 1451, 1452, 1453, 1454, 1565, 1614, 1615, 1616, 1628, 1629, 1630, 1651, 1652, 1653, 1654, 1687, 1690, 1691, 1701, 1702, 1747 ... (+38 more)</code></li>
+</ul>
+</section>
+<section id="fn-scalar-text-core" class="level3">
+<h3 class="anchored" data-anchor-id="fn-scalar-text-core"><code>scalar_text</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:987</code></li>
+<li><strong>Signature line:</strong> <code>scalar_text &lt;- function(x) {</code></li>
+<li><strong>Purpose:</strong> Normalizes potentially vector/empty values into a single trimmed string or NULL.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-get-req-header" class="level3">
+<h3 class="anchored" data-anchor-id="fn-get-req-header"><code>get_req_header</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1004</code></li>
+<li><strong>Signature line:</strong> <code>get_req_header &lt;- function(req, header_name) {</code></li>
+<li><strong>Purpose:</strong> Reads HTTP headers from multiple possible request structures and canonicalizes retrieval.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-get-proxy-authenticated-user" class="level3">
+<h3 class="anchored" data-anchor-id="fn-get-proxy-authenticated-user"><code>get_proxy_authenticated_user</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1030</code></li>
+<li><strong>Signature line:</strong> <code>get_proxy_authenticated_user &lt;- function(session) {</code></li>
+<li><strong>Purpose:</strong> Extracts authenticated username from trusted proxy headers.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-base64-decode-raw" class="level3">
+<h3 class="anchored" data-anchor-id="fn-base64-decode-raw"><code>base64_decode_raw</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1043</code></li>
+<li><strong>Signature line:</strong> <code>base64_decode_raw &lt;- function(encoded) {</code></li>
+<li><strong>Purpose:</strong> Decodes Base64 for Basic auth parsing without external dependency.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-parse-basic-auth-username" class="level3">
+<h3 class="anchored" data-anchor-id="fn-parse-basic-auth-username"><code>parse_basic_auth_username</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1079</code></li>
+<li><strong>Signature line:</strong> <code>parse_basic_auth_username &lt;- function(auth_header) {</code></li>
+<li><strong>Purpose:</strong> Parses <code>Authorization: Basic ...</code> and returns the username part only.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-get-auth-username" class="level3">
+<h3 class="anchored" data-anchor-id="fn-get-auth-username"><code>get_auth_username</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1103</code></li>
+<li><strong>Signature line:</strong> <code>get_auth_username &lt;- function(session) {</code></li>
+<li><strong>Purpose:</strong> Primary LDAP identity resolver; checks trusted headers, canonicalized query, optional dev fallback.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-parse-auth-user-from-qs" class="level3">
+<h3 class="anchored" data-anchor-id="fn-parse-auth-user-from-qs"><code>parse_auth_user_from_qs</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1117</code></li>
+<li><strong>Signature line:</strong> <code>parse_auth_user_from_qs &lt;- function(qs) {</code></li>
+<li><strong>Purpose:</strong> Internal helper to extract <code>auth_user</code> from query string safely.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-parse-ldap-uris" class="level3">
+<h3 class="anchored" data-anchor-id="fn-parse-ldap-uris"><code>parse_ldap_uris</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1169</code></li>
+<li><strong>Signature line:</strong> <code>parse_ldap_uris &lt;- function(uri_string) {</code></li>
+<li><strong>Purpose:</strong> Parses comma-separated LDAP URIs into host/port/SSL target objects.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-extract-ldap-attr" class="level3">
+<h3 class="anchored" data-anchor-id="fn-extract-ldap-attr"><code>extract_ldap_attr</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1191</code></li>
+<li><strong>Signature line:</strong> <code>extract_ldap_attr &lt;- function(result, attr) {</code></li>
+<li><strong>Purpose:</strong> Extracts one LDAP attribute from heterogeneous result formats.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-ldap-lookup-user" class="level3">
+<h3 class="anchored" data-anchor-id="fn-ldap-lookup-user"><code>ldap_lookup_user</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1207</code></li>
+<li><strong>Signature line:</strong> <code>ldap_lookup_user &lt;- function(username) {</code></li>
+<li><strong>Purpose:</strong> Performs LDAP attribute lookup (email/phone/ou/full_name) with bind and <code>ldapsearch</code> fallback.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-ldap-try-bind" class="level3">
+<h3 class="anchored" data-anchor-id="fn-ldap-try-bind"><code>ldap_try_bind</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1239</code></li>
+<li><strong>Signature line:</strong> <code>ldap_try_bind &lt;- function(conn, bind_dn, bind_pw) {</code></li>
+<li><strong>Purpose:</strong> Attempts LDAP bind using configured bind user/password or anonymous fallback.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-ldap-search" class="level3">
+<h3 class="anchored" data-anchor-id="fn-ldap-search"><code>ldap_search</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1276</code></li>
+<li><strong>Signature line:</strong> <code>ldap_search &lt;- function(conn, base_dn, filter, attrs) {</code></li>
+<li><strong>Purpose:</strong> Executes LDAP search using compatible parameter names for different package variants.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-ldapsearch-lookup" class="level3">
+<h3 class="anchored" data-anchor-id="fn-ldapsearch-lookup"><code>ldapsearch_lookup</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1294</code></li>
+<li><strong>Signature line:</strong> <code>ldapsearch_lookup &lt;- function(uri, base_dn, filter, attrs, bind_dn, bind_pw) {</code></li>
+<li><strong>Purpose:</strong> Runs shell <code>ldapsearch</code> fallback and captures output for parsing.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-normalize-ldap-lines" class="level3">
+<h3 class="anchored" data-anchor-id="fn-normalize-ldap-lines"><code>normalize_ldap_lines</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1339</code></li>
+<li><strong>Signature line:</strong> <code>normalize_ldap_lines &lt;- function(lines) {</code></li>
+<li><strong>Purpose:</strong> Normalizes folded LDAP output lines into full logical lines.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-parse-ldapsearch-output" class="level3">
+<h3 class="anchored" data-anchor-id="fn-parse-ldapsearch-output"><code>parse_ldapsearch_output</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1355</code></li>
+<li><strong>Signature line:</strong> <code>parse_ldapsearch_output &lt;- function(lines, key) {</code></li>
+<li><strong>Purpose:</strong> Extracts one key value from ldapsearch text output.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-normalize-group-key" class="level3">
+<h3 class="anchored" data-anchor-id="fn-normalize-group-key"><code>normalize_group_key</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1464</code></li>
+<li><strong>Signature line:</strong> <code>normalize_group_key &lt;- function(value) {</code></li>
+<li><strong>Purpose:</strong> Lowercases/trims group text for matching.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-extract-group-key-from-ou" class="level3">
+<h3 class="anchored" data-anchor-id="fn-extract-group-key-from-ou"><code>extract_group_key_from_ou</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1469</code></li>
+<li><strong>Signature line:</strong> <code>extract_group_key_from_ou &lt;- function(ou_value) {</code></li>
+<li><strong>Purpose:</strong> Extracts compact group key from LDAP OU text (prefers <code>(Group)</code> substring).</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-map-group-from-ldap-ou" class="level3">
+<h3 class="anchored" data-anchor-id="fn-map-group-from-ldap-ou"><code>map_group_from_ldap_ou</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1480</code></li>
+<li><strong>Signature line:</strong> <code>map_group_from_ldap_ou &lt;- function(ou_value, con) {</code></li>
+<li><strong>Purpose:</strong> Maps LDAP OU/group text to existing budget-holder full names.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-budget-holder-notice-ui" class="level3">
+<h3 class="anchored" data-anchor-id="fn-budget-holder-notice-ui"><code>budget_holder_notice_ui</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1508</code></li>
+<li><strong>Signature line:</strong> <code>budget_holder_notice_ui &lt;- function(selected_id) {</code></li>
+<li><strong>Purpose:</strong> Renders inline warnings when selected budget holder has missing/multiple cost-center contexts.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-budget-holder-other-fields-ui" class="level3">
+<h3 class="anchored" data-anchor-id="fn-budget-holder-other-fields-ui"><code>budget_holder_other_fields_ui</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1548</code></li>
+<li><strong>Signature line:</strong> <code>budget_holder_other_fields_ui &lt;- function(prefix = "") {</code></li>
+<li><strong>Purpose:</strong> Renders “Other / not listed” PI input fields for budget holder creation-on-the-fly.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-budget-holder-other-notice-ui" class="level3">
+<h3 class="anchored" data-anchor-id="fn-budget-holder-other-notice-ui"><code>budget_holder_other_notice_ui</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1564</code></li>
+<li><strong>Signature line:</strong> <code>budget_holder_other_notice_ui &lt;- function(cost_center_value) {</code></li>
+<li><strong>Purpose:</strong> Warns when free-text budget holder has no cost center.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-complete-login" class="level3">
+<h3 class="anchored" data-anchor-id="fn-complete-login"><code>complete_login</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1574</code></li>
+<li><strong>Signature line:</strong> <code>complete_login &lt;- function(user_data) {</code></li>
+<li><strong>Purpose:</strong> Sets logged-in state, user identity, admin flag, and refreshes reference data.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-show-profile-modal" class="level3">
+<h3 class="anchored" data-anchor-id="fn-show-profile-modal"><code>show_profile_modal</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1601</code></li>
+<li><strong>Signature line:</strong> <code>show_profile_modal &lt;- function(username, attrs, is_new) {</code></li>
+<li><strong>Purpose:</strong> Shows required LDAP profile completion modal for missing user attributes.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-maybe-prompt-profile-update" class="level3">
+<h3 class="anchored" data-anchor-id="fn-maybe-prompt-profile-update"><code>maybe_prompt_profile_update</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1621</code></li>
+<li><strong>Signature line:</strong> <code>maybe_prompt_profile_update &lt;- function(user_row, attrs) {</code></li>
+<li><strong>Purpose:</strong> Prompts existing users to fill missing mandatory profile fields.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-handle-ldap-login" class="level3">
+<h3 class="anchored" data-anchor-id="fn-handle-ldap-login"><code>handle_ldap_login</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1635</code></li>
+<li><strong>Signature line:</strong> <code>handle_ldap_login &lt;- function(username) {</code></li>
+<li><strong>Purpose:</strong> End-to-end LDAP login orchestration: user lookup/create/update + mapping + completion flow.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-make-status-choices" class="level3">
+<h3 class="anchored" data-anchor-id="fn-make-status-choices"><code>make_status_choices</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1802</code></li>
+<li><strong>Signature line:</strong> <code>make_status_choices &lt;- function(current_status = NULL) {</code></li>
+<li><strong>Purpose:</strong> Builds status select choices while preserving unknown legacy statuses.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-get-db-connection" class="level3">
+<h3 class="anchored" data-anchor-id="fn-get-db-connection"><code>get_db_connection</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1811</code></li>
+<li><strong>Signature line:</strong> <code>get_db_connection &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Returns SQLite connection to <code>sequencing_projects.db</code> in app working directory.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-users-has-full-name" class="level3">
+<h3 class="anchored" data-anchor-id="fn-users-has-full-name"><code>users_has_full_name</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1815</code></li>
+<li><strong>Signature line:</strong> <code>users_has_full_name &lt;- function(con) {</code></li>
+<li><strong>Purpose:</strong> Schema-compat helper: checks whether <code>users.full_name</code> exists.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-refresh-announcements" class="level3">
+<h3 class="anchored" data-anchor-id="fn-refresh-announcements"><code>refresh_announcements</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1821</code></li>
+<li><strong>Signature line:</strong> <code>refresh_announcements &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Reactive invalidation trigger to force landing text re-render after edits.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-get-announcement-panels" class="level3">
+<h3 class="anchored" data-anchor-id="fn-get-announcement-panels"><code>get_announcement_panels</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1825</code></li>
+<li><strong>Signature line:</strong> <code>get_announcement_panels &lt;- function(con = NULL, active_only = FALSE) {</code></li>
+<li><strong>Purpose:</strong> Returns panel rows for admin management, active or all.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-get-announcement-items-for-panel" class="level3">
+<h3 class="anchored" data-anchor-id="fn-get-announcement-items-for-panel"><code>get_announcement_items_for_panel</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1847</code></li>
+<li><strong>Signature line:</strong> <code>get_announcement_items_for_panel &lt;- function(panel_key, con = NULL, active_only = FALSE) {</code></li>
+<li><strong>Purpose:</strong> Returns ordered rows for one landing panel.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-normalize-announcement-item-order" class="level3">
+<h3 class="anchored" data-anchor-id="fn-normalize-announcement-item-order"><code>normalize_announcement_item_order</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1877</code></li>
+<li><strong>Signature line:</strong> <code>normalize_announcement_item_order &lt;- function(con, panel_id) {</code></li>
+<li><strong>Purpose:</strong> Compacts/resequences display order after deletes/reordering.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-validate-announcement-markdown" class="level3">
+<h3 class="anchored" data-anchor-id="fn-validate-announcement-markdown"><code>validate_announcement_markdown</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1895</code></li>
+<li><strong>Signature line:</strong> <code>validate_announcement_markdown &lt;- function(markdown_text) {</code></li>
+<li><strong>Purpose:</strong> Validates announcement item text for non-empty and max-length constraints.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-selected-announcement-item" class="level3">
+<h3 class="anchored" data-anchor-id="fn-selected-announcement-item"><code>selected_announcement_item</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1906</code></li>
+<li><strong>Signature line:</strong> <code>selected_announcement_item &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Returns currently selected item row from admin DT selection state.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-get-all-usernames" class="level3">
+<h3 class="anchored" data-anchor-id="fn-get-all-usernames"><code>get_all_usernames</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1926</code></li>
+<li><strong>Signature line:</strong> <code>get_all_usernames &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Builds responsible-user dropdown values (full name preferred, username fallback).</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-load-budget-holders" class="level3">
+<h3 class="anchored" data-anchor-id="fn-load-budget-holders"><code>load_budget_holders</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1942</code></li>
+<li><strong>Signature line:</strong> <code>load_budget_holders &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Loads budget holders reference data.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-load-service-types" class="level3">
+<h3 class="anchored" data-anchor-id="fn-load-service-types"><code>load_service_types</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1950</code></li>
+<li><strong>Signature line:</strong> <code>load_service_types &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Loads service type reference data (including per-sample cost).</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-load-sequencing-depths" class="level3">
+<h3 class="anchored" data-anchor-id="fn-load-sequencing-depths"><code>load_sequencing_depths</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1958</code></li>
+<li><strong>Signature line:</strong> <code>load_sequencing_depths &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Loads depth/reference pricing tiers.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-load-sequencing-cycles" class="level3">
+<h3 class="anchored" data-anchor-id="fn-load-sequencing-cycles"><code>load_sequencing_cycles</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1966</code></li>
+<li><strong>Signature line:</strong> <code>load_sequencing_cycles &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Loads cycle/read-length options.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-load-reference-genomes" class="level3">
+<h3 class="anchored" data-anchor-id="fn-load-reference-genomes"><code>load_reference_genomes</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1974</code></li>
+<li><strong>Signature line:</strong> <code>load_reference_genomes &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Loads genome list.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-load-types" class="level3">
+<h3 class="anchored" data-anchor-id="fn-load-types"><code>load_types</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1982</code></li>
+<li><strong>Signature line:</strong> <code>load_types &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Loads sample type list (<code>types</code> table).</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-load-sequencing-platforms" class="level3">
+<h3 class="anchored" data-anchor-id="fn-load-sequencing-platforms"><code>load_sequencing_platforms</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1990</code></li>
+<li><strong>Signature line:</strong> <code>load_sequencing_platforms &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Loads platform list.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-load-admin-data" class="level3">
+<h3 class="anchored" data-anchor-id="fn-load-admin-data"><code>load_admin_data</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1998</code></li>
+<li><strong>Signature line:</strong> <code>load_admin_data &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Loads all admin-maintained reference tables and user table.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-calculate-total-cost" class="level3">
+<h3 class="anchored" data-anchor-id="fn-calculate-total-cost"><code>calculate_total_cost</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2020</code></li>
+<li><strong>Signature line:</strong> <code>calculate_total_cost &lt;- function(num_samples, service_type_id, sequencing_depth_id, sequencing_cycles_id) {</code></li>
+<li><strong>Purpose:</strong> Computes estimated project cost from samples + service + depth/cycles rules.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-send-project-creation-email" class="level3">
+<h3 class="anchored" data-anchor-id="fn-send-project-creation-email"><code>send_project_creation_email</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2051</code></li>
+<li><strong>Signature line:</strong> <code>send_project_creation_email &lt;- function(project_data, budget_holder, user_email) {</code></li>
+<li><strong>Purpose:</strong> Builds and sends project-created email to creator + budget holder + facility mailbox.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-send-data-released-email" class="level3">
+<h3 class="anchored" data-anchor-id="fn-send-data-released-email"><code>send_data_released_email</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2151</code></li>
+<li><strong>Signature line:</strong> <code>send_data_released_email &lt;- function(project_data) {</code></li>
+<li><strong>Purpose:</strong> Sends automatic “Data released” email to responsible user and <code>omicsdesk</code> target.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-load-projects" class="level3">
+<h3 class="anchored" data-anchor-id="fn-load-projects"><code>load_projects</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2732</code></li>
+<li><strong>Signature line:</strong> <code>load_projects &lt;- function() {</code></li>
+<li><strong>Purpose:</strong> Queries projects table with joins, role filtering, and display-preparation columns.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-get-or-create-budget-holder" class="level3">
+<h3 class="anchored" data-anchor-id="fn-get-or-create-budget-holder"><code>get_or_create_budget_holder</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:3055</code></li>
+<li><strong>Signature line:</strong> <code>get_or_create_budget_holder &lt;- function(con, name, surname, cost_center, email) {</code></li>
+<li><strong>Purpose:</strong> Finds existing budget holder or inserts one from “Other / not listed” modal fields.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-scalar-text-update-flow" class="level3">
+<h3 class="anchored" data-anchor-id="fn-scalar-text-update-flow"><code>scalar_text</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5062</code></li>
+<li><strong>Signature line:</strong> <code>scalar_text &lt;- function(x, default = "") {</code></li>
+<li><strong>Purpose:</strong> Normalizes potentially vector/empty values into a single trimmed string or NULL.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+<li><strong>Important note:</strong> this later local <code>scalar_text()</code> shadows the earlier helper inside <code>update_project_btn</code> scope, to normalize DB bind params safely.</li>
+</ul>
+</section>
+<section id="fn-scalar-numeric" class="level3">
+<h3 class="anchored" data-anchor-id="fn-scalar-numeric"><code>scalar_numeric</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5069</code></li>
+<li><strong>Signature line:</strong> <code>scalar_numeric &lt;- function(x, default = NA_real_) {</code></li>
+<li><strong>Purpose:</strong> Normalizes potentially vector numeric input to one safe scalar for DB binding.</li>
+<li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+</section>
+<section id="reactive-event-catalog-all-observeevent" class="level2">
+<h2 class="anchored" data-anchor-id="reactive-event-catalog-all-observeevent">Reactive Event Catalog (All <code>observeEvent</code>)</h2>
+<p>Every event trigger is listed with the panel it belongs to and what action it performs.</p>
+<table class="table">
+<colgroup>
+<col style="width: 30%">
+<col style="width: 23%">
+<col style="width: 23%">
+<col style="width: 23%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Line</th>
+<th>Trigger</th>
+<th>UI panel/area</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">891</td>
+<td><code>input$debug_db_btn</code></td>
+<td>Administer Projects -&gt; Database Management</td>
+<td>Shows modal with table counts and SQLite file metadata for quick diagnostics.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">995</td>
+<td><code>input$client_url_search</code></td>
+<td>General / Shared</td>
+<td>Caches browser query-string reactively for auth canonicalization logic.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2266</td>
+<td><code>input$show_register_btn</code></td>
+<td>Authentication / Login area</td>
+<td>Opens user self-registration modal.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2297</td>
+<td><code>input$register_btn</code></td>
+<td>Authentication / Login area</td>
+<td>Validates registration inputs and inserts user into DB.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2454</td>
+<td><code>input$dev_auth_mode</code></td>
+<td>Authentication / Login area</td>
+<td>Switches between local/LDAP dev modes and resets session state.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2531</td>
+<td><code>input$dev_login_btn</code></td>
+<td>Authentication / Login area</td>
+<td>Simulates LDAP login in development by setting <code>DEV_REMOTE_USER</code>.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2539</td>
+<td><code>input$ldap_profile_save_btn</code></td>
+<td>Authentication / Login area</td>
+<td>Persists profile-completion values for LDAP user and finalizes login.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2589</td>
+<td><code>input$ldap_profile_cancel_btn</code></td>
+<td>Authentication / Login area</td>
+<td>Cancels profile completion flow and asks user to reload later.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2598</td>
+<td><code>input$ldap_relogin_btn</code></td>
+<td>Authentication / Login area</td>
+<td>Unblocks LDAP login after a profile interruption.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2608</td>
+<td><code>input$login_btn</code></td>
+<td>Authentication / Login area</td>
+<td>Processes local password login (disabled in LDAP mode).</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2633</td>
+<td><code>input$logout_btn</code></td>
+<td>General / Shared</td>
+<td>Handles local logout or LDAP end-session guidance modal.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2903</td>
+<td><code>input$new_project_btn</code></td>
+<td>Apply for Projects / Projects table</td>
+<td>Opens project-create modal and auto-selects budget holder by group mapping.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3079</td>
+<td><code>input$create_project_btn</code></td>
+<td>Apply for Projects / Projects table</td>
+<td>Validates, inserts new project, sends creation email, and refreshes project table.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3315</td>
+<td><code>user$logged_in</code></td>
+<td>General / Shared</td>
+<td>Loads project list after successful login.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3324</td>
+<td><code>input$manage_budget_holders_btn</code></td>
+<td>Administer Projects -&gt; Budget Holders</td>
+<td>Opens admin management modal for the selected reference-data domain.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3362</td>
+<td><code>input$manage_service_types_btn</code></td>
+<td>Administer Projects -&gt; Service Types</td>
+<td>Opens admin management modal for the selected reference-data domain.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3398</td>
+<td><code>input$manage_sequencing_depths_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+<td>Opens admin management modal for the selected reference-data domain.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3432</td>
+<td><code>input$manage_sequencing_cycles_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Cycles</td>
+<td>Opens admin management modal for the selected reference-data domain.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3456</td>
+<td><code>input$manage_users_btn</code></td>
+<td>Administer Projects -&gt; Users</td>
+<td>Opens admin management modal for the selected reference-data domain.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3493</td>
+<td><code>input$manage_genomes_btn</code></td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+<td>Opens admin management modal for the selected reference-data domain.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3519</td>
+<td><code>input$manage_types_btn</code></td>
+<td>Administer Projects -&gt; Sample Types</td>
+<td>Opens admin management modal for the selected reference-data domain.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3545</td>
+<td><code>input$manage_sequencing_platforms_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+<td>Opens admin management modal for the selected reference-data domain.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3571</td>
+<td><code>input$manage_announcements_btn</code></td>
+<td>Administer Projects -&gt; Landing Text</td>
+<td>Opens landing-text management modal with panel selector and item table.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3765</td>
+<td><code>input$announcement_add_btn</code></td>
+<td>Administer Projects -&gt; Landing Text</td>
+<td>Handles landing-text CRUD/reordering flow in admin panel.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3793</td>
+<td><code>input$save_announcement_item_btn</code></td>
+<td>Administer Projects -&gt; Landing Text</td>
+<td>Reactive event handler tied to this trigger; see linked line for exact logic.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3841</td>
+<td><code>input$announcement_edit_btn</code></td>
+<td>Administer Projects -&gt; Landing Text</td>
+<td>Handles landing-text CRUD/reordering flow in admin panel.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3873</td>
+<td><code>input$update_announcement_item_btn</code></td>
+<td>Administer Projects -&gt; Landing Text</td>
+<td>Applies updates from edit modal to DB and refreshes affected reactive tables.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3911</td>
+<td><code>input$announcement_delete_btn</code></td>
+<td>Administer Projects -&gt; Landing Text</td>
+<td>Handles landing-text CRUD/reordering flow in admin panel.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3933</td>
+<td><code>input$confirm_delete_announcement_item_btn</code></td>
+<td>Administer Projects -&gt; Landing Text</td>
+<td>Executes confirmed delete, then reloads related data.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3956</td>
+<td><code>input$announcement_move_up_btn</code></td>
+<td>Administer Projects -&gt; Landing Text</td>
+<td>Handles landing-text CRUD/reordering flow in admin panel.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4002</td>
+<td><code>input$announcement_move_down_btn</code></td>
+<td>Administer Projects -&gt; Landing Text</td>
+<td>Handles landing-text CRUD/reordering flow in admin panel.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4051</td>
+<td><code>input$add_budget_holder_btn</code></td>
+<td>Administer Projects -&gt; Budget Holders</td>
+<td>Validates form fields and inserts a new row into the corresponding reference table.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4096</td>
+<td><code>input$add_service_type_btn</code></td>
+<td>Administer Projects -&gt; Service Types</td>
+<td>Validates form fields and inserts a new row into the corresponding reference table.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4129</td>
+<td><code>input$edit_service_type_btn</code></td>
+<td>Administer Projects -&gt; Service Types</td>
+<td>Opens edit modal for currently selected row in the matching admin table.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4153</td>
+<td><code>input$edit_budget_holder_btn</code></td>
+<td>Administer Projects -&gt; Budget Holders</td>
+<td>Opens edit modal for currently selected row in the matching admin table.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4176</td>
+<td><code>input$update_budget_holder_btn</code></td>
+<td>Administer Projects -&gt; Budget Holders</td>
+<td>Applies updates from edit modal to DB and refreshes affected reactive tables.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4222</td>
+<td><code>input$edit_genome_btn</code></td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+<td>Opens edit modal for currently selected row in the matching admin table.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4242</td>
+<td><code>input$update_genome_btn</code></td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+<td>Applies updates from edit modal to DB and refreshes affected reactive tables.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4270</td>
+<td><code>input$edit_type_btn</code></td>
+<td>Administer Projects -&gt; Sample Types</td>
+<td>Opens edit modal for currently selected row in the matching admin table.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4290</td>
+<td><code>input$update_type_btn</code></td>
+<td>Administer Projects -&gt; Sample Types</td>
+<td>Applies updates from edit modal to DB and refreshes affected reactive tables.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4317</td>
+<td><code>input$edit_sequencing_platform_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+<td>Opens edit modal for currently selected row in the matching admin table.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4337</td>
+<td><code>input$update_sequencing_platform_update_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+<td>Applies updates from edit modal to DB and refreshes affected reactive tables.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4364</td>
+<td><code>input$update_service_type_btn</code></td>
+<td>Administer Projects -&gt; Service Types</td>
+<td>Applies updates from edit modal to DB and refreshes affected reactive tables.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4387</td>
+<td><code>input$add_sequencing_depth_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+<td>Validates form fields and inserts a new row into the corresponding reference table.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4420</td>
+<td><code>input$edit_sequencing_depth_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+<td>Opens edit modal for currently selected row in the matching admin table.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4444</td>
+<td><code>input$update_sequencing_depth_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+<td>Applies updates from edit modal to DB and refreshes affected reactive tables.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4468</td>
+<td><code>input$add_sequencing_cycles_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Cycles</td>
+<td>Validates form fields and inserts a new row into the corresponding reference table.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4495</td>
+<td><code>input$add_user_admin_btn</code></td>
+<td>Administer Projects -&gt; Users</td>
+<td>Validates form fields and inserts a new row into the corresponding reference table.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4541</td>
+<td><code>input$add_genome_btn</code></td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+<td>Validates form fields and inserts a new row into the corresponding reference table.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4568</td>
+<td><code>input$add_type_btn</code></td>
+<td>Administer Projects -&gt; Sample Types</td>
+<td>Validates form fields and inserts a new row into the corresponding reference table.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4591</td>
+<td><code>input$add_sequencing_platform_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+<td>Validates form fields and inserts a new row into the corresponding reference table.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4616</td>
+<td><code>input$delete_budget_holder_btn</code></td>
+<td>Administer Projects -&gt; Budget Holders</td>
+<td>Opens delete confirmation for selected row.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4635</td>
+<td><code>input$confirm_delete_budget_holder_btn</code></td>
+<td>Administer Projects -&gt; Budget Holders</td>
+<td>Executes confirmed delete, then reloads related data.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4650</td>
+<td><code>input$delete_service_type_btn</code></td>
+<td>Administer Projects -&gt; Service Types</td>
+<td>Opens delete confirmation for selected row.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4669</td>
+<td><code>input$confirm_delete_service_type_btn</code></td>
+<td>Administer Projects -&gt; Service Types</td>
+<td>Executes confirmed delete, then reloads related data.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4684</td>
+<td><code>input$delete_sequencing_depth_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+<td>Opens delete confirmation for selected row.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4703</td>
+<td><code>input$confirm_delete_sequencing_depth_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Depths</td>
+<td>Executes confirmed delete, then reloads related data.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4718</td>
+<td><code>input$delete_sequencing_cycles_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Cycles</td>
+<td>Opens delete confirmation for selected row.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4737</td>
+<td><code>input$confirm_delete_sequencing_cycles_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Cycles</td>
+<td>Executes confirmed delete, then reloads related data.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4752</td>
+<td><code>input$delete_user_admin_btn</code></td>
+<td>Administer Projects -&gt; Users</td>
+<td>Opens delete confirmation for selected row.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4776</td>
+<td><code>input$confirm_delete_user_btn</code></td>
+<td>Administer Projects -&gt; Users</td>
+<td>Executes confirmed delete, then reloads related data.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4791</td>
+<td><code>input$delete_genome_btn</code></td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+<td>Opens delete confirmation for selected row.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4810</td>
+<td><code>input$confirm_delete_genome_btn</code></td>
+<td>Administer Projects -&gt; Reference Genomes</td>
+<td>Executes confirmed delete, then reloads related data.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4825</td>
+<td><code>input$delete_type_btn</code></td>
+<td>Administer Projects -&gt; Sample Types</td>
+<td>Opens delete confirmation for selected row.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4844</td>
+<td><code>input$confirm_delete_type_btn</code></td>
+<td>Administer Projects -&gt; Sample Types</td>
+<td>Executes confirmed delete, then reloads related data.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4859</td>
+<td><code>input$delete_sequencing_platform_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+<td>Opens delete confirmation for selected row.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4878</td>
+<td><code>input$confirm_delete_sequencing_platform_btn</code></td>
+<td>Administer Projects -&gt; Sequencing Platforms</td>
+<td>Executes confirmed delete, then reloads related data.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4895</td>
+<td><code>input$edit_project_btn</code></td>
+<td>Apply for Projects / Projects table</td>
+<td>Opens edit modal for selected project with permission checks.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5027</td>
+<td><code>input$update_project_btn</code></td>
+<td>Apply for Projects / Projects table</td>
+<td>Updates selected project row and optionally sends data-released email.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5194</td>
+<td><code>input$delete_project_btn</code></td>
+<td>Apply for Projects / Projects table</td>
+<td>Shows admin-only delete confirmation for selected project.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5220</td>
+<td><code>input$confirm_delete_btn</code></td>
+<td>General / Shared</td>
+<td>Deletes project row from DB and refreshes table.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5236</td>
+<td><code>input$update_status_btn</code></td>
+<td>Apply for Projects / Projects table</td>
+<td>Opens status-update modal (admin only).</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5271</td>
+<td><code>input$confirm_status_update_btn</code></td>
+<td>Apply for Projects / Projects table</td>
+<td>Writes new status and sends data-released email when applicable.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5350</td>
+<td><code>input$validate_db_btn</code></td>
+<td>Administer Projects -&gt; Database Management</td>
+<td>Runs DB validation and reports health status.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5395</td>
+<td><code>input$restore_db_btn</code></td>
+<td>Administer Projects -&gt; Database Management</td>
+<td>Starts DB restore flow after backup-file selection.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5414</td>
+<td><code>input$confirm_restore_btn</code></td>
+<td>Administer Projects -&gt; Database Management</td>
+<td>Performs restore (with safety backup) and restarts app state expectations.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="reactive-observer-blocks-observe" class="level2">
+<h2 class="anchored" data-anchor-id="reactive-observer-blocks-observe">Reactive Observer Blocks (<code>observe</code>)</h2>
+<table class="table">
+<colgroup>
+<col style="width: 57%">
+<col style="width: 42%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Line</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">873</td>
+<td>Runs startup DB validation and opens warning modal if required tables are missing.</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2368</td>
+<td>Shows/hides login screen depending on LDAP header/dev state and current session login state.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2383</td>
+<td>Main LDAP auto-login observer: resolves username from trusted sources and executes <code>handle_ldap_login()</code>.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="sql-behavior-map-querywrite-intent-by-domain" class="level2">
+<h2 class="anchored" data-anchor-id="sql-behavior-map-querywrite-intent-by-domain">SQL Behavior Map (Query/Write Intent by Domain)</h2>
+<section id="line-by-line-sql-index" class="level3">
+<h3 class="anchored" data-anchor-id="line-by-line-sql-index">Line-by-Line SQL Index</h3>
+<p>The table below indexes each detected DB call (<code>dbGetQuery</code>, <code>dbExecute</code>) in <code>app.R</code> so you can jump from behavior to exact query line.</p>
+<table class="table">
+<colgroup>
+<col style="width: 21%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Line</th>
+<th>Active</th>
+<th>Call</th>
+<th>SQL verb</th>
+<th>Table(s)</th>
+<th>Query preview</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;"><code>715</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>CREATE TABLE</code></td>
+<td><code>announcement_panels</code></td>
+<td>CREATE TABLE IF NOT EXISTS announcement_panels ( id INTEGER PRIMARY KEY AUTOINCREMENT, panel_key TEXT UNIQUE NOT NULL, title TEXT, subtitle TEXT, display_order INTEGER NOT NULL,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>728</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>CREATE TABLE</code></td>
+<td><code>announcement_items</code></td>
+<td>CREATE TABLE IF NOT EXISTS announcement_items ( id INTEGER PRIMARY KEY AUTOINCREMENT, panel_id INTEGER NOT NULL, display_order INTEGER NOT NULL, markdown_text TEXT NOT NULL, is_…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>746</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>announcement_panels</code></td>
+<td>SELECT id, panel_key FROM announcement_panels</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>757</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>announcement_panels</code></td>
+<td>INSERT INTO announcement_panels (panel_key, title, subtitle, display_order, is_active, updated_by) VALUES (?, ?, ?, ?, 1, ?)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>768</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>announcement_panels</code></td>
+<td>SELECT id FROM announcement_panels WHERE panel_key = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>780</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>announcement_items</code></td>
+<td>INSERT INTO announcement_items (panel_id, display_order, markdown_text, is_active, updated_by) VALUES (?, ?, ?, 1, ?)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>822</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>unknown</code></td>
+<td><code>(dynamic/unknown)</code></td>
+<td>(query provided via variable/expression)</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>823</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>unknown</code></td>
+<td><code>(dynamic/unknown)</code></td>
+<td>(query provided via variable/expression)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>862</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>(dynamic/unknown)</code></td>
+<td>SELECT 1 as test</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>896</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>(dynamic/unknown)</code></td>
+<td>SELECT COUNT(*) as count FROM</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>1487</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>budget_holders</code></td>
+<td>SELECT id, name, surname, cost_center FROM budget_holders</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>1639</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT * FROM users WHERE username = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>1682</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>users</code></td>
+<td>INSERT INTO users (username, full_name, password, email, phone, research_group, is_admin) VALUES (?, ?, ?, ?, ?, ?, 0)</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>1694</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>users</code></td>
+<td>INSERT INTO users (username, password, email, phone, research_group, is_admin) VALUES (?, ?, ?, ?, ?, 0)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>1706</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT * FROM users WHERE username = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>1715</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>users</code></td>
+<td>UPDATE users SET research_group = ? WHERE username = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>1719</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT * FROM users WHERE username = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>1743</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>users</code></td>
+<td>UPDATE users SET email = ?, phone = ?, research_group = ?, full_name = ? WHERE username = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>1754</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>users</code></td>
+<td>UPDATE users SET email = ?, phone = ?, research_group = ? WHERE username = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>1765</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT * FROM users WHERE username = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>1817</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>PRAGMA</code></td>
+<td><code>table_info</code></td>
+<td>PRAGMA table_info(users)</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>1844</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>unknown</code></td>
+<td><code>(dynamic/unknown)</code></td>
+<td>(query provided via variable/expression)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>1858</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>announcement_panels</code></td>
+<td>SELECT id FROM announcement_panels WHERE panel_key = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>1874</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>unknown</code></td>
+<td><code>(dynamic/unknown)</code></td>
+<td>(query provided via variable/expression)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>1878</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>announcement_items</code></td>
+<td>SELECT id FROM announcement_items WHERE panel_id = ? ORDER BY display_order, id</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>1886</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>announcement_items</code></td>
+<td>UPDATE announcement_items SET display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>1930</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT username, full_name FROM users ORDER BY username</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>1932</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT username FROM users ORDER BY username</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>1945</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>budget_holders</code></td>
+<td>SELECT id, name, surname, cost_center, email FROM budget_holders ORDER BY name, surname</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>1953</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>service_types</code></td>
+<td>SELECT id, service_type, kit, costs_per_sample FROM service_types ORDER BY service_type</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>1961</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>sequencing_depths</code></td>
+<td>SELECT id, depth_description, cost_upto_150_cycles, cost_upto_300_cycles FROM sequencing_depths ORDER BY depth_description</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>1969</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>sequencing_cycles</code></td>
+<td>SELECT id, cycles_description FROM sequencing_cycles ORDER BY cycles_description</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>1977</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>reference_genomes</code></td>
+<td>SELECT name FROM reference_genomes ORDER BY name</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>1985</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>types</code></td>
+<td>SELECT id, name FROM types ORDER BY name</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>1993</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>sequencing_platforms</code></td>
+<td>SELECT id, name FROM sequencing_platforms ORDER BY name</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>2004</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT id, username, full_name, email, phone, research_group, is_admin FROM users</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>2006</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT id, username, email, phone, research_group, is_admin FROM users</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>2061</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>email_templates</code></td>
+<td>SELECT subject, body_template FROM email_templates WHERE template_name = ‘project_creation’ AND is_active = 1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>2076</code></td>
+<td>No (commented)</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT email FROM users WHERE is_admin = 1</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>2161</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT username, full_name, email FROM users WHERE username = ? LIMIT 1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>2167</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT username, full_name, email FROM users WHERE full_name = ? LIMIT 1</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>2176</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT username, full_name, email FROM users WHERE id = ? LIMIT 1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>2184</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT username, email FROM users WHERE username = ? LIMIT 1</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>2192</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT username, email FROM users WHERE id = ? LIMIT 1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>2269</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>budget_holders</code></td>
+<td>SELECT DISTINCT name, surname FROM budget_holders ORDER BY name, surname</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>2319</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT id FROM users WHERE username = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>2336</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>users</code></td>
+<td>INSERT INTO users (username, full_name, password, email, phone, research_group, is_admin) VALUES (?, ?, ?, ?, ?, ?, 0)</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>2348</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>users</code></td>
+<td>INSERT INTO users (username, password, email, phone, research_group, is_admin) VALUES (?, ?, ?, ?, ?, 0)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>2564</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>users</code></td>
+<td>INSERT INTO users (username, password, email, phone, research_group, is_admin) VALUES (?, ?, ?, ?, ?, 0)</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>2569</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>users</code></td>
+<td>UPDATE users SET email = ?, phone = ?, research_group = ? WHERE username = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>2581</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT * FROM users WHERE username = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>2619</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT * FROM users WHERE username = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>2743</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>projects, users, types, budget_holders, service_types, sequencing_depths, sequencing_cycles</code></td>
+<td>SELECT p.*, as created_by, t.name as type_name, bh.name as budget_holder_name, bh.surname as budget_holder_surname, bh.cost_center, st.service_type, sd.depth_description, sc.cyc…</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>2761</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>projects, users, types, budget_holders, service_types, sequencing_depths, sequencing_cycles</code></td>
+<td>SELECT p.*, as created_by, t.name as type_name, bh.name as budget_holder_name, bh.surname as budget_holder_surname, bh.cost_center, st.service_type, sd.depth_description, sc.cyc…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>2997</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT research_group FROM users WHERE id = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>3061</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>budget_holders</code></td>
+<td>SELECT id FROM budget_holders WHERE name = ? AND surname = ? AND cost_center = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>3068</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>budget_holders</code></td>
+<td>INSERT INTO budget_holders (name, surname, cost_center, email) VALUES (?, ?, ?, ?)</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>3073</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>budget_holders</code></td>
+<td>SELECT id FROM budget_holders WHERE name = ? AND surname = ? AND cost_center = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>3128</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>projects</code></td>
+<td>INSERT INTO projects (project_name, user_id, responsible_user, reference_genome, service_type_id, budget_id, description, num_samples, sequencing_platform, sequencing_depth_id, …</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>3152</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>(dynamic/unknown)</code></td>
+<td>SELECT last_insert_rowid() AS id</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>3153</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>projects</code></td>
+<td>SELECT project_id FROM projects WHERE id = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>3176</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>budget_holders</code></td>
+<td>SELECT * FROM budget_holders WHERE id = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>3177</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT email FROM users WHERE id = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>3809</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>announcement_panels</code></td>
+<td>SELECT id FROM announcement_panels WHERE panel_key = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>3819</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>announcement_items</code></td>
+<td>SELECT COALESCE(MAX(display_order), 0) + 1 AS next_order FROM announcement_items WHERE panel_id = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>3825</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>announcement_items</code></td>
+<td>INSERT INTO announcement_items (panel_id, display_order, markdown_text, is_active, updated_by) VALUES (?, ?, ?, ?, ?) admin</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>3894</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>announcement_items</code></td>
+<td>UPDATE announcement_items SET markdown_text = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ? admin</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>3948</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>DELETE</code></td>
+<td><code>announcement_items</code></td>
+<td>DELETE FROM announcement_items WHERE id = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>3981</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>announcement_items</code></td>
+<td>UPDATE announcement_items SET display_order = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ? admin</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>3989</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>announcement_items</code></td>
+<td>UPDATE announcement_items SET display_order = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ? admin</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>4027</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>announcement_items</code></td>
+<td>UPDATE announcement_items SET display_order = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ? admin</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>4035</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>announcement_items</code></td>
+<td>UPDATE announcement_items SET display_order = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ? admin</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>4063</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>budget_holders</code></td>
+<td>SELECT id FROM budget_holders WHERE cost_center = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>4073</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>budget_holders</code></td>
+<td>INSERT INTO budget_holders (name, surname, cost_center, email) VALUES (?, ?, ?, ?)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>4112</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>service_types</code></td>
+<td>INSERT INTO service_types (service_type, kit, costs_per_sample) VALUES (?, ?, ?)</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>4194</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>budget_holders</code></td>
+<td>SELECT id FROM budget_holders WHERE cost_center = ? AND id != ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>4204</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>budget_holders</code></td>
+<td>UPDATE budget_holders SET name = ?, surname = ?, cost_center = ?, email = ? WHERE id = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>4262</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>reference_genomes</code></td>
+<td>UPDATE reference_genomes SET name = ? WHERE name = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>4309</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>types</code></td>
+<td>UPDATE types SET name = ? WHERE id = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>4356</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>sequencing_platforms</code></td>
+<td>UPDATE sequencing_platforms SET name = ? WHERE id = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>4371</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>service_types</code></td>
+<td>UPDATE service_types SET service_type = ?, kit = ?, costs_per_sample = ? WHERE id = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>4403</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>sequencing_depths</code></td>
+<td>INSERT INTO sequencing_depths (depth_description, cost_upto_150_cycles, cost_upto_300_cycles) VALUES (?, ?, ?)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>4451</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>sequencing_depths</code></td>
+<td>UPDATE sequencing_depths SET depth_description = ?, cost_upto_150_cycles = ?, cost_upto_300_cycles = ? WHERE id = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>4484</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>sequencing_cycles</code></td>
+<td>INSERT INTO sequencing_cycles (cycles_description) VALUES (?)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>4511</code></td>
+<td>Yes</td>
+<td><code>dbGetQuery</code></td>
+<td><code>SELECT</code></td>
+<td><code>users</code></td>
+<td>SELECT id FROM users WHERE username = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>4520</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>users</code></td>
+<td>INSERT INTO users (username, password, email, is_admin) VALUES (?, ?, ?, ?)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>4557</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>reference_genomes</code></td>
+<td>INSERT INTO reference_genomes (name) VALUES (?)</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>4584</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>types</code></td>
+<td>INSERT INTO types (name) VALUES (?)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>4607</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>sequencing_platforms</code></td>
+<td>INSERT INTO sequencing_platforms (name) VALUES (?)</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>4642</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>DELETE</code></td>
+<td><code>budget_holders</code></td>
+<td>DELETE FROM budget_holders WHERE id = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>4676</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>DELETE</code></td>
+<td><code>service_types</code></td>
+<td>DELETE FROM service_types WHERE service_type = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>4710</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>DELETE</code></td>
+<td><code>sequencing_depths</code></td>
+<td>DELETE FROM sequencing_depths WHERE depth_description = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>4744</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>DELETE</code></td>
+<td><code>sequencing_cycles</code></td>
+<td>DELETE FROM sequencing_cycles WHERE cycles_description = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>4783</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>DELETE</code></td>
+<td><code>users</code></td>
+<td>DELETE FROM users WHERE id = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>4817</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>DELETE</code></td>
+<td><code>reference_genomes</code></td>
+<td>DELETE FROM reference_genomes WHERE name = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>4851</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>DELETE</code></td>
+<td><code>types</code></td>
+<td>DELETE FROM types WHERE name = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>4885</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>DELETE</code></td>
+<td><code>sequencing_platforms</code></td>
+<td>DELETE FROM sequencing_platforms WHERE name = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>5111</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>projects</code></td>
+<td>UPDATE projects SET project_name = ?, reference_genome = ?, service_type_id = ?, budget_id = ?, responsible_user = ?, description = ?, updated_at = CURRENT_TIMESTAMP, num_sample…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>5137</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>projects</code></td>
+<td>UPDATE projects SET project_name = ?, reference_genome = ?, service_type_id = ?, budget_id = ?, responsible_user = ?, description = ?, updated_at = CURRENT_TIMESTAMP, num_sample…</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>5227</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>DELETE</code></td>
+<td><code>projects</code></td>
+<td>DELETE FROM projects WHERE id = ?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>5298</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>UPDATE</code></td>
+<td><code>projects</code></td>
+<td>UPDATE projects SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><code>5377</code></td>
+<td>Yes</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>backup_logs</code></td>
+<td>INSERT INTO backup_logs (backup_timestamp, backup_size, backed_up_by) VALUES (?, ?, ?) %Y-%m-%d %H:%M:%S</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><code>5467</code></td>
+<td>No (commented)</td>
+<td><code>dbExecute</code></td>
+<td><code>INSERT</code></td>
+<td><code>backup_logs</code></td>
+<td># INSERT INTO backup_logs (backup_timestamp, backup_size, backed_up_by) # VALUES (?, ?, ?) # %Y-%m-%d %H:%M:%S</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="domain-summary" class="level3">
+<h3 class="anchored" data-anchor-id="domain-summary">Domain Summary</h3>
+</section>
+<section id="users-table" class="level3">
+<h3 class="anchored" data-anchor-id="users-table"><code>users</code> table</h3>
+<ul>
+<li><strong>Reads:</strong> login lookup, LDAP user lookup, responsible-user email/full-name resolution, admin user listing.</li>
+<li><strong>Writes:</strong> self-registration insert, LDAP auto-create/update, admin add/delete user, profile completion updates.</li>
+<li><strong>Key lines:</strong> 1639, 1682, 1694, 1715, 1735-1754, 1930-1932, 2004-2006, 2319, 2336/2348, 2564/2569, 2619, 4495-4535, 4783.</li>
+</ul>
+</section>
+<section id="projects-table" class="level3">
+<h3 class="anchored" data-anchor-id="projects-table"><code>projects</code> table</h3>
+<ul>
+<li><strong>Reads:</strong> project list (admin/non-admin variants with joins), selected project retrieval in edit/delete/status flows.</li>
+<li><strong>Writes:</strong> create project, update project fields, delete project, update status.</li>
+<li><strong>Key lines:</strong> 2743/2761, 3128, 3152/3153, 5111/5137, 5227, 5298.</li>
+</ul>
+</section>
+<section id="budget_holders-table" class="level3">
+<h3 class="anchored" data-anchor-id="budget_holders-table"><code>budget_holders</code> table</h3>
+<ul>
+<li><strong>Reads:</strong> reference list + group mapping + selected budget holder for emails.</li>
+<li><strong>Writes:</strong> add/edit/delete and on-demand create via “Other / not listed”.</li>
+<li><strong>Key lines:</strong> 1487, 1945, 2997, 3061/3068/3073, 4063/4073, 4194/4204, 4642.</li>
+</ul>
+</section>
+<section id="service_types-sequencing_depths-sequencing_cycles-types-sequencing_platforms-reference_genomes" class="level3">
+<h3 class="anchored" data-anchor-id="service_types-sequencing_depths-sequencing_cycles-types-sequencing_platforms-reference_genomes"><code>service_types</code>, <code>sequencing_depths</code>, <code>sequencing_cycles</code>, <code>types</code>, <code>sequencing_platforms</code>, <code>reference_genomes</code></h3>
+<ul>
+<li><strong>Reads:</strong> loaded into admin dropdowns and project joins.</li>
+<li><strong>Writes:</strong> full admin CRUD via dedicated modals/buttons.</li>
+<li><strong>Key lines:</strong> 1953-1993, 4112, 4371, 4403/4451/4710, 4484/4744, 4584/4309/4851, 4607/4356/4885, 4262/4557/4817.</li>
+</ul>
+</section>
+<section id="announcement_panels-and-announcement_items" class="level3">
+<h3 class="anchored" data-anchor-id="announcement_panels-and-announcement_items"><code>announcement_panels</code> and <code>announcement_items</code></h3>
+<ul>
+<li><strong>Reads:</strong> loaded for landing-page render and admin editing table.</li>
+<li><strong>Writes:</strong> auto-create/seed at startup + CRUD/reordering through <code>Manage Landing Text</code>.</li>
+<li><strong>Key lines:</strong> 714-831, 3809/3819/3825, 3894, 3948, 3981/3989/4027/4035.</li>
+</ul>
+</section>
+<section id="email_templates-and-email_logs" class="level3">
+<h3 class="anchored" data-anchor-id="email_templates-and-email_logs"><code>email_templates</code> and <code>email_logs</code></h3>
+<ul>
+<li><strong>Reads:</strong> loads template for project-creation message generation.</li>
+<li><strong>Writes:</strong> logs email send status/failure metadata.</li>
+<li><strong>Key lines:</strong> 2061, 2133-2144, 2234-2244.</li>
+</ul>
+</section>
+<section id="backup_logs" class="level3">
+<h3 class="anchored" data-anchor-id="backup_logs"><code>backup_logs</code></h3>
+<ul>
+<li><strong>Writes:</strong> backup metadata from manual backup download flow (and optional commented auto-backup block).</li>
+<li><strong>Key lines:</strong> 5377, 5467 (commented block context).</li>
+</ul>
+</section>
+</section>
+<section id="ui-panel-walkthrough-human-friendly" class="level2">
+<h2 class="anchored" data-anchor-id="ui-panel-walkthrough-human-friendly">UI Panel Walkthrough (Human-Friendly)</h2>
+<section id="login-screen-login_screen" class="level3">
+<h3 class="anchored" data-anchor-id="login-screen-login_screen">Login Screen (<code>login_screen</code>)</h3>
+<ul>
+<li>Contains informational text, local username/password inputs, registration link, and optional dev tools.</li>
+<li>In LDAP production, local password login is blocked; session identity comes from Apache LDAP auth headers/query canonicalization.</li>
+<li>Server linkages: <code>output$dev_tools_ui</code>, <code>output$dev_login_ui</code>, <code>observeEvent(input$login_btn)</code>, <code>observeEvent(input$show_register_btn)</code>, LDAP observers at lines ~2368 and ~2383.</li>
+</ul>
+</section>
+<section id="main-app-header" class="level3">
+<h3 class="anchored" data-anchor-id="main-app-header">Main App Header</h3>
+<ul>
+<li>Shows welcome text (<code>output$welcome_user</code>), dev mode badge, and logout/end-session button.</li>
+<li>In LDAP mode, logout action intentionally shows guidance (“close tab/window”) rather than clearing server auth.</li>
+</ul>
+</section>
+<section id="apply-for-projects" class="level3">
+<h3 class="anchored" data-anchor-id="apply-for-projects">Apply for Projects</h3>
+<ul>
+<li>Landing text panels (<code>output$announcement_blocks_ui</code>) are DB-driven and admin-editable.</li>
+<li>Project actions for users: create, edit (delete hidden for non-admin).</li>
+<li>Primary flows: <code>input$new_project_btn</code> -&gt; modal; <code>input$create_project_btn</code> writes DB + sends email; <code>input$edit_project_btn</code> and <code>input$update_project_btn</code> modify rows.</li>
+</ul>
+</section>
+<section id="administer-projects" class="level3">
+<h3 class="anchored" data-anchor-id="administer-projects">Administer Projects</h3>
+<ul>
+<li>Entry point for all reference-data management (users, budget holders, genomes, sample types, service types, depth, cycles, platforms, landing text).</li>
+<li>Includes DB backup download, restore upload, and validation controls.</li>
+<li>Every admin button opens a modal, each modal has add/edit/delete handlers, and each handler performs DB write + reactive refresh + notification.</li>
+</ul>
+</section>
+</section>
+<section id="notification-strategy" class="level2">
+<h2 class="anchored" data-anchor-id="notification-strategy">Notification Strategy</h2>
+<ul>
+<li><p><code>showNotification()</code> is used for user feedback after every validation failure and successful action.</p></li>
+<li><p>Patterns used:</p>
+<ul>
+<li><code>type = "error"</code> for invalid inputs, auth failures, DB failures.</li>
+<li><code>type = "warning"</code> for missing selections or non-blocking problems.</li>
+<li><code>type = "message"</code> for successful CRUD/deploy-like user actions.</li>
+</ul></li>
+<li><p>This gives immediate UX confirmation at every CRUD/event step.</p></li>
+</ul>
+</section>
+<section id="cross-reference-quick-index" class="level2">
+<h2 class="anchored" data-anchor-id="cross-reference-quick-index">Cross-Reference Quick Index</h2>
+<ul>
+<li><strong>Create project modal</strong>: <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2903</code> (open), <code>:3079</code> (submit).</li>
+<li><strong>Edit project modal</strong>: <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:4895</code> (open), <code>:5027</code> (submit).</li>
+<li><strong>Status update modal</strong>: <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5236</code> (open), <code>:5271</code> (submit).</li>
+<li><strong>Landing text management</strong>: <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:3571</code> and CRUD events <code>:3765</code> onward.</li>
+<li><strong>LDAP auto-login core</strong>: <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2383</code> + helpers around <code>:1103</code> and <code>:1635</code>.</li>
+<li><strong>DB backup/restore UI</strong>: <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2876-2893</code>; handlers at <code>:5350-5414</code>.</li>
+</ul>
+</section>
+<section id="caveats-and-technical-debt-notes" class="level2">
+<h2 class="anchored" data-anchor-id="caveats-and-technical-debt-notes">Caveats and Technical Debt Notes</h2>
+<ol type="1">
+<li><code>scalar_text()</code> is defined twice (global helper and local normalization helper inside update flow). This works due local scope but can confuse readers.</li>
+<li><code>dbExecute</code>/<code>dbGetQuery</code> calls are spread across many event handlers; transaction wrapping could improve consistency for multi-step writes.</li>
+<li>Email flow currently depends on Java/mail stack (<code>mailR</code>/<code>rJava</code>), which is sensitive to VM Java configuration.</li>
+<li>Backup restore intentionally requires explicit confirmation to reduce accidental overwrites.</li>
+<li>Announcement markdown is intentionally limited (safe subset) to avoid HTML/script injection.</li>
+</ol>
+</section>
+<section id="reading-checklist-for-new-maintainers" class="level2">
+<h2 class="anchored" data-anchor-id="reading-checklist-for-new-maintainers">Reading Checklist for New Maintainers</h2>
+<ol type="1">
+<li>Start with <code>validate_and_repair_database()</code> and auth mode setup to understand startup preconditions.</li>
+<li>Follow <code>complete_login()</code> + <code>load_projects()</code> to understand post-login state.</li>
+<li>Read one full CRUD chain end-to-end (e.g., service types) to understand modal -&gt; validation -&gt; SQL -&gt; refresh pattern.</li>
+<li>Read <code>send_project_creation_email()</code> and <code>send_data_released_email()</code> for notification side-effects.</li>
+<li>Read backup/restore handlers before doing production maintenance.</li>
+</ol>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        for (let i = 0; i < 2; i++) {
+          container.appendChild(note.children[i].cloneNode(true));
+        }
+        return container.innerHTML
+      } else {
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      return note.innerHTML;
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        console.log("RESIZE");
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
