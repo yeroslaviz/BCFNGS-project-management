@@ -2933,20 +2933,22 @@ server <- function(input, output, session) {
         column(6,
                selectInput("reference_genome", "Reference Genome *", 
                            choices = admin_data$reference_genomes),
-               selectInput("sequencing_depth_id", "Sequencing Depth *",
+               selectInput("sequencing_depth_id", "Data Amount (Total Reads) *",
                            choices = if(!is.null(admin_data$sequencing_depths) && nrow(admin_data$sequencing_depths) > 0) {
                              setNames(admin_data$sequencing_depths$id, 
                                       admin_data$sequencing_depths$depth_description)
                            } else {
                              c("No sequencing depths available" = "")
                            }),
-               selectInput("sequencing_cycles_id", "Sequencing Cycles *",
+               div(style = "font-size: 11px;", helpText("Estimated total sequencing output for this project (e.g., up to 200M / 400M / 800M reads).")),
+               selectInput("sequencing_cycles_id", "Read Length (Cycles) *",
                            choices = if(!is.null(admin_data$sequencing_cycles) && nrow(admin_data$sequencing_cycles) > 0) {
                              setNames(admin_data$sequencing_cycles$id, 
                                       admin_data$sequencing_cycles$cycles_description)
                            } else {
                              c("No sequencing cycles available" = "")
                            }),
+               div(style = "font-size: 11px;", helpText("Read setup, e.g., 2x75 (up to 150 cycles) or 2x150 (up to 300 cycles).")),
                selectInput("budget_id", "Budget Holder *",
                            choices = if(!is.null(admin_data$budget_holders) && nrow(admin_data$budget_holders) > 0) {
                              c(
@@ -4937,14 +4939,16 @@ server <- function(input, output, session) {
                selectInput("edit_reference_genome", "Reference Genome *", 
                            choices = admin_data$reference_genomes,
                            selected = project$reference_genome),
-               selectInput("edit_sequencing_depth_id", "Sequencing Depth *",
+               selectInput("edit_sequencing_depth_id", "Data Amount (Total Reads) *",
                            choices = setNames(admin_data$sequencing_depths$id, 
                                               admin_data$sequencing_depths$depth_description),
                            selected = project$sequencing_depth_id),
-               selectInput("edit_sequencing_cycles_id", "Sequencing Cycles *",
+               div(style = "font-size: 11px;", helpText("Estimated total sequencing output for this project (e.g., up to 200M / 400M / 800M reads).")),
+               selectInput("edit_sequencing_cycles_id", "Read Length (Cycles) *",
                            choices = setNames(admin_data$sequencing_cycles$id, 
                                               admin_data$sequencing_cycles$cycles_description),
                            selected = project$sequencing_cycles_id),
+               div(style = "font-size: 11px;", helpText("Read setup, e.g., 2x75 (up to 150 cycles) or 2x150 (up to 300 cycles).")),
                selectInput("edit_budget_id", "Budget Holder *",
                            choices = c(
                              setNames(as.character(admin_data$budget_holders$id),
