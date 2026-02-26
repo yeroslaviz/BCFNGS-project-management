@@ -36,6 +36,7 @@ Sys.setenv(
 )
 shiny::runApp("sequencing-app")
 ```
+To run this locally, replace "your_username" with actual user name.
 
 #### Local dev — unset
 

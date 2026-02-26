@@ -2915,6 +2915,12 @@ server <- function(input, output, session) {
                numericInput("num_samples", "Number of Samples *", value = 1, min = 1, max = 1000),
                selectInput("sequencing_platform", "Sequencing Platform *",
                            choices = admin_data$sequencing_platforms$name),
+               selectInput("type_id", "Sample Type *",
+                           choices = if(!is.null(admin_data$types) && nrow(admin_data$types) > 0) {
+                             setNames(admin_data$types$id, admin_data$types$name)
+                           } else {
+                             c("No sample types available" = "")
+                           }),
                selectInput("service_type_id", "Service Type *",
                            choices = if(!is.null(admin_data$service_types) && nrow(admin_data$service_types) > 0) {
                              setNames(admin_data$service_types$id, 
@@ -2922,12 +2928,6 @@ server <- function(input, output, session) {
                                             "- €", admin_data$service_types$costs_per_sample, "/sample"))
                            } else {
                              c("No service types available" = "")
-                           }),
-               selectInput("type_id", "Sample Type *",
-                           choices = if(!is.null(admin_data$types) && nrow(admin_data$types) > 0) {
-                             setNames(admin_data$types$id, admin_data$types$name)
-                           } else {
-                             c("No sample types available" = "")
                            })
         ),
         column(6,
