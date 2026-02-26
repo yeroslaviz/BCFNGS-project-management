@@ -443,6 +443,24 @@ ui <- fluidPage(
     height: 50px;
     width: auto;
   }
+  #main_app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  #main_content {
+    flex: 1 0 auto;
+  }
+  .app-footer {
+    flex-shrink: 0;
+    padding: 8px 20px 14px 20px;
+    text-align: left;
+  }
+  .footer-logo {
+    height: 52px;
+    width: auto;
+    max-width: 360px;
+  }
   .institute-name {
     color: white !important;
     font-size: 1.2em;
@@ -649,7 +667,15 @@ ui <- fluidPage(
       ),
       
       # Main content with tabs for admins
-      uiOutput("main_content")
+      uiOutput("main_content"),
+      div(
+        class = "app-footer",
+        img(
+          src = "bioinfo_core_concept_01_lockup.svg",
+          class = "footer-logo",
+          alt = "Bioinformatics Core Facility"
+        )
+      )
     )
   )
 )
