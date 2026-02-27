@@ -358,35 +358,97 @@ Use this as the short operational checklist for normal feature delivery.
 
 ### Step 1: Start feature branch (local machine)
 
+We first create feature branch locally.
+
 ```bash
 cd /Users/yeroslaviz/Documents/Github/BCFNGS-project-management
+# # Switches your working branch to main (or make sure I'm already in the branch)
 git checkout main
+# # --ff-only means “update only if this is a clean fast-forward.”.
+# It prevents Git from creating an automatic merge commit during pull.
+# This keeps history cleaner and avoids accidental branch divergence surprises.
 git pull --ff-only origin main
+# Creates a new branch with that name and immediately switches onto it
 git checkout -b <feature-branch>
 ```
+
 
 ### Step 2: Commit and push (local machine)
 
 ```bash
 git add <files>
+```
+
+running `git status` here will show the results of what we added to the new branch
+
+```
+$git status
+
+On branch additional-cost-notifications
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        modified:   Documentation/chapters/change-log.qmd
+        modified:   Documentation/chapters/deploy-operations.qmd
+        modified:   Documentation/chapters/git-github.qmd
+        modified:   sequencing-app/app.R
+        modified:   sequencing-app/setup_database.R
+```
+
+```bash
 git commit -m "<message>"
-git push -u origin <feature-branch>
+git push -u origin <feature-branch> # The `-u` sets upstream so future pushes can be just git push
 ```
 
 ### Step 3: Test branch on test VM (`bcf-vm` or `ngs-testing-vm`)
 
+The sequence would be: update remote info -> move to correct branch -> update branch safely.
+
 ```bash
 cd /home/<user>/BCFNGS-project-management
-git fetch origin
+git fetch origin # update remote info - Downloads latest remote refs/commits, but don't touch your working files.
+# # Switches working branch (or creates/tracks local branch from remote).
 git checkout --track origin/<feature-branch>   # first time only
 # or: git checkout <feature-branch>            # if local branch already exists
+# Integrates any new commits from remote into your local branch. --ff-only guarantees no merge commit is created accidentally.
 git pull --ff-only origin <feature-branch>
 PUBLIC_BASE_URL="https://<vm-hostname>" ./scripts/deploy.sh
 ```
 
+Now, we can log in to the testing VM (e.g. `bcf-vm`) and test the new setting to see if everything works as expected. If we can see the new changes, continue to step 5 and merge the PR
+
 ### Step 4: Merge PR on GitHub
 
-Create PR from `<feature-branch>` to `main`, review, then merge.
+This should only be done, after the changes were varified on the test VM and were sucessfully integrated.
+
+The `git push -u` command from step 2 has this output:
+
+```
+Enumerating objects: 19, done.
+Counting objects: 100% (19/19), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (10/10), done.
+Writing objects: 100% (10/10), 6.28 KiB | 1.25 MiB/s, done.
+Total 10 (delta 8), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (8/8), completed with 8 local objects.
+remote:
+remote: Create a pull request for 'additional-cost-notifications' on GitHub by visiting:
+remote:      https://github.com/yeroslaviz/BCFNGS-project-management/pull/new/additional-cost-notifications
+remote:
+To github.com:yeroslaviz/BCFNGS-project-management.git
+ * [new branch]      additional-cost-notifications -> additional-cost-notifications
+branch 'additional-cost-notifications' set up to track 'origin/additional-cost-notifications'.
+```
+
+it automatically creates a pull request for the new branch.
+
+Then:
+
+- Confirm base: main and compare: additional-cost-notifications.
+- Click Create pull request.
+- Review Files changed.
+- Click Merge pull request (or Squash and merge if you prefer one commit).
+- Click Confirm merge.
+
 
 ### Step 5: Sync local `main` after merge
 
@@ -418,6 +480,30 @@ git push origin --delete <feature-branch>
 cd /home/<user>/BCFNGS-project-management
 git checkout main
 git branch -d <feature-branch>
+```
+
+### Step 8: Keep unmerged feature branches in sync with `main`
+
+If you keep a feature branch open while `main` keeps changing, sync `main` into that branch before final merge.
+
+This apply for example if If I have a new branch were I test a new feature. I don't merge it yet, but continue to modify the main branch.
+
+Recommended (rebase):
+
+```bash
+git checkout <feature-branch>
+git fetch origin
+git rebase origin/main
+git push --force-with-lease
+```
+
+Alternative (merge):
+
+```bash
+git checkout <feature-branch>
+git fetch origin
+git merge origin/main
+git push
 ```
 
 ### Notes

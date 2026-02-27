@@ -72,3 +72,6 @@ booklet/
 
 # local logo/design assets
 Logos/
+
+/.quarto/
+**/*.quarto_ipynb
