@@ -48,6 +48,10 @@ execute:
 7. Documentation updates:
    - **Deploy & Operations**: feature-branch deploy workflow on test VMs; explicit note that deploy keeps DB content.
    - **Git & GitHub**: added end-to-end feature branch workflow (create, push, test, merge, cleanup).
+8. Updated email recipient routing:
+   - project-creation email now goes only to `ngs@biochem.mpg.de`
+   - admin-triggered notification email remains the detailed 3-recipient mail (project creator + budget holder + `ngs@biochem.mpg.de`).
+9. Added a compact **Quick Branch-To-Production Flow** section to **Git & GitHub** for day-to-day branch/testing/merge/deploy operations.
 
 ## Changes on 25.02.2026
 

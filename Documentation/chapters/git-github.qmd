@@ -16,6 +16,7 @@ execute:
 - [Repo Setup on the VM](#repo-setup-on-the-vm)
 - [Daily VM Git workflow](#daily-vm-git-workflow)
 - [Feature Branch Workflow (Recommended)](#feature-branch-workflow-recommended)
+- [Quick Branch-To-Production Flow](#quick-branch-to-production-flow)
 
 ## GitHub Auth (new laptop)
 
@@ -350,3 +351,77 @@ Optional cleanup:
 git branch -d codex/<short-feature-name>
 git push origin --delete codex/<short-feature-name>
 ```
+
+## Quick Branch-To-Production Flow
+
+Use this as the short operational checklist for normal feature delivery.
+
+### Step 1: Start feature branch (local machine)
+
+```bash
+cd /Users/yeroslaviz/Documents/Github/BCFNGS-project-management
+git checkout main
+git pull --ff-only origin main
+git checkout -b <feature-branch>
+```
+
+### Step 2: Commit and push (local machine)
+
+```bash
+git add <files>
+git commit -m "<message>"
+git push -u origin <feature-branch>
+```
+
+### Step 3: Test branch on test VM (`bcf-vm` or `ngs-testing-vm`)
+
+```bash
+cd /home/<user>/BCFNGS-project-management
+git fetch origin
+git checkout --track origin/<feature-branch>   # first time only
+# or: git checkout <feature-branch>            # if local branch already exists
+git pull --ff-only origin <feature-branch>
+PUBLIC_BASE_URL="https://<vm-hostname>" ./scripts/deploy.sh
+```
+
+### Step 4: Merge PR on GitHub
+
+Create PR from `<feature-branch>` to `main`, review, then merge.
+
+### Step 5: Sync local `main` after merge
+
+```bash
+cd /Users/yeroslaviz/Documents/Github/BCFNGS-project-management
+git checkout main
+git pull --ff-only origin main
+```
+
+### Step 6: Deploy `main` to production (`ngs-vm`)
+
+```bash
+cd /home/yeroslaviz/BCFNGS-project-management
+git checkout main
+git pull --ff-only origin main
+PUBLIC_BASE_URL="https://ngs-vm.biochem.mpg.de" ./scripts/deploy.sh
+```
+
+### Step 7: Optional branch cleanup
+
+```bash
+# local
+git branch -d <feature-branch>
+
+# remote
+git push origin --delete <feature-branch>
+
+# test VM (optional)
+cd /home/<user>/BCFNGS-project-management
+git checkout main
+git branch -d <feature-branch>
+```
+
+### Notes
+
+- `--ff-only` avoids accidental merge commits on pull.
+- `deploy.sh` deploys code and restarts app; it does not rebuild DB.
+- Production deployment should use `main` unless an explicit pre-merge production test is required.
