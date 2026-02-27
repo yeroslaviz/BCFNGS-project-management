@@ -1,0 +1,502 @@
+---
+title: "Button to Function Map (app.R)"
+execute:
+  echo: false
+  warning: false
+format:
+  html:
+    mermaid-format: svg
+---
+
+# Overview
+
+- Source file: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R`
+- Generated: `2026-02-27 17:27`
+- Total `actionButton()` controls detected: **70**
+- Total `observeEvent(input$...)` handlers detected: **76**
+- Buttons with direct handler mapping: **70**
+
+`Main Impacts` means what the handler changes, for example: reads/writes DB, sends email, opens/closes modal, shows notifications, refreshes UI data.
+
+## Regenerate
+
+```bash
+python3 /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/generate_button_function_map.py
+```
+
+## Explorer (Split View)
+
+```{=html}
+<style>
+main.content { max-width: 98vw !important; width: 98vw !important; }
+#quarto-document-content { max-width: none !important; width: 100% !important; }
+.page-columns { grid-template-columns: minmax(0, 1fr) !important; }
+.diagram-toolbar { display:flex; align-items:center; gap:8px; margin: 0 0 8px 0; }
+.diagram-toolbar button { border:1px solid #c6d0db; background:#f8fafc; padding:4px 10px; border-radius:6px; cursor:pointer; }
+.diagram-toolbar button:hover { background:#eef3f8; }
+.diagram-zoom-level { min-width:60px; text-align:center; font-weight:600; color:#2f3b4a; }
+#diagram-pane { border:1px solid #d8dee6; border-radius:8px; padding:8px; overflow:auto; max-height:80vh; background:#ffffff; }
+#diagram-pane svg { display:block; width:auto !important; max-width:none !important; height:auto !important; }
+.summary-table-wrap { max-height:80vh; overflow:auto; border:1px solid #d8dee6; border-radius:8px; padding:8px; background:#ffffff; }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const pane = document.getElementById('diagram-pane');
+  if (!pane) return;
+  const svg = pane.querySelector('svg');
+  const zoomLabel = document.getElementById('diagram-zoom-level');
+  const zoomInBtn = document.getElementById('diagram-zoom-in');
+  const zoomOutBtn = document.getElementById('diagram-zoom-out');
+  const zoomResetBtn = document.getElementById('diagram-zoom-reset');
+  if (!svg) { if (zoomLabel) zoomLabel.textContent = 'n/a'; return; }
+  let zoom = 1.0;
+  const minZoom = 0.30;
+  const maxZoom = 3.00;
+  const step = 0.10;
+  function applyZoom() {
+    svg.style.transformOrigin = 'top left';
+    svg.style.transform = `scale(${zoom})`;
+    if (zoomLabel) zoomLabel.textContent = `${Math.round(zoom * 100)}%`;
+  }
+  if (zoomInBtn) zoomInBtn.addEventListener('click', function () { zoom = Math.min(maxZoom, +(zoom + step).toFixed(2)); applyZoom(); });
+  if (zoomOutBtn) zoomOutBtn.addEventListener('click', function () { zoom = Math.max(minZoom, +(zoom - step).toFixed(2)); applyZoom(); });
+  if (zoomResetBtn) zoomResetBtn.addEventListener('click', function () { zoom = 1.0; applyZoom(); });
+  applyZoom();
+});
+</script>
+```
+
+:::: {.columns}
+::: {.column width="40%"}
+### Diagram
+
+```{=html}
+<div class="diagram-toolbar">
+  <button id="diagram-zoom-out" type="button">-</button>
+  <span id="diagram-zoom-level" class="diagram-zoom-level">100%</span>
+  <button id="diagram-zoom-in" type="button">+</button>
+  <button id="diagram-zoom-reset" type="button">Reset</button>
+</div>
+<div id="diagram-pane">
+```
+
+```{mermaid}
+%%| fig-width: 22
+%%| fig-height: 28
+graph LR
+  classDef btn fill:#e8f0fe,stroke:#356ac3,color:#1b3f7f,stroke-width:1px;
+  classDef evt fill:#f0f7e8,stroke:#5b8f29,color:#2f5c12,stroke-width:1px;
+  classDef fn fill:#fff3e6,stroke:#cc7a00,color:#7a4a00,stroke-width:1px;
+  classDef fx fill:#f5e9ff,stroke:#7b49b0,color:#4d2b73,stroke-width:1px;
+  btn_new_project_btn["new_project_btn"] --> evt_new_project_btn_3100["observeEvent @ 3100"]
+  class btn_new_project_btn btn;
+  class evt_new_project_btn_3100 evt;
+  evt_new_project_btn_3100 --> fn_new_project_btn_get_all_usernames["get_all_usernames()"]
+  class fn_new_project_btn_get_all_usernames fn;
+  evt_new_project_btn_3100 --> fn_new_project_btn_get_db_connection["get_db_connection()"]
+  class fn_new_project_btn_get_db_connection fn;
+  evt_new_project_btn_3100 --> fn_new_project_btn_showModal["showModal()"]
+  class fn_new_project_btn_showModal fn;
+  evt_new_project_btn_3100 --> fn_new_project_btn_dbGetQuery["dbGetQuery()"]
+  class fn_new_project_btn_dbGetQuery fn;
+  fx_Reads_DB["Reads DB"]
+  class fx_Reads_DB fx;
+  evt_new_project_btn_3100 --> fx_Reads_DB
+  fx_Opens_modal["Opens modal"]
+  class fx_Opens_modal fx;
+  evt_new_project_btn_3100 --> fx_Opens_modal
+  btn_create_project_btn["create_project_btn"] --> evt_create_project_btn_3278["observeEvent @ 3278"]
+  class btn_create_project_btn btn;
+  class evt_create_project_btn_3278 evt;
+  evt_create_project_btn_3278 --> fn_create_project_btn_calculate_total_cost["calculate_total_cost()"]
+  class fn_create_project_btn_calculate_total_cost fn;
+  evt_create_project_btn_3278 --> fn_create_project_btn_get_db_connection["get_db_connection()"]
+  class fn_create_project_btn_get_db_connection fn;
+  evt_create_project_btn_3278 --> fn_create_project_btn_get_or_create_budget_holder["get_or_create_budget_holder()"]
+  class fn_create_project_btn_get_or_create_budget_holder fn;
+  evt_create_project_btn_3278 --> fn_create_project_btn_load_projects["load_projects()"]
+  class fn_create_project_btn_load_projects fn;
+  fx_Writes_DB["Writes DB"]
+  class fx_Writes_DB fx;
+  evt_create_project_btn_3278 --> fx_Writes_DB
+  evt_create_project_btn_3278 --> fx_Reads_DB
+  fx_Sends_email["Sends email"]
+  class fx_Sends_email fx;
+  evt_create_project_btn_3278 --> fx_Sends_email
+  fx_Closes_modal["Closes modal"]
+  class fx_Closes_modal fx;
+  evt_create_project_btn_3278 --> fx_Closes_modal
+  fx_Shows_notification["Shows notification"]
+  class fx_Shows_notification fx;
+  evt_create_project_btn_3278 --> fx_Shows_notification
+  fx_Refreshes_UI_data["Refreshes UI data"]
+  class fx_Refreshes_UI_data fx;
+  evt_create_project_btn_3278 --> fx_Refreshes_UI_data
+  btn_manage_announcements_btn["manage_announcements_btn"] --> evt_manage_announcements_btn_3770["observeEvent @ 3770"]
+  class btn_manage_announcements_btn btn;
+  class evt_manage_announcements_btn_3770 evt;
+  evt_manage_announcements_btn_3770 --> fn_manage_announcements_btn_get_db_connection["get_db_connection()"]
+  class fn_manage_announcements_btn_get_db_connection fn;
+  evt_manage_announcements_btn_3770 --> fn_manage_announcements_btn_get_announcement_panels["get_announcement_panels()"]
+  class fn_manage_announcements_btn_get_announcement_panels fn;
+  evt_manage_announcements_btn_3770 --> fn_manage_announcements_btn_showNotification["showNotification()"]
+  class fn_manage_announcements_btn_showNotification fn;
+  evt_manage_announcements_btn_3770 --> fn_manage_announcements_btn_dbDisconnect["dbDisconnect()"]
+  class fn_manage_announcements_btn_dbDisconnect fn;
+  evt_manage_announcements_btn_3770 --> fx_Opens_modal
+  evt_manage_announcements_btn_3770 --> fx_Shows_notification
+  btn_edit_project_btn["edit_project_btn"] --> evt_edit_project_btn_5094["observeEvent @ 5094"]
+  class btn_edit_project_btn btn;
+  class evt_edit_project_btn_5094 evt;
+  evt_edit_project_btn_5094 --> fn_edit_project_btn_get_all_usernames["get_all_usernames()"]
+  class fn_edit_project_btn_get_all_usernames fn;
+  evt_edit_project_btn_5094 --> fn_edit_project_btn_make_status_choices["make_status_choices()"]
+  class fn_edit_project_btn_make_status_choices fn;
+  evt_edit_project_btn_5094 --> fn_edit_project_btn_showNotification["showNotification()"]
+  class fn_edit_project_btn_showNotification fn;
+  evt_edit_project_btn_5094 --> fn_edit_project_btn_showModal["showModal()"]
+  class fn_edit_project_btn_showModal fn;
+  evt_edit_project_btn_5094 --> fx_Opens_modal
+  evt_edit_project_btn_5094 --> fx_Shows_notification
+  btn_update_project_btn["update_project_btn"] --> evt_update_project_btn_5286["observeEvent @ 5286"]
+  class btn_update_project_btn btn;
+  class evt_update_project_btn_5286 evt;
+  evt_update_project_btn_5286 --> fn_update_project_btn_scalar_text["scalar_text()"]
+  class fn_update_project_btn_scalar_text fn;
+  evt_update_project_btn_5286 --> fn_update_project_btn_scalar_numeric["scalar_numeric()"]
+  class fn_update_project_btn_scalar_numeric fn;
+  evt_update_project_btn_5286 --> fn_update_project_btn_parse_additional_cost["parse_additional_cost()"]
+  class fn_update_project_btn_parse_additional_cost fn;
+  evt_update_project_btn_5286 --> fn_update_project_btn_calculate_total_cost["calculate_total_cost()"]
+  class fn_update_project_btn_calculate_total_cost fn;
+  evt_update_project_btn_5286 --> fx_Writes_DB
+  evt_update_project_btn_5286 --> fx_Sends_email
+  evt_update_project_btn_5286 --> fx_Closes_modal
+  evt_update_project_btn_5286 --> fx_Shows_notification
+  evt_update_project_btn_5286 --> fx_Refreshes_UI_data
+  btn_send_notification_btn["send_notification_btn"] --> evt_send_notification_btn_5473["observeEvent @ 5473"]
+  class btn_send_notification_btn btn;
+  class evt_send_notification_btn_5473 evt;
+  evt_send_notification_btn_5473 --> fn_send_notification_btn_parse_additional_cost["parse_additional_cost()"]
+  class fn_send_notification_btn_parse_additional_cost fn;
+  evt_send_notification_btn_5473 --> fn_send_notification_btn_calculate_total_cost["calculate_total_cost()"]
+  class fn_send_notification_btn_calculate_total_cost fn;
+  evt_send_notification_btn_5473 --> fn_send_notification_btn_get_db_connection["get_db_connection()"]
+  class fn_send_notification_btn_get_db_connection fn;
+  evt_send_notification_btn_5473 --> fn_send_notification_btn_send_project_cost_notification_email["send_project_cost_notification_email()"]
+  class fn_send_notification_btn_send_project_cost_notification_email fn;
+  evt_send_notification_btn_5473 --> fx_Reads_DB
+  evt_send_notification_btn_5473 --> fx_Sends_email
+  evt_send_notification_btn_5473 --> fx_Shows_notification
+  btn_delete_project_btn["delete_project_btn"] --> evt_delete_project_btn_5588["observeEvent @ 5588"]
+  class btn_delete_project_btn btn;
+  class evt_delete_project_btn_5588 evt;
+  evt_delete_project_btn_5588 --> fn_delete_project_btn_showNotification["showNotification()"]
+  class fn_delete_project_btn_showNotification fn;
+  evt_delete_project_btn_5588 --> fn_delete_project_btn_showModal["showModal()"]
+  class fn_delete_project_btn_showModal fn;
+  evt_delete_project_btn_5588 --> fx_Opens_modal
+  evt_delete_project_btn_5588 --> fx_Shows_notification
+  btn_confirm_delete_btn["confirm_delete_btn"] --> evt_confirm_delete_btn_5614["observeEvent @ 5614"]
+  class btn_confirm_delete_btn btn;
+  class evt_confirm_delete_btn_5614 evt;
+  evt_confirm_delete_btn_5614 --> fn_confirm_delete_btn_get_db_connection["get_db_connection()"]
+  class fn_confirm_delete_btn_get_db_connection fn;
+  evt_confirm_delete_btn_5614 --> fn_confirm_delete_btn_load_projects["load_projects()"]
+  class fn_confirm_delete_btn_load_projects fn;
+  evt_confirm_delete_btn_5614 --> fn_confirm_delete_btn_dbDisconnect["dbDisconnect()"]
+  class fn_confirm_delete_btn_dbDisconnect fn;
+  evt_confirm_delete_btn_5614 --> fn_confirm_delete_btn_dbExecute["dbExecute()"]
+  class fn_confirm_delete_btn_dbExecute fn;
+  evt_confirm_delete_btn_5614 --> fx_Writes_DB
+  evt_confirm_delete_btn_5614 --> fx_Closes_modal
+  evt_confirm_delete_btn_5614 --> fx_Shows_notification
+  evt_confirm_delete_btn_5614 --> fx_Refreshes_UI_data
+  btn_update_status_btn["update_status_btn"] --> evt_update_status_btn_5630["observeEvent @ 5630"]
+  class btn_update_status_btn btn;
+  class evt_update_status_btn_5630 evt;
+  evt_update_status_btn_5630 --> fn_update_status_btn_make_status_choices["make_status_choices()"]
+  class fn_update_status_btn_make_status_choices fn;
+  evt_update_status_btn_5630 --> fn_update_status_btn_showNotification["showNotification()"]
+  class fn_update_status_btn_showNotification fn;
+  evt_update_status_btn_5630 --> fn_update_status_btn_showModal["showModal()"]
+  class fn_update_status_btn_showModal fn;
+  evt_update_status_btn_5630 --> fx_Opens_modal
+  evt_update_status_btn_5630 --> fx_Shows_notification
+  btn_confirm_status_update_btn["confirm_status_update_btn"] --> evt_confirm_status_update_btn_5665["observeEvent @ 5665"]
+  class btn_confirm_status_update_btn btn;
+  class evt_confirm_status_update_btn_5665 evt;
+  evt_confirm_status_update_btn_5665 --> fn_confirm_status_update_btn_get_db_connection["get_db_connection()"]
+  class fn_confirm_status_update_btn_get_db_connection fn;
+  evt_confirm_status_update_btn_5665 --> fn_confirm_status_update_btn_load_projects["load_projects()"]
+  class fn_confirm_status_update_btn_load_projects fn;
+  evt_confirm_status_update_btn_5665 --> fn_confirm_status_update_btn_send_data_released_email["send_data_released_email()"]
+  class fn_confirm_status_update_btn_send_data_released_email fn;
+  evt_confirm_status_update_btn_5665 --> fn_confirm_status_update_btn_showNotification["showNotification()"]
+  class fn_confirm_status_update_btn_showNotification fn;
+  evt_confirm_status_update_btn_5665 --> fx_Writes_DB
+  evt_confirm_status_update_btn_5665 --> fx_Sends_email
+  evt_confirm_status_update_btn_5665 --> fx_Closes_modal
+  evt_confirm_status_update_btn_5665 --> fx_Shows_notification
+  evt_confirm_status_update_btn_5665 --> fx_Refreshes_UI_data
+```
+
+```{=html}
+</div>
+```
+:::
+::: {.column width="60%"}
+### Handler Summary
+
+```{=html}
+<div class="summary-table-wrap">
+```
+
+| Button ID | Purpose | Uses Inputs | Main Impacts |
+|---|---|---|---|
+| `debug_db_btn` | Opens an interaction modal for user/admin action. | - | Reads DB, Opens modal, Shows notification |
+| `client_url_search` | Handle this UI event and update app state. | - | - |
+| `show_register_btn` | Opens an interaction modal for user/admin action. | - | Reads DB, Opens modal |
+| `register_btn` | Validate registration fields and create a new user. | `reg_username`, `reg_email`, `reg_password`, `reg_confirm_password`, `reg_group` | Writes DB, Reads DB, Closes modal, Shows notification |
+| `dev_auth_mode` | Handle this UI event and update app state. | - | - |
+| `dev_login_btn` | Handle this UI event and update app state. | `dev_login_username` | - |
+| `ldap_profile_save_btn` | Processes input and writes changes to the database. | `ldap_profile_email`, `ldap_profile_phone`, `ldap_profile_group` | Writes DB, Reads DB, Closes modal, Shows notification |
+| `ldap_profile_cancel_btn` | Handle this UI event and update app state. | - | Closes modal, Shows notification |
+| `ldap_relogin_btn` | Handle this UI event and update app state. | - | Closes modal |
+| `login_btn` | Authenticate local login and initialize session state. | `login_username`, `login_password` | Reads DB, Shows notification |
+| `logout_btn` | End local session or show LDAP end-session guidance. | - | Opens modal |
+| `new_project_btn` | Open the Create Project modal and prefill lookup choices. | - | Reads DB, Opens modal |
+| `create_project_btn` | Validate form inputs, insert a new project, and send initial project email. | `budget_id`, `other_bh_name`, `other_bh_surname`, `num_samples`, `service_type_id` | Writes DB, Reads DB, Sends email, Closes modal, Shows notification, Refreshes UI data |
+| `manage_budget_holders_btn` | Open admin management modal for this reference table. | - | Opens modal |
+| `manage_service_types_btn` | Open admin management modal for this reference table. | - | Opens modal |
+| `manage_sequencing_depths_btn` | Open admin management modal for this reference table. | - | Opens modal |
+| `manage_sequencing_cycles_btn` | Open admin management modal for this reference table. | - | Opens modal |
+| `manage_users_btn` | Open admin management modal for this reference table. | - | Opens modal |
+| `manage_genomes_btn` | Open admin management modal for this reference table. | - | Opens modal |
+| `manage_types_btn` | Open admin management modal for this reference table. | - | Opens modal |
+| `manage_sequencing_platforms_btn` | Open admin management modal for this reference table. | - | Opens modal |
+| `manage_announcements_btn` | Open Landing Text admin panel. | - | Opens modal, Shows notification |
+| `announcement_add_btn` | Opens an interaction modal for user/admin action. | `announcement_panel_select` | Opens modal, Shows notification |
+| `save_announcement_item_btn` | Processes input and writes changes to the database. | `announcement_panel_select`, `item_markdown_text`, `item_active` | Writes DB, Reads DB, Closes modal, Shows notification |
+| `announcement_edit_btn` | Opens an interaction modal for user/admin action. | - | Opens modal, Shows notification |
+| `update_announcement_item_btn` | Apply update from modal form to the selected row. | `item_markdown_text`, `item_active` | Writes DB, Closes modal, Shows notification |
+| `announcement_delete_btn` | Opens an interaction modal for user/admin action. | - | Opens modal, Shows notification |
+| `confirm_delete_announcement_item_btn` | Delete selected row after confirmation. | - | Writes DB, Closes modal, Shows notification |
+| `announcement_move_up_btn` | Processes input and writes changes to the database. | `announcement_items_table_admin_rows_selected` | Writes DB, Shows notification |
+| `announcement_move_down_btn` | Processes input and writes changes to the database. | `announcement_items_table_admin_rows_selected` | Writes DB, Shows notification |
+| `add_budget_holder_btn` | Validate new entry fields and insert a new row. | `new_bh_name`, `new_bh_surname`, `new_bh_cost_center`, `new_bh_email` | Writes DB, Reads DB, Shows notification, Refreshes UI data |
+| `add_service_type_btn` | Validate new entry fields and insert a new row. | `new_service_type`, `new_service_kit`, `new_service_cost` | Writes DB, Shows notification |
+| `edit_service_type_btn` | Open edit modal for currently selected row. | `service_types_table_admin_rows_selected` | Opens modal, Shows notification |
+| `edit_budget_holder_btn` | Open edit modal for currently selected row. | `budget_holders_table_admin_rows_selected` | Opens modal, Shows notification |
+| `update_budget_holder_btn` | Apply update from modal form to the selected row. | `budget_holders_table_admin_rows_selected`, `edit_bh_name`, `edit_bh_surname`, `edit_bh_cost_center`, `edit_bh_email` | Writes DB, Reads DB, Closes modal, Shows notification |
+| `edit_genome_btn` | Open edit modal for currently selected row. | `genomes_table_admin_rows_selected` | Opens modal, Shows notification |
+| `update_genome_btn` | Apply update from modal form to the selected row. | `genomes_table_admin_rows_selected`, `edit_genome_name` | Writes DB, Closes modal, Shows notification |
+| `edit_type_btn` | Open edit modal for currently selected row. | `types_table_admin_rows_selected` | Opens modal, Shows notification |
+| `update_type_btn` | Apply update from modal form to the selected row. | `types_table_admin_rows_selected`, `edit_type_name` | Writes DB, Closes modal, Shows notification |
+| `edit_sequencing_platform_btn` | Open edit modal for currently selected row. | `sequencing_platforms_table_admin_rows_selected` | Opens modal, Shows notification |
+| `update_sequencing_platform_update_btn` | Apply update from modal form to the selected row. | `sequencing_platforms_table_admin_rows_selected`, `edit_sequencing_platform_name2` | Writes DB, Closes modal, Shows notification |
+| `update_service_type_btn` | Apply update from modal form to the selected row. | `service_types_table_admin_rows_selected`, `edit_service_type`, `edit_service_kit`, `edit_service_cost` | Writes DB, Closes modal, Shows notification |
+| `add_sequencing_depth_btn` | Validate new entry fields and insert a new row. | `new_depth_description`, `new_depth_cost_150`, `new_depth_cost_300` | Writes DB, Shows notification |
+| `edit_sequencing_depth_btn` | Open edit modal for currently selected row. | `sequencing_depths_table_admin_rows_selected` | Opens modal, Shows notification |
+| `update_sequencing_depth_btn` | Apply update from modal form to the selected row. | `sequencing_depths_table_admin_rows_selected`, `edit_depth_description`, `edit_depth_cost_150`, `edit_depth_cost_300` | Writes DB, Closes modal, Shows notification |
+| `add_sequencing_cycles_btn` | Validate new entry fields and insert a new row. | `new_cycles_description` | Writes DB, Shows notification |
+| `add_user_admin_btn` | Validate new entry fields and insert a new row. | `new_user_username`, `new_user_email`, `new_user_password`, `new_user_confirm_password`, `new_user_admin` | Writes DB, Reads DB, Shows notification, Refreshes UI data |
+| `add_genome_btn` | Validate new entry fields and insert a new row. | `new_genome_name` | Writes DB, Shows notification |
+| `add_type_btn` | Validate new entry fields and insert a new row. | `new_type_name` | Writes DB, Shows notification |
+| `add_sequencing_platform_btn` | Validate new entry fields and insert a new row. | `new_sequencing_platform_name` | Writes DB, Shows notification |
+| `delete_budget_holder_btn` | Open delete confirmation dialog for selected row. | `budget_holders_table_admin_rows_selected` | Opens modal, Shows notification |
+| `confirm_delete_budget_holder_btn` | Delete selected row after confirmation. | `budget_holders_table_admin_rows_selected` | Writes DB, Closes modal, Shows notification, Refreshes UI data |
+| `delete_service_type_btn` | Open delete confirmation dialog for selected row. | `service_types_table_admin_rows_selected` | Opens modal, Shows notification |
+| `confirm_delete_service_type_btn` | Delete selected row after confirmation. | `service_types_table_admin_rows_selected` | Writes DB, Closes modal, Shows notification |
+| `delete_sequencing_depth_btn` | Open delete confirmation dialog for selected row. | `sequencing_depths_table_admin_rows_selected` | Opens modal, Shows notification |
+| `confirm_delete_sequencing_depth_btn` | Delete selected row after confirmation. | `sequencing_depths_table_admin_rows_selected` | Writes DB, Closes modal, Shows notification |
+| `delete_sequencing_cycles_btn` | Open delete confirmation dialog for selected row. | `sequencing_cycles_table_admin_rows_selected` | Opens modal, Shows notification |
+| `confirm_delete_sequencing_cycles_btn` | Delete selected row after confirmation. | `sequencing_cycles_table_admin_rows_selected` | Writes DB, Closes modal, Shows notification |
+| `delete_user_admin_btn` | Open delete confirmation dialog for selected row. | `users_table_admin_rows_selected` | Opens modal, Shows notification |
+| `confirm_delete_user_btn` | Delete selected row after confirmation. | `users_table_admin_rows_selected` | Writes DB, Closes modal, Shows notification, Refreshes UI data |
+| `delete_genome_btn` | Open delete confirmation dialog for selected row. | `genomes_table_admin_rows_selected` | Opens modal, Shows notification |
+| `confirm_delete_genome_btn` | Delete selected row after confirmation. | `genomes_table_admin_rows_selected` | Writes DB, Closes modal, Shows notification |
+| `delete_type_btn` | Open delete confirmation dialog for selected row. | `types_table_admin_rows_selected` | Opens modal, Shows notification |
+| `confirm_delete_type_btn` | Delete selected row after confirmation. | `types_table_admin_rows_selected` | Writes DB, Closes modal, Shows notification |
+| `delete_sequencing_platform_btn` | Open delete confirmation dialog for selected row. | `sequencing_platforms_table_admin_rows_selected` | Opens modal, Shows notification |
+| `confirm_delete_sequencing_platform_btn` | Delete selected row after confirmation. | `sequencing_platforms_table_admin_rows_selected` | Writes DB, Closes modal, Shows notification |
+| `edit_project_btn` | Open the Edit Project modal for the selected project. | `projects_table_rows_selected` | Opens modal, Shows notification |
+| `update_project_btn` | Save edits to selected project (including additional cost for admins). | `projects_table_rows_selected`, `edit_budget_id`, `edit_other_bh_name`, `edit_other_bh_surname`, `edit_project_status` | Writes DB, Sends email, Closes modal, Shows notification, Refreshes UI data |
+| `send_notification_btn` | Send admin-triggered cost notification email for the selected project. | `projects_table_rows_selected`, `edit_additional_cost`, `edit_num_samples`, `edit_service_type_id`, `edit_sequencing_depth_id` | Reads DB, Sends email, Shows notification |
+| `delete_project_btn` | Open delete confirmation for selected project. | `projects_table_rows_selected` | Opens modal, Shows notification |
+| `confirm_delete_btn` | Delete selected project from the database. | `projects_table_rows_selected` | Writes DB, Closes modal, Shows notification, Refreshes UI data |
+| `update_status_btn` | Open status update modal for selected project. | `projects_table_rows_selected` | Opens modal, Shows notification |
+| `confirm_status_update_btn` | Persist new project status and trigger release email when applicable. | `projects_table_rows_selected`, `new_project_status` | Writes DB, Sends email, Closes modal, Shows notification, Refreshes UI data |
+| `validate_db_btn` | Run database validation checks and report issues. | - | Shows notification |
+| `restore_db_btn` | Start database restore flow from uploaded backup. | - | Opens modal |
+| `confirm_restore_btn` | Execute restore after confirmation and reopen app state. | `restore_db_btn` | Closes modal, Shows notification |
+
+```{=html}
+</div>
+```
+
+### Core Buttons
+
+| Button ID | Label | Responsibility | Data/Inputs used | Key calls | DB targets |
+|---|---|---|---|---|---|
+| `new_project_btn` | Create New Project | Open the Create Project modal and prefill lookup choices. | - | `get_all_usernames()`, `get_db_connection()`, `showModal()`, `dbGetQuery()` | `SELECT users` |
+| `create_project_btn` | Create Project | Validate form inputs, insert a new project, and send initial project email. | `budget_id`, `other_bh_name`, `other_bh_surname`, `num_samples`, `service_type_id`, `sequencing_depth_id` | `calculate_total_cost()`, `get_db_connection()`, `get_or_create_budget_holder()`, `load_projects()` | `SELECT projects`, `SELECT budget_holders`, `SELECT users`, `INSERT projects` |
+| `manage_announcements_btn` | Manage Landing Text | Open Landing Text admin panel. | - | `get_db_connection()`, `get_announcement_panels()`, `showNotification()`, `dbDisconnect()` | - |
+| `edit_project_btn` | Edit Project | Open the Edit Project modal for the selected project. | `projects_table_rows_selected` | `get_all_usernames()`, `make_status_choices()`, `showNotification()`, `showModal()` | `UPDATE Project` |
+| `update_project_btn` | Update Project | Save edits to selected project (including additional cost for admins). | `projects_table_rows_selected`, `edit_budget_id`, `edit_other_bh_name`, `edit_other_bh_surname`, `edit_project_status`, `edit_kickoff_meeting` | `scalar_text()`, `scalar_numeric()`, `parse_additional_cost()`, `calculate_total_cost()` | `UPDATE projects` |
+| `send_notification_btn` | - | Send admin-triggered cost notification email for the selected project. | `projects_table_rows_selected`, `edit_additional_cost`, `edit_num_samples`, `edit_service_type_id`, `edit_sequencing_depth_id`, `edit_sequencing_cycles_id` | `parse_additional_cost()`, `calculate_total_cost()`, `get_db_connection()`, `send_project_cost_notification_email()` | `SELECT budget_holders`, `SELECT users` |
+| `delete_project_btn` | Delete Project | Open delete confirmation for selected project. | `projects_table_rows_selected` | `showNotification()`, `showModal()` | - |
+| `confirm_delete_btn` | Delete | Delete selected project from the database. | `projects_table_rows_selected` | `get_db_connection()`, `load_projects()`, `dbDisconnect()`, `dbExecute()` | `DELETE projects` |
+| `update_status_btn` | Update Project Status | Open status update modal for selected project. | `projects_table_rows_selected` | `make_status_choices()`, `showNotification()`, `showModal()` | `UPDATE project`, `UPDATE status`, `UPDATE Project`, `UPDATE Status` |
+| `confirm_status_update_btn` | Update Status | Persist new project status and trigger release email when applicable. | `projects_table_rows_selected`, `new_project_status` | `get_db_connection()`, `load_projects()`, `send_data_released_email()`, `showNotification()` | `UPDATE projects`, `UPDATE ERROR`, `UPDATE project` |
+
+### Notification Text (Detected)
+
+| Button ID | Notification message sample(s) |
+|---|---|
+| `register_btn` | Passwords do not match<br>Password must be at least 6 characters |
+| `ldap_profile_save_btn` | Email is required.<br>Research group is required. |
+| `ldap_profile_cancel_btn` | Profile completion canceled. Reload the page to try again. |
+| `login_btn` | Local login is disabled in LDAP mode. |
+| `create_project_btn` | Please fill in all required fields<br>Please enter PI name and surname for the new budget holder. |
+| `manage_announcements_btn` | Admin permissions required.<br>No announcement panels are configured. |
+| `announcement_add_btn` | Admin permissions required. |
+| `save_announcement_item_btn` | Admin permissions required.<br>Selected panel does not exist. |
+| `announcement_edit_btn` | Admin permissions required.<br>Please select a text box to edit. |
+| `update_announcement_item_btn` | Admin permissions required.<br>No announcement item selected. |
+| `announcement_delete_btn` | Admin permissions required.<br>Please select a text box to delete. |
+| `confirm_delete_announcement_item_btn` | Admin permissions required.<br>Please select a text box to delete. |
+| `announcement_move_up_btn` | Admin permissions required.<br>Please select a text box to move. |
+| `announcement_move_down_btn` | Admin permissions required.<br>Please select a text box to move. |
+| `add_budget_holder_btn` | Please fill in all budget holder fields<br>Cost center already exists |
+| `add_service_type_btn` | Please enter a service type<br>This service type already exists |
+| `edit_service_type_btn` | Please select a service type to edit |
+| `edit_budget_holder_btn` | Please select a budget holder to edit |
+| `update_budget_holder_btn` | Please fill in all budget holder fields<br>Cost center already exists |
+| `edit_genome_btn` | Please select a reference genome to edit |
+| `update_genome_btn` | Please enter a genome name<br>This genome already exists |
+| `edit_type_btn` | Please select a sample type to edit |
+| `update_type_btn` | Please enter a sample type name<br>This type already exists |
+| `edit_sequencing_platform_btn` | Please select a platform to edit |
+| `update_sequencing_platform_update_btn` | Please enter a platform name<br>This platform already exists |
+| `update_service_type_btn` | Service type updated successfully! |
+| `add_sequencing_depth_btn` | Please enter a depth description<br>This sequencing depth already exists |
+| `edit_sequencing_depth_btn` | Please select a sequencing depth to edit |
+| `update_sequencing_depth_btn` | Sequencing depth updated successfully! |
+| `add_sequencing_cycles_btn` | Please enter a cycles description<br>This sequencing cycle already exists |
+| `add_user_admin_btn` | Passwords do not match<br>Password must be at least 6 characters |
+| `add_genome_btn` | Please enter a genome name<br>This genome already exists |
+| `add_type_btn` | Please enter a sample type name<br>This type already exists |
+| `add_sequencing_platform_btn` | Please enter a sequencing platform name<br>This platform already exists |
+| `delete_budget_holder_btn` | Please select a budget holder to delete |
+| `confirm_delete_budget_holder_btn` | Budget holder deleted successfully! |
+| `delete_service_type_btn` | Please select a service type to delete |
+| `confirm_delete_service_type_btn` | Service type deleted successfully! |
+| `delete_sequencing_depth_btn` | Please select a sequencing depth to delete |
+| `confirm_delete_sequencing_depth_btn` | Sequencing depth deleted successfully! |
+| `delete_sequencing_cycles_btn` | Please select a sequencing cycle to delete |
+| `confirm_delete_sequencing_cycles_btn` | Sequencing cycles deleted successfully! |
+| `delete_user_admin_btn` | Please select a user to delete<br>You cannot delete your own account |
+| `confirm_delete_user_btn` | User deleted successfully! |
+| `delete_genome_btn` | Please select a reference genome to delete |
+| `confirm_delete_genome_btn` | Reference genome deleted successfully! |
+| `delete_type_btn` | Please select a sample type to delete |
+| `confirm_delete_type_btn` | Sample type deleted successfully! |
+| `delete_sequencing_platform_btn` | Please select a sequencing platform to delete |
+| `confirm_delete_sequencing_platform_btn` | Sequencing platform deleted successfully! |
+| `edit_project_btn` | Please select a project to edit<br>You don't have permission to edit this project |
+| `update_project_btn` | Please select a project to edit<br>Selected project is no longer available. Please reload the table. |
+| `send_notification_btn` | Only administrators can send cost notification emails.<br>Please select a project first. |
+| `delete_project_btn` | Please select a project to delete<br>Only administrators can delete projects |
+| `confirm_delete_btn` | Project deleted successfully! |
+| `update_status_btn` | Only administrators can update project status<br>Please select a project to update status |
+| `confirm_status_update_btn` | Please select a project before updating status<br>Selected project is no longer available. Please reload the table. |
+| `validate_db_btn` | Database validation successful! |
+| `confirm_restore_btn` | Database restored successfully! Previous database backed up. |
+:::
+::::
+
+## Full Mapping Table
+
+| Button ID | Label | Purpose | Button line | Handler line | Handler block | Uses inputs | Key function calls | Impacts | SQL targets |
+|---|---|---|---:|---:|---|---|---|---|---|
+| `debug_db_btn` | Show Database Debug Info | Opens an interaction modal for user/admin action. | 909 | 918 | `918-942` | - | `dbGetQuery()`, `dbDisconnect()`, `showModal()`, `showNotification()` | Reads DB, Opens modal, Shows notification | - |
+| `client_url_search` | - | Handle this UI event and update app state. | - | 1023 | `1023-1030` | - | `scalar_text()` | - | - |
+| `show_register_btn` | - | Opens an interaction modal for user/admin action. | - | 2463 | `2463-2491` | - | `get_db_connection()`, `dbGetQuery()`, `dbDisconnect()`, `showModal()` | Reads DB, Opens modal | `SELECT budget_holders` |
+| `register_btn` | Register | Validate registration fields and create a new user. | 2476 | 2494 | `2494-2559` | `reg_username`, `reg_email`, `reg_password`, `reg_confirm_password`, `reg_group`, `reg_full_name`, `reg_phone` | `get_db_connection()`, `users_has_full_name()`, `showNotification()`, `dbDisconnect()`, `dbGetQuery()`, `dbExecute()`, `removeModal()` | Writes DB, Reads DB, Closes modal, Shows notification | `SELECT users`, `INSERT users` |
+| `dev_auth_mode` | - | Handle this UI event and update app state. | - | 2651 | `2651-2678` | - | - | - | - |
+| `dev_login_btn` | Login as Dev User | Handle this UI event and update app state. | 2692 | 2728 | `2728-2734` | `dev_login_username` | `handle_ldap_login()` | - | - |
+| `ldap_profile_save_btn` | Save | Processes input and writes changes to the database. | 1640 | 2736 | `2736-2784` | `ldap_profile_email`, `ldap_profile_phone`, `ldap_profile_group` | `get_db_connection()`, `complete_login()`, `showNotification()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `dbGetQuery()` | Writes DB, Reads DB, Closes modal, Shows notification | `SELECT users`, `INSERT users`, `UPDATE users` |
+| `ldap_profile_cancel_btn` | Cancel | Handle this UI event and update app state. | 1639 | 2786 | `2786-2793` | - | `removeModal()`, `showNotification()` | Closes modal, Shows notification | - |
+| `ldap_relogin_btn` | - | Handle this UI event and update app state. | - | 2795 | `2795-2798` | - | `removeModal()` | Closes modal | - |
+| `login_btn` | Login | Authenticate local login and initialize session state. | 625 | 2805 | `2805-2827` | `login_username`, `login_password` | `get_auth_mode()`, `get_db_connection()`, `complete_login()`, `showNotification()`, `dbDisconnect()`, `dbGetQuery()` | Reads DB, Shows notification | `SELECT users` |
+| `logout_btn` | End Session | End local session or show LDAP end-session guidance. | 663 | 2830 | `2830-2854` | - | `get_auth_mode()`, `showModal()` | Opens modal | - |
+| `new_project_btn` | Create New Project | Open the Create Project modal and prefill lookup choices. | 2984 | 3100 | `3100-3229` | - | `get_all_usernames()`, `get_db_connection()`, `showModal()`, `dbGetQuery()`, `dbDisconnect()` | Reads DB, Opens modal | `SELECT users` |
+| `create_project_btn` | Create Project | Validate form inputs, insert a new project, and send initial project email. | 3106 | 3278 | `3278-3385` | `budget_id`, `other_bh_name`, `other_bh_surname`, `num_samples`, `service_type_id`, `sequencing_depth_id`, `sequencing_cycles_id`, `other_bh_cost_center`, `other_bh_email`, `project_name`, `responsible_user`, `reference_genome`, `project_description`, `sequencing_platform`, `kickoff_meeting`, `type_id` | `calculate_total_cost()`, `get_db_connection()`, `get_or_create_budget_holder()`, `load_projects()`, `send_project_creation_email()`, `showNotification()`, `dbDisconnect()`, `dbExecute()`, `dbGetQuery()`, `removeModal()` | Writes DB, Reads DB, Sends email, Closes modal, Shows notification, Refreshes UI data | `SELECT projects`, `SELECT budget_holders`, `SELECT users`, `INSERT projects` |
+| `manage_budget_holders_btn` | Manage Budget Holders | Open admin management modal for this reference table. | 3026 | 3523 | `3523-3558` | - | `showModal()` | Opens modal | - |
+| `manage_service_types_btn` | Manage Service Types | Open admin management modal for this reference table. | 3044 | 3561 | `3561-3594` | - | `showModal()` | Opens modal | - |
+| `manage_sequencing_depths_btn` | Manage Depths | Open admin management modal for this reference table. | 3050 | 3597 | `3597-3628` | - | `showModal()` | Opens modal | - |
+| `manage_sequencing_cycles_btn` | Manage Cycles | Open admin management modal for this reference table. | 3056 | 3631 | `3631-3652` | - | `showModal()` | Opens modal | - |
+| `manage_users_btn` | Manage Users | Open admin management modal for this reference table. | 3020 | 3655 | `3655-3690` | - | `showModal()` | Opens modal | - |
+| `manage_genomes_btn` | Manage Genomes | Open admin management modal for this reference table. | 3032 | 3692 | `3692-3716` | - | `showModal()` | Opens modal | - |
+| `manage_types_btn` | Manage Sample Types | Open admin management modal for this reference table. | 3038 | 3718 | `3718-3742` | - | `showModal()` | Opens modal | - |
+| `manage_sequencing_platforms_btn` | Manage Platforms | Open admin management modal for this reference table. | 3062 | 3744 | `3744-3768` | - | `showModal()` | Opens modal | - |
+| `manage_announcements_btn` | Manage Landing Text | Open Landing Text admin panel. | 3068 | 3770 | `3770-3816` | - | `get_db_connection()`, `get_announcement_panels()`, `showNotification()`, `dbDisconnect()`, `showModal()` | Opens modal, Shows notification | - |
+| `announcement_add_btn` | Add Box | Opens an interaction modal for user/admin action. | 3809 | 3964 | `3964-3990` | `announcement_panel_select` | `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
+| `save_announcement_item_btn` | Save | Processes input and writes changes to the database. | 3978 | 3992 | `3992-4038` | `announcement_panel_select`, `item_markdown_text`, `item_active` | `validate_announcement_markdown()`, `get_db_connection()`, `refresh_announcements()`, `showNotification()`, `dbDisconnect()`, `dbGetQuery()`, `dbExecute()`, `removeModal()` | Writes DB, Reads DB, Closes modal, Shows notification | `SELECT announcement_panels`, `SELECT announcement_items`, `INSERT announcement_items` |
+| `announcement_edit_btn` | Edit Selected | Opens an interaction modal for user/admin action. | 3810 | 4040 | `4040-4070` | - | `selected_announcement_item()`, `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
+| `update_announcement_item_btn` | Update | Apply update from modal form to the selected row. | 4059 | 4072 | `4072-4108` | `item_markdown_text`, `item_active` | `validate_announcement_markdown()`, `get_db_connection()`, `refresh_announcements()`, `showNotification()`, `dbDisconnect()`, `dbExecute()`, `removeModal()` | Writes DB, Closes modal, Shows notification | `UPDATE announcement_items` |
+| `announcement_delete_btn` | Delete Selected | Opens an interaction modal for user/admin action. | 3813 | 4110 | `4110-4130` | - | `selected_announcement_item()`, `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
+| `confirm_delete_announcement_item_btn` | Delete | Delete selected row after confirmation. | 4127 | 4132 | `4132-4153` | - | `selected_announcement_item()`, `get_db_connection()`, `normalize_announcement_item_order()`, `refresh_announcements()`, `showNotification()`, `dbDisconnect()`, `dbExecute()`, `removeModal()` | Writes DB, Closes modal, Shows notification | `SELECT announcement_items`, `DELETE announcement_items` |
+| `announcement_move_up_btn` | Move Up | Processes input and writes changes to the database. | 3811 | 4155 | `4155-4199` | `announcement_items_table_admin_rows_selected` | `get_db_connection()`, `refresh_announcements()`, `showNotification()`, `dbDisconnect()`, `dbExecute()` | Writes DB, Shows notification | `UPDATE announcement_items` |
+| `announcement_move_down_btn` | Move Down | Processes input and writes changes to the database. | 3812 | 4201 | `4201-4245` | `announcement_items_table_admin_rows_selected` | `get_db_connection()`, `refresh_announcements()`, `showNotification()`, `dbDisconnect()`, `dbExecute()` | Writes DB, Shows notification | `UPDATE announcement_items` |
+| `add_budget_holder_btn` | Add Budget Holder | Validate new entry fields and insert a new row. | 3546 | 4250 | `4250-4292` | `new_bh_name`, `new_bh_surname`, `new_bh_cost_center`, `new_bh_email` | `get_db_connection()`, `load_admin_data()`, `showNotification()`, `dbDisconnect()`, `dbGetQuery()`, `dbExecute()` | Writes DB, Reads DB, Shows notification, Refreshes UI data | `SELECT budget_holders`, `INSERT budget_holders` |
+| `add_service_type_btn` | Add Service Type | Validate new entry fields and insert a new row. | 3581 | 4295 | `4295-4325` | `new_service_type`, `new_service_kit`, `new_service_cost` | `get_db_connection()`, `load_service_types()`, `showNotification()`, `dbDisconnect()`, `dbExecute()` | Writes DB, Shows notification | `INSERT service_types` |
+| `edit_service_type_btn` | Edit Selected | Open edit modal for currently selected row. | 3589 | 4328 | `4328-4349` | `service_types_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | `UPDATE Service` |
+| `edit_budget_holder_btn` | Edit Selected | Open edit modal for currently selected row. | 3554 | 4352 | `4352-4373` | `budget_holders_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | `UPDATE Budget` |
+| `update_budget_holder_btn` | Update Budget Holder | Apply update from modal form to the selected row. | 4366 | 4375 | `4375-4418` | `budget_holders_table_admin_rows_selected`, `edit_bh_name`, `edit_bh_surname`, `edit_bh_cost_center`, `edit_bh_email` | `get_db_connection()`, `load_budget_holders()`, `showNotification()`, `dbDisconnect()`, `dbGetQuery()`, `dbExecute()`, `removeModal()` | Writes DB, Reads DB, Closes modal, Shows notification | `SELECT budget_holders`, `UPDATE budget_holders` |
+| `edit_genome_btn` | Edit Selected | Open edit modal for currently selected row. | 3712 | 4421 | `4421-4439` | `genomes_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | `UPDATE Genome` |
+| `update_genome_btn` | Update Genome | Apply update from modal form to the selected row. | 4435 | 4441 | `4441-4466` | `genomes_table_admin_rows_selected`, `edit_genome_name` | `get_db_connection()`, `load_reference_genomes()`, `showNotification()`, `dbDisconnect()`, `dbExecute()`, `removeModal()` | Writes DB, Closes modal, Shows notification | `UPDATE reference_genomes` |
+| `edit_type_btn` | Edit Selected | Open edit modal for currently selected row. | 3738 | 4469 | `4469-4487` | `types_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | `UPDATE Sample` |
+| `update_type_btn` | Update Sample Type | Apply update from modal form to the selected row. | 4483 | 4489 | `4489-4513` | `types_table_admin_rows_selected`, `edit_type_name` | `get_db_connection()`, `load_types()`, `showNotification()`, `dbDisconnect()`, `dbExecute()`, `removeModal()` | Writes DB, Closes modal, Shows notification | `UPDATE types` |
+| `edit_sequencing_platform_btn` | Edit Selected | Open edit modal for currently selected row. | 3764 | 4516 | `4516-4534` | `sequencing_platforms_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | `UPDATE Platform` |
+| `update_sequencing_platform_update_btn` | Update Platform | Apply update from modal form to the selected row. | 4530 | 4536 | `4536-4560` | `sequencing_platforms_table_admin_rows_selected`, `edit_sequencing_platform_name2` | `get_db_connection()`, `load_sequencing_platforms()`, `showNotification()`, `dbDisconnect()`, `dbExecute()`, `removeModal()` | Writes DB, Closes modal, Shows notification | `UPDATE sequencing_platforms` |
+| `update_service_type_btn` | Update Service Type | Apply update from modal form to the selected row. | 4342 | 4563 | `4563-4584` | `service_types_table_admin_rows_selected`, `edit_service_type`, `edit_service_kit`, `edit_service_cost` | `get_db_connection()`, `load_service_types()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification | `UPDATE service_types` |
+| `add_sequencing_depth_btn` | Add Depth | Validate new entry fields and insert a new row. | 3615 | 4586 | `4586-4616` | `new_depth_description`, `new_depth_cost_150`, `new_depth_cost_300` | `get_db_connection()`, `load_sequencing_depths()`, `showNotification()`, `dbDisconnect()`, `dbExecute()` | Writes DB, Shows notification | `INSERT sequencing_depths` |
+| `edit_sequencing_depth_btn` | Edit Selected | Open edit modal for currently selected row. | 3623 | 4619 | `4619-4640` | `sequencing_depths_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | `UPDATE Depth` |
+| `update_sequencing_depth_btn` | Update Depth | Apply update from modal form to the selected row. | 4633 | 4643 | `4643-4664` | `sequencing_depths_table_admin_rows_selected`, `edit_depth_description`, `edit_depth_cost_150`, `edit_depth_cost_300` | `get_db_connection()`, `load_sequencing_depths()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification | `UPDATE sequencing_depths` |
+| `add_sequencing_cycles_btn` | Add Cycles | Validate new entry fields and insert a new row. | 3643 | 4667 | `4667-4691` | `new_cycles_description` | `get_db_connection()`, `load_sequencing_cycles()`, `showNotification()`, `dbDisconnect()`, `dbExecute()` | Writes DB, Shows notification | `INSERT sequencing_cycles` |
+| `add_user_admin_btn` | Add User | Validate new entry fields and insert a new row. | 3681 | 4694 | `4694-4737` | `new_user_username`, `new_user_email`, `new_user_password`, `new_user_confirm_password`, `new_user_admin` | `get_db_connection()`, `load_admin_data()`, `showNotification()`, `dbDisconnect()`, `dbGetQuery()`, `dbExecute()` | Writes DB, Reads DB, Shows notification, Refreshes UI data | `SELECT users`, `INSERT users` |
+| `add_genome_btn` | Add Genome | Validate new entry fields and insert a new row. | 3704 | 4740 | `4740-4764` | `new_genome_name` | `get_db_connection()`, `load_reference_genomes()`, `showNotification()`, `dbDisconnect()`, `dbExecute()` | Writes DB, Shows notification | `INSERT reference_genomes` |
+| `add_type_btn` | Add Sample Type | Validate new entry fields and insert a new row. | 3730 | 4767 | `4767-4787` | `new_type_name` | `get_db_connection()`, `load_types()`, `showNotification()`, `dbDisconnect()`, `dbExecute()` | Writes DB, Shows notification | `INSERT types` |
+| `add_sequencing_platform_btn` | Add Platform | Validate new entry fields and insert a new row. | 3756 | 4790 | `4790-4810` | `new_sequencing_platform_name` | `get_db_connection()`, `load_sequencing_platforms()`, `showNotification()`, `dbDisconnect()`, `dbExecute()` | Writes DB, Shows notification | `INSERT sequencing_platforms` |
+| `delete_budget_holder_btn` | Delete Selected Budget Holder | Open delete confirmation dialog for selected row. | 3555 | 4815 | `4815-4832` | `budget_holders_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
+| `confirm_delete_budget_holder_btn` | Delete | Delete selected row after confirmation. | 4829 | 4834 | `4834-4846` | `budget_holders_table_admin_rows_selected` | `get_db_connection()`, `load_admin_data()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification, Refreshes UI data | `DELETE budget_holders` |
+| `delete_service_type_btn` | Delete Selected Service Type | Open delete confirmation dialog for selected row. | 3590 | 4849 | `4849-4866` | `service_types_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
+| `confirm_delete_service_type_btn` | Delete | Delete selected row after confirmation. | 4863 | 4868 | `4868-4880` | `service_types_table_admin_rows_selected` | `get_db_connection()`, `load_service_types()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification | `DELETE service_types` |
+| `delete_sequencing_depth_btn` | Delete Selected Depth | Open delete confirmation dialog for selected row. | 3624 | 4883 | `4883-4900` | `sequencing_depths_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
+| `confirm_delete_sequencing_depth_btn` | Delete | Delete selected row after confirmation. | 4897 | 4902 | `4902-4914` | `sequencing_depths_table_admin_rows_selected` | `get_db_connection()`, `load_sequencing_depths()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification | `DELETE sequencing_depths` |
+| `delete_sequencing_cycles_btn` | Delete Selected Cycles | Open delete confirmation dialog for selected row. | 3650 | 4917 | `4917-4934` | `sequencing_cycles_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
+| `confirm_delete_sequencing_cycles_btn` | Delete | Delete selected row after confirmation. | 4931 | 4936 | `4936-4948` | `sequencing_cycles_table_admin_rows_selected` | `get_db_connection()`, `load_sequencing_cycles()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification | `DELETE sequencing_cycles` |
+| `delete_user_admin_btn` | Delete Selected User | Open delete confirmation dialog for selected row. | 3688 | 4951 | `4951-4973` | `users_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
+| `confirm_delete_user_btn` | Delete | Delete selected row after confirmation. | 4970 | 4975 | `4975-4987` | `users_table_admin_rows_selected` | `get_db_connection()`, `load_admin_data()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification, Refreshes UI data | `DELETE users` |
+| `delete_genome_btn` | Delete Selected Genome | Open delete confirmation dialog for selected row. | 3713 | 4990 | `4990-5007` | `genomes_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
+| `confirm_delete_genome_btn` | Delete | Delete selected row after confirmation. | 5004 | 5009 | `5009-5021` | `genomes_table_admin_rows_selected` | `get_db_connection()`, `load_reference_genomes()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification | `DELETE reference_genomes` |
+| `delete_type_btn` | Delete Selected Sample Type | Open delete confirmation dialog for selected row. | 3739 | 5024 | `5024-5041` | `types_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
+| `confirm_delete_type_btn` | Delete | Delete selected row after confirmation. | 5038 | 5043 | `5043-5055` | `types_table_admin_rows_selected` | `get_db_connection()`, `load_types()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification | `DELETE types` |
+| `delete_sequencing_platform_btn` | Delete Selected Platform | Open delete confirmation dialog for selected row. | 3765 | 5058 | `5058-5075` | `sequencing_platforms_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
+| `confirm_delete_sequencing_platform_btn` | Delete | Delete selected row after confirmation. | 5072 | 5077 | `5077-5089` | `sequencing_platforms_table_admin_rows_selected` | `get_db_connection()`, `load_sequencing_platforms()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification | `DELETE sequencing_platforms` |
+| `edit_project_btn` | Edit Project | Open the Edit Project modal for the selected project. | 2986 | 5094 | `5094-5227` | `projects_table_rows_selected` | `get_all_usernames()`, `make_status_choices()`, `showNotification()`, `showModal()` | Opens modal, Shows notification | `UPDATE Project` |
+| `update_project_btn` | Update Project | Save edits to selected project (including additional cost for admins). | 5131 | 5286 | `5286-5471` | `projects_table_rows_selected`, `edit_budget_id`, `edit_other_bh_name`, `edit_other_bh_surname`, `edit_project_status`, `edit_kickoff_meeting`, `edit_additional_cost`, `edit_num_samples`, `edit_service_type_id`, `edit_sequencing_depth_id`, `edit_sequencing_cycles_id`, `edit_other_bh_cost_center`, `edit_other_bh_email`, `edit_project_name`, `edit_reference_genome`, `edit_responsible_user`, `edit_project_description`, `edit_sequencing_platform`, `edit_type_id` | `scalar_text()`, `scalar_numeric()`, `parse_additional_cost()`, `calculate_total_cost()`, `get_db_connection()`, `get_or_create_budget_holder()`, `load_projects()`, `send_data_released_email()`, `showNotification()`, `dbDisconnect()` | Writes DB, Sends email, Closes modal, Shows notification, Refreshes UI data | `UPDATE projects` |
+| `send_notification_btn` | - | Send admin-triggered cost notification email for the selected project. | - | 5473 | `5473-5584` | `projects_table_rows_selected`, `edit_additional_cost`, `edit_num_samples`, `edit_service_type_id`, `edit_sequencing_depth_id`, `edit_sequencing_cycles_id`, `edit_budget_id`, `edit_project_name`, `edit_project_description`, `edit_responsible_user` | `parse_additional_cost()`, `calculate_total_cost()`, `get_db_connection()`, `send_project_cost_notification_email()`, `showNotification()`, `dbDisconnect()`, `dbGetQuery()` | Reads DB, Sends email, Shows notification | `SELECT budget_holders`, `SELECT users` |
+| `delete_project_btn` | Delete Project | Open delete confirmation for selected project. | 2989 | 5588 | `5588-5612` | `projects_table_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
+| `confirm_delete_btn` | Delete | Delete selected project from the database. | 5609 | 5614 | `5614-5626` | `projects_table_rows_selected` | `get_db_connection()`, `load_projects()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification, Refreshes UI data | `DELETE projects` |
+| `update_status_btn` | Update Project Status | Open status update modal for selected project. | 2997 | 5630 | `5630-5663` | `projects_table_rows_selected` | `make_status_choices()`, `showNotification()`, `showModal()` | Opens modal, Shows notification | `UPDATE project`, `UPDATE status`, `UPDATE Project`, `UPDATE Status` |
+| `confirm_status_update_btn` | Update Status | Persist new project status and trigger release email when applicable. | 5649 | 5665 | `5665-5737` | `projects_table_rows_selected`, `new_project_status` | `get_db_connection()`, `load_projects()`, `send_data_released_email()`, `showNotification()`, `dbDisconnect()`, `dbExecute()`, `removeModal()` | Writes DB, Sends email, Closes modal, Shows notification, Refreshes UI data | `UPDATE projects`, `UPDATE ERROR`, `UPDATE project` |
+| `validate_db_btn` | Validate Database | Run database validation checks and report issues. | 3084 | 5744 | `5744-5748` | - | `validate_and_repair_database()`, `showNotification()` | Shows notification | - |
+| `restore_db_btn` | - | Start database restore flow from uploaded backup. | - | 5789 | `5789-5806` | - | `showModal()` | Opens modal | - |
+| `confirm_restore_btn` | Restore Database | Execute restore after confirmation and reopen app state. | 5803 | 5808 | `5808-5828` | `restore_db_btn` | `removeModal()`, `showNotification()` | Closes modal, Shows notification | - |
+
+## Buttons Without Direct observeEvent(input$...) Handler
+
+- None

@@ -8,7 +8,7 @@ execute:
 
 # app.R Deep Breakdown
 
-This file is a comprehensive companion to `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R` (currently ~5,490 lines).
+This file is a comprehensive companion to `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R` (currently ~5,884 lines).
 It is intentionally verbose and written for readers with limited R/Shiny background.
 
 ## How to Use This Companion
@@ -17,6 +17,59 @@ It is intentionally verbose and written for readers with limited R/Shiny backgro
 2. Use **UI <-> Server wiring maps** to trace where each button/input/output is connected.
 3. Use **Function catalog** and **Event catalog** for behavior details and side-effects.
 4. Open `app.R` side-by-side and jump to line numbers noted here.
+
+## Update Addendum (27.02.2026)
+
+This addendum captures the latest behavior changes added after the first draft of this breakdown.
+
+### 1) New DB-backed additional-cost feature
+
+- New project field in `projects` table: `additional_cost` (nullable `REAL`).
+- Runtime auto-migration is now performed at app startup:
+  - `projects_has_additional_cost(con)` checks schema.
+  - `ensure_projects_additional_cost_column(con)` runs `ALTER TABLE projects ADD COLUMN additional_cost REAL` when missing.
+- `get_db_connection()` now enforces the migration automatically for every new connection.
+- `validate_and_repair_database()` also ensures the column exists during health checks.
+
+### 2) Cost calculation logic split
+
+- `calculate_base_cost(...)` now computes preparation + sequencing-only base cost.
+- `calculate_total_cost(..., additional_cost)` now adds admin-entered additional costs to base cost.
+- `parse_additional_cost(...)` validates non-negative decimals (supports comma/dot normalization).
+- `format_cost_amount(...)` enforces standardized `%.2f` display.
+
+### 3) UI wiring changes in Edit Project
+
+- New admin-only input: `edit_additional_cost` (`textInput`).
+- New admin-only button in modal footer: `send_notification_btn` (label `Notifications`, green style).
+- Cost summary blocks now show:
+  - Preparation Cost
+  - Sequencing Cost
+  - Additional costs
+  - Total Estimated Cost
+
+### 4) Email behavior split
+
+- Project creation email (`send_project_creation_email`) now notifies only `ngs@biochem.mpg.de`.
+- New function `send_project_cost_notification_email(...)` sends the detailed cost-estimation mail to:
+  - project creator
+  - budget holder
+  - `ngs@biochem.mpg.de`
+- Notification email format is HTML; total cost line is bold + underlined.
+
+### 5) New event flow
+
+- `observeEvent(input$send_notification_btn)` triggers the new notification email path.
+- `observeEvent(input$update_project_btn)` now validates and stores `additional_cost` (admin only) and recomputes `total_cost`.
+
+### 6) Create/Edit form labeling and field order updates
+
+- In both Create and Edit modals:
+  - `Project Type` label was renamed to `Sample Type`.
+  - `Sample Type` is now shown above `Service Type`.
+  - `Sequencing Depth` label was renamed to `Data Amount (Total Reads)`.
+  - `Sequencing Cycles` label was renamed to `Read Length (Cycles)`.
+- Helper texts were added below depth/cycles fields with compact `11px` styling to reduce visual noise while keeping examples visible.
 
 ## Top-Level Execution Map
 
@@ -35,9 +88,9 @@ It is intentionally verbose and written for readers with limited R/Shiny backgro
 | `2902-3318` | Create project workflow + project table rendering | High-level block in app startup/runtime path. |
 | `3321-4047` | Admin modals + landing text management + admin table renderers | High-level block in app startup/runtime path. |
 | `4048-4889` | Admin CRUD handlers for all reference tables | High-level block in app startup/runtime path. |
-| `4892-5343` | Edit/delete/update project workflows + status updates | High-level block in app startup/runtime path. |
-| `5345-5487` | Backup/restore and optional auto-backup block (commented) | High-level block in app startup/runtime path. |
-| `5490-5490` | Application entrypoint (`shinyApp(ui, server)`) | High-level block in app startup/runtime path. |
+| `4892-5708` | Edit/delete/update project workflows + status updates + cost-notification flow | High-level block in app startup/runtime path. |
+| `5710-5881` | Backup/restore and optional auto-backup block (commented) | High-level block in app startup/runtime path. |
+| `5884-5884` | Application entrypoint (`shinyApp(ui, server)`) | High-level block in app startup/runtime path. |
 
 ## UI <-> Server Wiring (Outputs)
 
@@ -105,8 +158,8 @@ When a line appears multiple times, it usually means validation + DB action + no
 | `confirm_delete_type_btn` | 4839 | actionButton | 4844 | Administer Projects -> Sample Types |
 | `confirm_delete_user_btn` | 4771 | actionButton | 4776 | Administer Projects -> Users |
 | `confirm_restore_btn` | 5409 | actionButton | 5414 | Administer Projects -> Database Management |
-| `confirm_status_update_btn` | 5255 | actionButton | 5271 | Apply for Projects / Projects table |
-| `create_project_btn` | 2909 | actionButton | 3079 | Apply for Projects / Projects table |
+| `confirm_status_update_btn` | 5649 | actionButton | 5665 | Apply for Projects / Projects table |
+| `create_project_btn` | 3106 | actionButton | 3278 | Apply for Projects / Projects table |
 | `debug_db_btn` | 882 | actionButton | 891 | Administer Projects -> Database Management |
 | `delete_budget_holder_btn` | 3356 | actionButton | 4616 | Administer Projects -> Budget Holders |
 | `delete_genome_btn` | 3514 | actionButton | 4791 | Administer Projects -> Reference Genomes |
@@ -132,8 +185,9 @@ When a line appears multiple times, it usually means validation + DB action + no
 | `edit_genome_btn` | 3513 | actionButton | 4222 | Administer Projects -> Reference Genomes |
 | `edit_genome_name` | 4238 | textInput | 4247, 4248 | Administer Projects -> Reference Genomes |
 | `edit_kickoff_meeting` | 4966 | radioButtons | 5085 | General / Shared |
+| `edit_additional_cost` | 5200 | textInput | 5242, 5353, 5493 | Apply for Projects / Edit Project modal |
 | `edit_num_samples` | 4925 | numericInput | 5007, 5013, 5088, 5126, 5152 | General / Shared |
-| `edit_project_btn` | 2789 | actionButton | 4895 | Apply for Projects / Projects table |
+| `edit_project_btn` | 2986 | actionButton | 5094 | Apply for Projects / Projects table |
 | `edit_project_description` | 4980 | textAreaInput | 5125, 5151 | Apply for Projects / Projects table |
 | `edit_project_name` | 4924 | textInput | 5120, 5146 | Apply for Projects / Projects table |
 | `edit_project_status` | 4996 | selectInput | 5076 | Apply for Projects / Projects table |
@@ -209,6 +263,7 @@ When a line appears multiple times, it usually means validation + DB action + no
 | `responsible_user` | 2966 | selectInput | 3137, 3168 | Administer Projects -> Users |
 | `restore_db_btn` | 2886 | fileInput | 5395, 5396, 5403, 5423 | Administer Projects -> Database Management |
 | `save_announcement_item_btn` | 3779 | actionButton | 3793 | Administer Projects -> Landing Text |
+| `send_notification_btn` | 5126 | actionButton | 5473 | Apply for Projects / Edit Project modal (admin) |
 | `sequencing_cycles_id` | 2944 | selectInput | 3037, 3105, 3145 | Administer Projects -> Sequencing Cycles |
 | `sequencing_depth_id` | 2936 | selectInput | 3037, 3040, 3105, 3144, 3171 | Administer Projects -> Sequencing Depths |
 | `sequencing_platform` | 2916 | selectInput | 3143 | Administer Projects -> Sequencing Platforms |
@@ -219,11 +274,11 @@ When a line appears multiple times, it usually means validation + DB action + no
 | `update_announcement_item_btn` | 3860 | actionButton | 3873 | Administer Projects -> Landing Text |
 | `update_budget_holder_btn` | 4167 | actionButton | 4176 | Administer Projects -> Budget Holders |
 | `update_genome_btn` | 4236 | actionButton | 4242 | Administer Projects -> Reference Genomes |
-| `update_project_btn` | 4919 | actionButton | 5027 | Apply for Projects / Projects table |
+| `update_project_btn` | 5131 | actionButton | 5286 | Apply for Projects / Projects table |
 | `update_sequencing_depth_btn` | 4434 | actionButton | 4444 | Administer Projects -> Sequencing Depths |
 | `update_sequencing_platform_update_btn` | 4331 | actionButton | 4337 | Administer Projects -> Sequencing Platforms |
 | `update_service_type_btn` | 4143 | actionButton | 4364 | Administer Projects -> Service Types |
-| `update_status_btn` | 2800 | actionButton | 5236 | Apply for Projects / Projects table |
+| `update_status_btn` | 2997 | actionButton | 5630 | Apply for Projects / Projects table |
 | `update_type_btn` | 4284 | actionButton | 4290 | Administer Projects -> Sample Types |
 | `validate_db_btn` | 2887 | actionButton | 5350 | Administer Projects -> Database Management |
 
@@ -580,50 +635,86 @@ For each function: **purpose**, **key behavior**, and **where it is called**.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `load_admin_data` {#fn-load-admin-data}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1998`
+- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2088`
 - **Signature line:** `load_admin_data <- function() {`
 - **Purpose:** Loads all admin-maintained reference tables and user table.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
+### `projects_has_additional_cost` {#fn-projects-has-additional-cost}
+- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1838`
+- **Signature line:** `projects_has_additional_cost <- function(con) {`
+- **Purpose:** Checks whether `projects.additional_cost` is present in the current DB schema.
+- **Called/referenced at:** startup DB migration helpers and health checks.
+
+### `ensure_projects_additional_cost_column` {#fn-ensure-projects-additional-cost-column}
+- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1844`
+- **Signature line:** `ensure_projects_additional_cost_column <- function(con) {`
+- **Purpose:** Applies in-place migration (`ALTER TABLE`) when `additional_cost` is missing.
+- **Called/referenced at:** `get_db_connection()`, `validate_and_repair_database()`.
+
+### `format_cost_amount` {#fn-format-cost-amount}
+- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1851`
+- **Signature line:** `format_cost_amount <- function(value) {`
+- **Purpose:** Normalizes numeric display to two decimals for all cost summaries.
+- **Called/referenced at:** create/edit cost UI blocks and notification message generation.
+
+### `parse_additional_cost` {#fn-parse-additional-cost}
+- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1857`
+- **Signature line:** `parse_additional_cost <- function(value) {`
+- **Purpose:** Validates admin-entered additional cost as non-negative decimal; supports comma/dot input.
+- **Called/referenced at:** edit-cost preview, project update write path, notification-send handler.
+
+### `calculate_base_cost` {#fn-calculate-base-cost}
+- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2110`
+- **Signature line:** `calculate_base_cost <- function(num_samples, service_type_id, sequencing_depth_id, sequencing_cycles_id) {`
+- **Purpose:** Computes preparation + sequencing baseline before optional admin surcharge.
+- **Called/referenced at:** create modal cost preview and edit modal cost preview.
+
 ### `calculate_total_cost` {#fn-calculate-total-cost}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2020`
-- **Signature line:** `calculate_total_cost <- function(num_samples, service_type_id, sequencing_depth_id, sequencing_cycles_id) {`
-- **Purpose:** Computes estimated project cost from samples + service + depth/cycles rules.
+- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2140`
+- **Signature line:** `calculate_total_cost <- function(num_samples, service_type_id, sequencing_depth_id, sequencing_cycles_id, additional_cost = 0) {`
+- **Purpose:** Computes final estimated cost (base cost + optional admin-entered additional cost).
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `send_project_creation_email` {#fn-send-project-creation-email}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2051`
+- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2150`
 - **Signature line:** `send_project_creation_email <- function(project_data, budget_holder, user_email) {`
-- **Purpose:** Builds and sends project-created email to creator + budget holder + facility mailbox.
+- **Purpose:** Builds and sends project-created email to NGS facility mailbox only (`ngs@biochem.mpg.de`).
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
+### `send_project_cost_notification_email` {#fn-send-project-cost-notification-email}
+- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2260`
+- **Signature line:** `send_project_cost_notification_email <- function(project_data, budget_holder, user_email) {`
+- **Purpose:** Sends admin-triggered cost-estimation notification to creator + budget holder + NGS mailbox.
+- **Called/referenced at:** `observeEvent(input$send_notification_btn)`.
+
 ### `send_data_released_email` {#fn-send-data-released-email}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2151`
+- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2348`
 - **Signature line:** `send_data_released_email <- function(project_data) {`
 - **Purpose:** Sends automatic “Data released” email to responsible user and `omicsdesk` target.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `load_projects` {#fn-load-projects}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2732`
+- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2929`
 - **Signature line:** `load_projects <- function() {`
 - **Purpose:** Queries projects table with joins, role filtering, and display-preparation columns.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `get_or_create_budget_holder` {#fn-get-or-create-budget-holder}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:3055`
+- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:3254`
 - **Signature line:** `get_or_create_budget_holder <- function(con, name, surname, cost_center, email) {`
 - **Purpose:** Finds existing budget holder or inserts one from “Other / not listed” modal fields.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `scalar_text` {#fn-scalar-text-update-flow}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5062`
+- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5321`
 - **Signature line:** `scalar_text <- function(x, default = "") {`
 - **Purpose:** Normalizes potentially vector/empty values into a single trimmed string or NULL.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 - **Important note:** this later local `scalar_text()` shadows the earlier helper inside `update_project_btn` scope, to normalize DB bind params safely.
 
 ### `scalar_numeric` {#fn-scalar-numeric}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5069`
+- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5328`
 - **Signature line:** `scalar_numeric <- function(x, default = NA_real_) {`
 - **Purpose:** Normalizes potentially vector numeric input to one safe scalar for DB binding.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
@@ -645,8 +736,8 @@ Every event trigger is listed with the panel it belongs to and what action it pe
 | 2598 | `input$ldap_relogin_btn` | Authentication / Login area | Unblocks LDAP login after a profile interruption. |
 | 2608 | `input$login_btn` | Authentication / Login area | Processes local password login (disabled in LDAP mode). |
 | 2633 | `input$logout_btn` | General / Shared | Handles local logout or LDAP end-session guidance modal. |
-| 2903 | `input$new_project_btn` | Apply for Projects / Projects table | Opens project-create modal and auto-selects budget holder by group mapping. |
-| 3079 | `input$create_project_btn` | Apply for Projects / Projects table | Validates, inserts new project, sends creation email, and refreshes project table. |
+| 3100 | `input$new_project_btn` | Apply for Projects / Projects table | Opens project-create modal and auto-selects budget holder by group mapping. |
+| 3278 | `input$create_project_btn` | Apply for Projects / Projects table | Validates, inserts new project, sends creation email to NGS mailbox, and refreshes project table. |
 | 3315 | `user$logged_in` | General / Shared | Loads project list after successful login. |
 | 3324 | `input$manage_budget_holders_btn` | Administer Projects -> Budget Holders | Opens admin management modal for the selected reference-data domain. |
 | 3362 | `input$manage_service_types_btn` | Administer Projects -> Service Types | Opens admin management modal for the selected reference-data domain. |
@@ -701,12 +792,13 @@ Every event trigger is listed with the panel it belongs to and what action it pe
 | 4844 | `input$confirm_delete_type_btn` | Administer Projects -> Sample Types | Executes confirmed delete, then reloads related data. |
 | 4859 | `input$delete_sequencing_platform_btn` | Administer Projects -> Sequencing Platforms | Opens delete confirmation for selected row. |
 | 4878 | `input$confirm_delete_sequencing_platform_btn` | Administer Projects -> Sequencing Platforms | Executes confirmed delete, then reloads related data. |
-| 4895 | `input$edit_project_btn` | Apply for Projects / Projects table | Opens edit modal for selected project with permission checks. |
-| 5027 | `input$update_project_btn` | Apply for Projects / Projects table | Updates selected project row and optionally sends data-released email. |
+| 5094 | `input$edit_project_btn` | Apply for Projects / Projects table | Opens edit modal for selected project with permission checks. |
+| 5286 | `input$update_project_btn` | Apply for Projects / Projects table | Updates selected project row, validates/stores `additional_cost` (admin), and optionally sends data-released email. |
+| 5473 | `input$send_notification_btn` | Apply for Projects / Edit Project modal (admin) | Sends explicit cost-estimation notification email (creator + budget holder + NGS) without changing project status. |
 | 5194 | `input$delete_project_btn` | Apply for Projects / Projects table | Shows admin-only delete confirmation for selected project. |
 | 5220 | `input$confirm_delete_btn` | General / Shared | Deletes project row from DB and refreshes table. |
-| 5236 | `input$update_status_btn` | Apply for Projects / Projects table | Opens status-update modal (admin only). |
-| 5271 | `input$confirm_status_update_btn` | Apply for Projects / Projects table | Writes new status and sends data-released email when applicable. |
+| 5630 | `input$update_status_btn` | Apply for Projects / Projects table | Opens status-update modal (admin only). |
+| 5665 | `input$confirm_status_update_btn` | Apply for Projects / Projects table | Writes new status and sends data-released email when applicable. |
 | 5350 | `input$validate_db_btn` | Administer Projects -> Database Management | Runs DB validation and reports health status. |
 | 5395 | `input$restore_db_btn` | Administer Projects -> Database Management | Starts DB restore flow after backup-file selection. |
 | 5414 | `input$confirm_restore_btn` | Administer Projects -> Database Management | Performs restore (with safety backup) and restarts app state expectations. |
@@ -891,7 +983,7 @@ The table below indexes each detected DB call (`dbGetQuery`, `dbExecute`) in `ap
 
 - Landing text panels (`output$announcement_blocks_ui`) are DB-driven and admin-editable.
 - Project actions for users: create, edit (delete hidden for non-admin).
-- Primary flows: `input$new_project_btn` -> modal; `input$create_project_btn` writes DB + sends email; `input$edit_project_btn` and `input$update_project_btn` modify rows.
+- Primary flows: `input$new_project_btn` -> modal; `input$create_project_btn` writes DB + sends NGS-only creation email; `input$edit_project_btn` and `input$update_project_btn` modify rows; `input$send_notification_btn` sends explicit cost notifications.
 
 ### Administer Projects
 
@@ -911,12 +1003,13 @@ The table below indexes each detected DB call (`dbGetQuery`, `dbExecute`) in `ap
 
 ## Cross-Reference Quick Index
 
-- **Create project modal**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2903` (open), `:3079` (submit).
-- **Edit project modal**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:4895` (open), `:5027` (submit).
-- **Status update modal**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5236` (open), `:5271` (submit).
-- **Landing text management**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:3571` and CRUD events `:3765` onward.
+- **Create project modal**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:3100` (open), `:3278` (submit).
+- **Edit project modal**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5094` (open), `:5286` (submit).
+- **Cost notification button**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5126` (UI), `:5473` (handler).
+- **Status update modal**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5630` (open), `:5665` (submit).
+- **Landing text management**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:3770` and CRUD events `:3765` onward.
 - **LDAP auto-login core**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2383` + helpers around `:1103` and `:1635`.
-- **DB backup/restore UI**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2876-2893`; handlers at `:5350-5414`.
+- **DB backup/restore UI**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:3196-3213`; handlers at `:5744-5808`.
 
 ## Caveats and Technical Debt Notes
 
@@ -931,5 +1024,5 @@ The table below indexes each detected DB call (`dbGetQuery`, `dbExecute`) in `ap
 1. Start with `validate_and_repair_database()` and auth mode setup to understand startup preconditions.
 2. Follow `complete_login()` + `load_projects()` to understand post-login state.
 3. Read one full CRUD chain end-to-end (e.g., service types) to understand modal -> validation -> SQL -> refresh pattern.
-4. Read `send_project_creation_email()` and `send_data_released_email()` for notification side-effects.
+4. Read `send_project_creation_email()`, `send_project_cost_notification_email()`, and `send_data_released_email()` for notification side-effects.
 5. Read backup/restore handlers before doing production maintenance.
