@@ -15,6 +15,7 @@ execute:
 - [Enable push from the VM](#enable-push-from-the-vm)
 - [Repo Setup on the VM](#repo-setup-on-the-vm)
 - [Daily VM Git workflow](#daily-vm-git-workflow)
+- [Feature Branch Workflow (Recommended)](#feature-branch-workflow-recommended)
 
 ## GitHub Auth (new laptop)
 
@@ -292,3 +293,60 @@ git push -u origin <your-branch>
 ```
 
 For pull conflicts/divergent branches, see **Troubleshooting → Git / GitHub**.
+
+## Feature Branch Workflow (Recommended)
+
+Use this flow for new features and bug fixes.
+
+### Step 1: Start from updated `main`
+
+```bash
+cd /home/<user>/BCFNGS-project-management
+git checkout main
+git pull --ff-only origin main
+```
+
+### Step 2: Create and switch to a feature branch
+
+```bash
+git checkout -b codex/<short-feature-name>
+```
+
+### Step 3: Commit your work on the feature branch
+
+```bash
+git add <files>
+git commit -m "<clear message>"
+```
+
+### Step 4: Push branch and open PR
+
+```bash
+git push -u origin codex/<short-feature-name>
+```
+
+Open a Pull Request from `codex/<short-feature-name>` -> `main`.
+
+### Step 5: Test on VM from the same branch (optional but recommended)
+
+```bash
+cd /home/<user>/BCFNGS-project-management
+git fetch origin
+git checkout codex/<short-feature-name>
+git pull --ff-only origin codex/<short-feature-name>
+PUBLIC_BASE_URL="https://<vm-hostname>" ./scripts/deploy.sh
+```
+
+### Step 6: Merge PR, then sync local/VM to `main`
+
+```bash
+git checkout main
+git pull --ff-only origin main
+```
+
+Optional cleanup:
+
+```bash
+git branch -d codex/<short-feature-name>
+git push origin --delete codex/<short-feature-name>
+```

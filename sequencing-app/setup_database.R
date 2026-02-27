@@ -179,6 +179,7 @@ setup_complete_database <- function() {
       sequencing_cycles_id INTEGER NOT NULL,
       kickoff_meeting INTEGER,
       type_id INTEGER,
+      additional_cost REAL,
       total_cost REAL,
       status TEXT DEFAULT 'Created' CHECK(status IN (
         'Created',
@@ -427,7 +428,7 @@ setup_complete_database <- function() {
   email_templates <- data.frame(
     template_name = c('project_creation'),
     subject = c('New Sequencing Project Created'),
-    body_template = c('Dear {surname} {name},\n\nA new sequencing project has been created under your cost center {cost_center}.\n\nProject Details:\n- Project Name: {project_name}\n- Responsible User: {responsible_user}\n- Number of Samples: {num_samples}\n- Service Type: {service_type}\n- Total Estimated Cost: €{total_cost}\n\n{cost_warning}\n\nBest regards,\nSequencing Facility Team')
+    body_template = c('Dear {surname} {name},\n\nA new sequencing project has been created under your cost center {cost_center}.\n\nProject Details:\n- Project Name: {project_name}\n- Responsible User: {responsible_user}\n- Number of Samples: {num_samples}\n- Service Type: {service_type}\n- Total Project Costs will be provided soon after project assessment by the NGS core facility.\n\n{cost_warning}\n\nBest regards,\nSequencing Facility Team')
   )
 
   for(i in 1:nrow(email_templates)) {
