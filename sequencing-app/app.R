@@ -865,6 +865,7 @@ server <- function(input, output, session) {
       con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
       on.exit(dbDisconnect(con), add = TRUE)
 
+      ensure_projects_additional_cost_column(con)
       ensure_announcement_tables(con)
       seed_announcement_defaults(con)
       
@@ -953,6 +954,7 @@ server <- function(input, output, session) {
     is_admin = FALSE
   )
   projects_data <- reactiveVal()
+  edit_existing_additional_cost <- reactiveVal(NA_real_)
   announcement_refresh <- reactiveVal(0)
   announcement_items_current <- reactiveVal(data.frame())
   announcement_editing_item_id <- reactiveVal(NULL)
@@ -1832,10 +1834,72 @@ server <- function(input, output, session) {
     }
     choices
   }
+
+  projects_has_additional_cost <- function(con) {
+    tryCatch({
+      "additional_cost" %in% dbGetQuery(con, "PRAGMA table_info(projects)")$name
+    }, error = function(e) FALSE)
+  }
+
+  ensure_projects_additional_cost_column <- function(con) {
+    if (!projects_has_additional_cost(con)) {
+      dbExecute(con, "ALTER TABLE projects ADD COLUMN additional_cost REAL")
+    }
+    invisible(NULL)
+  }
+
+  format_cost_amount <- function(value) {
+    numeric_value <- suppressWarnings(as.numeric(value))
+    if (length(numeric_value) == 0 || is.na(numeric_value)) return("")
+    sprintf("%.2f", numeric_value)
+  }
+
+  parse_additional_cost <- function(value) {
+    raw_value <- ""
+    if (!is.null(value) && length(value) > 0) {
+      raw_value <- as.character(value[[1]])
+    }
+    raw_value <- trimws(raw_value)
+
+    if (raw_value == "") {
+      return(list(valid = TRUE, empty = TRUE, value = NA_real_, error = NULL))
+    }
+
+    normalized <- gsub(",", ".", raw_value, fixed = TRUE)
+    normalized <- gsub("\\s+", "", normalized)
+
+    if (!grepl("^([0-9]+(\\.[0-9]+)?|\\.[0-9]+)$", normalized)) {
+      return(list(
+        valid = FALSE,
+        empty = FALSE,
+        value = NA_real_,
+        error = "Additional costs must be a non-negative number (e.g., 125 or 125.50)."
+      ))
+    }
+
+    numeric_value <- suppressWarnings(as.numeric(normalized))
+    if (is.na(numeric_value) || numeric_value < 0) {
+      return(list(
+        valid = FALSE,
+        empty = FALSE,
+        value = NA_real_,
+        error = "Additional costs must be a non-negative number (e.g., 125 or 125.50)."
+      ))
+    }
+
+    list(valid = TRUE, empty = FALSE, value = round(numeric_value, 2), error = NULL)
+  }
   
   # Database connection
   get_db_connection <- function() {
-    dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
+    con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
+    tryCatch({
+      ensure_projects_additional_cost_column(con)
+    }, error = function(e) {
+      cat("DB MIGRATION ERROR (additional_cost):", e$message, "\n", file = stderr())
+      flush.console()
+    })
+    con
   }
 
   users_has_full_name <- function(con) {
@@ -2042,8 +2106,8 @@ server <- function(input, output, session) {
     admin_data$sequencing_platforms <- load_sequencing_platforms()
   }
   
-  # Calculate total cost
-  calculate_total_cost <- function(num_samples, service_type_id, sequencing_depth_id, sequencing_cycles_id) {
+  # Calculate base sequencing cost (without admin-entered additional costs)
+  calculate_base_cost <- function(num_samples, service_type_id, sequencing_depth_id, sequencing_cycles_id) {
     if(is.null(num_samples) || is.null(service_type_id) || is.null(sequencing_depth_id) || is.null(sequencing_cycles_id)) {
       return(0)
     }
@@ -2069,8 +2133,17 @@ server <- function(input, output, session) {
       seq_cost <- sequencing_depth$cost_upto_300_cycles
     }
     
-    total_cost <- prep_cost + ifelse(is.na(seq_cost), 0, seq_cost)
-    return(total_cost)
+    prep_cost + ifelse(is.na(seq_cost), 0, seq_cost)
+  }
+
+  # Calculate total cost (base + optional additional costs)
+  calculate_total_cost <- function(num_samples, service_type_id, sequencing_depth_id, sequencing_cycles_id, additional_cost = 0) {
+    base_cost <- calculate_base_cost(num_samples, service_type_id, sequencing_depth_id, sequencing_cycles_id)
+    add_cost <- suppressWarnings(as.numeric(additional_cost))
+    if (length(add_cost) == 0 || is.na(add_cost) || add_cost < 0) {
+      add_cost <- 0
+    }
+    base_cost + add_cost
   }
   
   # Send email notification
@@ -2119,7 +2192,17 @@ server <- function(input, output, session) {
       email_body <- gsub("\\{responsible_user\\}", project_data$responsible_user, email_body)
       email_body <- gsub("\\{num_samples\\}", project_data$num_samples, email_body)
       email_body <- gsub("\\{service_type\\}", admin_data$service_types$service_type[admin_data$service_types$id == project_data$service_type_id], email_body)
-      email_body <- gsub("\\{total_cost\\}", sprintf("%.2f", project_data$total_cost), email_body)
+      email_body <- gsub(
+        "\\{total_cost\\}",
+        "Total Project Costs will be provided soon after project assessment by the NGS core facility.",
+        email_body
+      )
+      email_body <- gsub(
+        "(?m)^-\\s*Total\\s*Estimated\\s*Cost:.*$",
+        "- Total Project Costs will be provided soon after project assessment by the NGS core facility.",
+        email_body,
+        perl = TRUE
+      )
       email_body <- gsub("\\{cost_warning\\}", cost_warning, email_body)
 
       # Append project description if provided
@@ -2170,6 +2253,94 @@ server <- function(input, output, session) {
     }, error = function(e) {
       cat("DEBUG: Error occurred:", e$message, "\n")
       return(list(success = FALSE, error = e$message))
+    })
+  }
+
+  # Send admin-triggered cost-estimation email notification
+  send_project_cost_notification_email <- function(project_data, budget_holder, user_email) {
+    tryCatch({
+      facility_email <- "ngs@biochem.mpg.de"
+
+      project_code <- trimws(project_data$project_code %||% "")
+      if (!nzchar(project_code) && !is.null(project_data$project_id) && !is.na(project_data$project_id)) {
+        project_code <- paste0("P", as.character(project_data$project_id))
+      }
+      if (!nzchar(project_code)) project_code <- "Project"
+
+      safe_total_cost <- suppressWarnings(as.numeric(project_data$total_cost))
+      if (length(safe_total_cost) == 0 || is.na(safe_total_cost)) safe_total_cost <- 0
+
+      budget_name <- trimws(paste(budget_holder$surname[[1]] %||% "", budget_holder$name[[1]] %||% ""))
+      if (!nzchar(budget_name)) budget_name <- "Budget holder"
+      budget_center <- trimws(as.character(budget_holder$cost_center[[1]] %||% "N.A."))
+
+      service_type <- trimws(as.character(project_data$service_type %||% ""))
+      if (!nzchar(service_type)) service_type <- "N.A."
+
+      recipients <- unique(c(
+        trimws(as.character(budget_holder$email[[1]] %||% "")),
+        trimws(as.character(user_email %||% "")),
+        facility_email
+      ))
+      recipients <- recipients[!is.na(recipients) & recipients != ""]
+      if (length(recipients) == 0) {
+        return(list(success = FALSE, error = "No valid recipients found for notification email."))
+      }
+
+      project_description <- trimws(as.character(project_data$description %||% ""))
+      description_html <- ""
+      if (nzchar(project_description)) {
+        description_html <- paste0(
+          "<p><strong>Project Description:</strong><br>",
+          htmltools::htmlEscape(project_description),
+          "</p>"
+        )
+      }
+
+      cost_line <- paste0(
+        "<strong><u>Total Estimated Cost: ",
+        sprintf("%.2f", safe_total_cost),
+        "€</u></strong>"
+      )
+
+      email_body <- paste0(
+        "<html><body style='font-family: Arial, sans-serif;'>",
+        "<p>Dear ", htmltools::htmlEscape(budget_name), ",</p>",
+        "<p>A new sequencing project has been created under your cost center ",
+        htmltools::htmlEscape(budget_center), ".</p>",
+        "<p><strong>Project Details:</strong><br>",
+        "- Project Name: ", htmltools::htmlEscape(as.character(project_data$project_name %||% "")), "<br>",
+        "- Responsible User: ", htmltools::htmlEscape(as.character(project_data$responsible_user %||% "")), "<br>",
+        "- Number of Samples: ", htmltools::htmlEscape(as.character(project_data$num_samples %||% "")), "<br>",
+        "- Service Type: ", htmltools::htmlEscape(service_type), "<br>",
+        "- ", cost_line,
+        "</p>",
+        description_html,
+        "<p>Best regards,<br>Sequencing Facility Team</p>",
+        "</body></html>"
+      )
+
+      send.mail(
+        from = "ngs@biochem.mpg.de",
+        to = recipients,
+        encoding = "utf-8",
+        subject = paste0(project_code, " - New Sequencing Project Created - cost estimation"),
+        body = email_body,
+        html = TRUE,
+        smtp = list(
+          host.name = "msx.biochem.mpg.de",
+          port = 25,
+          ssl = FALSE,
+          tls = FALSE,
+          authenticate = FALSE
+        ),
+        send = TRUE
+      )
+
+      list(success = TRUE, recipients = recipients)
+    }, error = function(e) {
+      cat("NOTIFICATION EMAIL ERROR:", e$message, "\n", file = stderr())
+      list(success = FALSE, error = e$message)
     })
   }
 
@@ -3059,18 +3230,20 @@ server <- function(input, output, session) {
   
   # Dynamic cost calculation
   output$cost_calculation_display <- renderUI({
-    total_cost <- calculate_total_cost(input$num_samples, input$service_type_id, 
-                                       input$sequencing_depth_id, input$sequencing_cycles_id)
+    base_cost <- calculate_base_cost(input$num_samples, input$service_type_id,
+                                     input$sequencing_depth_id, input$sequencing_cycles_id)
     
     service_type <- admin_data$service_types[admin_data$service_types$id == as.numeric(input$service_type_id), ]
     sequencing_depth <- admin_data$sequencing_depths[admin_data$sequencing_depths$id == as.numeric(input$sequencing_depth_id), ]
     
     prep_cost <- if(nrow(service_type) > 0) service_type$costs_per_sample * as.numeric(input$num_samples) else 0
+    sequencing_cost <- base_cost - prep_cost
     
     tagList(
-      p(paste("Preparation Cost: €", prep_cost)),
-      p(paste("Sequencing Cost: €", total_cost - prep_cost)),
-      p(class = "cost-total", paste("Total Estimated Cost: €", total_cost)),
+      p(paste0("Preparation Cost: €", format_cost_amount(prep_cost))),
+      p(paste0("Sequencing Cost: €", format_cost_amount(sequencing_cost))),
+      p("Additional costs:"),
+      p(class = "cost-total", paste0("Total Estimated Cost: €", format_cost_amount(base_cost))),
       if(!is.null(sequencing_depth) && nrow(sequencing_depth) > 0 && sequencing_depth$depth_description == "other") {
         p(class = "cost-warning", 
           "Note: 'Other' sequencing depth selected. These costs are preliminary. Please contact us to discuss your specific needs.")
@@ -4936,12 +5109,25 @@ server <- function(input, output, session) {
       showNotification("You don't have permission to edit this project", type = "error")
       return()
     }
+
+    project_additional <- suppressWarnings(as.numeric(project$additional_cost[[1]]))
+    if (length(project_additional) == 0 || is.na(project_additional)) {
+      project_additional <- NA_real_
+    }
+    edit_existing_additional_cost(project_additional)
     
     showModal(modalDialog(
       title = "Edit Project",
       size = "l",
       footer = tagList(
         modalButton("Cancel"),
+        if (user$is_admin) {
+          actionButton(
+            "send_notification_btn",
+            "Notifications",
+            style = "background-color: #a1d99b; border-color: #8bcf84; color: #1b4332;"
+          )
+        },
         actionButton("update_project_btn", "Update Project", class = "btn-primary")
       ),
       
@@ -5007,6 +5193,18 @@ server <- function(input, output, session) {
                              value = project$description, rows = 4)
         )
       ),
+      if (user$is_admin) {
+        fluidRow(
+          column(12,
+                 textInput(
+                   "edit_additional_cost",
+                   "Additional costs (€)",
+                   value = if (!is.na(project_additional)) sprintf("%.2f", project_additional) else "",
+                   placeholder = "Leave empty if no additional costs"
+                 )
+          )
+        )
+      },
       # Cost calculation for edit
       fluidRow(
         column(12,
@@ -5030,18 +5228,53 @@ server <- function(input, output, session) {
   
   # Edit cost calculation
   output$edit_cost_calculation_display <- renderUI({
-    total_cost <- calculate_total_cost(input$edit_num_samples, input$edit_service_type_id, 
-                                       input$edit_sequencing_depth_id, input$edit_sequencing_cycles_id)
+    base_cost <- calculate_base_cost(input$edit_num_samples, input$edit_service_type_id,
+                                     input$edit_sequencing_depth_id, input$edit_sequencing_cycles_id)
     
     service_type <- admin_data$service_types[admin_data$service_types$id == as.numeric(input$edit_service_type_id), ]
     sequencing_depth <- admin_data$sequencing_depths[admin_data$sequencing_depths$id == as.numeric(input$edit_sequencing_depth_id), ]
     
     prep_cost <- if(nrow(service_type) > 0) service_type$costs_per_sample * as.numeric(input$edit_num_samples) else 0
-    
+    sequencing_cost <- base_cost - prep_cost
+
+    stored_additional <- edit_existing_additional_cost()
+    additional_source <- if (isTRUE(user$is_admin)) {
+      input$edit_additional_cost
+    } else if (is.na(stored_additional)) {
+      ""
+    } else {
+      as.character(stored_additional)
+    }
+    parsed_additional <- parse_additional_cost(additional_source)
+    additional_cost <- if (parsed_additional$valid && !parsed_additional$empty) {
+      parsed_additional$value
+    } else if (!isTRUE(user$is_admin) && !is.na(edit_existing_additional_cost())) {
+      edit_existing_additional_cost()
+    } else {
+      0
+    }
+    total_cost <- calculate_total_cost(
+      input$edit_num_samples,
+      input$edit_service_type_id,
+      input$edit_sequencing_depth_id,
+      input$edit_sequencing_cycles_id,
+      additional_cost
+    )
+
+    additional_line <- if (parsed_additional$valid && !parsed_additional$empty) {
+      paste0("Additional costs: €", format_cost_amount(parsed_additional$value))
+    } else {
+      "Additional costs:"
+    }
+
     tagList(
-      p(paste("Preparation Cost: €", prep_cost)),
-      p(paste("Sequencing Cost: €", total_cost - prep_cost)),
-      p(class = "cost-total", paste("Total Estimated Cost: €", total_cost)),
+      p(paste0("Preparation Cost: €", format_cost_amount(prep_cost))),
+      p(paste0("Sequencing Cost: €", format_cost_amount(sequencing_cost))),
+      p(additional_line),
+      p(class = "cost-total", paste0("Total Estimated Cost: €", format_cost_amount(total_cost))),
+      if (isTRUE(user$is_admin) && !parsed_additional$valid) {
+        p(class = "cost-warning", parsed_additional$error)
+      },
       if(!is.null(sequencing_depth) && nrow(sequencing_depth) > 0 && sequencing_depth$depth_description == "other") {
         p(class = "cost-warning", 
           "Note: 'Other' sequencing depth selected. These costs are preliminary. Please contact us to discuss your specific needs.")
@@ -5110,9 +5343,29 @@ server <- function(input, output, session) {
     }
     kickoff_value <- scalar_numeric(input$edit_kickoff_meeting, kickoff_default)
 
-    # Calculate total cost
-    total_cost <- calculate_total_cost(input$edit_num_samples, input$edit_service_type_id, 
-                                       input$edit_sequencing_depth_id, input$edit_sequencing_cycles_id)
+    existing_additional_cost <- suppressWarnings(as.numeric(project$additional_cost[[1]]))
+    if (length(existing_additional_cost) == 0 || is.na(existing_additional_cost)) {
+      existing_additional_cost <- NA_real_
+    }
+
+    additional_cost_value <- existing_additional_cost
+    if (user$is_admin) {
+      parsed_additional <- parse_additional_cost(input$edit_additional_cost)
+      if (!parsed_additional$valid) {
+        showNotification(parsed_additional$error, type = "error")
+        return()
+      }
+      additional_cost_value <- if (parsed_additional$empty) NA_real_ else parsed_additional$value
+    }
+
+    # Calculate total cost (base + additional costs if present)
+    total_cost <- calculate_total_cost(
+      input$edit_num_samples,
+      input$edit_service_type_id,
+      input$edit_sequencing_depth_id,
+      input$edit_sequencing_cycles_id,
+      additional_cost_value
+    )
     
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
@@ -5140,7 +5393,7 @@ server <- function(input, output, session) {
             budget_id = ?, responsible_user = ?, description = ?, updated_at = CURRENT_TIMESTAMP,
             num_samples = ?, sequencing_platform = ?, sequencing_depth_id = ?,
             sequencing_cycles_id = ?, kickoff_meeting = ?, status = ?,
-            type_id = ?, total_cost = ?
+            type_id = ?, additional_cost = ?, total_cost = ?
         WHERE id = ?
       ", params = list(
         scalar_text(input$edit_project_name),
@@ -5156,6 +5409,7 @@ server <- function(input, output, session) {
         kickoff_value,
         new_status_for_update,
         as.numeric(input$edit_type_id),
+        additional_cost_value,
         total_cost,
         project_id
       ))
@@ -5188,6 +5442,7 @@ server <- function(input, output, session) {
     
     removeModal()
     load_projects()
+    edit_existing_additional_cost(additional_cost_value)
     showNotification("Project updated successfully!", type = "message")
 
     if (should_send_data_released_email) {
@@ -5212,6 +5467,119 @@ server <- function(input, output, session) {
           duration = 10
         )
       }
+    }
+  })
+
+  observeEvent(input$send_notification_btn, {
+    if (!user$is_admin) {
+      showNotification("Only administrators can send cost notification emails.", type = "error")
+      return()
+    }
+
+    selected_row <- input$projects_table_rows_selected
+    if (is.null(selected_row) || length(selected_row) == 0) {
+      showNotification("Please select a project first.", type = "warning")
+      return()
+    }
+
+    projects <- projects_data()
+    if (is.null(projects) || nrow(projects) < selected_row[1]) {
+      showNotification("Selected project is no longer available. Please reload the table.", type = "warning")
+      return()
+    }
+
+    project <- projects[selected_row[1], , drop = FALSE]
+
+    parsed_additional <- parse_additional_cost(input$edit_additional_cost)
+    if (!parsed_additional$valid) {
+      showNotification(parsed_additional$error, type = "error")
+      return()
+    }
+    additional_cost_value <- if (parsed_additional$empty) NA_real_ else parsed_additional$value
+
+    total_cost <- calculate_total_cost(
+      input$edit_num_samples,
+      input$edit_service_type_id,
+      input$edit_sequencing_depth_id,
+      input$edit_sequencing_cycles_id,
+      additional_cost_value
+    )
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+
+    budget_holder <- data.frame()
+
+    selected_budget_id <- suppressWarnings(as.numeric(input$edit_budget_id))
+    if (!is.na(selected_budget_id)) {
+      bh_row <- dbGetQuery(
+        con,
+        "SELECT name, surname, cost_center, email FROM budget_holders WHERE id = ? LIMIT 1",
+        params = list(selected_budget_id)
+      )
+      if (nrow(bh_row) > 0) budget_holder <- bh_row
+    }
+
+    if (nrow(budget_holder) == 0 && !is.null(project$budget_id[[1]]) && !is.na(project$budget_id[[1]])) {
+      bh_row <- dbGetQuery(
+        con,
+        "SELECT name, surname, cost_center, email FROM budget_holders WHERE id = ? LIMIT 1",
+        params = list(as.numeric(project$budget_id[[1]]))
+      )
+      if (nrow(bh_row) > 0) budget_holder <- bh_row
+    }
+
+    if (nrow(budget_holder) == 0) {
+      budget_holder <- data.frame(
+        name = "NGS",
+        surname = "Facility",
+        cost_center = "N.A.",
+        email = "ngs@biochem.mpg.de",
+        stringsAsFactors = FALSE
+      )
+    }
+
+    user_email <- dbGetQuery(
+      con,
+      "SELECT email FROM users WHERE id = ? LIMIT 1",
+      params = list(as.numeric(project$user_id[[1]]))
+    )$email
+    if (length(user_email) == 0 || is.na(user_email[[1]])) user_email <- ""
+
+    service_type_label <- admin_data$service_types$service_type[
+      admin_data$service_types$id == as.numeric(input$edit_service_type_id)
+    ]
+    if (length(service_type_label) == 0) {
+      service_type_label <- admin_data$service_types$service_type[
+        admin_data$service_types$id == as.numeric(project$service_type_id[[1]])
+      ]
+    }
+    if (length(service_type_label) == 0) service_type_label <- "N.A."
+
+    project_id_value <- suppressWarnings(as.numeric(project$project_id[[1]]))
+    project_code <- if (!is.na(project_id_value)) paste0("P", as.integer(project_id_value)) else "Project"
+
+    notification_payload <- list(
+      project_id = project_id_value,
+      project_code = project_code,
+      project_name = trimws(input$edit_project_name %||% project$project_name[[1]]),
+      description = trimws(input$edit_project_description %||% project$description[[1]]),
+      responsible_user = trimws(input$edit_responsible_user %||% project$responsible_user[[1]]),
+      num_samples = input$edit_num_samples %||% project$num_samples[[1]],
+      service_type = service_type_label[[1]],
+      total_cost = total_cost
+    )
+
+    email_result <- send_project_cost_notification_email(notification_payload, budget_holder, user_email[[1]])
+
+    if (isTRUE(email_result$success)) {
+      showNotification("Cost estimation notification sent.", type = "message")
+    } else {
+      showNotification(
+        paste("Could not send notification email:", email_result$error %||% "unknown error"),
+        type = "error",
+        duration = 10
+      )
     }
   })
   

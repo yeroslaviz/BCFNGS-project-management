@@ -10,6 +10,7 @@ execute:
 
 ### Contents
 
+- [Changes on 27.02.2026](#changes-on-27.02.2026)
 - [Changes on 25.02.2026](#changes-on-25.02.2026)
 - [Changes on 23.02.2026](#changes-on-23.02.2026)
 - [Changes on 20.02.2026](#changes-on-20.02.2026)
@@ -20,6 +21,33 @@ execute:
 - [Changes on 09.02.2026](#changes-on-09.02.2026)
 - [Changes on 06.02.2026](#changes-on-06.02.2026)
 - [Changes on 14.11.2026](#changes-on-14.11.2026)
+
+## Changes on 27.02.2026
+
+1. Added support for admin-managed **additional project costs**:
+   - new DB column `projects.additional_cost`
+   - automatic runtime migration in app startup (`ALTER TABLE ... ADD COLUMN` when missing)
+   - `setup_database.R` now creates `additional_cost` for fresh DB rebuilds.
+2. Updated **Cost Calculation** blocks in Create/Edit project dialogs:
+   - inserted new row: `Additional costs:`
+   - row is empty by default on project creation
+   - totals now compute as `base_cost + additional_cost` when set.
+3. Added admin-only `Additional costs (€)` input in **Edit Project**:
+   - accepts non-negative decimals (`.` or `,`), normalizes to numeric
+   - empty value is stored as `NULL`
+   - non-admin edits preserve existing additional costs.
+4. Added admin-only **Notifications** button in Edit Project footer:
+   - button color `#a1d99b`
+   - sends cost-estimation mail to project creator + budget holder + `ngs@biochem.mpg.de`.
+5. Added dedicated HTML email sender for notifications:
+   - subject format: `P<id> - New Sequencing Project Created - cost estimation`
+   - cost line is bold + underlined and includes formatted value (e.g. `2460.00€`).
+6. Updated project-creation email wording:
+   - replaced numeric total-cost line with:
+     - `Total Project Costs will be provided soon after project assessment by the NGS core facility.`
+7. Documentation updates:
+   - **Deploy & Operations**: feature-branch deploy workflow on test VMs; explicit note that deploy keeps DB content.
+   - **Git & GitHub**: added end-to-end feature branch workflow (create, push, test, merge, cleanup).
 
 ## Changes on 25.02.2026
 

@@ -12,6 +12,7 @@ execute:
 
 - [Project Deletion Permissions](#project-deletion-permissions)
 - [Deploy Workflow](#deploy-workflow)
+- [Feature Branch Deploy (Test VM)](#feature-branch-deploy-test-vm)
 - [Deploy Scope and DB Behavior](#deploy-scope-and-db-behavior)
 - [LDAP Deploy Smoke Tests](#ldap-deploy-smoke-tests)
 - [Backups (summary)](#backups-summary)
@@ -279,6 +280,41 @@ Override target base URL:
 ```bash
 PUBLIC_BASE_URL="https://ngs-vm.biochem.mpg.de" ./scripts/deploy.sh
 ```
+
+## Feature Branch Deploy (Test VM)
+
+Use this when you want to validate a feature branch on `bcf-vm` or `ngs-testing-vm` before merging to `main`.
+
+1. Switch to your feature branch on the VM and pull latest branch commits.
+
+```bash
+cd /home/<user>/BCFNGS-project-management
+git fetch origin
+git checkout <feature-branch>
+git pull --ff-only origin <feature-branch>
+```
+
+2. Deploy branch code to `/srv/shiny-server/sequencing-app/`.
+
+```bash
+PUBLIC_BASE_URL="https://<vm-hostname>" ./scripts/deploy.sh
+```
+
+3. Validate app behavior on that VM (LDAP/local mode, forms, emails, admin actions).
+
+4. After merge to `main`, switch VM back to `main` and deploy again:
+
+```bash
+cd /home/<user>/BCFNGS-project-management
+git checkout main
+git pull --ff-only origin main
+PUBLIC_BASE_URL="https://<vm-hostname>" ./scripts/deploy.sh
+```
+
+Notes:
+
+- `scripts/deploy.sh` does not rebuild or replace the SQLite DB.
+- DB-backed content (projects, landing text, additional costs) persists across deploy and restart.
 
 ## ngs-vm Cutover (443/9443)
 
