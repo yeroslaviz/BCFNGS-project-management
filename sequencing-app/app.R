@@ -2174,7 +2174,7 @@ server <- function(input, output, session) {
       # and include `admin_emails` in the `to =` list.
       # admin_emails <- dbGetQuery(con, "SELECT email FROM users WHERE is_admin = 1")$email
       
-      cat("DEBUG: To:", paste(c(budget_holder$email, user_email, facility_email), collapse = ", "), "\n")
+      cat("DEBUG: To:", facility_email, "\n")
       
       # Prepare cost warning
       sequencing_depth <- admin_data$sequencing_depths[admin_data$sequencing_depths$id == project_data$sequencing_depth_id, ]
@@ -2233,7 +2233,7 @@ server <- function(input, output, session) {
         from = "ngs@biochem.mpg.de",
         # NOTE: Admin notifications are currently disabled; to re-enable,
         # include `admin_emails` below and uncomment the query above.
-        to = c(budget_holder$email, user_email, facility_email),
+        to = c(facility_email),
         encoding = "utf-8",
         subject = subject,
         body = email_body,
@@ -3381,7 +3381,7 @@ server <- function(input, output, session) {
     # Send email notification
     send_project_creation_email(project_data, budget_holder, user_email)
     
-    showNotification("Project created successfully! Email notifications sent.", type = "message")
+    showNotification("Project created successfully! NGS team notified.", type = "message")
   })
   
   # Projects table with updated columns - MODIFIED FOR PREFIXED PROJECT IDs
