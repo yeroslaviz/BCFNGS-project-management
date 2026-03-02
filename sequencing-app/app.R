@@ -866,6 +866,7 @@ server <- function(input, output, session) {
       on.exit(dbDisconnect(con), add = TRUE)
 
       ensure_projects_additional_cost_column(con)
+      ensure_users_full_name_column(con)
       ensure_announcement_tables(con)
       seed_announcement_defaults(con)
       
@@ -887,6 +888,25 @@ server <- function(input, output, session) {
       
       # Test basic query
       dbGetQuery(con, "SELECT 1 as test")
+
+      migration_result <- tryCatch(
+        normalize_legacy_responsible_users(con),
+        error = function(e) {
+          cat("RESPONSIBLE USER MIGRATION ERROR:", conditionMessage(e), "\n", file = stderr())
+          list(updated_rows = 0L, normalized_values = 0L, unresolved_values = character(0))
+        }
+      )
+      if (length(migration_result$unresolved_values) > 0) {
+        showNotification(
+          paste0(
+            "Some legacy responsible-user values could not be auto-mapped (",
+            length(migration_result$unresolved_values),
+            "). Please review project assignments."
+          ),
+          type = "warning",
+          duration = 12
+        )
+      }
 
       return(TRUE)
       
@@ -1890,22 +1910,242 @@ server <- function(input, output, session) {
     list(valid = TRUE, empty = FALSE, value = round(numeric_value, 2), error = NULL)
   }
   
+  users_has_full_name <- function(con) {
+    tryCatch({
+      "full_name" %in% dbGetQuery(con, "PRAGMA table_info(users)")$name
+    }, error = function(e) FALSE)
+  }
+
+  ensure_users_full_name_column <- function(con) {
+    if (!users_has_full_name(con)) {
+      dbExecute(con, "ALTER TABLE users ADD COLUMN full_name TEXT")
+    }
+    dbExecute(con, "
+      UPDATE users
+      SET full_name = username
+      WHERE full_name IS NULL OR TRIM(full_name) = ''
+    ")
+    invisible(NULL)
+  }
+
+  normalize_key <- function(x) {
+    tolower(trimws(as.character(x %||% "")))
+  }
+
+  to_scalar_text <- function(x, default = "") {
+    if (is.null(x) || length(x) == 0) return(default)
+    values <- as.character(x)
+    if (length(values) == 0) return(default)
+    value <- values[[1]]
+    if (is.na(value)) return(default)
+    trimws(value)
+  }
+
+  format_responsible_label <- function(full_name, username) {
+    username_clean <- to_scalar_text(username, "")
+    if (!nzchar(username_clean)) return("")
+
+    full_name_clean <- to_scalar_text(full_name, "")
+    if (!nzchar(full_name_clean) || normalize_key(full_name_clean) == normalize_key(username_clean)) {
+      return(username_clean)
+    }
+
+    paste0(full_name_clean, " (", username_clean, ")")
+  }
+
+  extract_username_from_label <- function(value) {
+    label <- to_scalar_text(value, "")
+    if (!nzchar(label)) return(NULL)
+
+    match <- regexec("\\(([^()]+)\\)\\s*$", label, perl = TRUE)
+    parsed <- regmatches(label, match)[[1]]
+    if (length(parsed) < 2) return(NULL)
+
+    username <- trimws(parsed[2])
+    if (!nzchar(username)) return(NULL)
+    username
+  }
+
+  get_responsible_users <- function(con) {
+    ensure_users_full_name_column(con)
+    users <- dbGetQuery(con, "SELECT username, full_name FROM users ORDER BY username")
+    if (nrow(users) == 0) {
+      return(data.frame(username = character(0), full_name = character(0), stringsAsFactors = FALSE))
+    }
+
+    users$username <- trimws(as.character(users$username))
+    users$full_name <- trimws(as.character(users$full_name))
+    users$full_name[is.na(users$full_name)] <- ""
+    users <- users[!is.na(users$username) & users$username != "", , drop = FALSE]
+    if (nrow(users) == 0) {
+      return(data.frame(username = character(0), full_name = character(0), stringsAsFactors = FALSE))
+    }
+
+    users <- users[order(tolower(users$username), users$username), , drop = FALSE]
+    users <- users[!duplicated(tolower(users$username)), , drop = FALSE]
+    users
+  }
+
+  resolve_responsible_username <- function(value, users_df) {
+    raw_value <- to_scalar_text(value, "")
+    if (!nzchar(raw_value) || nrow(users_df) == 0 || !all(c("username", "full_name") %in% names(users_df))) {
+      return(NA_character_)
+    }
+
+    username_norm <- normalize_key(users_df$username)
+    target_norm <- normalize_key(raw_value)
+
+    idx_username <- which(username_norm == target_norm)
+    if (length(idx_username) > 0) return(users_df$username[idx_username[1]])
+
+    parsed_username <- extract_username_from_label(raw_value)
+    if (!is.null(parsed_username)) {
+      idx_parsed <- which(username_norm == normalize_key(parsed_username))
+      if (length(idx_parsed) > 0) return(users_df$username[idx_parsed[1]])
+    }
+
+    full_name_norm <- normalize_key(users_df$full_name)
+    idx_full_name <- which(full_name_norm == target_norm & users_df$full_name != "")
+    if (length(idx_full_name) == 1) return(users_df$username[idx_full_name[1]])
+
+    NA_character_
+  }
+
+  resolve_responsible_for_storage <- function(value, con, fallback = "") {
+    raw_value <- to_scalar_text(value, "")
+    fallback_value <- to_scalar_text(fallback, "")
+    if (!nzchar(raw_value)) return(fallback_value)
+
+    users <- get_responsible_users(con)
+    resolved <- resolve_responsible_username(raw_value, users)
+    if (!is.na(resolved) && nzchar(resolved)) return(resolved)
+    raw_value
+  }
+
+  is_responsible_for_user <- function(stored_value, username, full_name = NULL) {
+    stored <- to_scalar_text(stored_value, "")
+    if (!nzchar(stored)) return(FALSE)
+
+    username_clean <- to_scalar_text(username, "")
+    full_name_clean <- to_scalar_text(full_name, "")
+
+    if (nzchar(username_clean) && normalize_key(stored) == normalize_key(username_clean)) return(TRUE)
+    if (nzchar(full_name_clean) && normalize_key(stored) == normalize_key(full_name_clean)) return(TRUE)
+
+    label_value <- format_responsible_label(full_name_clean, username_clean)
+    if (nzchar(label_value) && normalize_key(stored) == normalize_key(label_value)) return(TRUE)
+
+    parsed_username <- extract_username_from_label(stored)
+    if (!is.null(parsed_username) && nzchar(username_clean) &&
+        normalize_key(parsed_username) == normalize_key(username_clean)) {
+      return(TRUE)
+    }
+
+    FALSE
+  }
+
   # Database connection
   get_db_connection <- function() {
     con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
     tryCatch({
       ensure_projects_additional_cost_column(con)
+      ensure_users_full_name_column(con)
     }, error = function(e) {
-      cat("DB MIGRATION ERROR (additional_cost):", e$message, "\n", file = stderr())
+      cat("DB MIGRATION ERROR:", e$message, "\n", file = stderr())
       flush.console()
     })
     con
   }
 
-  users_has_full_name <- function(con) {
-    tryCatch({
-      "full_name" %in% dbGetQuery(con, "PRAGMA table_info(users)")$name
-    }, error = function(e) FALSE)
+  format_responsible_display <- function(value, con = NULL) {
+    close_con <- FALSE
+    if (is.null(con)) {
+      con <- get_db_connection()
+      close_con <- TRUE
+    }
+    on.exit(if (close_con) dbDisconnect(con), add = TRUE)
+
+    raw_value <- to_scalar_text(value, "")
+    if (!nzchar(raw_value)) return("")
+
+    users <- get_responsible_users(con)
+    resolved <- resolve_responsible_username(raw_value, users)
+    if (!is.na(resolved) && nzchar(resolved)) {
+      idx <- which(normalize_key(users$username) == normalize_key(resolved))
+      if (length(idx) > 0) {
+        row <- users[idx[1], , drop = FALSE]
+        return(format_responsible_label(row$full_name[[1]], row$username[[1]]))
+      }
+    }
+
+    raw_value
+  }
+
+  normalize_legacy_responsible_users <- function(con) {
+    users <- get_responsible_users(con)
+    result <- list(updated_rows = 0L, normalized_values = 0L, unresolved_values = character(0))
+    if (nrow(users) == 0) return(result)
+
+    values <- dbGetQuery(
+      con,
+      "
+      SELECT DISTINCT TRIM(responsible_user) AS responsible_user
+      FROM projects
+      WHERE responsible_user IS NOT NULL AND TRIM(responsible_user) <> ''
+      "
+    )
+    if (nrow(values) == 0) return(result)
+
+    unresolved <- character(0)
+    normalized_values <- 0L
+    updated_rows <- 0L
+
+    for (value_raw in values$responsible_user) {
+      value <- trimws(as.character(value_raw %||% ""))
+      if (!nzchar(value)) next
+
+      resolved <- resolve_responsible_username(value, users)
+      if (is.na(resolved) || !nzchar(resolved)) {
+        unresolved <- c(unresolved, value)
+        next
+      }
+
+      if (identical(value, resolved)) next
+
+      affected <- dbExecute(
+        con,
+        "
+        UPDATE projects
+        SET responsible_user = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE responsible_user = ? OR TRIM(responsible_user) = ?
+        ",
+        params = list(resolved, value, value)
+      )
+      if (!is.null(affected) && affected > 0) {
+        updated_rows <- updated_rows + as.integer(affected)
+        normalized_values <- normalized_values + 1L
+      }
+    }
+
+    unresolved <- sort(unique(unresolved))
+    cat(
+      "RESPONSIBLE USER MIGRATION: normalized_values=", normalized_values,
+      " updated_rows=", updated_rows,
+      " unresolved_values=", length(unresolved), "\n",
+      sep = ""
+    )
+    if (length(unresolved) > 0) {
+      cat(
+        "RESPONSIBLE USER MIGRATION unresolved entries:",
+        paste(unresolved, collapse = " | "),
+        "\n"
+      )
+    }
+
+    result$updated_rows <- updated_rows
+    result$normalized_values <- normalized_values
+    result$unresolved_values <- unresolved
+    result
   }
 
   refresh_announcements <- function() {
@@ -2012,20 +2252,40 @@ server <- function(input, output, session) {
     flush.console()
   })
   
-  # Get all usernames for responsible user dropdown
-  get_all_usernames <- function() {
+  get_responsible_user_choices <- function(selected_legacy = NULL) {
     con <- get_db_connection()
-    on.exit(dbDisconnect(con))
-    if (users_has_full_name(con)) {
-      users <- dbGetQuery(con, "SELECT username, full_name FROM users ORDER BY username")
+    on.exit(dbDisconnect(con), add = TRUE)
+
+    users <- get_responsible_users(con)
+    if (nrow(users) > 0) {
+      users$display_label <- mapply(
+        format_responsible_label,
+        users$full_name,
+        users$username,
+        USE.NAMES = FALSE
+      )
+      users <- users[
+        order(tolower(users$display_label), tolower(users$username), users$username),
+        ,
+        drop = FALSE
+      ]
+      users <- users[!duplicated(tolower(users$username)), , drop = FALSE]
+      choices <- setNames(users$username, users$display_label)
     } else {
-      users <- dbGetQuery(con, "SELECT username FROM users ORDER BY username")
-      users$full_name <- NA_character_
+      choices <- character(0)
     }
-    if (nrow(users) == 0) return(character(0))
-    display <- trimws(users$full_name)
-    display[is.na(display) | display == ""] <- users$username[is.na(display) | display == ""]
-    unique(c(display, users$username))
+
+    legacy_value <- to_scalar_text(selected_legacy, "")
+    if (nzchar(legacy_value)) {
+      resolved <- resolve_responsible_username(legacy_value, users)
+      if (is.na(resolved) || !nzchar(resolved)) {
+        if (!(legacy_value %in% unname(choices))) {
+          choices <- c(choices, setNames(legacy_value, paste0("Legacy entry: ", legacy_value)))
+        }
+      }
+    }
+
+    choices
   }
   
   # Load budget holders from database
@@ -2184,12 +2444,17 @@ server <- function(input, output, session) {
       }
       
       # Replace placeholders in template
+      responsible_user_display <- format_responsible_display(project_data$responsible_user, con = con)
+      if (!nzchar(responsible_user_display)) {
+        responsible_user_display <- trimws(as.character(project_data$responsible_user %||% ""))
+      }
+
       email_body <- template$body_template
       email_body <- gsub("\\{name\\}", budget_holder$name, email_body)
       email_body <- gsub("\\{surname\\}", budget_holder$surname, email_body)
       email_body <- gsub("\\{cost_center\\}", budget_holder$cost_center, email_body)
       email_body <- gsub("\\{project_name\\}", project_data$project_name, email_body)
-      email_body <- gsub("\\{responsible_user\\}", project_data$responsible_user, email_body)
+      email_body <- gsub("\\{responsible_user\\}", responsible_user_display, email_body)
       email_body <- gsub("\\{num_samples\\}", project_data$num_samples, email_body)
       email_body <- gsub("\\{service_type\\}", admin_data$service_types$service_type[admin_data$service_types$id == project_data$service_type_id], email_body)
       email_body <- gsub(
@@ -2259,6 +2524,9 @@ server <- function(input, output, session) {
   # Send admin-triggered cost-estimation email notification
   send_project_cost_notification_email <- function(project_data, budget_holder, user_email) {
     tryCatch({
+      con <- get_db_connection()
+      on.exit(dbDisconnect(con), add = TRUE)
+
       facility_email <- "ngs@biochem.mpg.de"
 
       project_code <- trimws(project_data$project_code %||% "")
@@ -2302,6 +2570,10 @@ server <- function(input, output, session) {
         sprintf("%.2f", safe_total_cost),
         "€</u></strong>"
       )
+      responsible_user_display <- format_responsible_display(project_data$responsible_user, con = con)
+      if (!nzchar(responsible_user_display)) {
+        responsible_user_display <- trimws(as.character(project_data$responsible_user %||% ""))
+      }
 
       email_body <- paste0(
         "<html><body style='font-family: Arial, sans-serif;'>",
@@ -2310,7 +2582,7 @@ server <- function(input, output, session) {
         htmltools::htmlEscape(budget_center), ".</p>",
         "<p><strong>Project Details:</strong><br>",
         "- Project Name: ", htmltools::htmlEscape(as.character(project_data$project_name %||% "")), "<br>",
-        "- Responsible User: ", htmltools::htmlEscape(as.character(project_data$responsible_user %||% "")), "<br>",
+        "- Responsible User: ", htmltools::htmlEscape(responsible_user_display), "<br>",
         "- Number of Samples: ", htmltools::htmlEscape(as.character(project_data$num_samples %||% "")), "<br>",
         "- Service Type: ", htmltools::htmlEscape(service_type), "<br>",
         "- ", cost_line,
@@ -2351,54 +2623,48 @@ server <- function(input, output, session) {
       on.exit(dbDisconnect(con))
 
       responsible_user <- trimws(project_data$responsible_user %||% "")
+      users <- get_responsible_users(con)
+      resolved_username <- resolve_responsible_username(responsible_user, users)
       user_row <- data.frame()
 
-      if (users_has_full_name(con)) {
-        if (nzchar(responsible_user)) {
-          user_row <- dbGetQuery(
-            con,
-            "SELECT username, full_name, email FROM users WHERE username = ? LIMIT 1",
-            params = list(responsible_user)
-          )
-          if (nrow(user_row) == 0) {
-            user_row <- dbGetQuery(
-              con,
-              "SELECT username, full_name, email FROM users WHERE full_name = ? LIMIT 1",
-              params = list(responsible_user)
-            )
-          }
-        }
+      if (!is.na(resolved_username) && nzchar(resolved_username)) {
+        user_row <- dbGetQuery(
+          con,
+          "
+          SELECT username, full_name, email
+          FROM users
+          WHERE lower(username) = lower(?)
+          LIMIT 1
+          ",
+          params = list(resolved_username)
+        )
+      }
 
-        if (nrow(user_row) == 0 && !is.null(project_data$user_id) && !is.na(project_data$user_id)) {
-          user_row <- dbGetQuery(
-            con,
-            "SELECT username, full_name, email FROM users WHERE id = ? LIMIT 1",
-            params = list(as.numeric(project_data$user_id))
-          )
-        }
-      } else {
-        if (nzchar(responsible_user)) {
-          user_row <- dbGetQuery(
-            con,
-            "SELECT username, email FROM users WHERE username = ? LIMIT 1",
-            params = list(responsible_user)
-          )
-        }
-
-        if (nrow(user_row) == 0 && !is.null(project_data$user_id) && !is.na(project_data$user_id)) {
-          user_row <- dbGetQuery(
-            con,
-            "SELECT username, email FROM users WHERE id = ? LIMIT 1",
-            params = list(as.numeric(project_data$user_id))
-          )
-        }
-
-        if (!("full_name" %in% names(user_row))) {
-          user_row$full_name <- NA_character_
+      if (nrow(user_row) == 0 && nzchar(responsible_user)) {
+        full_name_matches <- dbGetQuery(
+          con,
+          "
+          SELECT username, full_name, email
+          FROM users
+          WHERE lower(trim(full_name)) = lower(trim(?))
+          ",
+          params = list(responsible_user)
+        )
+        if (nrow(full_name_matches) == 1) {
+          user_row <- full_name_matches[1, , drop = FALSE]
         }
       }
 
-      full_name <- responsible_user
+      if (nrow(user_row) == 0 && !is.null(project_data$user_id) && !is.na(project_data$user_id)) {
+        user_row <- dbGetQuery(
+          con,
+          "SELECT username, full_name, email FROM users WHERE id = ? LIMIT 1",
+          params = list(as.numeric(project_data$user_id))
+        )
+      }
+
+      full_name <- format_responsible_display(responsible_user, con = con)
+      if (!nzchar(full_name)) full_name <- responsible_user
       responsible_email <- ""
       if (nrow(user_row) > 0) {
         resolved_name <- trimws(user_row$full_name[[1]] %||% "")
@@ -2955,6 +3221,7 @@ server <- function(input, output, session) {
       if (is.null(current_full_name) || current_full_name == "") {
         current_full_name <- user$username
       }
+      current_label <- format_responsible_label(current_full_name, user$username)
       projects <- dbGetQuery(con, paste0("
         SELECT p.*, ", created_by_expr, " as created_by, t.name as type_name,
                bh.name as budget_holder_name, bh.surname as budget_holder_surname, bh.cost_center,
@@ -2966,9 +3233,13 @@ server <- function(input, output, session) {
         LEFT JOIN service_types st ON p.service_type_id = st.id
         LEFT JOIN sequencing_depths sd ON p.sequencing_depth_id = sd.id
         LEFT JOIN sequencing_cycles sc ON p.sequencing_cycles_id = sc.id
-        WHERE p.responsible_user = ? OR p.responsible_user = ? OR p.user_id = ?
+        WHERE lower(trim(p.responsible_user)) = lower(trim(?))
+           OR lower(trim(p.responsible_user)) = lower(trim(?))
+           OR lower(trim(p.responsible_user)) = lower(trim(?))
+           OR lower(trim(p.responsible_user)) LIKE ('%(' || lower(trim(?)) || ')')
+           OR p.user_id = ?
         ORDER BY p.project_id DESC
-      "), params = list(current_full_name, user$username, user$user_id))
+      "), params = list(user$username, current_full_name, current_label, user$username, user$user_id))
     }
     
     projects_data(projects)
@@ -3161,10 +3432,8 @@ server <- function(input, output, session) {
                uiOutput("budget_holder_notice"),
                uiOutput("budget_holder_other_fields"),
                selectInput("responsible_user", "Responsible User *",
-                           choices = get_all_usernames(),
-                           selected = {
-                             if (is.null(user$full_name) || user$full_name == "") user$username else user$full_name
-                           }),
+                           choices = get_responsible_user_choices(),
+                           selected = user$username %||% ""),
                radioButtons("kickoff_meeting", "Kick-off Meeting Required? *",
                             choices = c("Yes" = 1, "No" = 0), 
                             selected = 0, inline = TRUE)
@@ -3323,6 +3592,12 @@ server <- function(input, output, session) {
       )
     }
 
+    responsible_user_value <- resolve_responsible_for_storage(
+      input$responsible_user,
+      con,
+      fallback = user$username
+    )
+
     # Insert project
     dbExecute(con, "
     INSERT INTO projects 
@@ -3333,7 +3608,7 @@ server <- function(input, output, session) {
   ", params = list(
     input$project_name,
     user$user_id,
-    input$responsible_user,
+    responsible_user_value,
     input$reference_genome,
     as.numeric(input$service_type_id),
     as.numeric(budget_id_value),
@@ -3364,7 +3639,7 @@ server <- function(input, output, session) {
       project_code = project_code,
       project_name = input$project_name,
       description = input$project_description,
-      responsible_user = input$responsible_user,
+      responsible_user = responsible_user_value,
       num_samples = input$num_samples,
       service_type_id = as.numeric(input$service_type_id),
       sequencing_depth_id = as.numeric(input$sequencing_depth_id),
@@ -3416,6 +3691,16 @@ server <- function(input, output, session) {
     # Create budget holder display
     if(all(c("budget_holder_name", "cost_center") %in% names(display_data))) {
       display_data$budget_display <- paste(display_data$budget_holder_name, "-", display_data$cost_center)
+    }
+
+    if ("responsible_user" %in% names(display_data)) {
+      con_display <- get_db_connection()
+      on.exit(dbDisconnect(con_display), add = TRUE)
+      display_data$responsible_user <- vapply(
+        display_data$responsible_user,
+        function(x) format_responsible_display(x, con = con_display),
+        FUN.VALUE = character(1)
+      )
     }
     
     # Define the columns we want to show (project_id is numeric; we render the P-prefix at display-time)
@@ -5100,10 +5385,9 @@ server <- function(input, output, session) {
     
     project <- projects_data()[selected_row, ]
     
-    can_edit <- user$is_admin || 
-      project$user_id == user$user_id || 
-      project$responsible_user == user$username ||
-      project$responsible_user == user$full_name
+    can_edit <- user$is_admin ||
+      project$user_id == user$user_id ||
+      is_responsible_for_user(project$responsible_user, user$username, user$full_name)
     
     if(!can_edit) {
       showNotification("You don't have permission to edit this project", type = "error")
@@ -5115,6 +5399,20 @@ server <- function(input, output, session) {
       project_additional <- NA_real_
     }
     edit_existing_additional_cost(project_additional)
+
+    current_responsible <- trimws(as.character(project$responsible_user[[1]] %||% ""))
+    edit_responsible_choices <- get_responsible_user_choices(selected_legacy = current_responsible)
+    edit_responsible_selected <- current_responsible
+
+    if (nzchar(current_responsible)) {
+      con_responsible <- get_db_connection()
+      on.exit(dbDisconnect(con_responsible), add = TRUE)
+      users_responsible <- get_responsible_users(con_responsible)
+      resolved_current <- resolve_responsible_username(current_responsible, users_responsible)
+      if (!is.na(resolved_current) && nzchar(resolved_current)) {
+        edit_responsible_selected <- resolved_current
+      }
+    }
     
     showModal(modalDialog(
       title = "Edit Project",
@@ -5173,8 +5471,8 @@ server <- function(input, output, session) {
                uiOutput("edit_budget_holder_notice"),
                uiOutput("edit_budget_holder_other_fields"),
                selectInput("edit_responsible_user", "Responsible User *",
-                           choices = get_all_usernames(),
-                           selected = project$responsible_user),
+                           choices = edit_responsible_choices,
+                           selected = edit_responsible_selected),
                radioButtons("edit_kickoff_meeting", "Kick-off Meeting Required? *",
                             choices = c("Yes" = 1, "No" = 0),
                             selected = {
@@ -5299,10 +5597,9 @@ server <- function(input, output, session) {
     project <- projects[selected_row[1], , drop = FALSE]
     project_id <- project$id[[1]]
     
-    can_edit <- user$is_admin || 
-      project$user_id == user$user_id || 
-      project$responsible_user == user$username ||
-      project$responsible_user == user$full_name
+    can_edit <- user$is_admin ||
+      project$user_id == user$user_id ||
+      is_responsible_for_user(project$responsible_user, user$username, user$full_name)
     
     if(!can_edit) {
       showNotification("You don't have permission to edit this project", type = "error")
@@ -5385,6 +5682,12 @@ server <- function(input, output, session) {
         bh_email
       )
     }
+
+    responsible_user_value <- resolve_responsible_for_storage(
+      input$edit_responsible_user,
+      con,
+      fallback = scalar_text(project$responsible_user, "")
+    )
     
     if(user$is_admin) {
       dbExecute(con, "
@@ -5400,7 +5703,7 @@ server <- function(input, output, session) {
         scalar_text(input$edit_reference_genome),
         as.numeric(input$edit_service_type_id),
         as.numeric(budget_id_value),
-        scalar_text(input$edit_responsible_user),
+        responsible_user_value,
         scalar_text(input$edit_project_description),
         input$edit_num_samples,
         scalar_text(input$edit_sequencing_platform),
@@ -5427,7 +5730,7 @@ server <- function(input, output, session) {
         scalar_text(input$edit_reference_genome),
         as.numeric(input$edit_service_type_id),
         as.numeric(budget_id_value),
-        scalar_text(input$edit_responsible_user),
+        responsible_user_value,
         scalar_text(input$edit_project_description),
         input$edit_num_samples,
         scalar_text(input$edit_sequencing_platform),
@@ -5454,7 +5757,7 @@ server <- function(input, output, session) {
       email_result <- send_data_released_email(list(
         project_id = project$project_id[[1]],
         project_code = project_code,
-        responsible_user = scalar_text(input$edit_responsible_user, scalar_text(project$responsible_user, "")),
+        responsible_user = responsible_user_value,
         user_id = project$user_id[[1]]
       ))
 
@@ -5558,13 +5861,18 @@ server <- function(input, output, session) {
 
     project_id_value <- suppressWarnings(as.numeric(project$project_id[[1]]))
     project_code <- if (!is.na(project_id_value)) paste0("P", as.integer(project_id_value)) else "Project"
+    responsible_user_value <- resolve_responsible_for_storage(
+      input$edit_responsible_user %||% project$responsible_user[[1]],
+      con,
+      fallback = project$responsible_user[[1]]
+    )
 
     notification_payload <- list(
       project_id = project_id_value,
       project_code = project_code,
       project_name = trimws(input$edit_project_name %||% project$project_name[[1]]),
       description = trimws(input$edit_project_description %||% project$description[[1]]),
-      responsible_user = trimws(input$edit_responsible_user %||% project$responsible_user[[1]]),
+      responsible_user = responsible_user_value,
       num_samples = input$edit_num_samples %||% project$num_samples[[1]],
       service_type = service_type_label[[1]],
       total_cost = total_cost
