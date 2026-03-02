@@ -10,6 +10,7 @@ execute:
 
 ### Contents
 
+- [Changes on 02.03.2026](#changes-on-02.03.2026)
 - [Changes on 27.02.2026](#changes-on-27.02.2026)
 - [Changes on 25.02.2026](#changes-on-25.02.2026)
 - [Changes on 23.02.2026](#changes-on-23.02.2026)
@@ -21,6 +22,31 @@ execute:
 - [Changes on 09.02.2026](#changes-on-09.02.2026)
 - [Changes on 06.02.2026](#changes-on-06.02.2026)
 - [Changes on 14.11.2026](#changes-on-14.11.2026)
+
+## Changes on 02.03.2026
+
+1. Reworked responsible-user handling in `sequencing-app/app.R`:
+   - added canonicalization helpers so new/edited projects store stable `username` values in `projects.responsible_user`.
+   - kept legacy compatibility for historical entries (full-name only and label-like values).
+2. Updated responsible-user dropdown behavior in Create/Edit project dialogs:
+   - choices now use named values (`label -> username`).
+   - label format is `Full Name (username)` when full name is available.
+   - choices are sorted alphabetically and duplicate full names are disambiguated by username.
+   - edit modal preserves unresolved legacy values via a single `Legacy entry: ...` option.
+3. Added startup normalization/migration for legacy responsible-user values:
+   - exact matches are auto-normalized to canonical username.
+   - unresolved values are reported and not overwritten.
+4. Updated permissions and project visibility checks to support mixed historical formats:
+   - canonical username
+   - legacy full name
+   - label format `Full Name (username)`.
+5. Updated display and notifications:
+   - projects table now renders responsible users in friendly format (`Full Name (username)` where resolvable).
+   - project creation and cost-notification emails now use the same friendly responsible-user display.
+6. Fixed startup error on larger user tables (`length = 78 in coercion to logical(1)`):
+   - hardened scalar coercion in responsible-user helper functions.
+   - wrapped legacy normalization at startup in `tryCatch` to avoid blocking app startup if migration encounters unexpected data.
+7. Validated the feature on `bcf-vm` after deploy from the feature branch; dropdown behavior and responsible-user flow worked as expected.
 
 ## Changes on 27.02.2026
 
