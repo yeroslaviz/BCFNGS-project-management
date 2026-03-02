@@ -889,7 +889,13 @@ server <- function(input, output, session) {
       # Test basic query
       dbGetQuery(con, "SELECT 1 as test")
 
-      migration_result <- normalize_legacy_responsible_users(con)
+      migration_result <- tryCatch(
+        normalize_legacy_responsible_users(con),
+        error = function(e) {
+          cat("RESPONSIBLE USER MIGRATION ERROR:", conditionMessage(e), "\n", file = stderr())
+          list(updated_rows = 0L, normalized_values = 0L, unresolved_values = character(0))
+        }
+      )
       if (length(migration_result$unresolved_values) > 0) {
         showNotification(
           paste0(
@@ -1928,7 +1934,9 @@ server <- function(input, output, session) {
 
   to_scalar_text <- function(x, default = "") {
     if (is.null(x) || length(x) == 0) return(default)
-    value <- as.character(x[[1]])
+    values <- as.character(x)
+    if (length(values) == 0) return(default)
+    value <- values[[1]]
     if (is.na(value)) return(default)
     trimws(value)
   }
