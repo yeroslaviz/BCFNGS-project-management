@@ -1926,11 +1926,18 @@ server <- function(input, output, session) {
     tolower(trimws(as.character(x %||% "")))
   }
 
+  to_scalar_text <- function(x, default = "") {
+    if (is.null(x) || length(x) == 0) return(default)
+    value <- as.character(x[[1]])
+    if (is.na(value)) return(default)
+    trimws(value)
+  }
+
   format_responsible_label <- function(full_name, username) {
-    username_clean <- trimws(as.character(username %||% ""))
+    username_clean <- to_scalar_text(username, "")
     if (!nzchar(username_clean)) return("")
 
-    full_name_clean <- trimws(as.character(full_name %||% ""))
+    full_name_clean <- to_scalar_text(full_name, "")
     if (!nzchar(full_name_clean) || normalize_key(full_name_clean) == normalize_key(username_clean)) {
       return(username_clean)
     }
@@ -1939,7 +1946,7 @@ server <- function(input, output, session) {
   }
 
   extract_username_from_label <- function(value) {
-    label <- trimws(as.character(value %||% ""))
+    label <- to_scalar_text(value, "")
     if (!nzchar(label)) return(NULL)
 
     match <- regexec("\\(([^()]+)\\)\\s*$", label, perl = TRUE)
@@ -1972,7 +1979,7 @@ server <- function(input, output, session) {
   }
 
   resolve_responsible_username <- function(value, users_df) {
-    raw_value <- trimws(as.character(value %||% ""))
+    raw_value <- to_scalar_text(value, "")
     if (!nzchar(raw_value) || nrow(users_df) == 0 || !all(c("username", "full_name") %in% names(users_df))) {
       return(NA_character_)
     }
@@ -1997,8 +2004,8 @@ server <- function(input, output, session) {
   }
 
   resolve_responsible_for_storage <- function(value, con, fallback = "") {
-    raw_value <- trimws(as.character(value %||% ""))
-    fallback_value <- trimws(as.character(fallback %||% ""))
+    raw_value <- to_scalar_text(value, "")
+    fallback_value <- to_scalar_text(fallback, "")
     if (!nzchar(raw_value)) return(fallback_value)
 
     users <- get_responsible_users(con)
@@ -2008,11 +2015,11 @@ server <- function(input, output, session) {
   }
 
   is_responsible_for_user <- function(stored_value, username, full_name = NULL) {
-    stored <- trimws(as.character(stored_value %||% ""))
+    stored <- to_scalar_text(stored_value, "")
     if (!nzchar(stored)) return(FALSE)
 
-    username_clean <- trimws(as.character(username %||% ""))
-    full_name_clean <- trimws(as.character(full_name %||% ""))
+    username_clean <- to_scalar_text(username, "")
+    full_name_clean <- to_scalar_text(full_name, "")
 
     if (nzchar(username_clean) && normalize_key(stored) == normalize_key(username_clean)) return(TRUE)
     if (nzchar(full_name_clean) && normalize_key(stored) == normalize_key(full_name_clean)) return(TRUE)
@@ -2050,7 +2057,7 @@ server <- function(input, output, session) {
     }
     on.exit(if (close_con) dbDisconnect(con), add = TRUE)
 
-    raw_value <- trimws(as.character(value %||% ""))
+    raw_value <- to_scalar_text(value, "")
     if (!nzchar(raw_value)) return("")
 
     users <- get_responsible_users(con)
@@ -2260,7 +2267,7 @@ server <- function(input, output, session) {
       choices <- character(0)
     }
 
-    legacy_value <- trimws(as.character(selected_legacy %||% ""))
+    legacy_value <- to_scalar_text(selected_legacy, "")
     if (nzchar(legacy_value)) {
       resolved <- resolve_responsible_username(legacy_value, users)
       if (is.na(resolved) || !nzchar(resolved)) {
