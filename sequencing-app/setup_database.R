@@ -48,7 +48,7 @@ setup_complete_database <- function() {
     )
   ")
 
-  # Service type table (replaces sample_types)
+  # Sample service type table (replaces sample_types)
   dbExecute(con, "
     CREATE TABLE IF NOT EXISTS service_types (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -324,7 +324,7 @@ setup_complete_database <- function() {
 
   message("✅ Budget holders loaded from ", budget_holders_file, " (", nrow(budget_holders_df), " entries)")
 
-  # Insert service types
+  # Insert sample service types
   service_types <- data.frame(
     service_type = c('single cell/low mRNAseq',
                      'single cell/low total RNAseq mammalian rRNA depletion',
@@ -428,7 +428,7 @@ setup_complete_database <- function() {
   email_templates <- data.frame(
     template_name = c('project_creation'),
     subject = c('New Sequencing Project Created'),
-    body_template = c('Dear {surname} {name},\n\nA new sequencing project has been created under your cost center {cost_center}.\n\nProject Details:\n- Project Name: {project_name}\n- Responsible User: {responsible_user}\n- Number of Samples: {num_samples}\n- Service Type: {service_type}\n- Total Project Costs will be provided soon after project assessment by the NGS core facility.\n\n{cost_warning}\n\nBest regards,\nSequencing Facility Team')
+    body_template = c('Dear {surname} {name},\n\nA new sequencing project has been created under your cost center {cost_center}.\n\nProject Details:\n- Project Name: {project_name}\n- Responsible User: {responsible_user}\n- Number of Samples: {num_samples}\n- Sample Service Type: {service_type}\n- Total Project Costs will be provided soon after project assessment by the NGS core facility.\n\n{cost_warning}\n\nBest regards,\nSequencing Facility Team')
   )
 
   for(i in 1:nrow(email_templates)) {
@@ -572,7 +572,7 @@ setup_complete_database <- function() {
   message("Default login: admin/admin123")
   message("Sample users: user1/user1123, user2/user2123")
   message("Budget holders table with name, surname, cost_center, email")
-  message("Service types table with costs per sample")
+  message("Sample service types table with costs per sample")
   message("Sequencing depth table with cost calculations")
   message("Email templates table for notifications")
   message("Announcement panels and markdown text boxes initialized")

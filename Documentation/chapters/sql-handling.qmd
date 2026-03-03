@@ -341,7 +341,7 @@ sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
 "UPDATE users SET email='newadmin@institute.org' WHERE username='admin';"
 ```
 
-**Update service type costs**
+**Update sample service type costs**
 
 ```bash
 sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \

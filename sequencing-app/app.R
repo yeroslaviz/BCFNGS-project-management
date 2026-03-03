@@ -2299,7 +2299,7 @@ server <- function(input, output, session) {
     return(holders)
   }
   
-  # Load service types from database
+  # Load sample service types from database
   load_service_types <- function() {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
@@ -2461,6 +2461,12 @@ server <- function(input, output, session) {
       email_body <- gsub("\\{num_samples\\}", project_data$num_samples, email_body)
       email_body <- gsub("\\{service_type\\}", admin_data$service_types$service_type[admin_data$service_types$id == project_data$service_type_id], email_body)
       email_body <- gsub(
+        "(?m)^-\\s*Service\\s*Type:",
+        "- Sample Service Type:",
+        email_body,
+        perl = TRUE
+      )
+      email_body <- gsub(
         "\\{total_cost\\}",
         "Total Project Costs will be provided soon after project assessment by the NGS core facility.",
         email_body
@@ -2587,7 +2593,7 @@ server <- function(input, output, session) {
         "- Project Name: ", htmltools::htmlEscape(as.character(project_data$project_name %||% "")), "<br>",
         "- Responsible User: ", htmltools::htmlEscape(responsible_user_display), "<br>",
         "- Number of Samples: ", htmltools::htmlEscape(as.character(project_data$num_samples %||% "")), "<br>",
-        "- Service Type: ", htmltools::htmlEscape(service_type), "<br>",
+        "- Sample Service Type: ", htmltools::htmlEscape(service_type), "<br>",
         "- ", cost_line,
         "</p>",
         description_html,
@@ -3314,8 +3320,8 @@ server <- function(input, output, session) {
         ),
         column(4,
                wellPanel(
-                 h4("Service Types"),
-                 actionButton("manage_service_types_btn", "Manage Service Types", class = "btn-primary")
+                 h4("Sample Service Types"),
+                 actionButton("manage_service_types_btn", "Manage Sample Service Types", class = "btn-primary")
                )
         ),
         column(4,
@@ -3392,13 +3398,13 @@ server <- function(input, output, session) {
                            } else {
                              c("No sample types available" = "")
                            }),
-               selectInput("service_type_id", "Service Type *",
+               selectInput("service_type_id", "Sample Service Type *",
                            choices = if(!is.null(admin_data$service_types) && nrow(admin_data$service_types) > 0) {
                              setNames(admin_data$service_types$id, 
                                       paste(admin_data$service_types$service_type, 
                                             "- €", admin_data$service_types$costs_per_sample, "/sample"))
                            } else {
-                             c("No service types available" = "")
+                             c("No sample service types available" = "")
                            })
         ),
         column(6,
@@ -3726,7 +3732,7 @@ server <- function(input, output, session) {
     # Define column names
     column_names <- c(
       "Project ID", "Project Name", "Samples", "Platform", "Reference", 
-      "Sample Type", "Service Type", "Sequencing Depth", "Sequencing Cycles",
+      "Sample Type", "Sample Service Type", "Sequencing Depth", "Sequencing Cycles",
       "Budget Holder", "Responsible User", "Kick-off Meeting", "Total Cost", "Status"
     )
     
@@ -3747,7 +3753,7 @@ server <- function(input, output, session) {
       list(targets = 3, width = "110px"),  # Platform
       list(targets = 4, width = "140px"),  # Reference
       list(targets = 5, width = "190px"),  # Sample Type
-      list(targets = 6, width = "170px"),  # Service Type
+      list(targets = 6, width = "170px"),  # Sample Service Type
       list(targets = 7, width = "150px"),  # Sequencing Depth
       list(targets = 8, width = "130px"),  # Sequencing Cycles
       list(targets = 9, width = "180px"),  # Budget Holder
@@ -3845,17 +3851,17 @@ server <- function(input, output, session) {
     ))
   })
   
-  # Service Types Management Modal
+  # Sample Service Types Management Modal
   observeEvent(input$manage_service_types_btn, {
     showModal(modalDialog(
-      title = "Service Types Management",
+      title = "Sample Service Types Management",
       size = "m",
       footer = modalButton("Close"),
       
-      h4("Add New Service Type"),
+      h4("Add New Sample Service Type"),
       fluidRow(
         column(4,
-               textInput("new_service_type", "Service Type", placeholder = "Enter service type")
+               textInput("new_service_type", "Sample Service Type", placeholder = "Enter sample service type")
         ),
         column(4,
                textInput("new_service_kit", "Kit", placeholder = "Enter kit name")
@@ -3866,16 +3872,16 @@ server <- function(input, output, session) {
       ),
       fluidRow(
         column(12,
-               actionButton("add_service_type_btn", "Add Service Type", class = "btn-primary")
+               actionButton("add_service_type_btn", "Add Sample Service Type", class = "btn-primary")
         )
       ),
       
       hr(),
-      h4("Current Service Types"),
+      h4("Current Sample Service Types"),
       DTOutput("service_types_table_admin"),
       div(  # ADD Adding the edit button to the table
         actionButton("edit_service_type_btn", "Edit Selected", class = "btn-warning"),
-        actionButton("delete_service_type_btn", "Delete Selected Service Type", class = "btn-danger")
+        actionButton("delete_service_type_btn", "Delete Selected Sample Service Type", class = "btn-danger")
         )
       )
     )
@@ -4166,7 +4172,7 @@ server <- function(input, output, session) {
       selection = 'single',
       options = list(pageLength = 10),
       rownames = FALSE,
-      colnames = c("Service Type", "Kit", "Cost per Sample")
+      colnames = c("Sample Service Type", "Kit", "Cost per Sample")
     ) %>% formatCurrency('costs_per_sample', currency = "€", digits = 2)
   })
   
@@ -4579,17 +4585,17 @@ server <- function(input, output, session) {
     showNotification("Budget holder added successfully!", type = "message")
   })
   
-  # Add new service type
+  # Add new sample service type
   observeEvent(input$add_service_type_btn, {
     req(input$new_service_type, input$new_service_kit, input$new_service_cost)
     
     if(input$new_service_type == "") {
-      showNotification("Please enter a service type", type = "error")
+      showNotification("Please enter a sample service type", type = "error")
       return()
     }
     
     if(input$new_service_type %in% admin_data$service_types$service_type) {
-      showNotification("This service type already exists", type = "error")
+      showNotification("This sample service type already exists", type = "error")
       return()
     }
     
@@ -4609,28 +4615,28 @@ server <- function(input, output, session) {
     updateTextInput(session, "new_service_type", value = "")
     updateTextInput(session, "new_service_kit", value = "")
     updateNumericInput(session, "new_service_cost", value = 0)
-    showNotification("Service type added successfully!", type = "message")
+    showNotification("Sample service type added successfully!", type = "message")
   })
   
-  # Edit Service Type
+  # Edit Sample Service Type
   observeEvent(input$edit_service_type_btn, {
     selected_row <- input$service_types_table_admin_rows_selected
     if(length(selected_row) == 0) {
-      showNotification("Please select a service type to edit", type = "warning")
+      showNotification("Please select a sample service type to edit", type = "warning")
       return()
     }
     
     service_to_edit <- admin_data$service_types[selected_row, ]
     
     showModal(modalDialog(
-      title = "Edit Service Type",
+      title = "Edit Sample Service Type",
       size = "m",
       footer = tagList(
         modalButton("Cancel"),
-        actionButton("update_service_type_btn", "Update Service Type", class = "btn-primary")
+        actionButton("update_service_type_btn", "Update Sample Service Type", class = "btn-primary")
       ),
       
-      textInput("edit_service_type", "Service Type", value = service_to_edit$service_type),
+      textInput("edit_service_type", "Sample Service Type", value = service_to_edit$service_type),
       textInput("edit_service_kit", "Kit", value = service_to_edit$kit),
       numericInput("edit_service_cost", "Cost per Sample", value = service_to_edit$costs_per_sample, min = 0)
     ))
@@ -4847,7 +4853,7 @@ server <- function(input, output, session) {
     showNotification("Platform updated successfully!", type = "message")
   })
   
-  # Update Service Type
+  # Update Sample Service Type
   observeEvent(input$update_service_type_btn, {
     selected_row <- input$service_types_table_admin_rows_selected
     service_to_edit <- admin_data$service_types[selected_row, ]
@@ -4868,7 +4874,7 @@ server <- function(input, output, session) {
     
     removeModal()
     admin_data$service_types <- load_service_types()
-    showNotification("Service type updated successfully!", type = "message")
+    showNotification("Sample service type updated successfully!", type = "message")
   })
   # Add new sequencing depth
   observeEvent(input$add_sequencing_depth_btn, {
@@ -5133,11 +5139,11 @@ server <- function(input, output, session) {
     showNotification("Budget holder deleted successfully!", type = "message")
   })
   
-  # Delete service type
+  # Delete sample service type
   observeEvent(input$delete_service_type_btn, {
     selected_row <- input$service_types_table_admin_rows_selected
     if(length(selected_row) == 0) {
-      showNotification("Please select a service type to delete", type = "warning")
+      showNotification("Please select a sample service type to delete", type = "warning")
       return()
     }
     
@@ -5145,7 +5151,7 @@ server <- function(input, output, session) {
     
     showModal(modalDialog(
       title = "Confirm Delete",
-      paste("Are you sure you want to delete service type:", service_to_delete, "?"),
+      paste("Are you sure you want to delete sample service type:", service_to_delete, "?"),
       footer = tagList(
         modalButton("Cancel"),
         actionButton("confirm_delete_service_type_btn", "Delete", class = "btn-danger")
@@ -5164,7 +5170,7 @@ server <- function(input, output, session) {
     
     removeModal()
     admin_data$service_types <- load_service_types()
-    showNotification("Service type deleted successfully!", type = "message")
+    showNotification("Sample service type deleted successfully!", type = "message")
   })
   
   # Delete sequencing depth
@@ -5442,7 +5448,7 @@ server <- function(input, output, session) {
                selectInput("edit_type_id", "Sample Type *",
                            choices = setNames(admin_data$types$id, admin_data$types$name),
                            selected = project$type_id),
-               selectInput("edit_service_type_id", "Service Type *",
+               selectInput("edit_service_type_id", "Sample Service Type *",
                            choices = setNames(admin_data$service_types$id, 
                                               paste(admin_data$service_types$service_type, 
                                                     "- €", admin_data$service_types$costs_per_sample, "/sample")),

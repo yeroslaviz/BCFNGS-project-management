@@ -369,8 +369,8 @@ graph LR
 | `announcement_move_up_btn` | Admin permissions required.<br>Please select a text box to move. |
 | `announcement_move_down_btn` | Admin permissions required.<br>Please select a text box to move. |
 | `add_budget_holder_btn` | Please fill in all budget holder fields<br>Cost center already exists |
-| `add_service_type_btn` | Please enter a service type<br>This service type already exists |
-| `edit_service_type_btn` | Please select a service type to edit |
+| `add_service_type_btn` | Please enter a sample service type<br>This sample service type already exists |
+| `edit_service_type_btn` | Please select a sample service type to edit |
 | `edit_budget_holder_btn` | Please select a budget holder to edit |
 | `update_budget_holder_btn` | Please fill in all budget holder fields<br>Cost center already exists |
 | `edit_genome_btn` | Please select a reference genome to edit |
@@ -379,7 +379,7 @@ graph LR
 | `update_type_btn` | Please enter a sample type name<br>This type already exists |
 | `edit_sequencing_platform_btn` | Please select a platform to edit |
 | `update_sequencing_platform_update_btn` | Please enter a platform name<br>This platform already exists |
-| `update_service_type_btn` | Service type updated successfully! |
+| `update_service_type_btn` | Sample service type updated successfully! |
 | `add_sequencing_depth_btn` | Please enter a depth description<br>This sequencing depth already exists |
 | `edit_sequencing_depth_btn` | Please select a sequencing depth to edit |
 | `update_sequencing_depth_btn` | Sequencing depth updated successfully! |
@@ -390,8 +390,8 @@ graph LR
 | `add_sequencing_platform_btn` | Please enter a sequencing platform name<br>This platform already exists |
 | `delete_budget_holder_btn` | Please select a budget holder to delete |
 | `confirm_delete_budget_holder_btn` | Budget holder deleted successfully! |
-| `delete_service_type_btn` | Please select a service type to delete |
-| `confirm_delete_service_type_btn` | Service type deleted successfully! |
+| `delete_service_type_btn` | Please select a sample service type to delete |
+| `confirm_delete_service_type_btn` | Sample service type deleted successfully! |
 | `delete_sequencing_depth_btn` | Please select a sequencing depth to delete |
 | `confirm_delete_sequencing_depth_btn` | Sequencing depth deleted successfully! |
 | `delete_sequencing_cycles_btn` | Please select a sequencing cycle to delete |
@@ -434,7 +434,7 @@ graph LR
 | `new_project_btn` | Create New Project | Open the Create Project modal and prefill lookup choices. | 2984 | 3100 | `3100-3229` | - | `get_all_usernames()`, `get_db_connection()`, `showModal()`, `dbGetQuery()`, `dbDisconnect()` | Reads DB, Opens modal | `SELECT users` |
 | `create_project_btn` | Create Project | Validate form inputs, insert a new project, and send initial project email. | 3106 | 3278 | `3278-3385` | `budget_id`, `other_bh_name`, `other_bh_surname`, `num_samples`, `service_type_id`, `sequencing_depth_id`, `sequencing_cycles_id`, `other_bh_cost_center`, `other_bh_email`, `project_name`, `responsible_user`, `reference_genome`, `project_description`, `sequencing_platform`, `kickoff_meeting`, `type_id` | `calculate_total_cost()`, `get_db_connection()`, `get_or_create_budget_holder()`, `load_projects()`, `send_project_creation_email()`, `showNotification()`, `dbDisconnect()`, `dbExecute()`, `dbGetQuery()`, `removeModal()` | Writes DB, Reads DB, Sends email, Closes modal, Shows notification, Refreshes UI data | `SELECT projects`, `SELECT budget_holders`, `SELECT users`, `INSERT projects` |
 | `manage_budget_holders_btn` | Manage Budget Holders | Open admin management modal for this reference table. | 3026 | 3523 | `3523-3558` | - | `showModal()` | Opens modal | - |
-| `manage_service_types_btn` | Manage Service Types | Open admin management modal for this reference table. | 3044 | 3561 | `3561-3594` | - | `showModal()` | Opens modal | - |
+| `manage_service_types_btn` | Manage Sample Service Types | Open admin management modal for this reference table. | 3044 | 3561 | `3561-3594` | - | `showModal()` | Opens modal | - |
 | `manage_sequencing_depths_btn` | Manage Depths | Open admin management modal for this reference table. | 3050 | 3597 | `3597-3628` | - | `showModal()` | Opens modal | - |
 | `manage_sequencing_cycles_btn` | Manage Cycles | Open admin management modal for this reference table. | 3056 | 3631 | `3631-3652` | - | `showModal()` | Opens modal | - |
 | `manage_users_btn` | Manage Users | Open admin management modal for this reference table. | 3020 | 3655 | `3655-3690` | - | `showModal()` | Opens modal | - |
@@ -451,7 +451,7 @@ graph LR
 | `announcement_move_up_btn` | Move Up | Processes input and writes changes to the database. | 3811 | 4155 | `4155-4199` | `announcement_items_table_admin_rows_selected` | `get_db_connection()`, `refresh_announcements()`, `showNotification()`, `dbDisconnect()`, `dbExecute()` | Writes DB, Shows notification | `UPDATE announcement_items` |
 | `announcement_move_down_btn` | Move Down | Processes input and writes changes to the database. | 3812 | 4201 | `4201-4245` | `announcement_items_table_admin_rows_selected` | `get_db_connection()`, `refresh_announcements()`, `showNotification()`, `dbDisconnect()`, `dbExecute()` | Writes DB, Shows notification | `UPDATE announcement_items` |
 | `add_budget_holder_btn` | Add Budget Holder | Validate new entry fields and insert a new row. | 3546 | 4250 | `4250-4292` | `new_bh_name`, `new_bh_surname`, `new_bh_cost_center`, `new_bh_email` | `get_db_connection()`, `load_admin_data()`, `showNotification()`, `dbDisconnect()`, `dbGetQuery()`, `dbExecute()` | Writes DB, Reads DB, Shows notification, Refreshes UI data | `SELECT budget_holders`, `INSERT budget_holders` |
-| `add_service_type_btn` | Add Service Type | Validate new entry fields and insert a new row. | 3581 | 4295 | `4295-4325` | `new_service_type`, `new_service_kit`, `new_service_cost` | `get_db_connection()`, `load_service_types()`, `showNotification()`, `dbDisconnect()`, `dbExecute()` | Writes DB, Shows notification | `INSERT service_types` |
+| `add_service_type_btn` | Add Sample Service Type | Validate new entry fields and insert a new row. | 3581 | 4295 | `4295-4325` | `new_service_type`, `new_service_kit`, `new_service_cost` | `get_db_connection()`, `load_service_types()`, `showNotification()`, `dbDisconnect()`, `dbExecute()` | Writes DB, Shows notification | `INSERT service_types` |
 | `edit_service_type_btn` | Edit Selected | Open edit modal for currently selected row. | 3589 | 4328 | `4328-4349` | `service_types_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | `UPDATE Service` |
 | `edit_budget_holder_btn` | Edit Selected | Open edit modal for currently selected row. | 3554 | 4352 | `4352-4373` | `budget_holders_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | `UPDATE Budget` |
 | `update_budget_holder_btn` | Update Budget Holder | Apply update from modal form to the selected row. | 4366 | 4375 | `4375-4418` | `budget_holders_table_admin_rows_selected`, `edit_bh_name`, `edit_bh_surname`, `edit_bh_cost_center`, `edit_bh_email` | `get_db_connection()`, `load_budget_holders()`, `showNotification()`, `dbDisconnect()`, `dbGetQuery()`, `dbExecute()`, `removeModal()` | Writes DB, Reads DB, Closes modal, Shows notification | `SELECT budget_holders`, `UPDATE budget_holders` |
@@ -461,7 +461,7 @@ graph LR
 | `update_type_btn` | Update Sample Type | Apply update from modal form to the selected row. | 4483 | 4489 | `4489-4513` | `types_table_admin_rows_selected`, `edit_type_name` | `get_db_connection()`, `load_types()`, `showNotification()`, `dbDisconnect()`, `dbExecute()`, `removeModal()` | Writes DB, Closes modal, Shows notification | `UPDATE types` |
 | `edit_sequencing_platform_btn` | Edit Selected | Open edit modal for currently selected row. | 3764 | 4516 | `4516-4534` | `sequencing_platforms_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | `UPDATE Platform` |
 | `update_sequencing_platform_update_btn` | Update Platform | Apply update from modal form to the selected row. | 4530 | 4536 | `4536-4560` | `sequencing_platforms_table_admin_rows_selected`, `edit_sequencing_platform_name2` | `get_db_connection()`, `load_sequencing_platforms()`, `showNotification()`, `dbDisconnect()`, `dbExecute()`, `removeModal()` | Writes DB, Closes modal, Shows notification | `UPDATE sequencing_platforms` |
-| `update_service_type_btn` | Update Service Type | Apply update from modal form to the selected row. | 4342 | 4563 | `4563-4584` | `service_types_table_admin_rows_selected`, `edit_service_type`, `edit_service_kit`, `edit_service_cost` | `get_db_connection()`, `load_service_types()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification | `UPDATE service_types` |
+| `update_service_type_btn` | Update Sample Service Type | Apply update from modal form to the selected row. | 4342 | 4563 | `4563-4584` | `service_types_table_admin_rows_selected`, `edit_service_type`, `edit_service_kit`, `edit_service_cost` | `get_db_connection()`, `load_service_types()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification | `UPDATE service_types` |
 | `add_sequencing_depth_btn` | Add Depth | Validate new entry fields and insert a new row. | 3615 | 4586 | `4586-4616` | `new_depth_description`, `new_depth_cost_150`, `new_depth_cost_300` | `get_db_connection()`, `load_sequencing_depths()`, `showNotification()`, `dbDisconnect()`, `dbExecute()` | Writes DB, Shows notification | `INSERT sequencing_depths` |
 | `edit_sequencing_depth_btn` | Edit Selected | Open edit modal for currently selected row. | 3623 | 4619 | `4619-4640` | `sequencing_depths_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | `UPDATE Depth` |
 | `update_sequencing_depth_btn` | Update Depth | Apply update from modal form to the selected row. | 4633 | 4643 | `4643-4664` | `sequencing_depths_table_admin_rows_selected`, `edit_depth_description`, `edit_depth_cost_150`, `edit_depth_cost_300` | `get_db_connection()`, `load_sequencing_depths()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification | `UPDATE sequencing_depths` |
@@ -472,7 +472,7 @@ graph LR
 | `add_sequencing_platform_btn` | Add Platform | Validate new entry fields and insert a new row. | 3756 | 4790 | `4790-4810` | `new_sequencing_platform_name` | `get_db_connection()`, `load_sequencing_platforms()`, `showNotification()`, `dbDisconnect()`, `dbExecute()` | Writes DB, Shows notification | `INSERT sequencing_platforms` |
 | `delete_budget_holder_btn` | Delete Selected Budget Holder | Open delete confirmation dialog for selected row. | 3555 | 4815 | `4815-4832` | `budget_holders_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
 | `confirm_delete_budget_holder_btn` | Delete | Delete selected row after confirmation. | 4829 | 4834 | `4834-4846` | `budget_holders_table_admin_rows_selected` | `get_db_connection()`, `load_admin_data()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification, Refreshes UI data | `DELETE budget_holders` |
-| `delete_service_type_btn` | Delete Selected Service Type | Open delete confirmation dialog for selected row. | 3590 | 4849 | `4849-4866` | `service_types_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
+| `delete_service_type_btn` | Delete Selected Sample Service Type | Open delete confirmation dialog for selected row. | 3590 | 4849 | `4849-4866` | `service_types_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
 | `confirm_delete_service_type_btn` | Delete | Delete selected row after confirmation. | 4863 | 4868 | `4868-4880` | `service_types_table_admin_rows_selected` | `get_db_connection()`, `load_service_types()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification | `DELETE service_types` |
 | `delete_sequencing_depth_btn` | Delete Selected Depth | Open delete confirmation dialog for selected row. | 3624 | 4883 | `4883-4900` | `sequencing_depths_table_admin_rows_selected` | `showNotification()`, `showModal()` | Opens modal, Shows notification | - |
 | `confirm_delete_sequencing_depth_btn` | Delete | Delete selected row after confirmation. | 4897 | 4902 | `4902-4914` | `sequencing_depths_table_admin_rows_selected` | `get_db_connection()`, `load_sequencing_depths()`, `dbDisconnect()`, `dbExecute()`, `removeModal()`, `showNotification()` | Writes DB, Closes modal, Shows notification | `DELETE sequencing_depths` |

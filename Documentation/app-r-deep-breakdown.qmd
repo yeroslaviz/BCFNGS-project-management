@@ -66,7 +66,7 @@ This addendum captures the latest behavior changes added after the first draft o
 
 - In both Create and Edit modals:
   - `Project Type` label was renamed to `Sample Type`.
-  - `Sample Type` is now shown above `Service Type`.
+  - `Sample Type` is now shown above `Sample Service Type`.
   - `Sequencing Depth` label was renamed to `Data Amount (Total Reads)`.
   - `Sequencing Cycles` label was renamed to `Read Length (Cycles)`.
 - Helper texts were added below depth/cycles fields with compact `11px` styling to reduce visual noise while keeping examples visible.
@@ -138,7 +138,7 @@ When a line appears multiple times, it usually means validation + DB action + no
 | `add_sequencing_cycles_btn` | 3444 | actionButton | 4468 | Administer Projects -> Sequencing Cycles |
 | `add_sequencing_depth_btn` | 3416 | actionButton | 4387 | Administer Projects -> Sequencing Depths |
 | `add_sequencing_platform_btn` | 3557 | actionButton | 4591 | Administer Projects -> Sequencing Platforms |
-| `add_service_type_btn` | 3382 | actionButton | 4096 | Administer Projects -> Service Types |
+| `add_service_type_btn` | 3382 | actionButton | 4096 | Administer Projects -> Sample Service Types |
 | `add_type_btn` | 3531 | actionButton | 4568 | Administer Projects -> Sample Types |
 | `add_user_admin_btn` | 3482 | actionButton | 4495 | Administer Projects -> Users |
 | `announcement_add_btn` | 3610 | actionButton | 3765 | Administer Projects -> Landing Text |
@@ -154,7 +154,7 @@ When a line appears multiple times, it usually means validation + DB action + no
 | `confirm_delete_sequencing_cycles_btn` | 4732 | actionButton | 4737 | Administer Projects -> Sequencing Cycles |
 | `confirm_delete_sequencing_depth_btn` | 4698 | actionButton | 4703 | Administer Projects -> Sequencing Depths |
 | `confirm_delete_sequencing_platform_btn` | 4873 | actionButton | 4878 | Administer Projects -> Sequencing Platforms |
-| `confirm_delete_service_type_btn` | 4664 | actionButton | 4669 | Administer Projects -> Service Types |
+| `confirm_delete_service_type_btn` | 4664 | actionButton | 4669 | Administer Projects -> Sample Service Types |
 | `confirm_delete_type_btn` | 4839 | actionButton | 4844 | Administer Projects -> Sample Types |
 | `confirm_delete_user_btn` | 4771 | actionButton | 4776 | Administer Projects -> Users |
 | `confirm_restore_btn` | 5409 | actionButton | 5414 | Administer Projects -> Database Management |
@@ -167,7 +167,7 @@ When a line appears multiple times, it usually means validation + DB action + no
 | `delete_sequencing_cycles_btn` | 3451 | actionButton | 4718 | Administer Projects -> Sequencing Cycles |
 | `delete_sequencing_depth_btn` | 3425 | actionButton | 4684 | Administer Projects -> Sequencing Depths |
 | `delete_sequencing_platform_btn` | 3566 | actionButton | 4859 | Administer Projects -> Sequencing Platforms |
-| `delete_service_type_btn` | 3391 | actionButton | 4650 | Administer Projects -> Service Types |
+| `delete_service_type_btn` | 3391 | actionButton | 4650 | Administer Projects -> Sample Service Types |
 | `delete_type_btn` | 3540 | actionButton | 4825 | Administer Projects -> Sample Types |
 | `delete_user_admin_btn` | 3489 | actionButton | 4752 | Administer Projects -> Users |
 | `dev_auth_mode` | 2446 | radioButtons | 2454, 2455, 2456 | Authentication / Login area |
@@ -199,11 +199,11 @@ When a line appears multiple times, it usually means validation + DB action + no
 | `edit_sequencing_platform` | 4926 | selectInput | 5127, 5153 | Administer Projects -> Sequencing Platforms |
 | `edit_sequencing_platform_btn` | 3565 | actionButton | 4317 | Administer Projects -> Sequencing Platforms |
 | `edit_sequencing_platform_name2` | 4333 | textInput | 4342, 4343 | Administer Projects -> Sequencing Platforms |
-| `edit_service_cost` | 4148 | numericInput | 4378 | Administer Projects -> Service Types |
-| `edit_service_kit` | 4147 | textInput | 4377 | Administer Projects -> Service Types |
-| `edit_service_type` | 4146 | textInput | 4376 | Administer Projects -> Service Types |
-| `edit_service_type_btn` | 3390 | actionButton | 4129 | Administer Projects -> Service Types |
-| `edit_service_type_id` | 4932 | selectInput | 5007, 5010, 5088, 5122, 5148 | Administer Projects -> Service Types |
+| `edit_service_cost` | 4148 | numericInput | 4378 | Administer Projects -> Sample Service Types |
+| `edit_service_kit` | 4147 | textInput | 4377 | Administer Projects -> Sample Service Types |
+| `edit_service_type` | 4146 | textInput | 4376 | Administer Projects -> Sample Service Types |
+| `edit_service_type_btn` | 3390 | actionButton | 4129 | Administer Projects -> Sample Service Types |
+| `edit_service_type_id` | 4932 | selectInput | 5007, 5010, 5088, 5122, 5148 | Administer Projects -> Sample Service Types |
 | `edit_type_btn` | 3539 | actionButton | 4270 | Administer Projects -> Sample Types |
 | `edit_type_id` | 4929 | selectInput | 5132, 5157 | Administer Projects -> Sample Types |
 | `edit_type_name` | 4286 | textInput | 4295, 4296 | Administer Projects -> Sample Types |
@@ -224,7 +224,7 @@ When a line appears multiple times, it usually means validation + DB action + no
 | `manage_sequencing_cycles_btn` | 2859 | actionButton | 3432 | Administer Projects -> Sequencing Cycles |
 | `manage_sequencing_depths_btn` | 2853 | actionButton | 3398 | Administer Projects -> Sequencing Depths |
 | `manage_sequencing_platforms_btn` | 2865 | actionButton | 3545 | Administer Projects -> Sequencing Platforms |
-| `manage_service_types_btn` | 2847 | actionButton | 3362 | Administer Projects -> Service Types |
+| `manage_service_types_btn` | 2847 | actionButton | 3362 | Administer Projects -> Sample Service Types |
 | `manage_types_btn` | 2841 | actionButton | 3519 | Administer Projects -> Sample Types |
 | `manage_users_btn` | 2823 | actionButton | 3456 | Administer Projects -> Users |
 | `new_bh_cost_center` | 3339 | textInput | 4052, 4054, 4065, 4079 | Administer Projects -> Budget Holders |
@@ -239,9 +239,9 @@ When a line appears multiple times, it usually means validation + DB action + no
 | `new_project_btn` | 2787 | actionButton | 2903 | Apply for Projects / Projects table |
 | `new_project_status` | 5261 | selectInput | 5286 | Apply for Projects / Projects table |
 | `new_sequencing_platform_name` | 3554 | textInput | 4592, 4594, 4599, 4607 | Administer Projects -> Sequencing Platforms |
-| `new_service_cost` | 3377 | numericInput | 4097, 4118 | Administer Projects -> Service Types |
-| `new_service_kit` | 3374 | textInput | 4097, 4117 | Administer Projects -> Service Types |
-| `new_service_type` | 3371 | textInput | 4097, 4099, 4104, 4116 | Administer Projects -> Service Types |
+| `new_service_cost` | 3377 | numericInput | 4097, 4118 | Administer Projects -> Sample Service Types |
+| `new_service_kit` | 3374 | textInput | 4097, 4117 | Administer Projects -> Sample Service Types |
+| `new_service_type` | 3371 | textInput | 4097, 4099, 4104, 4116 | Administer Projects -> Sample Service Types |
 | `new_type_name` | 3528 | textInput | 4569, 4571, 4576, 4584 | Administer Projects -> Sample Types |
 | `new_user_admin` | 3481 | checkboxInput | 4527 | Administer Projects -> Users |
 | `new_user_confirm_password` | 3476 | passwordInput | 4498 | Administer Projects -> Users |
@@ -267,7 +267,7 @@ When a line appears multiple times, it usually means validation + DB action + no
 | `sequencing_cycles_id` | 2944 | selectInput | 3037, 3105, 3145 | Administer Projects -> Sequencing Cycles |
 | `sequencing_depth_id` | 2936 | selectInput | 3037, 3040, 3105, 3144, 3171 | Administer Projects -> Sequencing Depths |
 | `sequencing_platform` | 2916 | selectInput | 3143 | Administer Projects -> Sequencing Platforms |
-| `service_type_id` | 2924 | selectInput | 3036, 3039, 3104, 3139, 3170 | Administer Projects -> Service Types |
+| `service_type_id` | 2924 | selectInput | 3036, 3039, 3104, 3139, 3170 | Administer Projects -> Sample Service Types |
 | `show_register_btn` | 610 | actionLink | 2266 | Authentication / Login area |
 | `status_notes` | 5265 | textAreaInput | - | Apply for Projects / Projects table |
 | `type_id` | 2918 | selectInput | 3147 | Administer Projects -> Sample Types |
@@ -277,7 +277,7 @@ When a line appears multiple times, it usually means validation + DB action + no
 | `update_project_btn` | 5131 | actionButton | 5286 | Apply for Projects / Projects table |
 | `update_sequencing_depth_btn` | 4434 | actionButton | 4444 | Administer Projects -> Sequencing Depths |
 | `update_sequencing_platform_update_btn` | 4331 | actionButton | 4337 | Administer Projects -> Sequencing Platforms |
-| `update_service_type_btn` | 4143 | actionButton | 4364 | Administer Projects -> Service Types |
+| `update_service_type_btn` | 4143 | actionButton | 4364 | Administer Projects -> Sample Service Types |
 | `update_status_btn` | 2997 | actionButton | 5630 | Apply for Projects / Projects table |
 | `update_type_btn` | 4284 | actionButton | 4290 | Administer Projects -> Sample Types |
 | `validate_db_btn` | 2887 | actionButton | 5350 | Administer Projects -> Database Management |
@@ -601,7 +601,7 @@ For each function: **purpose**, **key behavior**, and **where it is called**.
 ### `load_service_types` {#fn-load-service-types}
 - **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1950`
 - **Signature line:** `load_service_types <- function() {`
-- **Purpose:** Loads service type reference data (including per-sample cost).
+- **Purpose:** Loads sample service type reference data (including per-sample cost).
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `load_sequencing_depths` {#fn-load-sequencing-depths}
@@ -740,7 +740,7 @@ Every event trigger is listed with the panel it belongs to and what action it pe
 | 3278 | `input$create_project_btn` | Apply for Projects / Projects table | Validates, inserts new project, sends creation email to NGS mailbox, and refreshes project table. |
 | 3315 | `user$logged_in` | General / Shared | Loads project list after successful login. |
 | 3324 | `input$manage_budget_holders_btn` | Administer Projects -> Budget Holders | Opens admin management modal for the selected reference-data domain. |
-| 3362 | `input$manage_service_types_btn` | Administer Projects -> Service Types | Opens admin management modal for the selected reference-data domain. |
+| 3362 | `input$manage_service_types_btn` | Administer Projects -> Sample Service Types | Opens admin management modal for the selected reference-data domain. |
 | 3398 | `input$manage_sequencing_depths_btn` | Administer Projects -> Sequencing Depths | Opens admin management modal for the selected reference-data domain. |
 | 3432 | `input$manage_sequencing_cycles_btn` | Administer Projects -> Sequencing Cycles | Opens admin management modal for the selected reference-data domain. |
 | 3456 | `input$manage_users_btn` | Administer Projects -> Users | Opens admin management modal for the selected reference-data domain. |
@@ -757,8 +757,8 @@ Every event trigger is listed with the panel it belongs to and what action it pe
 | 3956 | `input$announcement_move_up_btn` | Administer Projects -> Landing Text | Handles landing-text CRUD/reordering flow in admin panel. |
 | 4002 | `input$announcement_move_down_btn` | Administer Projects -> Landing Text | Handles landing-text CRUD/reordering flow in admin panel. |
 | 4051 | `input$add_budget_holder_btn` | Administer Projects -> Budget Holders | Validates form fields and inserts a new row into the corresponding reference table. |
-| 4096 | `input$add_service_type_btn` | Administer Projects -> Service Types | Validates form fields and inserts a new row into the corresponding reference table. |
-| 4129 | `input$edit_service_type_btn` | Administer Projects -> Service Types | Opens edit modal for currently selected row in the matching admin table. |
+| 4096 | `input$add_service_type_btn` | Administer Projects -> Sample Service Types | Validates form fields and inserts a new row into the corresponding reference table. |
+| 4129 | `input$edit_service_type_btn` | Administer Projects -> Sample Service Types | Opens edit modal for currently selected row in the matching admin table. |
 | 4153 | `input$edit_budget_holder_btn` | Administer Projects -> Budget Holders | Opens edit modal for currently selected row in the matching admin table. |
 | 4176 | `input$update_budget_holder_btn` | Administer Projects -> Budget Holders | Applies updates from edit modal to DB and refreshes affected reactive tables. |
 | 4222 | `input$edit_genome_btn` | Administer Projects -> Reference Genomes | Opens edit modal for currently selected row in the matching admin table. |
@@ -767,7 +767,7 @@ Every event trigger is listed with the panel it belongs to and what action it pe
 | 4290 | `input$update_type_btn` | Administer Projects -> Sample Types | Applies updates from edit modal to DB and refreshes affected reactive tables. |
 | 4317 | `input$edit_sequencing_platform_btn` | Administer Projects -> Sequencing Platforms | Opens edit modal for currently selected row in the matching admin table. |
 | 4337 | `input$update_sequencing_platform_update_btn` | Administer Projects -> Sequencing Platforms | Applies updates from edit modal to DB and refreshes affected reactive tables. |
-| 4364 | `input$update_service_type_btn` | Administer Projects -> Service Types | Applies updates from edit modal to DB and refreshes affected reactive tables. |
+| 4364 | `input$update_service_type_btn` | Administer Projects -> Sample Service Types | Applies updates from edit modal to DB and refreshes affected reactive tables. |
 | 4387 | `input$add_sequencing_depth_btn` | Administer Projects -> Sequencing Depths | Validates form fields and inserts a new row into the corresponding reference table. |
 | 4420 | `input$edit_sequencing_depth_btn` | Administer Projects -> Sequencing Depths | Opens edit modal for currently selected row in the matching admin table. |
 | 4444 | `input$update_sequencing_depth_btn` | Administer Projects -> Sequencing Depths | Applies updates from edit modal to DB and refreshes affected reactive tables. |
@@ -778,8 +778,8 @@ Every event trigger is listed with the panel it belongs to and what action it pe
 | 4591 | `input$add_sequencing_platform_btn` | Administer Projects -> Sequencing Platforms | Validates form fields and inserts a new row into the corresponding reference table. |
 | 4616 | `input$delete_budget_holder_btn` | Administer Projects -> Budget Holders | Opens delete confirmation for selected row. |
 | 4635 | `input$confirm_delete_budget_holder_btn` | Administer Projects -> Budget Holders | Executes confirmed delete, then reloads related data. |
-| 4650 | `input$delete_service_type_btn` | Administer Projects -> Service Types | Opens delete confirmation for selected row. |
-| 4669 | `input$confirm_delete_service_type_btn` | Administer Projects -> Service Types | Executes confirmed delete, then reloads related data. |
+| 4650 | `input$delete_service_type_btn` | Administer Projects -> Sample Service Types | Opens delete confirmation for selected row. |
+| 4669 | `input$confirm_delete_service_type_btn` | Administer Projects -> Sample Service Types | Executes confirmed delete, then reloads related data. |
 | 4684 | `input$delete_sequencing_depth_btn` | Administer Projects -> Sequencing Depths | Opens delete confirmation for selected row. |
 | 4703 | `input$confirm_delete_sequencing_depth_btn` | Administer Projects -> Sequencing Depths | Executes confirmed delete, then reloads related data. |
 | 4718 | `input$delete_sequencing_cycles_btn` | Administer Projects -> Sequencing Cycles | Opens delete confirmation for selected row. |
@@ -987,7 +987,7 @@ The table below indexes each detected DB call (`dbGetQuery`, `dbExecute`) in `ap
 
 ### Administer Projects
 
-- Entry point for all reference-data management (users, budget holders, genomes, sample types, service types, depth, cycles, platforms, landing text).
+- Entry point for all reference-data management (users, budget holders, genomes, sample types, sample service types, depth, cycles, platforms, landing text).
 - Includes DB backup download, restore upload, and validation controls.
 - Every admin button opens a modal, each modal has add/edit/delete handlers, and each handler performs DB write + reactive refresh + notification.
 
@@ -1023,6 +1023,6 @@ The table below indexes each detected DB call (`dbGetQuery`, `dbExecute`) in `ap
 
 1. Start with `validate_and_repair_database()` and auth mode setup to understand startup preconditions.
 2. Follow `complete_login()` + `load_projects()` to understand post-login state.
-3. Read one full CRUD chain end-to-end (e.g., service types) to understand modal -> validation -> SQL -> refresh pattern.
+3. Read one full CRUD chain end-to-end (e.g., sample service types) to understand modal -> validation -> SQL -> refresh pattern.
 4. Read `send_project_creation_email()`, `send_project_cost_notification_email()`, and `send_data_released_email()` for notification side-effects.
 5. Read backup/restore handlers before doing production maintenance.
