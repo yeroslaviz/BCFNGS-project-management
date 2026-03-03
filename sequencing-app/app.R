@@ -1929,7 +1929,10 @@ server <- function(input, output, session) {
   }
 
   normalize_key <- function(x) {
-    tolower(trimws(as.character(x %||% "")))
+    if (is.null(x) || length(x) == 0) return(character(0))
+    values <- as.character(x)
+    values[is.na(values)] <- ""
+    tolower(trimws(values))
   }
 
   to_scalar_text <- function(x, default = "") {
