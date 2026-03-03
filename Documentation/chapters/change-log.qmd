@@ -10,6 +10,7 @@ execute:
 
 ### Contents
 
+- [Changes on 03.03.2026](#changes-on-03.03.2026)
 - [Changes on 02.03.2026](#changes-on-02.03.2026)
 - [Changes on 27.02.2026](#changes-on-27.02.2026)
 - [Changes on 25.02.2026](#changes-on-25.02.2026)
@@ -22,6 +23,32 @@ execute:
 - [Changes on 09.02.2026](#changes-on-09.02.2026)
 - [Changes on 06.02.2026](#changes-on-06.02.2026)
 - [Changes on 14.11.2026](#changes-on-14.11.2026)
+
+## Changes on 03.03.2026
+
+1. Updated admin cost-notification recipient routing:
+   - replaced project creator (`projects.user_id`) email with **responsible user** email resolution.
+   - resolution order now supports:
+     - username match in `users`
+     - unique full-name match in `users`
+     - direct email stored in `responsible_user` (legacy/manual fallback).
+   - recipient set for admin cost-notification remains:
+     - budget holder email
+     - resolved responsible user email
+     - `ngs@biochem.mpg.de`.
+2. Fixed responsible-user normalization crash on larger user tables:
+   - `normalize_key()` is now vector-safe and no longer applies scalar `%||%` logic to full vectors.
+   - resolves runtime error: `length = <n> in coercion to logical(1)` seen in project table rendering and responsible-user migration flow.
+3. Standardized user-facing terminology:
+   - changed **Service Type(s)** to **Sample Service Type(s)** across the app UI, notifications, and source docs.
+   - database schema/table names remain unchanged (`service_types`, `service_type_id`).
+4. Updated admin cost-estimation HTML email formatting:
+   - added `Sequencing Platform` line to the email details payload/body.
+   - both lines are now emphasized in red:
+     - `Sample Service Type: ...`
+     - `Sequencing Platform: ...`.
+5. Added compatibility rewrite for project-creation email templates:
+   - if an existing DB template still contains `- Service Type:`, the send path rewrites it to `- Sample Service Type:` at runtime.
 
 ## Changes on 02.03.2026
 
