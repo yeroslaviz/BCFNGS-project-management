@@ -2522,7 +2522,7 @@ server <- function(input, output, session) {
   }
 
   # Send admin-triggered cost-estimation email notification
-  send_project_cost_notification_email <- function(project_data, budget_holder, user_email) {
+  send_project_cost_notification_email <- function(project_data, budget_holder, responsible_email) {
     tryCatch({
       con <- get_db_connection()
       on.exit(dbDisconnect(con), add = TRUE)
@@ -2547,7 +2547,7 @@ server <- function(input, output, session) {
 
       recipients <- unique(c(
         trimws(as.character(budget_holder$email[[1]] %||% "")),
-        trimws(as.character(user_email %||% "")),
+        trimws(as.character(responsible_email %||% "")),
         facility_email
       ))
       recipients <- recipients[!is.na(recipients) & recipients != ""]
@@ -5842,13 +5842,6 @@ server <- function(input, output, session) {
       )
     }
 
-    user_email <- dbGetQuery(
-      con,
-      "SELECT email FROM users WHERE id = ? LIMIT 1",
-      params = list(as.numeric(project$user_id[[1]]))
-    )$email
-    if (length(user_email) == 0 || is.na(user_email[[1]])) user_email <- ""
-
     service_type_label <- admin_data$service_types$service_type[
       admin_data$service_types$id == as.numeric(input$edit_service_type_id)
     ]
@@ -5866,6 +5859,41 @@ server <- function(input, output, session) {
       con,
       fallback = project$responsible_user[[1]]
     )
+    users_responsible <- get_responsible_users(con)
+    resolved_username <- resolve_responsible_username(responsible_user_value, users_responsible)
+    responsible_email <- ""
+
+    if (!is.na(resolved_username) && nzchar(resolved_username)) {
+      responsible_email_row <- dbGetQuery(
+        con,
+        "SELECT email FROM users WHERE lower(username) = lower(?) LIMIT 1",
+        params = list(resolved_username)
+      )
+      if (nrow(responsible_email_row) > 0) {
+        responsible_email <- trimws(as.character(responsible_email_row$email[[1]] %||% ""))
+      }
+    }
+
+    if (!nzchar(responsible_email) && nzchar(responsible_user_value)) {
+      full_name_matches <- dbGetQuery(
+        con,
+        "
+        SELECT email
+        FROM users
+        WHERE lower(trim(full_name)) = lower(trim(?))
+        ",
+        params = list(responsible_user_value)
+      )
+      if (nrow(full_name_matches) == 1) {
+        responsible_email <- trimws(as.character(full_name_matches$email[[1]] %||% ""))
+      }
+    }
+
+    # If responsible_user is stored as a direct email (legacy/manual entry), use it.
+    if (!nzchar(responsible_email) &&
+        grepl("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", responsible_user_value)) {
+      responsible_email <- responsible_user_value
+    }
 
     notification_payload <- list(
       project_id = project_id_value,
@@ -5878,7 +5906,7 @@ server <- function(input, output, session) {
       total_cost = total_cost
     )
 
-    email_result <- send_project_cost_notification_email(notification_payload, budget_holder, user_email[[1]])
+    email_result <- send_project_cost_notification_email(notification_payload, budget_holder, responsible_email)
 
     if (isTRUE(email_result$success)) {
       showNotification("Cost estimation notification sent.", type = "message")
