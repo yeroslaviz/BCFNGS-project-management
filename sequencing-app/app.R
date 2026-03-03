@@ -2553,6 +2553,8 @@ server <- function(input, output, session) {
 
       service_type <- trimws(as.character(project_data$service_type %||% ""))
       if (!nzchar(service_type)) service_type <- "N.A."
+      sequencing_platform <- trimws(as.character(project_data$sequencing_platform %||% ""))
+      if (!nzchar(sequencing_platform)) sequencing_platform <- "N.A."
 
       recipients <- unique(c(
         trimws(as.character(budget_holder$email[[1]] %||% "")),
@@ -2593,7 +2595,8 @@ server <- function(input, output, session) {
         "- Project Name: ", htmltools::htmlEscape(as.character(project_data$project_name %||% "")), "<br>",
         "- Responsible User: ", htmltools::htmlEscape(responsible_user_display), "<br>",
         "- Number of Samples: ", htmltools::htmlEscape(as.character(project_data$num_samples %||% "")), "<br>",
-        "- Sample Service Type: ", htmltools::htmlEscape(service_type), "<br>",
+        "<span style='color:#c00000;'>- Sample Service Type: ", htmltools::htmlEscape(service_type), "</span><br>",
+        "<span style='color:#c00000;'>- Sequencing Platform: ", htmltools::htmlEscape(sequencing_platform), "</span><br>",
         "- ", cost_line,
         "</p>",
         description_html,
@@ -5911,6 +5914,7 @@ server <- function(input, output, session) {
       description = trimws(input$edit_project_description %||% project$description[[1]]),
       responsible_user = responsible_user_value,
       num_samples = input$edit_num_samples %||% project$num_samples[[1]],
+      sequencing_platform = trimws(input$edit_sequencing_platform %||% project$sequencing_platform[[1]]),
       service_type = service_type_label[[1]],
       total_cost = total_cost
     )
