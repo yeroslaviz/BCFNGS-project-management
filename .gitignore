@@ -14,6 +14,7 @@ mpiseq2/*
 !mpiseq2/ngs-vm_01-main.conf
 etc/
 export/
+ngs-vm_cost.xlsx
 
 # SQLite / database files
 *.db
