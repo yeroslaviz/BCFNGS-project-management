@@ -230,33 +230,33 @@ setup_complete_database <- function() {
   default_password <- digest::digest("admin123")
   dbExecute(con, "
   INSERT OR IGNORE INTO users (username, password, email, is_admin, research_group)
-  VALUES ('admin', ?, 'ngs@biochem.mpg.de', 1, 'Kim')
+  VALUES ('admin', ?, 'ngs@example.org', 1, 'Group Alpha')
 ", params = list(default_password))
 
   dbExecute(con, "
   INSERT OR IGNORE INTO users (username, password, email, is_admin, research_group)
-  VALUES ('admin2', ?, 'yeroslaviz@biochem.mpg.de', 1, 'Cox')
-", params = list(digest::digest("yeroslaviz123")))
+  VALUES ('admin_backup', ?, 'budget-holder-08@example.org', 1, 'Group Beta')
+", params = list(digest::digest("backupadmin123")))
 
   # Ensure LDAP admin users exist after rebuild (add more by copying this block)
   dbExecute(con, "
   INSERT OR IGNORE INTO users (username, password, email, is_admin, research_group)
-  VALUES ('yeroslaviz', ?, 'yeroslaviz@biochem.mpg.de', 1, 'Cox')
+  VALUES ('exampleadmin', ?, 'budget-holder-08@example.org', 1, 'Group Beta')
 ", params = list(digest::digest("ldap-only")))
 
   dbExecute(con, "
   INSERT OR IGNORE INTO users (username, password, email, is_admin, research_group)
-  VALUES ('rkim', ?, 'rkim@biochem.mpg.de', 1, 'NGS Facility')
+  VALUES ('coreadmin1', ?, 'budget-holder-01@example.org', 1, 'Core Facility')
   ", params = list(digest::digest("ldap-only")))
 
   dbExecute(con, "
   INSERT OR IGNORE INTO users (username, password, email, is_admin, research_group)
-  VALUES ('casper', ?, 'casper@biochem.mpg.de', 1, 'NGS Facility')
+  VALUES ('coreadmin2', ?, 'core.admin2@example.org', 1, 'Core Facility')
   ", params = list(digest::digest("ldap-only")))
 
   dbExecute(con, "
   INSERT OR IGNORE INTO users (username, password, email, is_admin, research_group)
-  VALUES ('gautsch', ?, 'gautsch@biochem.mpg.de', 1, 'NGS Facility')
+  VALUES ('coreadmin3', ?, 'core.admin3@example.org', 1, 'Core Facility')
   ", params = list(digest::digest("ldap-only")))
 
   # Insert sample users with phone and research_group
@@ -265,8 +265,8 @@ setup_complete_database <- function() {
     full_name = c('User One', 'User Two'),
     password = c(digest('user1123'), digest('user2123')),
     email = c('user1@institute.org', 'user2@institute.org'),
-    phone = c("+49 89 12345678", "+49 89 87654321"),
-    research_group = c("Cox", "Baier"),
+    phone = c("+49 30 55501001", "+49 30 55501002"),
+    research_group = c("Group Beta", "Group Gamma"),
     is_admin = c(0, 0)
   )
 
@@ -485,7 +485,7 @@ setup_complete_database <- function() {
       "- Data analysis on collaborative basis",
       sep = "\n"
     ),
-    "If you have any further questions, please do not hesitate to contact us @ [**@NGS**](mailto:ngs@biochem.mpg.de) !",
+    "If you have any further questions, please do not hesitate to contact us @ [**@NGS**](mailto:ngs@example.org) !",
     paste(
       "- To start, Click on **'Create New Project'**.",
       "- For better overview, we recommend keeping the project Name to this preferred format - **YYYYMMDD_AB_CD** - AB-Groupleader's initial, CD-Researcher's initial)",
