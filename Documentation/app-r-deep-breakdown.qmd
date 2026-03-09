@@ -8,7 +8,7 @@ execute:
 
 # app.R Deep Breakdown
 
-This file is a comprehensive companion to `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R` (currently ~5,884 lines).
+This file is a comprehensive companion to `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R` (currently ~5,884 lines).
 It is intentionally verbose and written for readers with limited R/Shiny background.
 
 ## How to Use This Companion
@@ -50,11 +50,11 @@ This addendum captures the latest behavior changes added after the first draft o
 
 ### 4) Email behavior split
 
-- Project creation email (`send_project_creation_email`) now notifies only `ngs@biochem.mpg.de`.
+- Project creation email (`send_project_creation_email`) now notifies only `ngs@example.org`.
 - New function `send_project_cost_notification_email(...)` sends the detailed cost-estimation mail to:
   - project creator
   - budget holder
-  - `ngs@biochem.mpg.de`
+  - `ngs@example.org`
 - Notification email format is HTML; total cost line is bold + underlined.
 
 ### 5) New event flow
@@ -287,434 +287,434 @@ When a line appears multiple times, it usually means validation + DB action + no
 For each function: **purpose**, **key behavior**, and **where it is called**.
 
 ### `default_announcement_seed` {#fn-default-announcement-seed}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:14`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:14`
 - **Signature line:** `default_announcement_seed <- function() {`
 - **Purpose:** Returns the default two-panel landing-page content (Announcement + service info) used for first-time DB seeding.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `is_safe_markdown_href` {#fn-is-safe-markdown-href}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:60`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:60`
 - **Signature line:** `is_safe_markdown_href <- function(href) {`
 - **Purpose:** Allows only safe link protocols in markdown links (`http`, `https`, `mailto`, `smb`).
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `escape_inline_markdown` {#fn-escape-inline-markdown}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:65`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:65`
 - **Signature line:** `escape_inline_markdown <- function(text) {`
 - **Purpose:** HTML-escapes plain text and then converts `**bold**` markup into `<strong>` safely.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `render_inline_markdown` {#fn-render-inline-markdown}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:70`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:70`
 - **Signature line:** `render_inline_markdown <- function(text) {`
 - **Purpose:** Parses one inline text fragment, converts markdown links, and safely escapes all other text.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `markdown_lite_to_html` {#fn-markdown-lite-to-html}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:122`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:122`
 - **Signature line:** `markdown_lite_to_html <- function(markdown_text) {`
 - **Purpose:** Converts simplified markdown (paragraphs, lists, bold, links) into safe HTML for info boxes.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `flush_paragraph` {#fn-flush-paragraph}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:134`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:134`
 - **Signature line:** `flush_paragraph <- function() {`
 - **Purpose:** Internal helper: finalizes accumulated paragraph lines during markdown parsing.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `flush_list` {#fn-flush-list}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:144`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:144`
 - **Signature line:** `flush_list <- function() {`
 - **Purpose:** Internal helper: finalizes accumulated list items (ordered/unordered) during markdown parsing.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `announcement_blocks` {#fn-announcement-blocks}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:197`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:197`
 - **Signature line:** `announcement_blocks <- function(announcement_data) {`
 - **Purpose:** Builds landing-page panels from DB data and renders each row as one `.info-box`.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `server` {#fn-server}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:658`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:658`
 - **Signature line:** `server <- function(input, output, session) {`
 - **Purpose:** Main Shiny server function: owns all reactive state, auth, DB operations, outputs, and event handlers.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `ensure_announcement_tables` {#fn-ensure-announcement-tables}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:714`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:714`
 - **Signature line:** `ensure_announcement_tables <- function(con) {`
 - **Purpose:** Creates `announcement_panels` and `announcement_items` tables when missing.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `seed_announcement_defaults` {#fn-seed-announcement-defaults}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:742`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:742`
 - **Signature line:** `seed_announcement_defaults <- function(con, updated_by = "system") {`
 - **Purpose:** Seeds default landing text only for newly inserted panel keys (non-destructive for existing panels).
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `load_announcement_content` {#fn-load-announcement-content}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:794`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:794`
 - **Signature line:** `load_announcement_content <- function(con = NULL, active_only = TRUE) {`
 - **Purpose:** Loads panel metadata + ordered rows from DB, optionally active-only.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `validate_and_repair_database` {#fn-validate-and-repair-database}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:837`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:837`
 - **Signature line:** `validate_and_repair_database <- function() {`
 - **Purpose:** Checks critical table presence and minimal DB readability; shows diagnostics when unhealthy.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `get_auth_mode` {#fn-get-auth-mode}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:956`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:956`
 - **Signature line:** `get_auth_mode <- function() auth_mode_val()`
 - **Purpose:** Returns current auth mode (`local` or `ldap`) from reactive value.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `to_bool` {#fn-to-bool}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:958`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:958`
 - **Signature line:** `to_bool <- function(x) {`
 - **Purpose:** Normalizes env-flag style strings (1/true/yes/on) to logical.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### ``%||%`` {#fn-or-null-operator}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:983`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:983`
 - **Signature line:** ``%||%` <- function(x, y) {`
 - **Purpose:** Null/empty fallback operator used heavily for robust text handling.
-- **Called/referenced at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:697, 698, 699, 997, 1451, 1452, 1453, 1454, 1565, 1614, 1615, 1616, 1628, 1629, 1630, 1651, 1652, 1653, 1654, 1687, 1690, 1691, 1701, 1702, 1747 ... (+38 more)`
+- **Called/referenced at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:697, 698, 699, 997, 1451, 1452, 1453, 1454, 1565, 1614, 1615, 1616, 1628, 1629, 1630, 1651, 1652, 1653, 1654, 1687, 1690, 1691, 1701, 1702, 1747 ... (+38 more)`
 
 ### `scalar_text` {#fn-scalar-text-core}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:987`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:987`
 - **Signature line:** `scalar_text <- function(x) {`
 - **Purpose:** Normalizes potentially vector/empty values into a single trimmed string or NULL.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `get_req_header` {#fn-get-req-header}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1004`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1004`
 - **Signature line:** `get_req_header <- function(req, header_name) {`
 - **Purpose:** Reads HTTP headers from multiple possible request structures and canonicalizes retrieval.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `get_proxy_authenticated_user` {#fn-get-proxy-authenticated-user}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1030`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1030`
 - **Signature line:** `get_proxy_authenticated_user <- function(session) {`
 - **Purpose:** Extracts authenticated username from trusted proxy headers.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `base64_decode_raw` {#fn-base64-decode-raw}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1043`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1043`
 - **Signature line:** `base64_decode_raw <- function(encoded) {`
 - **Purpose:** Decodes Base64 for Basic auth parsing without external dependency.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `parse_basic_auth_username` {#fn-parse-basic-auth-username}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1079`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1079`
 - **Signature line:** `parse_basic_auth_username <- function(auth_header) {`
 - **Purpose:** Parses `Authorization: Basic ...` and returns the username part only.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `get_auth_username` {#fn-get-auth-username}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1103`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1103`
 - **Signature line:** `get_auth_username <- function(session) {`
 - **Purpose:** Primary LDAP identity resolver; checks trusted headers, canonicalized query, optional dev fallback.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `parse_auth_user_from_qs` {#fn-parse-auth-user-from-qs}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1117`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1117`
 - **Signature line:** `parse_auth_user_from_qs <- function(qs) {`
 - **Purpose:** Internal helper to extract `auth_user` from query string safely.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `parse_ldap_uris` {#fn-parse-ldap-uris}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1169`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1169`
 - **Signature line:** `parse_ldap_uris <- function(uri_string) {`
 - **Purpose:** Parses comma-separated LDAP URIs into host/port/SSL target objects.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `extract_ldap_attr` {#fn-extract-ldap-attr}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1191`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1191`
 - **Signature line:** `extract_ldap_attr <- function(result, attr) {`
 - **Purpose:** Extracts one LDAP attribute from heterogeneous result formats.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `ldap_lookup_user` {#fn-ldap-lookup-user}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1207`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1207`
 - **Signature line:** `ldap_lookup_user <- function(username) {`
 - **Purpose:** Performs LDAP attribute lookup (email/phone/ou/full_name) with bind and `ldapsearch` fallback.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `ldap_try_bind` {#fn-ldap-try-bind}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1239`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1239`
 - **Signature line:** `ldap_try_bind <- function(conn, bind_dn, bind_pw) {`
 - **Purpose:** Attempts LDAP bind using configured bind user/password or anonymous fallback.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `ldap_search` {#fn-ldap-search}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1276`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1276`
 - **Signature line:** `ldap_search <- function(conn, base_dn, filter, attrs) {`
 - **Purpose:** Executes LDAP search using compatible parameter names for different package variants.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `ldapsearch_lookup` {#fn-ldapsearch-lookup}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1294`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1294`
 - **Signature line:** `ldapsearch_lookup <- function(uri, base_dn, filter, attrs, bind_dn, bind_pw) {`
 - **Purpose:** Runs shell `ldapsearch` fallback and captures output for parsing.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `normalize_ldap_lines` {#fn-normalize-ldap-lines}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1339`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1339`
 - **Signature line:** `normalize_ldap_lines <- function(lines) {`
 - **Purpose:** Normalizes folded LDAP output lines into full logical lines.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `parse_ldapsearch_output` {#fn-parse-ldapsearch-output}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1355`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1355`
 - **Signature line:** `parse_ldapsearch_output <- function(lines, key) {`
 - **Purpose:** Extracts one key value from ldapsearch text output.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `normalize_group_key` {#fn-normalize-group-key}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1464`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1464`
 - **Signature line:** `normalize_group_key <- function(value) {`
 - **Purpose:** Lowercases/trims group text for matching.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `extract_group_key_from_ou` {#fn-extract-group-key-from-ou}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1469`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1469`
 - **Signature line:** `extract_group_key_from_ou <- function(ou_value) {`
 - **Purpose:** Extracts compact group key from LDAP OU text (prefers `(Group)` substring).
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `map_group_from_ldap_ou` {#fn-map-group-from-ldap-ou}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1480`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1480`
 - **Signature line:** `map_group_from_ldap_ou <- function(ou_value, con) {`
 - **Purpose:** Maps LDAP OU/group text to existing budget-holder full names.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `budget_holder_notice_ui` {#fn-budget-holder-notice-ui}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1508`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1508`
 - **Signature line:** `budget_holder_notice_ui <- function(selected_id) {`
 - **Purpose:** Renders inline warnings when selected budget holder has missing/multiple cost-center contexts.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `budget_holder_other_fields_ui` {#fn-budget-holder-other-fields-ui}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1548`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1548`
 - **Signature line:** `budget_holder_other_fields_ui <- function(prefix = "") {`
 - **Purpose:** Renders “Other / not listed” PI input fields for budget holder creation-on-the-fly.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `budget_holder_other_notice_ui` {#fn-budget-holder-other-notice-ui}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1564`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1564`
 - **Signature line:** `budget_holder_other_notice_ui <- function(cost_center_value) {`
 - **Purpose:** Warns when free-text budget holder has no cost center.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `complete_login` {#fn-complete-login}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1574`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1574`
 - **Signature line:** `complete_login <- function(user_data) {`
 - **Purpose:** Sets logged-in state, user identity, admin flag, and refreshes reference data.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `show_profile_modal` {#fn-show-profile-modal}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1601`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1601`
 - **Signature line:** `show_profile_modal <- function(username, attrs, is_new) {`
 - **Purpose:** Shows required LDAP profile completion modal for missing user attributes.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `maybe_prompt_profile_update` {#fn-maybe-prompt-profile-update}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1621`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1621`
 - **Signature line:** `maybe_prompt_profile_update <- function(user_row, attrs) {`
 - **Purpose:** Prompts existing users to fill missing mandatory profile fields.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `handle_ldap_login` {#fn-handle-ldap-login}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1635`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1635`
 - **Signature line:** `handle_ldap_login <- function(username) {`
 - **Purpose:** End-to-end LDAP login orchestration: user lookup/create/update + mapping + completion flow.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `make_status_choices` {#fn-make-status-choices}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1802`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1802`
 - **Signature line:** `make_status_choices <- function(current_status = NULL) {`
 - **Purpose:** Builds status select choices while preserving unknown legacy statuses.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `get_db_connection` {#fn-get-db-connection}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1811`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1811`
 - **Signature line:** `get_db_connection <- function() {`
 - **Purpose:** Returns SQLite connection to `sequencing_projects.db` in app working directory.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `users_has_full_name` {#fn-users-has-full-name}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1815`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1815`
 - **Signature line:** `users_has_full_name <- function(con) {`
 - **Purpose:** Schema-compat helper: checks whether `users.full_name` exists.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `refresh_announcements` {#fn-refresh-announcements}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1821`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1821`
 - **Signature line:** `refresh_announcements <- function() {`
 - **Purpose:** Reactive invalidation trigger to force landing text re-render after edits.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `get_announcement_panels` {#fn-get-announcement-panels}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1825`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1825`
 - **Signature line:** `get_announcement_panels <- function(con = NULL, active_only = FALSE) {`
 - **Purpose:** Returns panel rows for admin management, active or all.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `get_announcement_items_for_panel` {#fn-get-announcement-items-for-panel}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1847`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1847`
 - **Signature line:** `get_announcement_items_for_panel <- function(panel_key, con = NULL, active_only = FALSE) {`
 - **Purpose:** Returns ordered rows for one landing panel.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `normalize_announcement_item_order` {#fn-normalize-announcement-item-order}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1877`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1877`
 - **Signature line:** `normalize_announcement_item_order <- function(con, panel_id) {`
 - **Purpose:** Compacts/resequences display order after deletes/reordering.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `validate_announcement_markdown` {#fn-validate-announcement-markdown}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1895`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1895`
 - **Signature line:** `validate_announcement_markdown <- function(markdown_text) {`
 - **Purpose:** Validates announcement item text for non-empty and max-length constraints.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `selected_announcement_item` {#fn-selected-announcement-item}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1906`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1906`
 - **Signature line:** `selected_announcement_item <- function() {`
 - **Purpose:** Returns currently selected item row from admin DT selection state.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `get_all_usernames` {#fn-get-all-usernames}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1926`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1926`
 - **Signature line:** `get_all_usernames <- function() {`
 - **Purpose:** Builds responsible-user dropdown values (full name preferred, username fallback).
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `load_budget_holders` {#fn-load-budget-holders}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1942`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1942`
 - **Signature line:** `load_budget_holders <- function() {`
 - **Purpose:** Loads budget holders reference data.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `load_service_types` {#fn-load-service-types}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1950`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1950`
 - **Signature line:** `load_service_types <- function() {`
 - **Purpose:** Loads sample service type reference data (including per-sample cost).
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `load_sequencing_depths` {#fn-load-sequencing-depths}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1958`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1958`
 - **Signature line:** `load_sequencing_depths <- function() {`
 - **Purpose:** Loads depth/reference pricing tiers.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `load_sequencing_cycles` {#fn-load-sequencing-cycles}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1966`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1966`
 - **Signature line:** `load_sequencing_cycles <- function() {`
 - **Purpose:** Loads cycle/read-length options.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `load_reference_genomes` {#fn-load-reference-genomes}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1974`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1974`
 - **Signature line:** `load_reference_genomes <- function() {`
 - **Purpose:** Loads genome list.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `load_types` {#fn-load-types}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1982`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1982`
 - **Signature line:** `load_types <- function() {`
 - **Purpose:** Loads sample type list (`types` table).
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `load_sequencing_platforms` {#fn-load-sequencing-platforms}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1990`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1990`
 - **Signature line:** `load_sequencing_platforms <- function() {`
 - **Purpose:** Loads platform list.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `load_admin_data` {#fn-load-admin-data}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2088`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2088`
 - **Signature line:** `load_admin_data <- function() {`
 - **Purpose:** Loads all admin-maintained reference tables and user table.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `projects_has_additional_cost` {#fn-projects-has-additional-cost}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1838`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1838`
 - **Signature line:** `projects_has_additional_cost <- function(con) {`
 - **Purpose:** Checks whether `projects.additional_cost` is present in the current DB schema.
 - **Called/referenced at:** startup DB migration helpers and health checks.
 
 ### `ensure_projects_additional_cost_column` {#fn-ensure-projects-additional-cost-column}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1844`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1844`
 - **Signature line:** `ensure_projects_additional_cost_column <- function(con) {`
 - **Purpose:** Applies in-place migration (`ALTER TABLE`) when `additional_cost` is missing.
 - **Called/referenced at:** `get_db_connection()`, `validate_and_repair_database()`.
 
 ### `format_cost_amount` {#fn-format-cost-amount}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1851`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1851`
 - **Signature line:** `format_cost_amount <- function(value) {`
 - **Purpose:** Normalizes numeric display to two decimals for all cost summaries.
 - **Called/referenced at:** create/edit cost UI blocks and notification message generation.
 
 ### `parse_additional_cost` {#fn-parse-additional-cost}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1857`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1857`
 - **Signature line:** `parse_additional_cost <- function(value) {`
 - **Purpose:** Validates admin-entered additional cost as non-negative decimal; supports comma/dot input.
 - **Called/referenced at:** edit-cost preview, project update write path, notification-send handler.
 
 ### `calculate_base_cost` {#fn-calculate-base-cost}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2110`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2110`
 - **Signature line:** `calculate_base_cost <- function(num_samples, service_type_id, sequencing_depth_id, sequencing_cycles_id) {`
 - **Purpose:** Computes preparation + sequencing baseline before optional admin surcharge.
 - **Called/referenced at:** create modal cost preview and edit modal cost preview.
 
 ### `calculate_total_cost` {#fn-calculate-total-cost}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2140`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2140`
 - **Signature line:** `calculate_total_cost <- function(num_samples, service_type_id, sequencing_depth_id, sequencing_cycles_id, additional_cost = 0) {`
 - **Purpose:** Computes final estimated cost (base cost + optional admin-entered additional cost).
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `send_project_creation_email` {#fn-send-project-creation-email}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2150`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2150`
 - **Signature line:** `send_project_creation_email <- function(project_data, budget_holder, user_email) {`
-- **Purpose:** Builds and sends project-created email to NGS facility mailbox only (`ngs@biochem.mpg.de`).
+- **Purpose:** Builds and sends project-created email to NGS facility mailbox only (`ngs@example.org`).
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `send_project_cost_notification_email` {#fn-send-project-cost-notification-email}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2260`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2260`
 - **Signature line:** `send_project_cost_notification_email <- function(project_data, budget_holder, user_email) {`
 - **Purpose:** Sends admin-triggered cost-estimation notification to creator + budget holder + NGS mailbox.
 - **Called/referenced at:** `observeEvent(input$send_notification_btn)`.
 
 ### `send_data_released_email` {#fn-send-data-released-email}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2348`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2348`
 - **Signature line:** `send_data_released_email <- function(project_data) {`
 - **Purpose:** Sends automatic “Data released” email to responsible user and `omicsdesk` target.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `load_projects` {#fn-load-projects}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2929`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2929`
 - **Signature line:** `load_projects <- function() {`
 - **Purpose:** Queries projects table with joins, role filtering, and display-preparation columns.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `get_or_create_budget_holder` {#fn-get-or-create-budget-holder}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:3254`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:3254`
 - **Signature line:** `get_or_create_budget_holder <- function(con, name, surname, cost_center, email) {`
 - **Purpose:** Finds existing budget holder or inserts one from “Other / not listed” modal fields.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 
 ### `scalar_text` {#fn-scalar-text-update-flow}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5321`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:5321`
 - **Signature line:** `scalar_text <- function(x, default = "") {`
 - **Purpose:** Normalizes potentially vector/empty values into a single trimmed string or NULL.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
 - **Important note:** this later local `scalar_text()` shadows the earlier helper inside `update_project_btn` scope, to normalize DB bind params safely.
 
 ### `scalar_numeric` {#fn-scalar-numeric}
-- **Defined at:** `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5328`
+- **Defined at:** `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:5328`
 - **Signature line:** `scalar_numeric <- function(x, default = NA_real_) {`
 - **Purpose:** Normalizes potentially vector numeric input to one safe scalar for DB binding.
 - **Called/referenced at:** not detected directly (may be invoked via nested closure/runtime path).
@@ -1003,13 +1003,13 @@ The table below indexes each detected DB call (`dbGetQuery`, `dbExecute`) in `ap
 
 ## Cross-Reference Quick Index
 
-- **Create project modal**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:3100` (open), `:3278` (submit).
-- **Edit project modal**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5094` (open), `:5286` (submit).
-- **Cost notification button**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5126` (UI), `:5473` (handler).
-- **Status update modal**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5630` (open), `:5665` (submit).
-- **Landing text management**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:3770` and CRUD events `:3765` onward.
-- **LDAP auto-login core**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2383` + helpers around `:1103` and `:1635`.
-- **DB backup/restore UI**: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:3196-3213`; handlers at `:5744-5808`.
+- **Create project modal**: `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:3100` (open), `:3278` (submit).
+- **Edit project modal**: `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:5094` (open), `:5286` (submit).
+- **Cost notification button**: `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:5126` (UI), `:5473` (handler).
+- **Status update modal**: `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:5630` (open), `:5665` (submit).
+- **Landing text management**: `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:3770` and CRUD events `:3765` onward.
+- **LDAP auto-login core**: `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2383` + helpers around `:1103` and `:1635`.
+- **DB backup/restore UI**: `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:3196-3213`; handlers at `:5744-5808`.
 
 ## Caveats and Technical Debt Notes
 

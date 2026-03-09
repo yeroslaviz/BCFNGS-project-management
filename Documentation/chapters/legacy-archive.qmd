@@ -136,8 +136,8 @@ $ tree -L 1
 
 ```{bash}
  git pull origin main
-# Username for 'https://github.com': yeroslaviz
-# Password for 'https://yeroslaviz@github.com':  HERE WE MUST INPUT THE PAT from above!!!
+# Username for 'https://github.com': exampleuser
+# Password for 'https://exampleuser@github.com':  HERE WE MUST INPUT THE PAT from above!!!
  ...
 ```
 
@@ -168,7 +168,7 @@ Both machines can be logged-in directly via ssh
 
 ```{bash}
 
-ssh yeroslaviz@ngs-testing-vm.biochem.mpg.de
+ssh exampleuser@ngs-testing-vm.biochem.mpg.de
 
 ```
 
@@ -191,7 +191,7 @@ to see which data base the GUI is accessing, I can call for the apache2' config 
     AuthName "LDAP Authentication"
     AuthType Basic
     AuthBasicProvider ldap
-    AuthLDAPURL "ldaps://ldapserv1.biochem.mpg.de ldapserv2.biochem.mpg.de ldapserv3.biochem.mpg.de/dc=biochem,dc=mpg,dc=de?uid?sub?(objectClass=posixAccount)"
+    AuthLDAPURL "ldaps://ldap01.example.internal ldap02.example.internal ldap03.example.internal/dc=biochem,dc=mpg,dc=de?uid?sub?(objectClass=posixAccount)"
     Require valid-user
  </Directory>
 /etc/apache2/sites-available/auth_ldap.conf (END)
@@ -203,38 +203,38 @@ Here all the files are listed:
 ```{bash}
 $ ll /www/mpiseq2/web/
 total 208
-drwxr-xr-x 9 letunic b_mcf  4096 Mar  3 08:57 ./
-drwxr-xr-x 9 letunic b_mcf  4096 Oct  4  2022 ../
--rwxr-xr-x 1 letunic b_mcf  1368 Oct  4  2022 404.cgi*
--rwxr-xr-x 1 letunic b_mcf  1434 Oct  4  2022 505.cgi*
--rwxr-xr-x 1 letunic b_mcf  1139 Oct  4  2022 about.cgi*
--rwxr-xr-x 1 letunic b_mcf  1862 Oct  4  2022 account.cgi*
--rwxr-xr-x 1 letunic b_mcf  2839 Oct  4  2022 addProjectFile.cgi*
-drwxr-xr-x 2 letunic b_mcf  4096 Apr 28  2023 admin/
--rwxr-xr-x 1 letunic b_mcf  7494 Oct  4  2022 admin.cgi*
-drwxr-xr-x 2 letunic b_mcf  4096 Apr 28  2023 ajax/
--rwxr-xr-x 1 letunic b_mcf  2182 Oct  4  2022 barcodeIDlist.cgi*
-drwxr-xr-x 2 letunic b_mcf  4096 Oct  4  2022 css/
--rwxr-xr-x 1 letunic b_mcf 10019 Apr 28  2023 dataRelease.cgi*
--rwxr-xr-x 1 letunic b_mcf 21653 Jun 10  2024 demultiplex.cgi*
--rwxr-xr-x 1 letunic b_mcf  1163 Oct  4  2022 downloadSampleSheet.cgi*
--rwxr-xr-x 1 letunic b_mcf 12203 Oct  4  2022 genome_mapping.cgi*
--rwxr-xr-x 1 letunic b_mcf  3354 Mar  3 08:57 help.html*
-drwxr-xr-x 2 letunic b_mcf  4096 Oct  4  2022 img/
--rwxr-xr-x 1 letunic b_mcf  1967 Oct  4  2022 index.cgi*
--rwxr-xr-x 1 letunic b_mcf   963 Oct  4  2022 information.cgi*
-drwxr-xr-x 3 letunic b_mcf  4096 Jan 23 13:40 js/
--rwxr-xr-x 1 letunic b_mcf  5350 Oct  4  2022 login.cgi*
-drwxr-xr-x 2 letunic b_mcf  4096 Oct  4  2022 metadata/
--rwxr-xr-x 1 letunic b_mcf 10681 Oct  4  2022 processAdminSamplesFile.cgi*
--rwxr-xr-x 1 letunic b_mcf 16152 Oct  4  2022 processSamplesFile.cgi*
--rwxr-xr-x 1 letunic b_mcf 10213 Oct 11  2022 projectAdmin.cgi*
--rwxr-xr-x 1 letunic b_mcf  8097 Oct  4  2022 projectDetails.cgi*
--rwxr-xr-x 1 letunic b_mcf  7679 Feb  5 12:01 register.cgi*
-drwxr-xr-x 2 letunic b_mcf  4096 Oct 17  2022 templates/
--rwxr-xr-x 1 letunic b_mcf  1261 Oct  4  2022 t.pl*
--rwxr-xr-x 1 letunic b_mcf  2263 Oct  4  2022 userDetails.cgi*
--rwxr-xr-x 1 letunic b_mcf  1512 Oct  4  2022 viewProjectFile.cgi*
+drwxr-xr-x 9 legacyadmin b_mcf  4096 Mar  3 08:57 ./
+drwxr-xr-x 9 legacyadmin b_mcf  4096 Oct  4  2022 ../
+-rwxr-xr-x 1 legacyadmin b_mcf  1368 Oct  4  2022 404.cgi*
+-rwxr-xr-x 1 legacyadmin b_mcf  1434 Oct  4  2022 505.cgi*
+-rwxr-xr-x 1 legacyadmin b_mcf  1139 Oct  4  2022 about.cgi*
+-rwxr-xr-x 1 legacyadmin b_mcf  1862 Oct  4  2022 account.cgi*
+-rwxr-xr-x 1 legacyadmin b_mcf  2839 Oct  4  2022 addProjectFile.cgi*
+drwxr-xr-x 2 legacyadmin b_mcf  4096 Apr 28  2023 admin/
+-rwxr-xr-x 1 legacyadmin b_mcf  7494 Oct  4  2022 admin.cgi*
+drwxr-xr-x 2 legacyadmin b_mcf  4096 Apr 28  2023 ajax/
+-rwxr-xr-x 1 legacyadmin b_mcf  2182 Oct  4  2022 barcodeIDlist.cgi*
+drwxr-xr-x 2 legacyadmin b_mcf  4096 Oct  4  2022 css/
+-rwxr-xr-x 1 legacyadmin b_mcf 10019 Apr 28  2023 dataRelease.cgi*
+-rwxr-xr-x 1 legacyadmin b_mcf 21653 Jun 10  2024 demultiplex.cgi*
+-rwxr-xr-x 1 legacyadmin b_mcf  1163 Oct  4  2022 downloadSampleSheet.cgi*
+-rwxr-xr-x 1 legacyadmin b_mcf 12203 Oct  4  2022 genome_mapping.cgi*
+-rwxr-xr-x 1 legacyadmin b_mcf  3354 Mar  3 08:57 help.html*
+drwxr-xr-x 2 legacyadmin b_mcf  4096 Oct  4  2022 img/
+-rwxr-xr-x 1 legacyadmin b_mcf  1967 Oct  4  2022 index.cgi*
+-rwxr-xr-x 1 legacyadmin b_mcf   963 Oct  4  2022 information.cgi*
+drwxr-xr-x 3 legacyadmin b_mcf  4096 Jan 23 13:40 js/
+-rwxr-xr-x 1 legacyadmin b_mcf  5350 Oct  4  2022 login.cgi*
+drwxr-xr-x 2 legacyadmin b_mcf  4096 Oct  4  2022 metadata/
+-rwxr-xr-x 1 legacyadmin b_mcf 10681 Oct  4  2022 processAdminSamplesFile.cgi*
+-rwxr-xr-x 1 legacyadmin b_mcf 16152 Oct  4  2022 processSamplesFile.cgi*
+-rwxr-xr-x 1 legacyadmin b_mcf 10213 Oct 11  2022 projectAdmin.cgi*
+-rwxr-xr-x 1 legacyadmin b_mcf  8097 Oct  4  2022 projectDetails.cgi*
+-rwxr-xr-x 1 legacyadmin b_mcf  7679 Feb  5 12:01 register.cgi*
+drwxr-xr-x 2 legacyadmin b_mcf  4096 Oct 17  2022 templates/
+-rwxr-xr-x 1 legacyadmin b_mcf  1261 Oct  4  2022 t.pl*
+-rwxr-xr-x 1 legacyadmin b_mcf  2263 Oct  4  2022 userDetails.cgi*
+-rwxr-xr-x 1 legacyadmin b_mcf  1512 Oct  4  2022 viewProjectFile.cgi*
 ```
 
 
@@ -332,8 +332,8 @@ ADD COLUMN costs integer NOT NULL DEFAULT 0;
 
 ```{bash}
 
-psql -h 127.0.0.1 -p 5432 -U admin_user -d mpiseq2_db
-psql -h 127.0.0.1 -p 5432 -U letunic -d mpiseq2_db # gives sudo rights
+psql -h 127.0.0.10 -p 5432 -U admin_user -d mpiseq2_db
+psql -h 127.0.0.10 -p 5432 -U legacyadmin -d mpiseq2_db # gives sudo rights
 
 GRANT USAGE ON SCHEMA people, project TO admin_user;
 

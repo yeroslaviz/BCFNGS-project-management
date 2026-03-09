@@ -28,7 +28,7 @@ Deletion is **admin-only**:
 
 ### Re-enable delete for non-admin users
 
-In `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R`:
+In `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R`:
 
 1. In `output$user_interface`, render the button unconditionally (remove the `if (user$is_admin)` guard around `delete_project_btn`).
 2. In the `observeEvent(input$delete_project_btn)` handler, allow owners again:
@@ -47,7 +47,7 @@ This is the short checklist I use on production. Details for each step are below
 
 ```{bash}
 ssh -T git@github.com
-cd /home/yeroslaviz/BCFNGS-project-management
+cd /home/exampleuser/example-repo
 git pull origin main
 ```
 
@@ -100,7 +100,7 @@ This is the repeatable checklist I use when rolling out to a VM (first `ngs-test
 Check which remote is set:
 
 ```{bash}
-git -C /home/yeroslaviz/BCFNGS-project-management remote -v
+git -C /home/exampleuser/example-repo remote -v
 ```
 
 If the remote is SSH (`git@github.com:...`), verify SSH access:
@@ -121,7 +121,7 @@ Then add that key in GitHub:
 #### Step 2: Pull latest code
 
 ```{bash}
-cd /home/yeroslaviz/BCFNGS-project-management
+cd /home/exampleuser/example-repo
 git pull origin main
 ```
 
@@ -198,7 +198,7 @@ It does **not**:
 
 Run deploy after changes to app code/config in:
 
-- `/home/yeroslaviz/BCFNGS-project-management/sequencing-app/`
+- `/home/exampleuser/example-repo/sequencing-app/`
 
 Do not use deploy for Apache-only changes; apply Apache config separately.
 
@@ -266,7 +266,7 @@ Note:
 If you do not want password prompts:
 
 ```bash
-LDAP_TEST_USER="yeroslaviz-test" LDAP_TEST_PASSWORD="YOUR_PASSWORD" ./scripts/deploy.sh
+LDAP_TEST_USER="exampleuser-test" LDAP_TEST_PASSWORD="YOUR_PASSWORD" ./scripts/deploy.sh
 ```
 
 Skip smoke tests only when needed:
@@ -335,8 +335,8 @@ Use these repo templates:
 Copy to Apache:
 
 ```bash
-sudo cp /home/yeroslaviz/BCFNGS-project-management/scripts/ngs-vm-shiny-443.conf /etc/apache2/sites-available/ngs-vm-shiny-443.conf
-sudo cp /home/yeroslaviz/BCFNGS-project-management/scripts/ngs-vm-perl-9443.conf /etc/apache2/sites-available/ngs-vm-perl-9443.conf
+sudo cp /home/exampleuser/example-repo/scripts/ngs-vm-shiny-443.conf /etc/apache2/sites-available/ngs-vm-shiny-443.conf
+sudo cp /home/exampleuser/example-repo/scripts/ngs-vm-perl-9443.conf /etc/apache2/sites-available/ngs-vm-perl-9443.conf
 ```
 
 ### Step 2: Enable routing and switch traffic
@@ -375,7 +375,7 @@ sudo systemctl restart apache2
 Use:
 
 ```bash
-cd /home/yeroslaviz/BCFNGS-project-management
+cd /home/exampleuser/example-repo
 ./scripts/cutover_ngs_vm_ports.sh cutover
 ```
 
@@ -384,7 +384,7 @@ cd /home/yeroslaviz/BCFNGS-project-management
 Rollback:
 
 ```bash
-cd /home/yeroslaviz/BCFNGS-project-management
+cd /home/exampleuser/example-repo
 ./scripts/cutover_ngs_vm_ports.sh rollback
 ```
 

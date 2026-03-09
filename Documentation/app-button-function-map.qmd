@@ -10,7 +10,7 @@ format:
 
 # Overview
 
-- Source file: `/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R`
+- Source file: `/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R`
 - Generated: `2026-02-27 17:27`
 - Total `actionButton()` controls detected: **70**
 - Total `observeEvent(input$...)` handlers detected: **76**
@@ -21,7 +21,7 @@ format:
 ## Regenerate
 
 ```bash
-python3 /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/generate_button_function_map.py
+python3 /Users/exampleuser/Documents/Github/example-repo/scripts/generate_button_function_map.py
 ```
 
 ## Explorer (Split View)

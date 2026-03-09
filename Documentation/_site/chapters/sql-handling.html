@@ -305,13 +305,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 To grant admin access, mark the LDAP user as admin in SQLite.</p>
 <p><strong>Option 1: Pre‑create the user as admin (before first login)</strong></p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="st">"INSERT OR IGNORE INTO users (username, is_admin) VALUES ('soyer', 1);"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="st">"INSERT OR IGNORE INTO users (username, is_admin) VALUES ('ldapadmin', 1);"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If the insert is ignored because <code>password</code>/<code>email</code> are NOT NULL, use:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="st">"INSERT OR IGNORE INTO users (username, password, email, is_admin) VALUES ('soyer', 'ldap-only', 'soyer@biochem.mpg.de', 1);"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="st">"INSERT OR IGNORE INTO users (username, password, email, is_admin) VALUES ('ldapadmin', 'ldap-only', 'ldap.admin@example.org', 1);"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Option 2: Promote after first login</strong></p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="st">"UPDATE users SET is_admin=1 WHERE username='soyer';"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="st">"UPDATE users SET is_admin=1 WHERE username='ldapadmin';"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>List all admin users</strong></p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="st">"SELECT username, email, is_admin FROM users WHERE is_admin = 1;"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -369,7 +369,7 @@ See the rebuild section below.</p>
 <p>This workflow imports legacy projects from the perl‑VM (PostgreSQL) into the shiny‑VM (SQLite).</p>
 <p><strong>Step 1 — Export CSV on perl‑VM (PostgreSQL)</strong></p>
 <p>Run this on the perl‑VM (adjust DB user if needed):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">psql</span> <span class="at">-U</span> letunic <span class="at">-h</span> 127.0.0.1 <span class="at">-d</span> mpiseq2_db <span class="at">-c</span> <span class="st">"</span><span class="dt">\</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">psql</span> <span class="at">-U</span> legacyadmin <span class="at">-h</span> 127.0.0.10 <span class="at">-d</span> mpiseq2_db <span class="at">-c</span> <span class="st">"</span><span class="dt">\</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="dt">\\</span><span class="st">copy (</span><span class="dt">\</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT </span><span class="dt">\</span></span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="st">    p.id AS legacy_id, </span><span class="dt">\</span></span>
@@ -415,15 +415,15 @@ See the rebuild section below.</p>
 <p>Use the <code>.utf8.csv</code> file in the next steps if you ran this.</p>
 <p><strong>Step 3 — Copy CSV to shiny‑VM (if needed)</strong></p>
 <p>If perl‑VM and shiny‑VM are different machines, copy the CSV:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">scp</span> /www/mpiseq2/exports/legacy_projects.csv USER@shiny-vm:/home/yeroslaviz/BCFNGS-project-management/exports/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">scp</span> /www/mpiseq2/exports/legacy_projects.csv USER@shiny-vm:/home/exampleuser/example-repo/exports/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If you normalized, copy the <code>.utf8.csv</code> instead.</p>
 <p><strong>Step 4 — Run the import script on shiny‑VM</strong></p>
 <p>Stop Shiny Server first (avoids open DB handles) and run the import as the <code>shiny</code> user (the DB is owned by <code>shiny</code> on the VM).</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /srv/shiny-server/sequencing-app</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny python3 /home/yeroslaviz/BCFNGS-project-management/scripts/import_legacy_projects.py <span class="dt">\</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny python3 /home/exampleuser/example-repo/scripts/import_legacy_projects.py <span class="dt">\</span></span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--db</span> /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--csv</span> /home/yeroslaviz/BCFNGS-project-management/exports/legacy_projects.csv</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--csv</span> /home/exampleuser/example-repo/exports/legacy_projects.csv</span>
 <span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If you normalized, point <code>--csv</code> at <code>legacy_projects.utf8.csv</code>.</p>
 <p><strong>What the import does</strong></p>
@@ -494,7 +494,7 @@ They should <strong>not</strong> be tracked in git.</p>
 <p><strong>Update admin email</strong></p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="st">"UPDATE users SET email='newadmin@institute.org' WHERE username='admin';"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><strong>Update service type costs</strong></p>
+<p><strong>Update sample service type costs</strong></p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="st">"UPDATE service_types SET costs_per_sample = 55 WHERE service_type = 'single cell/low mRNAseq';"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Verify LDAP user attributes in SQLite</strong></p>

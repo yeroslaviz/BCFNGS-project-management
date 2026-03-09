@@ -308,7 +308,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ul>
 <section id="re-enable-delete-for-non-admin-users" class="level3" data-number="6.2.1">
 <h3 data-number="6.2.1" class="anchored" data-anchor-id="re-enable-delete-for-non-admin-users"><span class="header-section-number">6.2.1</span> Re-enable delete for non-admin users</h3>
-<p>In <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R</code>:</p>
+<p>In <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R</code>:</p>
 <ol type="1">
 <li>In <code>output$user_interface</code>, render the button unconditionally (remove the <code>if (user$is_admin)</code> guard around <code>delete_project_btn</code>).</li>
 <li>In the <code>observeEvent(input$delete_project_btn)</code> handler, allow owners again:
@@ -331,7 +331,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Confirm GitHub access and pull latest code.</li>
 </ol>
 <pre class="{bash}"><code>ssh -T git@github.com
-cd /home/yeroslaviz/BCFNGS-project-management
+cd /home/exampleuser/example-repo
 git pull origin main</code></pre>
 <ol start="2" type="1">
 <li>Take backups (app folder, SQLite DB, Apache config).</li>
@@ -369,7 +369,7 @@ sudo systemctl restart apache2</code></pre>
 <section id="step-1-make-sure-github-access-works-on-the-vm" class="level4" data-number="6.3.2.1">
 <h4 data-number="6.3.2.1" class="anchored" data-anchor-id="step-1-make-sure-github-access-works-on-the-vm"><span class="header-section-number">6.3.2.1</span> Step 1: Make sure GitHub access works on the VM</h4>
 <p>Check which remote is set:</p>
-<pre class="{bash}"><code>git -C /home/yeroslaviz/BCFNGS-project-management remote -v</code></pre>
+<pre class="{bash}"><code>git -C /home/exampleuser/example-repo remote -v</code></pre>
 <p>If the remote is SSH (<code>git@github.com:...</code>), verify SSH access:</p>
 <pre class="{bash}"><code>ssh -T git@github.com</code></pre>
 <p>If SSH works but <code>git pull</code> still says <strong>Permission denied (publickey)</strong>, the VM key is <strong>not added</strong> to the repo. The fix is to add the VM public key as a <strong>Deploy Key</strong>:</p>
@@ -378,7 +378,7 @@ sudo systemctl restart apache2</code></pre>
 </section>
 <section id="step-2-pull-latest-code" class="level4" data-number="6.3.2.2">
 <h4 data-number="6.3.2.2" class="anchored" data-anchor-id="step-2-pull-latest-code"><span class="header-section-number">6.3.2.2</span> Step 2: Pull latest code</h4>
-<pre class="{bash}"><code>cd /home/yeroslaviz/BCFNGS-project-management
+<pre class="{bash}"><code>cd /home/exampleuser/example-repo
 git pull origin main</code></pre>
 <p>If Git says <strong>divergent branches</strong>, I set merge as the default and pull again:</p>
 <pre class="{bash}"><code>git config pull.rebase false
@@ -435,7 +435,7 @@ sudo systemctl restart apache2</code></pre>
 <h3 data-number="6.4.1" class="anchored" data-anchor-id="when-to-run-deploy"><span class="header-section-number">6.4.1</span> When to run deploy</h3>
 <p>Run deploy after changes to app code/config in:</p>
 <ul>
-<li><code>/home/yeroslaviz/BCFNGS-project-management/sequencing-app/</code></li>
+<li><code>/home/exampleuser/example-repo/sequencing-app/</code></li>
 </ul>
 <p>Do not use deploy for Apache-only changes; apply Apache config separately.</p>
 </section>
@@ -495,7 +495,7 @@ sudo systemctl restart apache2</code></pre>
 <section id="step-2-non-interactive-usage-optional" class="level3" data-number="6.6.1">
 <h3 data-number="6.6.1" class="anchored" data-anchor-id="step-2-non-interactive-usage-optional"><span class="header-section-number">6.6.1</span> Step 2: Non-interactive usage (optional)</h3>
 <p>If you do not want password prompts:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="va">LDAP_TEST_USER</span><span class="op">=</span><span class="st">"yeroslaviz-test"</span> <span class="va">LDAP_TEST_PASSWORD</span><span class="op">=</span><span class="st">"YOUR_PASSWORD"</span> <span class="ex">./scripts/deploy.sh</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="va">LDAP_TEST_USER</span><span class="op">=</span><span class="st">"exampleuser-test"</span> <span class="va">LDAP_TEST_PASSWORD</span><span class="op">=</span><span class="st">"YOUR_PASSWORD"</span> <span class="ex">./scripts/deploy.sh</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Skip smoke tests only when needed:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="va">SKIP_SMOKE_TEST</span><span class="op">=</span>1 <span class="ex">./scripts/deploy.sh</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Override target base URL:</p>
@@ -546,8 +546,8 @@ sudo systemctl restart apache2</code></pre>
 <li><code>scripts/ngs-vm-perl-9443.conf</code></li>
 </ul>
 <p>Copy to Apache:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/yeroslaviz/BCFNGS-project-management/scripts/ngs-vm-shiny-443.conf /etc/apache2/sites-available/ngs-vm-shiny-443.conf</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/yeroslaviz/BCFNGS-project-management/scripts/ngs-vm-perl-9443.conf /etc/apache2/sites-available/ngs-vm-perl-9443.conf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/exampleuser/example-repo/scripts/ngs-vm-shiny-443.conf /etc/apache2/sites-available/ngs-vm-shiny-443.conf</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/exampleuser/example-repo/scripts/ngs-vm-perl-9443.conf /etc/apache2/sites-available/ngs-vm-perl-9443.conf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="step-2-enable-routing-and-switch-traffic" class="level3" data-number="6.8.2">
 <h3 data-number="6.8.2" class="anchored" data-anchor-id="step-2-enable-routing-and-switch-traffic"><span class="header-section-number">6.8.2</span> Step 2: Enable routing and switch traffic</h3>
@@ -577,11 +577,11 @@ sudo systemctl restart apache2</code></pre>
 <section id="step-5-scripted-switch-optional" class="level3" data-number="6.8.5">
 <h3 data-number="6.8.5" class="anchored" data-anchor-id="step-5-scripted-switch-optional"><span class="header-section-number">6.8.5</span> Step 5: Scripted switch (optional)</h3>
 <p>Use:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/yeroslaviz/BCFNGS-project-management</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/exampleuser/example-repo</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/cutover_ngs_vm_ports.sh</span> cutover</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>cutover</code> automatically disables any enabled <code>:443</code> site that is not <code>ngs-vm-shiny-443.conf</code>.</p>
 <p>Rollback:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/yeroslaviz/BCFNGS-project-management</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/exampleuser/example-repo</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/cutover_ngs_vm_ports.sh</span> rollback</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>rollback</code> re-enables legacy <code>:443</code> in this priority:</p>
 <ol type="1">

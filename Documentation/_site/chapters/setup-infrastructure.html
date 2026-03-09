@@ -329,7 +329,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><code>1. first</code></li>
 <li><code>2. second</code></li>
 </ul></li>
-<li>Link: <code>[@NGS](mailto:ngs@biochem.mpg.de)</code></li>
+<li>Link: <code>[@NGS](mailto:ngs@example.org)</code></li>
 </ul>
 </section>
 <section id="where-it-is-stored" class="level3" data-number="3.3.2">
@@ -342,7 +342,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ul></li>
 <li>App render + admin handlers:
 <ul>
-<li><code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R</code></li>
+<li><code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R</code></li>
 </ul></li>
 <li>Style classes (unchanged):
 <ul>
@@ -378,16 +378,16 @@ hostnamectl status
 </code></pre>
 <pre class="{bash}"><code>nslookup ngs-testing-vm.biochem.mpg.de
 ping ngs-testing-vm.biochem.mpg.de</code></pre>
-<pre><code>Server:     127.0.0.53
-Address:    127.0.0.53#53
+<pre><code>Server:     127.0.0.54
+Address:    127.0.0.54#53
 
 Non-authoritative answer:
 Name:   ngs-testing-vm.biochem.mpg.de
-Address: 10.33.0.60
+Address: 192.0.2.60
 
-PING ngs-testing-vm.biochem.mpg.de (10.33.0.60) 56(84) bytes of data.
-64 bytes from ngs-testing-vm.biochem.mpg.de (10.33.0.60): icmp_seq=1 ttl=64 time=0.079 ms
-64 bytes from ngs-testing-vm.biochem.mpg.de (10.33.0.60): icmp_seq=2 ttl=64 time=0.074 ms</code></pre>
+PING ngs-testing-vm.biochem.mpg.de (192.0.2.60) 56(84) bytes of data.
+64 bytes from ngs-testing-vm.biochem.mpg.de (192.0.2.60): icmp_seq=1 ttl=64 time=0.079 ms
+64 bytes from ngs-testing-vm.biochem.mpg.de (192.0.2.60): icmp_seq=2 ttl=64 time=0.074 ms</code></pre>
 <pre class="{bash}"><code>
 sudo systemctl restart apache2
 </code></pre>
@@ -450,7 +450,7 @@ sudo systemctl enable shiny-server
 <section id="clone-the-repo" class="level3" data-number="3.5.5">
 <h3 data-number="3.5.5" class="anchored" data-anchor-id="clone-the-repo"><span class="header-section-number">3.5.5</span> Clone the repo</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>your-user<span class="op">&gt;</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone git@github.com:yeroslaviz/BCFNGS-project-management.git</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone git@github.com:example-org/example-repo.git</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="configure-the-shiny-app-folder" class="level3" data-number="3.5.6">
 <h3 data-number="3.5.6" class="anchored" data-anchor-id="configure-the-shiny-app-folder"><span class="header-section-number">3.5.6</span> Configure the Shiny app folder</h3>
@@ -485,7 +485,7 @@ sudo systemctl enable shiny-server
 <p>Add:</p>
 <pre><code>[Service]
 Environment=AUTH_MODE=ldap
-Environment=LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
+Environment=LDAP_URI=ldaps://ldap01.example.internal:636,ldaps://ldap02.example.internal:636,ldaps://ldap03.example.internal:636
 Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
 # Optional debug (dev only):
 # Environment=APP_ENV=dev
@@ -498,11 +498,11 @@ Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
 <h3 data-number="3.5.9" class="anchored" data-anchor-id="configure-ldap-trust-openldap-client"><span class="header-section-number">3.5.9</span> Configure LDAP trust (OpenLDAP client)</h3>
 <p>Edit <code>/etc/ldap/ldap.conf</code> and ensure:</p>
 <pre><code>BASE            dc=biochem,dc=mpg,dc=de
-URI             ldaps://ldapserv1.biochem.mpg.de ldaps://ldapserv2.biochem.mpg.de ldaps://ldapserv3.biochem.mpg.de
+URI             ldaps://ldap01.example.internal ldaps://ldap02.example.internal ldaps://ldap03.example.internal
 TLS_REQCERT     hard
 TLS_CACERTDIR   /etc/ssl/certs</code></pre>
 <p>Test:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ldapsearch</span> <span class="at">-x</span> <span class="at">-H</span> ldaps://ldapserv1.biochem.mpg.de:636 <span class="dt">\</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ldapsearch</span> <span class="at">-x</span> <span class="at">-H</span> ldaps://ldap01.example.internal:636 <span class="dt">\</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-b</span> <span class="st">"dc=biochem,dc=mpg,dc=de"</span> <span class="st">"(uid=USER)"</span> mail</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="configure-apache-reverse-proxy-ldap-auth" class="level3" data-number="3.5.10">
@@ -559,9 +559,9 @@ TLS_CACERTDIR   /etc/ssl/certs</code></pre>
 <p>the <code>PEM</code> is the pem file and the <code>DER (issuer)</code> is the chain file. Both of them are needed.</p>
 <p>Setting for the readability of the files:</p>
 <pre><code>cd /etc/apache2/certificate/2026
--rw------- 1 yeroslaviz b_mcf 3272 Nov 10 15:58 private-key.pem # udo chmod 600 /path/to/private.key  # Readable only by root
--rw-r--r-- 1 yeroslaviz b_mcf 1545 Nov 14 12:12 NGS_2026_Issuer_ChainFile.cer # sudo chmod 644 /path/to/chain.crt  # Readable by all
--rw-r--r-- 1 yeroslaviz b_mcf 2796 Nov 14 12:34 NGS_2026_Cert.pem # sudo chmod 644 /path/to/certificate.crt # Readable by all</code></pre>
+-rw------- 1 exampleuser b_mcf 3272 Nov 10 15:58 private-key.pem # udo chmod 600 /path/to/private.key  # Readable only by root
+-rw-r--r-- 1 exampleuser b_mcf 1545 Nov 14 12:12 NGS_2026_Issuer_ChainFile.cer # sudo chmod 644 /path/to/chain.crt  # Readable by all
+-rw-r--r-- 1 exampleuser b_mcf 2796 Nov 14 12:34 NGS_2026_Cert.pem # sudo chmod 644 /path/to/certificate.crt # Readable by all</code></pre>
 <p>All the files are saved under <code>/etc/apache2/certificate/2026</code>.</p>
 <p>Now I created soft links for each of these files.</p>
 <pre class="{bash}"><code>sudo ln -s /etc/apache2/certificate/2026/private-key.pem /etc/ssl/private/2026_private-key.pem

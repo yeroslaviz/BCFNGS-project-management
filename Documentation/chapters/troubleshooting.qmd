@@ -29,7 +29,7 @@ Quarto search requires a web server. If you open the docs directly via `file://`
 **Fix (local server):**
 
 ```bash
-cd /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/Documentation/_site
+cd /Users/exampleuser/Documents/Github/example-repo/Documentation/_site
 python3 -m http.server 8000
 ```
 
@@ -42,7 +42,7 @@ http://localhost:8000
 **Alternative:**
 
 ```bash
-quarto preview /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/Documentation
+quarto preview /Users/exampleuser/Documents/Github/example-repo/Documentation
 ```
 
 ## Git / GitHub
@@ -142,7 +142,7 @@ Fix:
 Use a single, complete LDAP URL:
 
 ```
-AuthLDAPURL "ldaps://ldapserv1.biochem.mpg.de:636/dc=biochem,dc=mpg,dc=de?uid?sub?(objectClass=posixAccount)"
+AuthLDAPURL "ldaps://ldap01.example.internal:636/dc=biochem,dc=mpg,dc=de?uid?sub?(objectClass=posixAccount)"
 ```
 
 ### `Invalid command 'RequestHeader'`
@@ -178,13 +178,13 @@ Fix:
 1. Check port:
 
 ```
-nc -vz ldapserv1.biochem.mpg.de 636
+nc -vz ldap01.example.internal 636
 ```
 
 2. Test TLS bypass:
 
 ```
-LDAPTLS_REQCERT=never ldapsearch -x -H ldaps://ldapserv1.biochem.mpg.de:636 \
+LDAPTLS_REQCERT=never ldapsearch -x -H ldaps://ldap01.example.internal:636 \
   -b "dc=biochem,dc=mpg,dc=de" "(uid=USER)" mail
 ```
 
@@ -252,7 +252,7 @@ sudo systemctl restart apache2
 1.  On your **local machine**, map VM IP to hostnames:
 
 ```
-sudo sh -c 'echo "10.33.0.55 bcf-vm bcf-vm.biochem.mpg.de" >> /etc/hosts'
+sudo sh -c 'echo "192.0.2.55 bcf-vm bcf-vm.biochem.mpg.de" >> /etc/hosts'
 sudo dscacheutil -flushcache
 sudo killall -HUP mDNSResponder
 ```
@@ -284,7 +284,7 @@ curl -vk https://bcf-vm.biochem.mpg.de/
 If needed, test locally on VM with explicit host header:
 
 ```
-curl -kI -H 'Host: bcf-vm.biochem.mpg.de' https://127.0.0.1/
+curl -kI -H 'Host: bcf-vm.biochem.mpg.de' https://127.0.0.10/
 ```
 
 **Config path used**
@@ -347,7 +347,7 @@ Set LDAP env in app-local `.Renviron` (runtime source used by R):
 ```bash
 sudo tee /srv/shiny-server/sequencing-app/.Renviron >/dev/null <<'EOF'
 AUTH_MODE=ldap
-LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
+LDAP_URI=ldaps://ldap01.example.internal:636,ldaps://ldap02.example.internal:636,ldaps://ldap03.example.internal:636
 LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
 TRUST_PROXY_AUTH_USER_QUERY=1
 LDAP_DEBUG=1
@@ -404,7 +404,7 @@ sudo systemctl restart apache2
 Or run the scripted cutover:
 
 ```bash
-cd /home/yeroslaviz/BCFNGS-project-management
+cd /home/exampleuser/example-repo
 ./scripts/cutover_ngs_vm_ports.sh cutover
 ```
 
@@ -435,7 +435,7 @@ Fix:
 - Copy from repo template and re-enable:
 
 ```bash
-sudo cp /home/yeroslaviz/BCFNGS-project-management/scripts/ngs-vm-shiny-443.conf /etc/apache2/sites-available/ngs-vm-shiny-443.conf
+sudo cp /home/exampleuser/example-repo/scripts/ngs-vm-shiny-443.conf /etc/apache2/sites-available/ngs-vm-shiny-443.conf
 sudo a2ensite ngs-vm-shiny-443.conf
 sudo apache2ctl -t
 sudo systemctl restart apache2
@@ -588,7 +588,7 @@ sudo apache2ctl -t
 sudo apache2ctl -S
 
 # LDAP
-ldapsearch -x -H ldaps://ldapserv1.biochem.mpg.de:636 \
+ldapsearch -x -H ldaps://ldap01.example.internal:636 \
   -b "dc=biochem,dc=mpg,dc=de" "(uid=USER)" mail
 
 # App (proxy)
@@ -706,7 +706,7 @@ Apache’s `AuthLDAPURL` is very strict. Each URL must be complete (host + base 
 Use a single server (most stable on my VM):
 
 ```
-AuthLDAPURL "ldaps://ldapserv1.biochem.mpg.de:636/dc=biochem,dc=mpg,dc=de?uid?sub?(objectClass=posixAccount)"
+AuthLDAPURL "ldaps://ldap01.example.internal:636/dc=biochem,dc=mpg,dc=de?uid?sub?(objectClass=posixAccount)"
 ```
 
 If the multi‑server line fails, I keep one server and fall back manually if needed.
@@ -747,13 +747,13 @@ LDAP TLS handshake fails (certificate trust not configured).
 1. Confirm port reachability:
 
 ```
-nc -vz ldapserv1.biochem.mpg.de 636
+nc -vz ldap01.example.internal 636
 ```
 
 2. Test LDAP with **TLS bypass** to confirm trust problem:
 
 ```
-LDAPTLS_REQCERT=never ldapsearch -x -H ldaps://ldapserv1.biochem.mpg.de:636 \
+LDAPTLS_REQCERT=never ldapsearch -x -H ldaps://ldap01.example.internal:636 \
   -b "dc=biochem,dc=mpg,dc=de" "(uid=USER)" mail
 ```
 
@@ -768,7 +768,7 @@ TLS_CACERTDIR /etc/ssl/certs
 4. Verify normal LDAP now works:
 
 ```
-ldapsearch -x -H ldaps://ldapserv1.biochem.mpg.de:636 \
+ldapsearch -x -H ldaps://ldap01.example.internal:636 \
   -b "dc=biochem,dc=mpg,dc=de" "(uid=USER)" mail
 ```
 
@@ -831,8 +831,8 @@ sudo grep -n "ProxyPass" -R /etc/apache2/sites-enabled /etc/apache2/conf-enabled
 4.  **LDAP connectivity + TLS**
 
 ```
-nc -vz ldapserv1.biochem.mpg.de 636
-ldapsearch -x -H ldaps://ldapserv1.biochem.mpg.de:636 \
+nc -vz ldap01.example.internal 636
+ldapsearch -x -H ldaps://ldap01.example.internal:636 \
   -b "dc=biochem,dc=mpg,dc=de" "(uid=USER)" mail
 ```
 

@@ -31,7 +31,7 @@ Sys.setenv(
   APP_ENV = "dev",
   AUTH_MODE = "ldap",
   DEV_REMOTE_USER = "your_username",
-  LDAP_URI = "ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636",
+  LDAP_URI = "ldaps://ldap01.example.internal:636,ldaps://ldap02.example.internal:636,ldaps://ldap03.example.internal:636",
   LDAP_BASE_DN = "dc=biochem,dc=mpg,dc=de"
 )
 shiny::runApp("sequencing-app")
@@ -57,7 +57,7 @@ sudo systemctl edit shiny-server
 ```ini
 [Service]
 Environment=AUTH_MODE=ldap
-Environment=LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
+Environment=LDAP_URI=ldaps://ldap01.example.internal:636,ldaps://ldap02.example.internal:636,ldaps://ldap03.example.internal:636
 Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
 ```
 

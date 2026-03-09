@@ -2,13 +2,16 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.4.315">
+<meta name="generator" content="quarto-1.9.23">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>app.R Deep Breakdown</title>
 <style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -24,20 +27,22 @@ ul.task-list li input[type="checkbox"] {
 
 
 <script src="app-r-deep-breakdown_files/libs/clipboard/clipboard.min.js"></script>
-<script src="app-r-deep-breakdown_files/libs/quarto-html/quarto.js"></script>
+<script src="app-r-deep-breakdown_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="app-r-deep-breakdown_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="app-r-deep-breakdown_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="app-r-deep-breakdown_files/libs/quarto-html/popper.min.js"></script>
 <script src="app-r-deep-breakdown_files/libs/quarto-html/tippy.umd.min.js"></script>
 <script src="app-r-deep-breakdown_files/libs/quarto-html/anchor.min.js"></script>
 <link href="app-r-deep-breakdown_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="app-r-deep-breakdown_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="app-r-deep-breakdown_files/libs/quarto-html/quarto-syntax-highlighting-076ecbd647e1f0418c5051713cd9b730.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="app-r-deep-breakdown_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="app-r-deep-breakdown_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="app-r-deep-breakdown_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="app-r-deep-breakdown_files/libs/bootstrap/bootstrap-138a6193a3bd40baf1e627da441a4734.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
 
 </head>
 
-<body class="fullcontent">
+<body class="fullcontent quarto-light">
 
 <div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
 
@@ -61,9 +66,10 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
+
 <section id="app.r-deep-breakdown" class="level1">
 <h1>app.R Deep Breakdown</h1>
-<p>This file is a comprehensive companion to <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R</code> (currently ~5,490 lines). It is intentionally verbose and written for readers with limited R/Shiny background.</p>
+<p>This file is a comprehensive companion to <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R</code> (currently ~5,884 lines). It is intentionally verbose and written for readers with limited R/Shiny background.</p>
 <section id="how-to-use-this-companion" class="level2">
 <h2 class="anchored" data-anchor-id="how-to-use-this-companion">How to Use This Companion</h2>
 <ol type="1">
@@ -73,9 +79,82 @@ ul.task-list li input[type="checkbox"] {
 <li>Open <code>app.R</code> side-by-side and jump to line numbers noted here.</li>
 </ol>
 </section>
+<section id="update-addendum-27.02.2026" class="level2">
+<h2 class="anchored" data-anchor-id="update-addendum-27.02.2026">Update Addendum (27.02.2026)</h2>
+<p>This addendum captures the latest behavior changes added after the first draft of this breakdown.</p>
+<section id="new-db-backed-additional-cost-feature" class="level3">
+<h3 class="anchored" data-anchor-id="new-db-backed-additional-cost-feature">1) New DB-backed additional-cost feature</h3>
+<ul>
+<li>New project field in <code>projects</code> table: <code>additional_cost</code> (nullable <code>REAL</code>).</li>
+<li>Runtime auto-migration is now performed at app startup:
+<ul>
+<li><code>projects_has_additional_cost(con)</code> checks schema.</li>
+<li><code>ensure_projects_additional_cost_column(con)</code> runs <code>ALTER TABLE projects ADD COLUMN additional_cost REAL</code> when missing.</li>
+</ul></li>
+<li><code>get_db_connection()</code> now enforces the migration automatically for every new connection.</li>
+<li><code>validate_and_repair_database()</code> also ensures the column exists during health checks.</li>
+</ul>
+</section>
+<section id="cost-calculation-logic-split" class="level3">
+<h3 class="anchored" data-anchor-id="cost-calculation-logic-split">2) Cost calculation logic split</h3>
+<ul>
+<li><code>calculate_base_cost(...)</code> now computes preparation + sequencing-only base cost.</li>
+<li><code>calculate_total_cost(..., additional_cost)</code> now adds admin-entered additional costs to base cost.</li>
+<li><code>parse_additional_cost(...)</code> validates non-negative decimals (supports comma/dot normalization).</li>
+<li><code>format_cost_amount(...)</code> enforces standardized <code>%.2f</code> display.</li>
+</ul>
+</section>
+<section id="ui-wiring-changes-in-edit-project" class="level3">
+<h3 class="anchored" data-anchor-id="ui-wiring-changes-in-edit-project">3) UI wiring changes in Edit Project</h3>
+<ul>
+<li>New admin-only input: <code>edit_additional_cost</code> (<code>textInput</code>).</li>
+<li>New admin-only button in modal footer: <code>send_notification_btn</code> (label <code>Notifications</code>, green style).</li>
+<li>Cost summary blocks now show:
+<ul>
+<li>Preparation Cost</li>
+<li>Sequencing Cost</li>
+<li>Additional costs</li>
+<li>Total Estimated Cost</li>
+</ul></li>
+</ul>
+</section>
+<section id="email-behavior-split" class="level3">
+<h3 class="anchored" data-anchor-id="email-behavior-split">4) Email behavior split</h3>
+<ul>
+<li>Project creation email (<code>send_project_creation_email</code>) now notifies only <code>ngs@example.org</code>.</li>
+<li>New function <code>send_project_cost_notification_email(...)</code> sends the detailed cost-estimation mail to:
+<ul>
+<li>project creator</li>
+<li>budget holder</li>
+<li><code>ngs@example.org</code></li>
+</ul></li>
+<li>Notification email format is HTML; total cost line is bold + underlined.</li>
+</ul>
+</section>
+<section id="new-event-flow" class="level3">
+<h3 class="anchored" data-anchor-id="new-event-flow">5) New event flow</h3>
+<ul>
+<li><code>observeEvent(input$send_notification_btn)</code> triggers the new notification email path.</li>
+<li><code>observeEvent(input$update_project_btn)</code> now validates and stores <code>additional_cost</code> (admin only) and recomputes <code>total_cost</code>.</li>
+</ul>
+</section>
+<section id="createedit-form-labeling-and-field-order-updates" class="level3">
+<h3 class="anchored" data-anchor-id="createedit-form-labeling-and-field-order-updates">6) Create/Edit form labeling and field order updates</h3>
+<ul>
+<li>In both Create and Edit modals:
+<ul>
+<li><code>Project Type</code> label was renamed to <code>Sample Type</code>.</li>
+<li><code>Sample Type</code> is now shown above <code>Sample Service Type</code>.</li>
+<li><code>Sequencing Depth</code> label was renamed to <code>Data Amount (Total Reads)</code>.</li>
+<li><code>Sequencing Cycles</code> label was renamed to <code>Read Length (Cycles)</code>.</li>
+</ul></li>
+<li>Helper texts were added below depth/cycles fields with compact <code>11px</code> styling to reduce visual noise while keeping examples visible.</li>
+</ul>
+</section>
+</section>
 <section id="top-level-execution-map" class="level2">
 <h2 class="anchored" data-anchor-id="top-level-execution-map">Top-Level Execution Map</h2>
-<table class="table">
+<table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
 <col style="width: 33%">
@@ -155,17 +234,17 @@ ul.task-list li input[type="checkbox"] {
 <td>High-level block in app startup/runtime path.</td>
 </tr>
 <tr class="even">
-<td><code>4892-5343</code></td>
-<td>Edit/delete/update project workflows + status updates</td>
+<td><code>4892-5708</code></td>
+<td>Edit/delete/update project workflows + status updates + cost-notification flow</td>
 <td>High-level block in app startup/runtime path.</td>
 </tr>
 <tr class="odd">
-<td><code>5345-5487</code></td>
+<td><code>5710-5881</code></td>
 <td>Backup/restore and optional auto-backup block (commented)</td>
 <td>High-level block in app startup/runtime path.</td>
 </tr>
 <tr class="even">
-<td><code>5490-5490</code></td>
+<td><code>5884-5884</code></td>
 <td>Application entrypoint (<code>shinyApp(ui, server)</code>)</td>
 <td>High-level block in app startup/runtime path.</td>
 </tr>
@@ -175,7 +254,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="ui---server-wiring-outputs" class="level2">
 <h2 class="anchored" data-anchor-id="ui---server-wiring-outputs">UI &lt;-&gt; Server Wiring (Outputs)</h2>
 <p>Each row below connects an output placeholder declared in UI (<code>uiOutput</code>, <code>DTOutput</code>, <code>textOutput</code>, etc.) with the matching server renderer (<code>renderUI</code>, <code>renderDT</code>, <code>renderText</code>, <code>downloadHandler</code>).</p>
-<table class="table">
+<table class="caption-top table">
 <colgroup>
 <col style="width: 23%">
 <col style="width: 30%">
@@ -359,7 +438,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="ui---server-wiring-inputs" class="level2">
 <h2 class="anchored" data-anchor-id="ui---server-wiring-inputs">UI &lt;-&gt; Server Wiring (Inputs)</h2>
 <p>This table maps every detected UI input control ID to where it is referenced in server logic. When a line appears multiple times, it usually means validation + DB action + notifications all happen for the same control.</p>
-<table class="table">
+<table class="caption-top table">
 <colgroup>
 <col style="width: 18%">
 <col style="width: 25%">
@@ -417,7 +496,7 @@ ul.task-list li input[type="checkbox"] {
 <td style="text-align: right;">3382</td>
 <td>actionButton</td>
 <td>4096</td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 </tr>
 <tr class="odd">
 <td><code>add_type_btn</code></td>
@@ -529,7 +608,7 @@ ul.task-list li input[type="checkbox"] {
 <td style="text-align: right;">4664</td>
 <td>actionButton</td>
 <td>4669</td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 </tr>
 <tr class="odd">
 <td><code>confirm_delete_type_btn</code></td>
@@ -554,16 +633,16 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 <tr class="even">
 <td><code>confirm_status_update_btn</code></td>
-<td style="text-align: right;">5255</td>
+<td style="text-align: right;">5649</td>
 <td>actionButton</td>
-<td>5271</td>
+<td>5665</td>
 <td>Apply for Projects / Projects table</td>
 </tr>
 <tr class="odd">
 <td><code>create_project_btn</code></td>
-<td style="text-align: right;">2909</td>
+<td style="text-align: right;">3106</td>
 <td>actionButton</td>
-<td>3079</td>
+<td>3278</td>
 <td>Apply for Projects / Projects table</td>
 </tr>
 <tr class="even">
@@ -620,7 +699,7 @@ ul.task-list li input[type="checkbox"] {
 <td style="text-align: right;">3391</td>
 <td>actionButton</td>
 <td>4650</td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 </tr>
 <tr class="even">
 <td><code>delete_type_btn</code></td>
@@ -742,543 +821,557 @@ ul.task-list li input[type="checkbox"] {
 <td>General / Shared</td>
 </tr>
 <tr class="odd">
+<td><code>edit_additional_cost</code></td>
+<td style="text-align: right;">5200</td>
+<td>textInput</td>
+<td>5242, 5353, 5493</td>
+<td>Apply for Projects / Edit Project modal</td>
+</tr>
+<tr class="even">
 <td><code>edit_num_samples</code></td>
 <td style="text-align: right;">4925</td>
 <td>numericInput</td>
 <td>5007, 5013, 5088, 5126, 5152</td>
 <td>General / Shared</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>edit_project_btn</code></td>
-<td style="text-align: right;">2789</td>
+<td style="text-align: right;">2986</td>
 <td>actionButton</td>
-<td>4895</td>
+<td>5094</td>
 <td>Apply for Projects / Projects table</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>edit_project_description</code></td>
 <td style="text-align: right;">4980</td>
 <td>textAreaInput</td>
 <td>5125, 5151</td>
 <td>Apply for Projects / Projects table</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>edit_project_name</code></td>
 <td style="text-align: right;">4924</td>
 <td>textInput</td>
 <td>5120, 5146</td>
 <td>Apply for Projects / Projects table</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>edit_project_status</code></td>
 <td style="text-align: right;">4996</td>
 <td>selectInput</td>
 <td>5076</td>
 <td>Apply for Projects / Projects table</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>edit_reference_genome</code></td>
 <td style="text-align: right;">4939</td>
 <td>selectInput</td>
 <td>5121, 5147</td>
 <td>Administer Projects -&gt; Reference Genomes</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>edit_responsible_user</code></td>
 <td style="text-align: right;">4963</td>
 <td>selectInput</td>
 <td>5124, 5150, 5176</td>
 <td>Administer Projects -&gt; Users</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>edit_sequencing_cycles_id</code></td>
 <td style="text-align: right;">4947</td>
 <td>selectInput</td>
 <td>5008, 5089, 5129, 5155</td>
 <td>Administer Projects -&gt; Sequencing Cycles</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>edit_sequencing_depth_btn</code></td>
 <td style="text-align: right;">3424</td>
 <td>actionButton</td>
 <td>4420</td>
 <td>Administer Projects -&gt; Sequencing Depths</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>edit_sequencing_depth_id</code></td>
 <td style="text-align: right;">4942</td>
 <td>selectInput</td>
 <td>5008, 5011, 5089, 5128, 5154</td>
 <td>Administer Projects -&gt; Sequencing Depths</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>edit_sequencing_platform</code></td>
 <td style="text-align: right;">4926</td>
 <td>selectInput</td>
 <td>5127, 5153</td>
 <td>Administer Projects -&gt; Sequencing Platforms</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>edit_sequencing_platform_btn</code></td>
 <td style="text-align: right;">3565</td>
 <td>actionButton</td>
 <td>4317</td>
 <td>Administer Projects -&gt; Sequencing Platforms</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>edit_sequencing_platform_name2</code></td>
 <td style="text-align: right;">4333</td>
 <td>textInput</td>
 <td>4342, 4343</td>
 <td>Administer Projects -&gt; Sequencing Platforms</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>edit_service_cost</code></td>
 <td style="text-align: right;">4148</td>
 <td>numericInput</td>
 <td>4378</td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>edit_service_kit</code></td>
 <td style="text-align: right;">4147</td>
 <td>textInput</td>
 <td>4377</td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>edit_service_type</code></td>
 <td style="text-align: right;">4146</td>
 <td>textInput</td>
 <td>4376</td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>edit_service_type_btn</code></td>
 <td style="text-align: right;">3390</td>
 <td>actionButton</td>
 <td>4129</td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>edit_service_type_id</code></td>
 <td style="text-align: right;">4932</td>
 <td>selectInput</td>
 <td>5007, 5010, 5088, 5122, 5148</td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>edit_type_btn</code></td>
 <td style="text-align: right;">3539</td>
 <td>actionButton</td>
 <td>4270</td>
 <td>Administer Projects -&gt; Sample Types</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>edit_type_id</code></td>
 <td style="text-align: right;">4929</td>
 <td>selectInput</td>
 <td>5132, 5157</td>
 <td>Administer Projects -&gt; Sample Types</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>edit_type_name</code></td>
 <td style="text-align: right;">4286</td>
 <td>textInput</td>
 <td>4295, 4296</td>
 <td>Administer Projects -&gt; Sample Types</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>item_active</code></td>
 <td style="text-align: right;">3781, 3862</td>
 <td>checkboxInput</td>
 <td>3832, 3900</td>
 <td>General / Shared</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>kickoff_meeting</code></td>
 <td style="text-align: right;">2971</td>
 <td>radioButtons</td>
 <td>3146</td>
 <td>General / Shared</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>ldap_profile_cancel_btn</code></td>
 <td style="text-align: right;">1611</td>
 <td>actionButton</td>
 <td>2589</td>
 <td>Authentication / Login area</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>ldap_profile_email</code></td>
 <td style="text-align: right;">1614</td>
 <td>textInput</td>
 <td>2542, 2542, 2550</td>
 <td>Authentication / Login area</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>ldap_profile_group</code></td>
 <td style="text-align: right;">1616</td>
 <td>textInput</td>
 <td>2552</td>
 <td>Authentication / Login area</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>ldap_profile_phone</code></td>
 <td style="text-align: right;">1615</td>
 <td>textInput</td>
 <td>2551</td>
 <td>Authentication / Login area</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>ldap_profile_save_btn</code></td>
 <td style="text-align: right;">1612</td>
 <td>actionButton</td>
 <td>2539</td>
 <td>Authentication / Login area</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>login_btn</code></td>
 <td style="text-align: right;">607</td>
 <td>actionButton</td>
 <td>2608</td>
 <td>Authentication / Login area</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>login_password</code></td>
 <td style="text-align: right;">606</td>
 <td>passwordInput</td>
 <td>2614, 2624</td>
 <td>Authentication / Login area</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>login_username</code></td>
 <td style="text-align: right;">605</td>
 <td>textInput</td>
 <td>2614, 2621</td>
 <td>Authentication / Login area</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>logout_btn</code></td>
 <td style="text-align: right;">645</td>
 <td>actionButton</td>
 <td>2633</td>
 <td>General / Shared</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>manage_announcements_btn</code></td>
 <td style="text-align: right;">2871</td>
 <td>actionButton</td>
 <td>3571</td>
 <td>Administer Projects -&gt; Landing Text</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>manage_budget_holders_btn</code></td>
 <td style="text-align: right;">2829</td>
 <td>actionButton</td>
 <td>3324</td>
 <td>Administer Projects -&gt; Budget Holders</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>manage_genomes_btn</code></td>
 <td style="text-align: right;">2835</td>
 <td>actionButton</td>
 <td>3493</td>
 <td>Administer Projects -&gt; Reference Genomes</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>manage_sequencing_cycles_btn</code></td>
 <td style="text-align: right;">2859</td>
 <td>actionButton</td>
 <td>3432</td>
 <td>Administer Projects -&gt; Sequencing Cycles</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>manage_sequencing_depths_btn</code></td>
 <td style="text-align: right;">2853</td>
 <td>actionButton</td>
 <td>3398</td>
 <td>Administer Projects -&gt; Sequencing Depths</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>manage_sequencing_platforms_btn</code></td>
 <td style="text-align: right;">2865</td>
 <td>actionButton</td>
 <td>3545</td>
 <td>Administer Projects -&gt; Sequencing Platforms</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>manage_service_types_btn</code></td>
 <td style="text-align: right;">2847</td>
 <td>actionButton</td>
 <td>3362</td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>manage_types_btn</code></td>
 <td style="text-align: right;">2841</td>
 <td>actionButton</td>
 <td>3519</td>
 <td>Administer Projects -&gt; Sample Types</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>manage_users_btn</code></td>
 <td style="text-align: right;">2823</td>
 <td>actionButton</td>
 <td>3456</td>
 <td>Administer Projects -&gt; Users</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>new_bh_cost_center</code></td>
 <td style="text-align: right;">3339</td>
 <td>textInput</td>
 <td>4052, 4054, 4065, 4079</td>
 <td>Administer Projects -&gt; Budget Holders</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>new_bh_email</code></td>
 <td style="text-align: right;">3342</td>
 <td>textInput</td>
 <td>4052, 4054, 4080</td>
 <td>Administer Projects -&gt; Budget Holders</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>new_bh_name</code></td>
 <td style="text-align: right;">3333</td>
 <td>textInput</td>
 <td>4052, 4054, 4077</td>
 <td>Administer Projects -&gt; Budget Holders</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>new_bh_surname</code></td>
 <td style="text-align: right;">3336</td>
 <td>textInput</td>
 <td>4052, 4054, 4078</td>
 <td>Administer Projects -&gt; Budget Holders</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>new_cycles_description</code></td>
 <td style="text-align: right;">3441</td>
 <td>textInput</td>
 <td>4469, 4471, 4476, 4487</td>
 <td>Administer Projects -&gt; Sequencing Cycles</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>new_depth_cost_150</code></td>
 <td style="text-align: right;">3410</td>
 <td>numericInput</td>
 <td>4408, 4408</td>
 <td>Administer Projects -&gt; Sequencing Depths</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>new_depth_cost_300</code></td>
 <td style="text-align: right;">3413</td>
 <td>numericInput</td>
 <td>4409, 4409</td>
 <td>Administer Projects -&gt; Sequencing Depths</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>new_depth_description</code></td>
 <td style="text-align: right;">3407</td>
 <td>textInput</td>
 <td>4388, 4390, 4395, 4407</td>
 <td>Administer Projects -&gt; Sequencing Depths</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>new_genome_name</code></td>
 <td style="text-align: right;">3502</td>
 <td>textInput</td>
 <td>4542, 4544, 4549, 4560</td>
 <td>Administer Projects -&gt; Reference Genomes</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>new_project_btn</code></td>
 <td style="text-align: right;">2787</td>
 <td>actionButton</td>
 <td>2903</td>
 <td>Apply for Projects / Projects table</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>new_project_status</code></td>
 <td style="text-align: right;">5261</td>
 <td>selectInput</td>
 <td>5286</td>
 <td>Apply for Projects / Projects table</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>new_sequencing_platform_name</code></td>
 <td style="text-align: right;">3554</td>
 <td>textInput</td>
 <td>4592, 4594, 4599, 4607</td>
 <td>Administer Projects -&gt; Sequencing Platforms</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>new_service_cost</code></td>
 <td style="text-align: right;">3377</td>
 <td>numericInput</td>
 <td>4097, 4118</td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>new_service_kit</code></td>
 <td style="text-align: right;">3374</td>
 <td>textInput</td>
 <td>4097, 4117</td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>new_service_type</code></td>
 <td style="text-align: right;">3371</td>
 <td>textInput</td>
 <td>4097, 4099, 4104, 4116</td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>new_type_name</code></td>
 <td style="text-align: right;">3528</td>
 <td>textInput</td>
 <td>4569, 4571, 4576, 4584</td>
 <td>Administer Projects -&gt; Sample Types</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>new_user_admin</code></td>
 <td style="text-align: right;">3481</td>
 <td>checkboxInput</td>
 <td>4527</td>
 <td>Administer Projects -&gt; Users</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>new_user_confirm_password</code></td>
 <td style="text-align: right;">3476</td>
 <td>passwordInput</td>
 <td>4498</td>
 <td>Administer Projects -&gt; Users</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>new_user_email</code></td>
 <td style="text-align: right;">3468</td>
 <td>textInput</td>
 <td>4496, 4526</td>
 <td>Administer Projects -&gt; Users</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>new_user_password</code></td>
 <td style="text-align: right;">3473</td>
 <td>passwordInput</td>
 <td>4496, 4498, 4503, 4525</td>
 <td>Administer Projects -&gt; Users</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>new_user_username</code></td>
 <td style="text-align: right;">3465</td>
 <td>textInput</td>
 <td>4496, 4513, 4524</td>
 <td>Administer Projects -&gt; Users</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>num_samples</code></td>
 <td style="text-align: right;">2915</td>
 <td>numericInput</td>
 <td>3036, 3042, 3104, 3142, 3169</td>
 <td>General / Shared</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>project_description</code></td>
 <td style="text-align: right;">2978</td>
 <td>textAreaInput</td>
 <td>3141, 3167</td>
 <td>Apply for Projects / Projects table</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>project_name</code></td>
 <td style="text-align: right;">2914</td>
 <td>textInput</td>
 <td>3135, 3166</td>
 <td>Apply for Projects / Projects table</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>reference_genome</code></td>
 <td style="text-align: right;">2934</td>
 <td>selectInput</td>
 <td>3138</td>
 <td>Administer Projects -&gt; Reference Genomes</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>reg_confirm_password</code></td>
 <td style="text-align: right;">2286</td>
 <td>passwordInput</td>
 <td>2298, 2300</td>
 <td>General / Shared</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>reg_email</code></td>
 <td style="text-align: right;">2284</td>
 <td>textInput</td>
 <td>2298, 2343, 2354</td>
 <td>General / Shared</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>reg_full_name</code></td>
 <td style="text-align: right;">2283</td>
 <td>textInput</td>
 <td>2330</td>
 <td>General / Shared</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>reg_group</code></td>
 <td style="text-align: right;">2288</td>
 <td>selectInput</td>
 <td>2310, 2310, 2345, 2356</td>
 <td>General / Shared</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>reg_password</code></td>
 <td style="text-align: right;">2285</td>
 <td>passwordInput</td>
 <td>2298, 2300, 2305, 2342, 2353</td>
 <td>General / Shared</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>reg_phone</code></td>
 <td style="text-align: right;">2287</td>
 <td>textInput</td>
 <td>2344, 2355</td>
 <td>General / Shared</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>reg_username</code></td>
 <td style="text-align: right;">2282</td>
 <td>textInput</td>
 <td>2298, 2321, 2332, 2340, 2352</td>
 <td>Administer Projects -&gt; Users</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>register_btn</code></td>
 <td style="text-align: right;">2279</td>
 <td>actionButton</td>
 <td>2297</td>
 <td>Authentication / Login area</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>responsible_user</code></td>
 <td style="text-align: right;">2966</td>
 <td>selectInput</td>
 <td>3137, 3168</td>
 <td>Administer Projects -&gt; Users</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>restore_db_btn</code></td>
 <td style="text-align: right;">2886</td>
 <td>fileInput</td>
 <td>5395, 5396, 5403, 5423</td>
 <td>Administer Projects -&gt; Database Management</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>save_announcement_item_btn</code></td>
 <td style="text-align: right;">3779</td>
 <td>actionButton</td>
 <td>3793</td>
 <td>Administer Projects -&gt; Landing Text</td>
+</tr>
+<tr class="odd">
+<td><code>send_notification_btn</code></td>
+<td style="text-align: right;">5126</td>
+<td>actionButton</td>
+<td>5473</td>
+<td>Apply for Projects / Edit Project modal (admin)</td>
 </tr>
 <tr class="even">
 <td><code>sequencing_cycles_id</code></td>
@@ -1306,7 +1399,7 @@ ul.task-list li input[type="checkbox"] {
 <td style="text-align: right;">2924</td>
 <td>selectInput</td>
 <td>3036, 3039, 3104, 3139, 3170</td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 </tr>
 <tr class="even">
 <td><code>show_register_btn</code></td>
@@ -1352,9 +1445,9 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 <tr class="even">
 <td><code>update_project_btn</code></td>
-<td style="text-align: right;">4919</td>
+<td style="text-align: right;">5131</td>
 <td>actionButton</td>
-<td>5027</td>
+<td>5286</td>
 <td>Apply for Projects / Projects table</td>
 </tr>
 <tr class="odd">
@@ -1376,13 +1469,13 @@ ul.task-list li input[type="checkbox"] {
 <td style="text-align: right;">4143</td>
 <td>actionButton</td>
 <td>4364</td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 </tr>
 <tr class="even">
 <td><code>update_status_btn</code></td>
-<td style="text-align: right;">2800</td>
+<td style="text-align: right;">2997</td>
 <td>actionButton</td>
-<td>5236</td>
+<td>5630</td>
 <td>Apply for Projects / Projects table</td>
 </tr>
 <tr class="odd">
@@ -1408,7 +1501,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-default-announcement-seed" class="level3">
 <h3 class="anchored" data-anchor-id="fn-default-announcement-seed"><code>default_announcement_seed</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:14</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:14</code></li>
 <li><strong>Signature line:</strong> <code>default_announcement_seed &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Returns the default two-panel landing-page content (Announcement + service info) used for first-time DB seeding.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1417,7 +1510,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-is-safe-markdown-href" class="level3">
 <h3 class="anchored" data-anchor-id="fn-is-safe-markdown-href"><code>is_safe_markdown_href</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:60</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:60</code></li>
 <li><strong>Signature line:</strong> <code>is_safe_markdown_href &lt;- function(href) {</code></li>
 <li><strong>Purpose:</strong> Allows only safe link protocols in markdown links (<code>http</code>, <code>https</code>, <code>mailto</code>, <code>smb</code>).</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1426,7 +1519,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-escape-inline-markdown" class="level3">
 <h3 class="anchored" data-anchor-id="fn-escape-inline-markdown"><code>escape_inline_markdown</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:65</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:65</code></li>
 <li><strong>Signature line:</strong> <code>escape_inline_markdown &lt;- function(text) {</code></li>
 <li><strong>Purpose:</strong> HTML-escapes plain text and then converts <code>**bold**</code> markup into <code>&lt;strong&gt;</code> safely.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1435,7 +1528,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-render-inline-markdown" class="level3">
 <h3 class="anchored" data-anchor-id="fn-render-inline-markdown"><code>render_inline_markdown</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:70</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:70</code></li>
 <li><strong>Signature line:</strong> <code>render_inline_markdown &lt;- function(text) {</code></li>
 <li><strong>Purpose:</strong> Parses one inline text fragment, converts markdown links, and safely escapes all other text.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1444,7 +1537,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-markdown-lite-to-html" class="level3">
 <h3 class="anchored" data-anchor-id="fn-markdown-lite-to-html"><code>markdown_lite_to_html</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:122</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:122</code></li>
 <li><strong>Signature line:</strong> <code>markdown_lite_to_html &lt;- function(markdown_text) {</code></li>
 <li><strong>Purpose:</strong> Converts simplified markdown (paragraphs, lists, bold, links) into safe HTML for info boxes.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1453,7 +1546,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-flush-paragraph" class="level3">
 <h3 class="anchored" data-anchor-id="fn-flush-paragraph"><code>flush_paragraph</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:134</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:134</code></li>
 <li><strong>Signature line:</strong> <code>flush_paragraph &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Internal helper: finalizes accumulated paragraph lines during markdown parsing.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1462,7 +1555,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-flush-list" class="level3">
 <h3 class="anchored" data-anchor-id="fn-flush-list"><code>flush_list</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:144</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:144</code></li>
 <li><strong>Signature line:</strong> <code>flush_list &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Internal helper: finalizes accumulated list items (ordered/unordered) during markdown parsing.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1471,7 +1564,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-announcement-blocks" class="level3">
 <h3 class="anchored" data-anchor-id="fn-announcement-blocks"><code>announcement_blocks</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:197</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:197</code></li>
 <li><strong>Signature line:</strong> <code>announcement_blocks &lt;- function(announcement_data) {</code></li>
 <li><strong>Purpose:</strong> Builds landing-page panels from DB data and renders each row as one <code>.info-box</code>.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1480,7 +1573,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-server" class="level3">
 <h3 class="anchored" data-anchor-id="fn-server"><code>server</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:658</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:658</code></li>
 <li><strong>Signature line:</strong> <code>server &lt;- function(input, output, session) {</code></li>
 <li><strong>Purpose:</strong> Main Shiny server function: owns all reactive state, auth, DB operations, outputs, and event handlers.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1489,7 +1582,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-ensure-announcement-tables" class="level3">
 <h3 class="anchored" data-anchor-id="fn-ensure-announcement-tables"><code>ensure_announcement_tables</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:714</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:714</code></li>
 <li><strong>Signature line:</strong> <code>ensure_announcement_tables &lt;- function(con) {</code></li>
 <li><strong>Purpose:</strong> Creates <code>announcement_panels</code> and <code>announcement_items</code> tables when missing.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1498,7 +1591,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-seed-announcement-defaults" class="level3">
 <h3 class="anchored" data-anchor-id="fn-seed-announcement-defaults"><code>seed_announcement_defaults</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:742</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:742</code></li>
 <li><strong>Signature line:</strong> <code>seed_announcement_defaults &lt;- function(con, updated_by = "system") {</code></li>
 <li><strong>Purpose:</strong> Seeds default landing text only for newly inserted panel keys (non-destructive for existing panels).</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1507,7 +1600,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-load-announcement-content" class="level3">
 <h3 class="anchored" data-anchor-id="fn-load-announcement-content"><code>load_announcement_content</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:794</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:794</code></li>
 <li><strong>Signature line:</strong> <code>load_announcement_content &lt;- function(con = NULL, active_only = TRUE) {</code></li>
 <li><strong>Purpose:</strong> Loads panel metadata + ordered rows from DB, optionally active-only.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1516,7 +1609,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-validate-and-repair-database" class="level3">
 <h3 class="anchored" data-anchor-id="fn-validate-and-repair-database"><code>validate_and_repair_database</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:837</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:837</code></li>
 <li><strong>Signature line:</strong> <code>validate_and_repair_database &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Checks critical table presence and minimal DB readability; shows diagnostics when unhealthy.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1525,7 +1618,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-get-auth-mode" class="level3">
 <h3 class="anchored" data-anchor-id="fn-get-auth-mode"><code>get_auth_mode</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:956</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:956</code></li>
 <li><strong>Signature line:</strong> <code>get_auth_mode &lt;- function() auth_mode_val()</code></li>
 <li><strong>Purpose:</strong> Returns current auth mode (<code>local</code> or <code>ldap</code>) from reactive value.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1534,7 +1627,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-to-bool" class="level3">
 <h3 class="anchored" data-anchor-id="fn-to-bool"><code>to_bool</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:958</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:958</code></li>
 <li><strong>Signature line:</strong> <code>to_bool &lt;- function(x) {</code></li>
 <li><strong>Purpose:</strong> Normalizes env-flag style strings (1/true/yes/on) to logical.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1543,16 +1636,16 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-or-null-operator" class="level3">
 <h3 class="anchored" data-anchor-id="fn-or-null-operator"><code>%||%</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:983</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:983</code></li>
 <li><strong>Signature line:</strong> `<code>%||%</code> &lt;- function(x, y) {`</li>
 <li><strong>Purpose:</strong> Null/empty fallback operator used heavily for robust text handling.</li>
-<li><strong>Called/referenced at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:697, 698, 699, 997, 1451, 1452, 1453, 1454, 1565, 1614, 1615, 1616, 1628, 1629, 1630, 1651, 1652, 1653, 1654, 1687, 1690, 1691, 1701, 1702, 1747 ... (+38 more)</code></li>
+<li><strong>Called/referenced at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:697, 698, 699, 997, 1451, 1452, 1453, 1454, 1565, 1614, 1615, 1616, 1628, 1629, 1630, 1651, 1652, 1653, 1654, 1687, 1690, 1691, 1701, 1702, 1747 ... (+38 more)</code></li>
 </ul>
 </section>
 <section id="fn-scalar-text-core" class="level3">
 <h3 class="anchored" data-anchor-id="fn-scalar-text-core"><code>scalar_text</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:987</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:987</code></li>
 <li><strong>Signature line:</strong> <code>scalar_text &lt;- function(x) {</code></li>
 <li><strong>Purpose:</strong> Normalizes potentially vector/empty values into a single trimmed string or NULL.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1561,7 +1654,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-get-req-header" class="level3">
 <h3 class="anchored" data-anchor-id="fn-get-req-header"><code>get_req_header</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1004</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1004</code></li>
 <li><strong>Signature line:</strong> <code>get_req_header &lt;- function(req, header_name) {</code></li>
 <li><strong>Purpose:</strong> Reads HTTP headers from multiple possible request structures and canonicalizes retrieval.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1570,7 +1663,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-get-proxy-authenticated-user" class="level3">
 <h3 class="anchored" data-anchor-id="fn-get-proxy-authenticated-user"><code>get_proxy_authenticated_user</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1030</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1030</code></li>
 <li><strong>Signature line:</strong> <code>get_proxy_authenticated_user &lt;- function(session) {</code></li>
 <li><strong>Purpose:</strong> Extracts authenticated username from trusted proxy headers.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1579,7 +1672,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-base64-decode-raw" class="level3">
 <h3 class="anchored" data-anchor-id="fn-base64-decode-raw"><code>base64_decode_raw</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1043</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1043</code></li>
 <li><strong>Signature line:</strong> <code>base64_decode_raw &lt;- function(encoded) {</code></li>
 <li><strong>Purpose:</strong> Decodes Base64 for Basic auth parsing without external dependency.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1588,7 +1681,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-parse-basic-auth-username" class="level3">
 <h3 class="anchored" data-anchor-id="fn-parse-basic-auth-username"><code>parse_basic_auth_username</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1079</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1079</code></li>
 <li><strong>Signature line:</strong> <code>parse_basic_auth_username &lt;- function(auth_header) {</code></li>
 <li><strong>Purpose:</strong> Parses <code>Authorization: Basic ...</code> and returns the username part only.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1597,7 +1690,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-get-auth-username" class="level3">
 <h3 class="anchored" data-anchor-id="fn-get-auth-username"><code>get_auth_username</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1103</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1103</code></li>
 <li><strong>Signature line:</strong> <code>get_auth_username &lt;- function(session) {</code></li>
 <li><strong>Purpose:</strong> Primary LDAP identity resolver; checks trusted headers, canonicalized query, optional dev fallback.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1606,7 +1699,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-parse-auth-user-from-qs" class="level3">
 <h3 class="anchored" data-anchor-id="fn-parse-auth-user-from-qs"><code>parse_auth_user_from_qs</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1117</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1117</code></li>
 <li><strong>Signature line:</strong> <code>parse_auth_user_from_qs &lt;- function(qs) {</code></li>
 <li><strong>Purpose:</strong> Internal helper to extract <code>auth_user</code> from query string safely.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1615,7 +1708,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-parse-ldap-uris" class="level3">
 <h3 class="anchored" data-anchor-id="fn-parse-ldap-uris"><code>parse_ldap_uris</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1169</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1169</code></li>
 <li><strong>Signature line:</strong> <code>parse_ldap_uris &lt;- function(uri_string) {</code></li>
 <li><strong>Purpose:</strong> Parses comma-separated LDAP URIs into host/port/SSL target objects.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1624,7 +1717,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-extract-ldap-attr" class="level3">
 <h3 class="anchored" data-anchor-id="fn-extract-ldap-attr"><code>extract_ldap_attr</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1191</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1191</code></li>
 <li><strong>Signature line:</strong> <code>extract_ldap_attr &lt;- function(result, attr) {</code></li>
 <li><strong>Purpose:</strong> Extracts one LDAP attribute from heterogeneous result formats.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1633,7 +1726,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-ldap-lookup-user" class="level3">
 <h3 class="anchored" data-anchor-id="fn-ldap-lookup-user"><code>ldap_lookup_user</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1207</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1207</code></li>
 <li><strong>Signature line:</strong> <code>ldap_lookup_user &lt;- function(username) {</code></li>
 <li><strong>Purpose:</strong> Performs LDAP attribute lookup (email/phone/ou/full_name) with bind and <code>ldapsearch</code> fallback.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1642,7 +1735,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-ldap-try-bind" class="level3">
 <h3 class="anchored" data-anchor-id="fn-ldap-try-bind"><code>ldap_try_bind</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1239</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1239</code></li>
 <li><strong>Signature line:</strong> <code>ldap_try_bind &lt;- function(conn, bind_dn, bind_pw) {</code></li>
 <li><strong>Purpose:</strong> Attempts LDAP bind using configured bind user/password or anonymous fallback.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1651,7 +1744,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-ldap-search" class="level3">
 <h3 class="anchored" data-anchor-id="fn-ldap-search"><code>ldap_search</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1276</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1276</code></li>
 <li><strong>Signature line:</strong> <code>ldap_search &lt;- function(conn, base_dn, filter, attrs) {</code></li>
 <li><strong>Purpose:</strong> Executes LDAP search using compatible parameter names for different package variants.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1660,7 +1753,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-ldapsearch-lookup" class="level3">
 <h3 class="anchored" data-anchor-id="fn-ldapsearch-lookup"><code>ldapsearch_lookup</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1294</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1294</code></li>
 <li><strong>Signature line:</strong> <code>ldapsearch_lookup &lt;- function(uri, base_dn, filter, attrs, bind_dn, bind_pw) {</code></li>
 <li><strong>Purpose:</strong> Runs shell <code>ldapsearch</code> fallback and captures output for parsing.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1669,7 +1762,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-normalize-ldap-lines" class="level3">
 <h3 class="anchored" data-anchor-id="fn-normalize-ldap-lines"><code>normalize_ldap_lines</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1339</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1339</code></li>
 <li><strong>Signature line:</strong> <code>normalize_ldap_lines &lt;- function(lines) {</code></li>
 <li><strong>Purpose:</strong> Normalizes folded LDAP output lines into full logical lines.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1678,7 +1771,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-parse-ldapsearch-output" class="level3">
 <h3 class="anchored" data-anchor-id="fn-parse-ldapsearch-output"><code>parse_ldapsearch_output</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1355</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1355</code></li>
 <li><strong>Signature line:</strong> <code>parse_ldapsearch_output &lt;- function(lines, key) {</code></li>
 <li><strong>Purpose:</strong> Extracts one key value from ldapsearch text output.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1687,7 +1780,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-normalize-group-key" class="level3">
 <h3 class="anchored" data-anchor-id="fn-normalize-group-key"><code>normalize_group_key</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1464</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1464</code></li>
 <li><strong>Signature line:</strong> <code>normalize_group_key &lt;- function(value) {</code></li>
 <li><strong>Purpose:</strong> Lowercases/trims group text for matching.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1696,7 +1789,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-extract-group-key-from-ou" class="level3">
 <h3 class="anchored" data-anchor-id="fn-extract-group-key-from-ou"><code>extract_group_key_from_ou</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1469</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1469</code></li>
 <li><strong>Signature line:</strong> <code>extract_group_key_from_ou &lt;- function(ou_value) {</code></li>
 <li><strong>Purpose:</strong> Extracts compact group key from LDAP OU text (prefers <code>(Group)</code> substring).</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1705,7 +1798,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-map-group-from-ldap-ou" class="level3">
 <h3 class="anchored" data-anchor-id="fn-map-group-from-ldap-ou"><code>map_group_from_ldap_ou</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1480</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1480</code></li>
 <li><strong>Signature line:</strong> <code>map_group_from_ldap_ou &lt;- function(ou_value, con) {</code></li>
 <li><strong>Purpose:</strong> Maps LDAP OU/group text to existing budget-holder full names.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1714,7 +1807,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-budget-holder-notice-ui" class="level3">
 <h3 class="anchored" data-anchor-id="fn-budget-holder-notice-ui"><code>budget_holder_notice_ui</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1508</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1508</code></li>
 <li><strong>Signature line:</strong> <code>budget_holder_notice_ui &lt;- function(selected_id) {</code></li>
 <li><strong>Purpose:</strong> Renders inline warnings when selected budget holder has missing/multiple cost-center contexts.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1723,7 +1816,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-budget-holder-other-fields-ui" class="level3">
 <h3 class="anchored" data-anchor-id="fn-budget-holder-other-fields-ui"><code>budget_holder_other_fields_ui</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1548</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1548</code></li>
 <li><strong>Signature line:</strong> <code>budget_holder_other_fields_ui &lt;- function(prefix = "") {</code></li>
 <li><strong>Purpose:</strong> Renders “Other / not listed” PI input fields for budget holder creation-on-the-fly.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1732,7 +1825,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-budget-holder-other-notice-ui" class="level3">
 <h3 class="anchored" data-anchor-id="fn-budget-holder-other-notice-ui"><code>budget_holder_other_notice_ui</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1564</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1564</code></li>
 <li><strong>Signature line:</strong> <code>budget_holder_other_notice_ui &lt;- function(cost_center_value) {</code></li>
 <li><strong>Purpose:</strong> Warns when free-text budget holder has no cost center.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1741,7 +1834,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-complete-login" class="level3">
 <h3 class="anchored" data-anchor-id="fn-complete-login"><code>complete_login</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1574</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1574</code></li>
 <li><strong>Signature line:</strong> <code>complete_login &lt;- function(user_data) {</code></li>
 <li><strong>Purpose:</strong> Sets logged-in state, user identity, admin flag, and refreshes reference data.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1750,7 +1843,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-show-profile-modal" class="level3">
 <h3 class="anchored" data-anchor-id="fn-show-profile-modal"><code>show_profile_modal</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1601</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1601</code></li>
 <li><strong>Signature line:</strong> <code>show_profile_modal &lt;- function(username, attrs, is_new) {</code></li>
 <li><strong>Purpose:</strong> Shows required LDAP profile completion modal for missing user attributes.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1759,7 +1852,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-maybe-prompt-profile-update" class="level3">
 <h3 class="anchored" data-anchor-id="fn-maybe-prompt-profile-update"><code>maybe_prompt_profile_update</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1621</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1621</code></li>
 <li><strong>Signature line:</strong> <code>maybe_prompt_profile_update &lt;- function(user_row, attrs) {</code></li>
 <li><strong>Purpose:</strong> Prompts existing users to fill missing mandatory profile fields.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1768,7 +1861,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-handle-ldap-login" class="level3">
 <h3 class="anchored" data-anchor-id="fn-handle-ldap-login"><code>handle_ldap_login</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1635</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1635</code></li>
 <li><strong>Signature line:</strong> <code>handle_ldap_login &lt;- function(username) {</code></li>
 <li><strong>Purpose:</strong> End-to-end LDAP login orchestration: user lookup/create/update + mapping + completion flow.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1777,7 +1870,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-make-status-choices" class="level3">
 <h3 class="anchored" data-anchor-id="fn-make-status-choices"><code>make_status_choices</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1802</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1802</code></li>
 <li><strong>Signature line:</strong> <code>make_status_choices &lt;- function(current_status = NULL) {</code></li>
 <li><strong>Purpose:</strong> Builds status select choices while preserving unknown legacy statuses.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1786,7 +1879,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-get-db-connection" class="level3">
 <h3 class="anchored" data-anchor-id="fn-get-db-connection"><code>get_db_connection</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1811</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1811</code></li>
 <li><strong>Signature line:</strong> <code>get_db_connection &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Returns SQLite connection to <code>sequencing_projects.db</code> in app working directory.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1795,7 +1888,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-users-has-full-name" class="level3">
 <h3 class="anchored" data-anchor-id="fn-users-has-full-name"><code>users_has_full_name</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1815</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1815</code></li>
 <li><strong>Signature line:</strong> <code>users_has_full_name &lt;- function(con) {</code></li>
 <li><strong>Purpose:</strong> Schema-compat helper: checks whether <code>users.full_name</code> exists.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1804,7 +1897,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-refresh-announcements" class="level3">
 <h3 class="anchored" data-anchor-id="fn-refresh-announcements"><code>refresh_announcements</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1821</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1821</code></li>
 <li><strong>Signature line:</strong> <code>refresh_announcements &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Reactive invalidation trigger to force landing text re-render after edits.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1813,7 +1906,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-get-announcement-panels" class="level3">
 <h3 class="anchored" data-anchor-id="fn-get-announcement-panels"><code>get_announcement_panels</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1825</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1825</code></li>
 <li><strong>Signature line:</strong> <code>get_announcement_panels &lt;- function(con = NULL, active_only = FALSE) {</code></li>
 <li><strong>Purpose:</strong> Returns panel rows for admin management, active or all.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1822,7 +1915,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-get-announcement-items-for-panel" class="level3">
 <h3 class="anchored" data-anchor-id="fn-get-announcement-items-for-panel"><code>get_announcement_items_for_panel</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1847</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1847</code></li>
 <li><strong>Signature line:</strong> <code>get_announcement_items_for_panel &lt;- function(panel_key, con = NULL, active_only = FALSE) {</code></li>
 <li><strong>Purpose:</strong> Returns ordered rows for one landing panel.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1831,7 +1924,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-normalize-announcement-item-order" class="level3">
 <h3 class="anchored" data-anchor-id="fn-normalize-announcement-item-order"><code>normalize_announcement_item_order</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1877</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1877</code></li>
 <li><strong>Signature line:</strong> <code>normalize_announcement_item_order &lt;- function(con, panel_id) {</code></li>
 <li><strong>Purpose:</strong> Compacts/resequences display order after deletes/reordering.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1840,7 +1933,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-validate-announcement-markdown" class="level3">
 <h3 class="anchored" data-anchor-id="fn-validate-announcement-markdown"><code>validate_announcement_markdown</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1895</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1895</code></li>
 <li><strong>Signature line:</strong> <code>validate_announcement_markdown &lt;- function(markdown_text) {</code></li>
 <li><strong>Purpose:</strong> Validates announcement item text for non-empty and max-length constraints.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1849,7 +1942,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-selected-announcement-item" class="level3">
 <h3 class="anchored" data-anchor-id="fn-selected-announcement-item"><code>selected_announcement_item</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1906</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1906</code></li>
 <li><strong>Signature line:</strong> <code>selected_announcement_item &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Returns currently selected item row from admin DT selection state.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1858,7 +1951,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-get-all-usernames" class="level3">
 <h3 class="anchored" data-anchor-id="fn-get-all-usernames"><code>get_all_usernames</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1926</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1926</code></li>
 <li><strong>Signature line:</strong> <code>get_all_usernames &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Builds responsible-user dropdown values (full name preferred, username fallback).</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1867,7 +1960,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-load-budget-holders" class="level3">
 <h3 class="anchored" data-anchor-id="fn-load-budget-holders"><code>load_budget_holders</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1942</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1942</code></li>
 <li><strong>Signature line:</strong> <code>load_budget_holders &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Loads budget holders reference data.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1876,16 +1969,16 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-load-service-types" class="level3">
 <h3 class="anchored" data-anchor-id="fn-load-service-types"><code>load_service_types</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1950</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1950</code></li>
 <li><strong>Signature line:</strong> <code>load_service_types &lt;- function() {</code></li>
-<li><strong>Purpose:</strong> Loads service type reference data (including per-sample cost).</li>
+<li><strong>Purpose:</strong> Loads sample service type reference data (including per-sample cost).</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
 </ul>
 </section>
 <section id="fn-load-sequencing-depths" class="level3">
 <h3 class="anchored" data-anchor-id="fn-load-sequencing-depths"><code>load_sequencing_depths</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1958</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1958</code></li>
 <li><strong>Signature line:</strong> <code>load_sequencing_depths &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Loads depth/reference pricing tiers.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1894,7 +1987,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-load-sequencing-cycles" class="level3">
 <h3 class="anchored" data-anchor-id="fn-load-sequencing-cycles"><code>load_sequencing_cycles</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1966</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1966</code></li>
 <li><strong>Signature line:</strong> <code>load_sequencing_cycles &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Loads cycle/read-length options.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1903,7 +1996,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-load-reference-genomes" class="level3">
 <h3 class="anchored" data-anchor-id="fn-load-reference-genomes"><code>load_reference_genomes</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1974</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1974</code></li>
 <li><strong>Signature line:</strong> <code>load_reference_genomes &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Loads genome list.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1912,7 +2005,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-load-types" class="level3">
 <h3 class="anchored" data-anchor-id="fn-load-types"><code>load_types</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1982</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1982</code></li>
 <li><strong>Signature line:</strong> <code>load_types &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Loads sample type list (<code>types</code> table).</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1921,7 +2014,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-load-sequencing-platforms" class="level3">
 <h3 class="anchored" data-anchor-id="fn-load-sequencing-platforms"><code>load_sequencing_platforms</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1990</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1990</code></li>
 <li><strong>Signature line:</strong> <code>load_sequencing_platforms &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Loads platform list.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1930,34 +2023,88 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-load-admin-data" class="level3">
 <h3 class="anchored" data-anchor-id="fn-load-admin-data"><code>load_admin_data</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:1998</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2088</code></li>
 <li><strong>Signature line:</strong> <code>load_admin_data &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Loads all admin-maintained reference tables and user table.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
 </ul>
 </section>
+<section id="fn-projects-has-additional-cost" class="level3">
+<h3 class="anchored" data-anchor-id="fn-projects-has-additional-cost"><code>projects_has_additional_cost</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1838</code></li>
+<li><strong>Signature line:</strong> <code>projects_has_additional_cost &lt;- function(con) {</code></li>
+<li><strong>Purpose:</strong> Checks whether <code>projects.additional_cost</code> is present in the current DB schema.</li>
+<li><strong>Called/referenced at:</strong> startup DB migration helpers and health checks.</li>
+</ul>
+</section>
+<section id="fn-ensure-projects-additional-cost-column" class="level3">
+<h3 class="anchored" data-anchor-id="fn-ensure-projects-additional-cost-column"><code>ensure_projects_additional_cost_column</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1844</code></li>
+<li><strong>Signature line:</strong> <code>ensure_projects_additional_cost_column &lt;- function(con) {</code></li>
+<li><strong>Purpose:</strong> Applies in-place migration (<code>ALTER TABLE</code>) when <code>additional_cost</code> is missing.</li>
+<li><strong>Called/referenced at:</strong> <code>get_db_connection()</code>, <code>validate_and_repair_database()</code>.</li>
+</ul>
+</section>
+<section id="fn-format-cost-amount" class="level3">
+<h3 class="anchored" data-anchor-id="fn-format-cost-amount"><code>format_cost_amount</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1851</code></li>
+<li><strong>Signature line:</strong> <code>format_cost_amount &lt;- function(value) {</code></li>
+<li><strong>Purpose:</strong> Normalizes numeric display to two decimals for all cost summaries.</li>
+<li><strong>Called/referenced at:</strong> create/edit cost UI blocks and notification message generation.</li>
+</ul>
+</section>
+<section id="fn-parse-additional-cost" class="level3">
+<h3 class="anchored" data-anchor-id="fn-parse-additional-cost"><code>parse_additional_cost</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:1857</code></li>
+<li><strong>Signature line:</strong> <code>parse_additional_cost &lt;- function(value) {</code></li>
+<li><strong>Purpose:</strong> Validates admin-entered additional cost as non-negative decimal; supports comma/dot input.</li>
+<li><strong>Called/referenced at:</strong> edit-cost preview, project update write path, notification-send handler.</li>
+</ul>
+</section>
+<section id="fn-calculate-base-cost" class="level3">
+<h3 class="anchored" data-anchor-id="fn-calculate-base-cost"><code>calculate_base_cost</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2110</code></li>
+<li><strong>Signature line:</strong> <code>calculate_base_cost &lt;- function(num_samples, service_type_id, sequencing_depth_id, sequencing_cycles_id) {</code></li>
+<li><strong>Purpose:</strong> Computes preparation + sequencing baseline before optional admin surcharge.</li>
+<li><strong>Called/referenced at:</strong> create modal cost preview and edit modal cost preview.</li>
+</ul>
+</section>
 <section id="fn-calculate-total-cost" class="level3">
 <h3 class="anchored" data-anchor-id="fn-calculate-total-cost"><code>calculate_total_cost</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2020</code></li>
-<li><strong>Signature line:</strong> <code>calculate_total_cost &lt;- function(num_samples, service_type_id, sequencing_depth_id, sequencing_cycles_id) {</code></li>
-<li><strong>Purpose:</strong> Computes estimated project cost from samples + service + depth/cycles rules.</li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2140</code></li>
+<li><strong>Signature line:</strong> <code>calculate_total_cost &lt;- function(num_samples, service_type_id, sequencing_depth_id, sequencing_cycles_id, additional_cost = 0) {</code></li>
+<li><strong>Purpose:</strong> Computes final estimated cost (base cost + optional admin-entered additional cost).</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
 </ul>
 </section>
 <section id="fn-send-project-creation-email" class="level3">
 <h3 class="anchored" data-anchor-id="fn-send-project-creation-email"><code>send_project_creation_email</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2051</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2150</code></li>
 <li><strong>Signature line:</strong> <code>send_project_creation_email &lt;- function(project_data, budget_holder, user_email) {</code></li>
-<li><strong>Purpose:</strong> Builds and sends project-created email to creator + budget holder + facility mailbox.</li>
+<li><strong>Purpose:</strong> Builds and sends project-created email to NGS facility mailbox only (<code>ngs@example.org</code>).</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
+</ul>
+</section>
+<section id="fn-send-project-cost-notification-email" class="level3">
+<h3 class="anchored" data-anchor-id="fn-send-project-cost-notification-email"><code>send_project_cost_notification_email</code></h3>
+<ul>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2260</code></li>
+<li><strong>Signature line:</strong> <code>send_project_cost_notification_email &lt;- function(project_data, budget_holder, user_email) {</code></li>
+<li><strong>Purpose:</strong> Sends admin-triggered cost-estimation notification to creator + budget holder + NGS mailbox.</li>
+<li><strong>Called/referenced at:</strong> <code>observeEvent(input$send_notification_btn)</code>.</li>
 </ul>
 </section>
 <section id="fn-send-data-released-email" class="level3">
 <h3 class="anchored" data-anchor-id="fn-send-data-released-email"><code>send_data_released_email</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2151</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2348</code></li>
 <li><strong>Signature line:</strong> <code>send_data_released_email &lt;- function(project_data) {</code></li>
 <li><strong>Purpose:</strong> Sends automatic “Data released” email to responsible user and <code>omicsdesk</code> target.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1966,7 +2113,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-load-projects" class="level3">
 <h3 class="anchored" data-anchor-id="fn-load-projects"><code>load_projects</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2732</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2929</code></li>
 <li><strong>Signature line:</strong> <code>load_projects &lt;- function() {</code></li>
 <li><strong>Purpose:</strong> Queries projects table with joins, role filtering, and display-preparation columns.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1975,7 +2122,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-get-or-create-budget-holder" class="level3">
 <h3 class="anchored" data-anchor-id="fn-get-or-create-budget-holder"><code>get_or_create_budget_holder</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:3055</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:3254</code></li>
 <li><strong>Signature line:</strong> <code>get_or_create_budget_holder &lt;- function(con, name, surname, cost_center, email) {</code></li>
 <li><strong>Purpose:</strong> Finds existing budget holder or inserts one from “Other / not listed” modal fields.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1984,7 +2131,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-scalar-text-update-flow" class="level3">
 <h3 class="anchored" data-anchor-id="fn-scalar-text-update-flow"><code>scalar_text</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5062</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:5321</code></li>
 <li><strong>Signature line:</strong> <code>scalar_text &lt;- function(x, default = "") {</code></li>
 <li><strong>Purpose:</strong> Normalizes potentially vector/empty values into a single trimmed string or NULL.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -1994,7 +2141,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="fn-scalar-numeric" class="level3">
 <h3 class="anchored" data-anchor-id="fn-scalar-numeric"><code>scalar_numeric</code></h3>
 <ul>
-<li><strong>Defined at:</strong> <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5069</code></li>
+<li><strong>Defined at:</strong> <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:5328</code></li>
 <li><strong>Signature line:</strong> <code>scalar_numeric &lt;- function(x, default = NA_real_) {</code></li>
 <li><strong>Purpose:</strong> Normalizes potentially vector numeric input to one safe scalar for DB binding.</li>
 <li><strong>Called/referenced at:</strong> not detected directly (may be invoked via nested closure/runtime path).</li>
@@ -2004,7 +2151,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="reactive-event-catalog-all-observeevent" class="level2">
 <h2 class="anchored" data-anchor-id="reactive-event-catalog-all-observeevent">Reactive Event Catalog (All <code>observeEvent</code>)</h2>
 <p>Every event trigger is listed with the panel it belongs to and what action it performs.</p>
-<table class="table">
+<table class="caption-top table">
 <colgroup>
 <col style="width: 30%">
 <col style="width: 23%">
@@ -2087,16 +2234,16 @@ ul.task-list li input[type="checkbox"] {
 <td>Handles local logout or LDAP end-session guidance modal.</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">2903</td>
+<td style="text-align: right;">3100</td>
 <td><code>input$new_project_btn</code></td>
 <td>Apply for Projects / Projects table</td>
 <td>Opens project-create modal and auto-selects budget holder by group mapping.</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">3079</td>
+<td style="text-align: right;">3278</td>
 <td><code>input$create_project_btn</code></td>
 <td>Apply for Projects / Projects table</td>
-<td>Validates, inserts new project, sends creation email, and refreshes project table.</td>
+<td>Validates, inserts new project, sends creation email to NGS mailbox, and refreshes project table.</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">3315</td>
@@ -2113,7 +2260,7 @@ ul.task-list li input[type="checkbox"] {
 <tr class="even">
 <td style="text-align: right;">3362</td>
 <td><code>input$manage_service_types_btn</code></td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 <td>Opens admin management modal for the selected reference-data domain.</td>
 </tr>
 <tr class="odd">
@@ -2215,13 +2362,13 @@ ul.task-list li input[type="checkbox"] {
 <tr class="odd">
 <td style="text-align: right;">4096</td>
 <td><code>input$add_service_type_btn</code></td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 <td>Validates form fields and inserts a new row into the corresponding reference table.</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">4129</td>
 <td><code>input$edit_service_type_btn</code></td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 <td>Opens edit modal for currently selected row in the matching admin table.</td>
 </tr>
 <tr class="odd">
@@ -2275,7 +2422,7 @@ ul.task-list li input[type="checkbox"] {
 <tr class="odd">
 <td style="text-align: right;">4364</td>
 <td><code>input$update_service_type_btn</code></td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 <td>Applies updates from edit modal to DB and refreshes affected reactive tables.</td>
 </tr>
 <tr class="even">
@@ -2341,13 +2488,13 @@ ul.task-list li input[type="checkbox"] {
 <tr class="even">
 <td style="text-align: right;">4650</td>
 <td><code>input$delete_service_type_btn</code></td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 <td>Opens delete confirmation for selected row.</td>
 </tr>
 <tr class="odd">
 <td style="text-align: right;">4669</td>
 <td><code>input$confirm_delete_service_type_btn</code></td>
-<td>Administer Projects -&gt; Service Types</td>
+<td>Administer Projects -&gt; Sample Service Types</td>
 <td>Executes confirmed delete, then reloads related data.</td>
 </tr>
 <tr class="even">
@@ -2423,54 +2570,60 @@ ul.task-list li input[type="checkbox"] {
 <td>Executes confirmed delete, then reloads related data.</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">4895</td>
+<td style="text-align: right;">5094</td>
 <td><code>input$edit_project_btn</code></td>
 <td>Apply for Projects / Projects table</td>
 <td>Opens edit modal for selected project with permission checks.</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">5027</td>
+<td style="text-align: right;">5286</td>
 <td><code>input$update_project_btn</code></td>
 <td>Apply for Projects / Projects table</td>
-<td>Updates selected project row and optionally sends data-released email.</td>
+<td>Updates selected project row, validates/stores <code>additional_cost</code> (admin), and optionally sends data-released email.</td>
 </tr>
 <tr class="even">
+<td style="text-align: right;">5473</td>
+<td><code>input$send_notification_btn</code></td>
+<td>Apply for Projects / Edit Project modal (admin)</td>
+<td>Sends explicit cost-estimation notification email (creator + budget holder + NGS) without changing project status.</td>
+</tr>
+<tr class="odd">
 <td style="text-align: right;">5194</td>
 <td><code>input$delete_project_btn</code></td>
 <td>Apply for Projects / Projects table</td>
 <td>Shows admin-only delete confirmation for selected project.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: right;">5220</td>
 <td><code>input$confirm_delete_btn</code></td>
 <td>General / Shared</td>
 <td>Deletes project row from DB and refreshes table.</td>
 </tr>
-<tr class="even">
-<td style="text-align: right;">5236</td>
+<tr class="odd">
+<td style="text-align: right;">5630</td>
 <td><code>input$update_status_btn</code></td>
 <td>Apply for Projects / Projects table</td>
 <td>Opens status-update modal (admin only).</td>
 </tr>
-<tr class="odd">
-<td style="text-align: right;">5271</td>
+<tr class="even">
+<td style="text-align: right;">5665</td>
 <td><code>input$confirm_status_update_btn</code></td>
 <td>Apply for Projects / Projects table</td>
 <td>Writes new status and sends data-released email when applicable.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: right;">5350</td>
 <td><code>input$validate_db_btn</code></td>
 <td>Administer Projects -&gt; Database Management</td>
 <td>Runs DB validation and reports health status.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: right;">5395</td>
 <td><code>input$restore_db_btn</code></td>
 <td>Administer Projects -&gt; Database Management</td>
 <td>Starts DB restore flow after backup-file selection.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: right;">5414</td>
 <td><code>input$confirm_restore_btn</code></td>
 <td>Administer Projects -&gt; Database Management</td>
@@ -2481,7 +2634,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="reactive-observer-blocks-observe" class="level2">
 <h2 class="anchored" data-anchor-id="reactive-observer-blocks-observe">Reactive Observer Blocks (<code>observe</code>)</h2>
-<table class="table">
+<table class="caption-top table">
 <colgroup>
 <col style="width: 57%">
 <col style="width: 42%">
@@ -2513,7 +2666,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="line-by-line-sql-index" class="level3">
 <h3 class="anchored" data-anchor-id="line-by-line-sql-index">Line-by-Line SQL Index</h3>
 <p>The table below indexes each detected DB call (<code>dbGetQuery</code>, <code>dbExecute</code>) in <code>app.R</code> so you can jump from behavior to exact query line.</p>
-<table class="table">
+<table class="caption-top table">
 <colgroup>
 <col style="width: 21%">
 <col style="width: 15%">
@@ -3441,13 +3594,13 @@ ul.task-list li input[type="checkbox"] {
 <ul>
 <li>Landing text panels (<code>output$announcement_blocks_ui</code>) are DB-driven and admin-editable.</li>
 <li>Project actions for users: create, edit (delete hidden for non-admin).</li>
-<li>Primary flows: <code>input$new_project_btn</code> -&gt; modal; <code>input$create_project_btn</code> writes DB + sends email; <code>input$edit_project_btn</code> and <code>input$update_project_btn</code> modify rows.</li>
+<li>Primary flows: <code>input$new_project_btn</code> -&gt; modal; <code>input$create_project_btn</code> writes DB + sends NGS-only creation email; <code>input$edit_project_btn</code> and <code>input$update_project_btn</code> modify rows; <code>input$send_notification_btn</code> sends explicit cost notifications.</li>
 </ul>
 </section>
 <section id="administer-projects" class="level3">
 <h3 class="anchored" data-anchor-id="administer-projects">Administer Projects</h3>
 <ul>
-<li>Entry point for all reference-data management (users, budget holders, genomes, sample types, service types, depth, cycles, platforms, landing text).</li>
+<li>Entry point for all reference-data management (users, budget holders, genomes, sample types, sample service types, depth, cycles, platforms, landing text).</li>
 <li>Includes DB backup download, restore upload, and validation controls.</li>
 <li>Every admin button opens a modal, each modal has add/edit/delete handlers, and each handler performs DB write + reactive refresh + notification.</li>
 </ul>
@@ -3469,12 +3622,13 @@ ul.task-list li input[type="checkbox"] {
 <section id="cross-reference-quick-index" class="level2">
 <h2 class="anchored" data-anchor-id="cross-reference-quick-index">Cross-Reference Quick Index</h2>
 <ul>
-<li><strong>Create project modal</strong>: <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2903</code> (open), <code>:3079</code> (submit).</li>
-<li><strong>Edit project modal</strong>: <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:4895</code> (open), <code>:5027</code> (submit).</li>
-<li><strong>Status update modal</strong>: <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:5236</code> (open), <code>:5271</code> (submit).</li>
-<li><strong>Landing text management</strong>: <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:3571</code> and CRUD events <code>:3765</code> onward.</li>
-<li><strong>LDAP auto-login core</strong>: <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2383</code> + helpers around <code>:1103</code> and <code>:1635</code>.</li>
-<li><strong>DB backup/restore UI</strong>: <code>/Users/yeroslaviz/Documents/Github/BCFNGS-project-management/sequencing-app/app.R:2876-2893</code>; handlers at <code>:5350-5414</code>.</li>
+<li><strong>Create project modal</strong>: <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:3100</code> (open), <code>:3278</code> (submit).</li>
+<li><strong>Edit project modal</strong>: <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:5094</code> (open), <code>:5286</code> (submit).</li>
+<li><strong>Cost notification button</strong>: <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:5126</code> (UI), <code>:5473</code> (handler).</li>
+<li><strong>Status update modal</strong>: <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:5630</code> (open), <code>:5665</code> (submit).</li>
+<li><strong>Landing text management</strong>: <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:3770</code> and CRUD events <code>:3765</code> onward.</li>
+<li><strong>LDAP auto-login core</strong>: <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:2383</code> + helpers around <code>:1103</code> and <code>:1635</code>.</li>
+<li><strong>DB backup/restore UI</strong>: <code>/Users/exampleuser/Documents/Github/example-repo/sequencing-app/app.R:3196-3213</code>; handlers at <code>:5744-5808</code>.</li>
 </ul>
 </section>
 <section id="caveats-and-technical-debt-notes" class="level2">
@@ -3492,8 +3646,8 @@ ul.task-list li input[type="checkbox"] {
 <ol type="1">
 <li>Start with <code>validate_and_repair_database()</code> and auth mode setup to understand startup preconditions.</li>
 <li>Follow <code>complete_login()</code> + <code>load_projects()</code> to understand post-login state.</li>
-<li>Read one full CRUD chain end-to-end (e.g., service types) to understand modal -&gt; validation -&gt; SQL -&gt; refresh pattern.</li>
-<li>Read <code>send_project_creation_email()</code> and <code>send_data_released_email()</code> for notification side-effects.</li>
+<li>Read one full CRUD chain end-to-end (e.g., sample service types) to understand modal -&gt; validation -&gt; SQL -&gt; refresh pattern.</li>
+<li>Read <code>send_project_creation_email()</code>, <code>send_project_cost_notification_email()</code>, and <code>send_data_released_email()</code> for notification side-effects.</li>
 <li>Read backup/restore handlers before doing production maintenance.</li>
 </ol>
 </section>
@@ -3502,43 +3656,58 @@ ul.task-list li input[type="checkbox"] {
 </main>
 <!-- /main column -->
 <script id="quarto-html-after-body" type="application/javascript">
-window.document.addEventListener("DOMContentLoaded", function (event) {
-  const toggleBodyColorMode = (bsSheetEl) => {
-    const mode = bsSheetEl.getAttribute("data-mode");
-    const bodyEl = window.document.querySelector("body");
-    if (mode === "dark") {
-      bodyEl.classList.add("quarto-dark");
-      bodyEl.classList.remove("quarto-light");
-    } else {
-      bodyEl.classList.add("quarto-light");
-      bodyEl.classList.remove("quarto-dark");
-    }
-  }
-  const toggleBodyColorPrimary = () => {
-    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
-    if (bsSheetEl) {
-      toggleBodyColorMode(bsSheetEl);
-    }
-  }
-  toggleBodyColorPrimary();  
-  const icon = "";
-  const anchorJS = new window.AnchorJS();
-  anchorJS.options = {
-    placement: 'right',
-    icon: icon
-  };
-  anchorJS.add('.anchored');
-  const isCodeAnnotation = (el) => {
-    for (const clz of el.classList) {
-      if (clz.startsWith('code-annotation-')) {                     
-        return true;
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
       }
+      return false;
     }
-    return false;
-  }
-  const clipboard = new window.ClipboardJS('.code-copy-button', {
-    text: function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
       for (const childEl of codeEl.children) {
         if (isCodeAnnotation(childEl)) {
           childEl.remove();
@@ -3546,141 +3715,184 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       }
       return codeEl.innerText;
     }
-  });
-  clipboard.on('success', function(e) {
-    // button target
-    const button = e.trigger;
-    // don't keep focus
-    button.blur();
-    // flash "checked"
-    button.classList.add('code-copy-button-checked');
-    var currentTitle = button.getAttribute("title");
-    button.setAttribute("title", "Copied!");
-    let tooltip;
-    if (window.bootstrap) {
-      button.setAttribute("data-bs-toggle", "tooltip");
-      button.setAttribute("data-bs-placement", "left");
-      button.setAttribute("data-bs-title", "Copied!");
-      tooltip = new bootstrap.Tooltip(button, 
-        { trigger: "manual", 
-          customClass: "code-copy-button-tooltip",
-          offset: [0, -8]});
-      tooltip.show();    
-    }
-    setTimeout(function() {
-      if (tooltip) {
-        tooltip.hide();
-        button.removeAttribute("data-bs-title");
-        button.removeAttribute("data-bs-toggle");
-        button.removeAttribute("data-bs-placement");
-      }
-      button.setAttribute("title", currentTitle);
-      button.classList.remove('code-copy-button-checked');
-    }, 1000);
-    // clear code selection
-    e.clearSelection();
-  });
-  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
-    const config = {
-      allowHTML: true,
-      maxWidth: 500,
-      delay: 100,
-      arrow: false,
-      appendTo: function(el) {
-          return el.parentElement;
-      },
-      interactive: true,
-      interactiveBorder: 10,
-      theme: 'quarto',
-      placement: 'bottom-start',
-    };
-    if (contentFn) {
-      config.content = contentFn;
-    }
-    if (onTriggerFn) {
-      config.onTrigger = onTriggerFn;
-    }
-    if (onUntriggerFn) {
-      config.onUntrigger = onUntriggerFn;
-    }
-    window.tippy(el, config); 
-  }
-  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-  for (var i=0; i<noterefs.length; i++) {
-    const ref = noterefs[i];
-    tippyHover(ref, function() {
-      // use id or data attribute instead here
-      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-      try { href = new URL(href).hash; } catch {}
-      const id = href.replace(/^#\/?/, "");
-      const note = window.document.getElementById(id);
-      return note.innerHTML;
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
     });
-  }
-  const xrefs = window.document.querySelectorAll('a.quarto-xref');
-  const processXRef = (id, note) => {
-    // Strip column container classes
-    const stripColumnClz = (el) => {
-      el.classList.remove("page-full", "page-columns");
-      if (el.children) {
-        for (const child of el.children) {
-          stripColumnClz(child);
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
         }
       }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
     }
-    stripColumnClz(note)
-    if (id.startsWith('sec-')) {
-      // Special case sections, only their first couple elements
-      const container = document.createElement("div");
-      if (note.children && note.children.length > 2) {
-        for (let i = 0; i < 2; i++) {
-          container.appendChild(note.children[i].cloneNode(true));
-        }
-        return container.innerHTML
-      } else {
-        return note.innerHTML;
-      }
-    } else {
-      // Remove any anchor links if they are present
-      const anchorLink = note.querySelector('a.anchorjs-link');
-      if (anchorLink) {
-        anchorLink.remove();
-      }
-      return note.innerHTML;
-    }
-  }
-  for (var i=0; i<xrefs.length; i++) {
-    const xref = xrefs[i];
-    tippyHover(xref, undefined, function(instance) {
-      instance.disable();
-      let url = xref.getAttribute('href');
-      let hash = undefined; 
-      if (url.startsWith('#')) {
-        hash = url;
-      } else {
-        try { hash = new URL(url).hash; } catch {}
-      }
-      if (hash) {
-        const id = hash.replace(/^#\/?/, "");
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
         const note = window.document.getElementById(id);
-        if (note !== null) {
-          try {
-            const html = processXRef(id, note.cloneNode(true));
-            instance.setContent(html);
-          } finally {
-            instance.enable();
-            instance.show();
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
           }
         } else {
-          // See if we can fetch this
-          fetch(url.split('#')[0])
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
           .then(res => res.text())
           .then(html => {
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString(html, "text/html");
-            const note = htmlDoc.getElementById(id);
+            const note = htmlDoc.querySelector('main.content');
             if (note !== null) {
-              const html = processXRef(id, note);
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
               instance.setContent(html);
             } 
           }).finally(() => {
@@ -3688,163 +3900,161 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             instance.show();
           });
         }
-      }
-    }, function(instance) {
-    });
-  }
-      let selectedAnnoteEl;
-      const selectorForAnnotation = ( cell, annotation) => {
-        let cellAttr = 'data-code-cell="' + cell + '"';
-        let lineAttr = 'data-code-annotation="' +  annotation + '"';
-        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-        return selector;
-      }
-      const selectCodeLines = (annoteEl) => {
-        const doc = window.document;
-        const targetCell = annoteEl.getAttribute("data-target-cell");
-        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-        const lineIds = lines.map((line) => {
-          return targetCell + "-" + line;
-        })
-        let top = null;
-        let height = null;
-        let parent = null;
-        if (lineIds.length > 0) {
-            //compute the position of the single el (top and bottom and make a div)
-            const el = window.document.getElementById(lineIds[0]);
-            top = el.offsetTop;
-            height = el.offsetHeight;
-            parent = el.parentElement.parentElement;
-          if (lineIds.length > 1) {
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-            height = bottom - top;
-          }
-          if (top !== null && height !== null && parent !== null) {
-            // cook up a div (if necessary) and position it 
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            div.style.top = top - 2 + "px";
-            div.style.height = height + 4 + "px";
-            div.style.left = 0;
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            gutterDiv.style.top = top - 2 + "px";
-            gutterDiv.style.height = height + 4 + "px";
-          }
-          selectedAnnoteEl = annoteEl;
-        }
-      };
-      const unselectCodeLines = () => {
-        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-        elementsIds.forEach((elId) => {
-          const div = window.document.getElementById(elId);
-          if (div) {
-            div.remove();
-          }
-        });
-        selectedAnnoteEl = undefined;
-      };
-        // Handle positioning of the toggle
-    window.addEventListener(
-      "resize",
-      throttle(() => {
-        console.log("RESIZE");
-        elRect = undefined;
-        if (selectedAnnoteEl) {
-          selectCodeLines(selectedAnnoteEl);
-        }
-      }, 10)
-    );
-    function throttle(fn, ms) {
-    let throttle = false;
-    let timer;
-      return (...args) => {
-        if(!throttle) { // first call gets through
-            fn.apply(this, args);
-            throttle = true;
-        } else { // all the others get throttled
-            if(timer) clearTimeout(timer); // cancel #2
-            timer = setTimeout(() => {
-              fn.apply(this, args);
-              timer = throttle = false;
-            }, ms);
-        }
-      };
-    }
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
-          }
-        });
-      }
-  const findCites = (el) => {
-    const parentEl = el.parentElement;
-    if (parentEl) {
-      const cites = parentEl.dataset.cites;
-      if (cites) {
-        return {
-          el,
-          cites: cites.split(' ')
-        };
-      } else {
-        return findCites(el.parentElement)
-      }
-    } else {
-      return undefined;
-    }
-  };
-  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-  for (var i=0; i<bibliorefs.length; i++) {
-    const ref = bibliorefs[i];
-    const citeInfo = findCites(ref);
-    if (citeInfo) {
-      tippyHover(citeInfo.el, function() {
-        var popup = window.document.createElement('div');
-        citeInfo.cites.forEach(function(cite) {
-          var citeDiv = window.document.createElement('div');
-          citeDiv.classList.add('hanging-indent');
-          citeDiv.classList.add('csl-entry');
-          var biblioDiv = window.document.getElementById('ref-' + cite);
-          if (biblioDiv) {
-            citeDiv.innerHTML = biblioDiv.innerHTML;
-          }
-          popup.appendChild(citeDiv);
-        });
-        return popup.innerHTML;
+      }, function(instance) {
       });
     }
-  }
-});
-</script>
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
 </div> <!-- /content -->
 
 

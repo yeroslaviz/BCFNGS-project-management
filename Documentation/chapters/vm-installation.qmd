@@ -42,19 +42,19 @@ Why `8443`: it is standard for HTTPS on alternate ports and avoids conflicts.
 Run the requirement check script:
 
 ```bash
-bash /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/check_requirements.sh
+bash /Users/exampleuser/Documents/Github/example-repo/scripts/check_requirements.sh
 ```
 
 Install missing apt packages:
 
 ```bash
-bash /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/check_requirements.sh --install
+bash /Users/exampleuser/Documents/Github/example-repo/scripts/check_requirements.sh --install
 ```
 
 Install missing R packages (including `rJava`):
 
 ```bash
-bash /Users/yeroslaviz/Documents/Github/BCFNGS-project-management/scripts/check_requirements.sh --install-r
+bash /Users/exampleuser/Documents/Github/example-repo/scripts/check_requirements.sh --install-r
 ```
 
 The requirement check reports missing `rJava`/`mailR` and missing Java tools (`java`, `javac`) explicitly.
@@ -145,7 +145,7 @@ Configure OpenLDAP client trust in `/etc/ldap/ldap.conf`:
 ```bash
 sudo tee /etc/ldap/ldap.conf >/dev/null <<'EOF'
 BASE            dc=biochem,dc=mpg,dc=de
-URI             ldaps://ldapserv1.biochem.mpg.de ldaps://ldapserv2.biochem.mpg.de ldaps://ldapserv3.biochem.mpg.de
+URI             ldaps://ldap01.example.internal ldaps://ldap02.example.internal ldaps://ldap03.example.internal
 TLS_REQCERT     hard
 TLS_CACERTDIR   /etc/ssl/certs
 EOF
@@ -166,7 +166,7 @@ sudo Rscript --vanilla -e 'if (!requireNamespace("remotes", quietly=TRUE)) insta
 Quick checks:
 
 ```bash
-ldapsearch -x -H ldaps://ldapserv1.biochem.mpg.de:636 -b "dc=biochem,dc=mpg,dc=de" "(uid=<user>)" mail
+ldapsearch -x -H ldaps://ldap01.example.internal:636 -b "dc=biochem,dc=mpg,dc=de" "(uid=<user>)" mail
 sudo -u shiny Rscript --vanilla -e 'library(ldapr); cat("ldapr OK\n")'
 ```
 
@@ -186,7 +186,7 @@ sudo openssl req -x509 -nodes -days 365 \
 
 ```bash
 cd /home/<user>
-git clone git@github.com:yeroslaviz/BCFNGS-project-management.git
+git clone git@github.com:example-org/example-repo.git
 sudo rsync -av /home/<user>/BCFNGS-project-management/sequencing-app/ /srv/shiny-server/sequencing-app/
 sudo chown -R shiny:shiny /srv/shiny-server/sequencing-app
 ```
@@ -207,7 +207,7 @@ sudo systemctl edit shiny-server
 ```ini
 [Service]
 Environment=AUTH_MODE=ldap
-Environment=LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
+Environment=LDAP_URI=ldaps://ldap01.example.internal:636,ldaps://ldap02.example.internal:636,ldaps://ldap03.example.internal:636
 Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
 Environment=TRUST_PROXY_AUTH_USER_QUERY=1
 ```
@@ -228,7 +228,7 @@ Create/update this file:
 ```bash
 sudo tee /srv/shiny-server/sequencing-app/.Renviron >/dev/null <<'EOF'
 AUTH_MODE=ldap
-LDAP_URI=ldaps://ldapserv1.biochem.mpg.de:636,ldaps://ldapserv2.biochem.mpg.de:636,ldaps://ldapserv3.biochem.mpg.de:636
+LDAP_URI=ldaps://ldap01.example.internal:636,ldaps://ldap02.example.internal:636,ldaps://ldap03.example.internal:636
 LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
 TRUST_PROXY_AUTH_USER_QUERY=1
 # LDAP_DEBUG=1   # only while debugging
@@ -312,8 +312,8 @@ curl -Ik -u USER https://ngs-vm.biochem.mpg.de:8443/sequencing-app/
 If hostname/port tests fail, validate locally against the vhost:
 
 ```bash
-curl -kI -H 'Host: ngs-vm.biochem.mpg.de' https://127.0.0.1:8443/
-curl -kI -u USER -H 'Host: ngs-vm.biochem.mpg.de' https://127.0.0.1:8443/sequencing-app/
+curl -kI -H 'Host: ngs-vm.biochem.mpg.de' https://127.0.0.10:8443/
+curl -kI -u USER -H 'Host: ngs-vm.biochem.mpg.de' https://127.0.0.10:8443/sequencing-app/
 ```
 
 If the app returns HTTP 500 with `mailR/rJava` errors on ngs-vm, apply this runtime fix:
@@ -363,7 +363,7 @@ Use this workflow to export legacy projects from the perl system on `ngs-vm` and
 ### Step 1) Export CSV on ngs-vm (perl PostgreSQL)
 
 ```bash
-psql -U letunic -h 127.0.0.1 -d mpiseq2_db -c "\
+psql -U legacyadmin -h 127.0.0.10 -d mpiseq2_db -c "\
 \\copy (\
   SELECT \
     p.id AS legacy_id, \
@@ -412,17 +412,17 @@ If importing into `bcf-vm`:
 
 ```bash
 # run on bcf-vm once
-mkdir -p /home/yeroslaviz/BCFNGS-project-management/exports/
+mkdir -p /home/exampleuser/example-repo/exports/
 
 # run on ngs-vm (source)
 scp /www/mpiseq2/exports/legacy_projects.utf8.csv \
-  yeroslaviz@bcf-vm:/home/yeroslaviz/BCFNGS-project-management/exports/
+  exampleuser@bcf-vm:/home/exampleuser/example-repo/exports/
 ```
 
 If importing into Shiny on `ngs-vm` (same host as perl system):
 
 ```bash
-cp -R /www/mpiseq2/exports/ /home/yeroslaviz/BCFNGS-project-management/
+cp -R /www/mpiseq2/exports/ /home/exampleuser/example-repo/
 ```
 
 ### Step 4) Import into Shiny SQLite DB
@@ -432,12 +432,12 @@ sudo systemctl stop shiny-server
 cd /srv/shiny-server/sequencing-app
 ```
 
-If `/home/yeroslaviz` is not traversable by `shiny` (permission denied), either:
+If `/home/exampleuser` is not traversable by `shiny` (permission denied), either:
 
 - quick fix:
 
 ```bash
-sudo chmod o+x /home/yeroslaviz
+sudo chmod o+x /home/exampleuser
 ```
 
 - safer fix (preferred): copy script + CSV to a service-owned path and run from there.
@@ -445,9 +445,9 @@ sudo chmod o+x /home/yeroslaviz
 Then run import:
 
 ```bash
-sudo -u shiny python3 /home/yeroslaviz/BCFNGS-project-management/scripts/import_legacy_projects.py \
+sudo -u shiny python3 /home/exampleuser/example-repo/scripts/import_legacy_projects.py \
   --db /srv/shiny-server/sequencing-app/sequencing_projects.db \
-  --csv /home/yeroslaviz/BCFNGS-project-management/exports/legacy_projects.utf8.csv
+  --csv /home/exampleuser/example-repo/exports/legacy_projects.utf8.csv
 
 sudo systemctl start shiny-server
 ```

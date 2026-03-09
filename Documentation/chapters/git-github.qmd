@@ -63,7 +63,7 @@ GitHub: `Settings -> SSH and GPG keys -> New SSH key`
 5. Switch repo remote to SSH:
 
 ```bash
-git remote set-url origin git@github.com:yeroslaviz/BCFNGS-project-management.git
+git remote set-url origin git@github.com:example-org/example-repo.git
 ```
 
 6. Test and pull:
@@ -80,7 +80,7 @@ If SSH is not possible, use a Personal Access Token (PAT), not your account pass
 1. Keep/set HTTPS remote:
 
 ```bash
-git remote set-url origin https://github.com/yeroslaviz/BCFNGS-project-management.git
+git remote set-url origin https://github.com/example-org/example-repo.git
 ```
 
 2. Pull/push and enter:
@@ -151,7 +151,7 @@ Choose one:
 
 Where to paste:
 
-- Deploy key: [GitHub repo `BCFNGS-project-management`](https://github.com/yeroslaviz/BCFNGS-project-management) -> `Settings` -> `Deploy keys` -> `Add deploy key`.
+- Deploy key: [GitHub repo `BCFNGS-project-management`](https://github.com/example-org/example-repo) -> `Settings` -> `Deploy keys` -> `Add deploy key`.
 - User key: GitHub account -> `Settings` -> `SSH and GPG keys` -> `New SSH key`.
 
 After choosing:
@@ -171,7 +171,7 @@ git stash pop
 
 ```bash
 cd /home/<user>
-git clone git@github.com:yeroslaviz/BCFNGS-project-management.git
+git clone git@github.com:example-org/example-repo.git
 cd /home/<user>/BCFNGS-project-management
 git pull --ff-only origin main
 ```
@@ -180,7 +180,7 @@ git pull --ff-only origin main
 
 ```bash
 cd /home/<user>
-git clone git@github.com:yeroslaviz/BCFNGS-project-management.git
+git clone git@github.com:example-org/example-repo.git
 cd /home/<user>/BCFNGS-project-management
 git checkout -b <your-branch>
 git push -u origin <your-branch>
@@ -210,7 +210,7 @@ If `stash pop` conflicts, resolve conflicts manually.
 
 ```bash
 ssh -T git@github.com
-git ls-remote git@github.com:yeroslaviz/BCFNGS-project-management.git
+git ls-remote git@github.com:example-org/example-repo.git
 ```
 
 ## Enable push from the VM
@@ -221,8 +221,8 @@ To allow push, use an SSH key attached to a GitHub user that has write permissio
 Set Git identity on the VM:
 
 ```bash
-git config --global user.name "Assa Yeroslaviz"
-git config --global user.email "yeroslaviz@biochem.mpg.de"
+git config --global user.name "Example User"
+git config --global user.email "example.user@example.org"
 git config --global pull.rebase false
 ```
 
@@ -249,7 +249,7 @@ Clone once:
 
 ```bash
 cd /home/<user>
-git clone git@github.com:yeroslaviz/BCFNGS-project-management.git
+git clone git@github.com:example-org/example-repo.git
 cd /home/<user>/BCFNGS-project-management
 git remote -v
 ```
@@ -258,7 +258,7 @@ If the repo already exists with HTTPS remote, switch it to SSH:
 
 ```bash
 cd /home/<user>/BCFNGS-project-management
-git remote set-url origin git@github.com:yeroslaviz/BCFNGS-project-management.git
+git remote set-url origin git@github.com:example-org/example-repo.git
 ```
 
 Expected server layout:
@@ -361,7 +361,7 @@ Use this as the short operational checklist for normal feature delivery.
 We first create feature branch locally.
 
 ```bash
-cd /Users/yeroslaviz/Documents/Github/BCFNGS-project-management
+cd /Users/exampleuser/Documents/Github/example-repo
 # # Switches your working branch to main (or make sure I'm already in the branch)
 git checkout main
 # # --ff-only means “update only if this is a clean fast-forward.”.
@@ -432,9 +432,9 @@ Total 10 (delta 8), reused 0 (delta 0), pack-reused 0 (from 0)
 remote: Resolving deltas: 100% (8/8), completed with 8 local objects.
 remote:
 remote: Create a pull request for 'additional-cost-notifications' on GitHub by visiting:
-remote:      https://github.com/yeroslaviz/BCFNGS-project-management/pull/new/additional-cost-notifications
+remote:      https://github.com/example-org/example-repo/pull/new/additional-cost-notifications
 remote:
-To github.com:yeroslaviz/BCFNGS-project-management.git
+To github.com:exampleuser/BCFNGS-project-management.git
  * [new branch]      additional-cost-notifications -> additional-cost-notifications
 branch 'additional-cost-notifications' set up to track 'origin/additional-cost-notifications'.
 ```
@@ -453,7 +453,7 @@ Then:
 ### Step 5: Sync local `main` after merge
 
 ```bash
-cd /Users/yeroslaviz/Documents/Github/BCFNGS-project-management
+cd /Users/exampleuser/Documents/Github/example-repo
 git checkout main
 git pull --ff-only origin main
 ```
@@ -461,7 +461,7 @@ git pull --ff-only origin main
 ### Step 6: Deploy `main` to production (`ngs-vm`)
 
 ```bash
-cd /home/yeroslaviz/BCFNGS-project-management
+cd /home/exampleuser/example-repo
 git checkout main
 git pull --ff-only origin main
 PUBLIC_BASE_URL="https://ngs-vm.biochem.mpg.de" ./scripts/deploy.sh
