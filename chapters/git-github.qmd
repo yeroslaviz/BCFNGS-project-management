@@ -387,9 +387,9 @@ $git status
 On branch additional-cost-notifications
 Changes to be committed:
   (use "git restore --staged <file>..." to unstage)
-        modified:   Documentation/chapters/change-log.qmd
-        modified:   Documentation/chapters/deploy-operations.qmd
-        modified:   Documentation/chapters/git-github.qmd
+        modified:   chapters/change-log.qmd
+        modified:   chapters/deploy-operations.qmd
+        modified:   chapters/git-github.qmd
         modified:   sequencing-app/app.R
         modified:   sequencing-app/setup_database.R
 ```

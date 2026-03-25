@@ -76,4 +76,5 @@ booklet/
 Logos/
 
 /.quarto/
+/_site/
 **/*.quarto_ipynb

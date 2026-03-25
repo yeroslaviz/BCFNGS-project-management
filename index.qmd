@@ -15,6 +15,7 @@ If you have any further questions, please do not hesitate to [contact us @ omics
 # Chapters
 
 - [Quick Start](chapters/quick-start.html)
+- [Coverage Calculator](chapters/coverage-calculator.html)
 - [Setup & Infrastructure](chapters/setup-infrastructure.html)
 - [Git & GitHub](chapters/git-github.html)
 - [Deploy & Operations](chapters/deploy-operations.html)
@@ -24,11 +25,26 @@ If you have any further questions, please do not hesitate to [contact us @ omics
 - [Change Log](chapters/change-log.html)
 - [Legacy / Archive](chapters/legacy-archive.html)
 
-## How to render
+## How to preview, render, and publish
+
+The Quarto book now lives at the repository root.
+That means the standard commands are:
 
 ```bash
-quarto render Documentation/
+quarto preview
+quarto render
+quarto publish gh-pages
 ```
+
+The book source files are:
+
+- `_quarto.yml`
+- `index.qmd`
+- `chapters/`
+
+Companion source notes that are not part of the default book render live in:
+
+- `reference/`
 
 
 This booklet consolidates all operational and technical documentation for the sequencing Shiny app.

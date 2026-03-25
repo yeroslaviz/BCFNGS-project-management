@@ -10,6 +10,7 @@ execute:
 
 ### Contents
 
+- [Changes on 25.03.2026](#changes-on-25.03.2026)
 - [Changes on 03.03.2026](#changes-on-03.03.2026)
 - [Changes on 02.03.2026](#changes-on-02.03.2026)
 - [Changes on 27.02.2026](#changes-on-27.02.2026)
@@ -23,6 +24,48 @@ execute:
 - [Changes on 09.02.2026](#changes-on-09.02.2026)
 - [Changes on 06.02.2026](#changes-on-06.02.2026)
 - [Changes on 14.11.2026](#changes-on-14.11.2026)
+
+## Changes on 25.03.2026
+
+1. Added a new logged-in **Coverage Calculator** tab to the Shiny app:
+   - regular users now see:
+     - `Apply for Projects`
+     - `Coverage Calculator`
+   - admins now see:
+     - `Home`
+     - `Apply for Projects`
+     - `Coverage Calculator`
+     - `Administer Projects`
+2. Added coverage-calculation support for three sequencing layouts:
+   - `Single-end`
+   - `Paired-end (same length for both reads)`
+   - `Paired-end (custom Read 1 / Read 2)`
+3. Added two calculator directions:
+   - estimate coverage from available reads
+   - estimate required reads for a target coverage
+4. Updated read-count handling in the calculator to use **millions**:
+   - entering `200` means `200,000,000`
+   - result cards now show both the primary value in millions and the exact absolute count
+5. Extended `reference_genomes` with genome-size support:
+   - new column: `genome_size_bp`
+   - runtime migration adds the column automatically when missing
+   - known organisms are seeded with stored genome sizes
+6. Added startup normalization for legacy short reference-genome names:
+   - examples:
+     - `Hsp.GRCh38` -> `Homo sapiens`
+     - `Mmu.GrCm38` -> `Mus musculus`
+   - existing project rows are updated to the canonical full names
+7. Updated the admin genome-management UI:
+   - genome table now shows genome size
+   - add/edit dialogs now support optional genome-size entry
+8. Updated `setup_database.R` so fresh rebuilds create `reference_genomes.genome_size_bp` and seed the default genome sizes.
+9. Added a new **Coverage Calculator** documentation chapter.
+10. Moved the Quarto book source from `Documentation/` to the repository root:
+    - `_quarto.yml`
+    - `index.qmd`
+    - `chapters/`
+    - `reference/`
+11. Updated the Quarto configuration so the default book render targets only the book sources (`index.qmd` + `chapters/*.qmd`), which makes `quarto preview`, `quarto render`, and `quarto publish gh-pages` work directly from the repository root.
 
 ## Changes on 03.03.2026
 

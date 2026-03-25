@@ -29,7 +29,7 @@ Quarto search requires a web server. If you open the docs directly via `file://`
 **Fix (local server):**
 
 ```bash
-cd /Users/exampleuser/Documents/Github/example-repo/Documentation/_site
+cd /Users/exampleuser/Documents/Github/example-repo/_site
 python3 -m http.server 8000
 ```
 
@@ -42,7 +42,7 @@ http://localhost:8000
 **Alternative:**
 
 ```bash
-quarto preview /Users/exampleuser/Documents/Github/example-repo/Documentation
+quarto preview /Users/exampleuser/Documents/Github/example-repo
 ```
 
 ## Git / GitHub
@@ -443,7 +443,7 @@ sudo systemctl restart apache2
 
 ## SQL (moved)
 
-All SQL database commands and explanations are documented in the **SQL Handling** chapter (`Documentation/chapters/sql-handling.qmd`).  
+All SQL database commands and explanations are documented in the **SQL Handling** chapter (`chapters/sql-handling.qmd`).  
 This includes admin promotion in LDAP mode, SQLite inspection commands, budget holder updates, and the legacy import workflow.
 
 ### SQLite: "attempt to write a readonly database"

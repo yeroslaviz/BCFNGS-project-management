@@ -466,7 +466,7 @@ Notes:
 
 - Rebuild is not required for regular imports; new `legacy_id` rows are inserted, already imported IDs are skipped.
 - If you need a full refresh of legacy rows, rebuild or delete legacy rows first, then re-import.
-- Detailed SQL notes remain in `Documentation/chapters/sql-handling.qmd`.
+- Detailed SQL notes remain in `chapters/sql-handling.qmd`.
 
 ## Cutover and rollback
 
