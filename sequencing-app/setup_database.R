@@ -102,6 +102,7 @@ setup_complete_database <- function() {
     CREATE TABLE IF NOT EXISTS reference_genomes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT UNIQUE NOT NULL,
+      genome_size_bp INTEGER,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   ")
@@ -404,24 +405,44 @@ setup_complete_database <- function() {
   }
 
   # Insert default reference genomes
-  default_genomes <- c(
-    "Homo sapiens",
-    "Mus musculus",
-    "Caenorhabditis elegans",
-    "Saccharomyces cerevisiae - yeast",
-    "Drosophila melanogaster",
-    "Drosophila pseudoobscura",
-    "Danio rerio - Zebrafish",
-    "Escherichia coli",
-    "Gallus gallus",
-    "Others or Mixed",
-    "Custom"
+  default_genomes <- data.frame(
+    name = c(
+      "Homo sapiens",
+      "Mus musculus",
+      "Caenorhabditis elegans",
+      "Saccharomyces cerevisiae - yeast",
+      "Drosophila melanogaster",
+      "Drosophila pseudoobscura",
+      "Danio rerio - Zebrafish",
+      "Escherichia coli",
+      "Gallus gallus",
+      "Others or Mixed",
+      "Custom"
+    ),
+    genome_size_bp = c(
+      3100000000,
+      2700000000,
+      100300000,
+      12100000,
+      143700000,
+      163300000,
+      1400000000,
+      4600000,
+      1100000000,
+      NA,
+      NA
+    ),
+    stringsAsFactors = FALSE
   )
-  for(genome in default_genomes) {
+
+  for(i in 1:nrow(default_genomes)) {
     dbExecute(con, "
-      INSERT OR IGNORE INTO reference_genomes (name)
-      VALUES (?)
-    ", params = list(genome))
+      INSERT OR IGNORE INTO reference_genomes (name, genome_size_bp)
+      VALUES (?, ?)
+    ", params = list(
+      default_genomes$name[i],
+      default_genomes$genome_size_bp[i]
+    ))
   }
 
   # Insert email templates
@@ -527,7 +548,7 @@ setup_complete_database <- function() {
     project_name = c('Test Project 1', 'Test Project 2'),
     user_id = c(2, 3),
     responsible_user = c('user1', 'user2'),
-    reference_genome = c("Hsp.GRCh38", "Mmu.GrCm38"),
+    reference_genome = c("Homo sapiens", "Mus musculus"),
     service_type_id = c(1, 2),
     budget_id = c(1, 2),
     description = c('Test description 1', 'Test description 2'),
