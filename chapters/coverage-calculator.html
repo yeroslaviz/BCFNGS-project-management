@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.23">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>3&nbsp; Coverage Calculator – Documentation</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/setup-infrastructure.html" rel="next">
+<link href="../chapters/quick-start.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-076ecbd647e1f0418c5051713cd9b730.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-87aed0b8589e23e45aa8556edf37a91b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/coverage-calculator.html"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Coverage Calculator</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Documentation</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Documentation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/quick-start.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Quick Start</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/coverage-calculator.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Coverage Calculator</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/setup-infrastructure.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Setup &amp; Infrastructure</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/vm-installation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">VM Installation Guide (ngs-vm &amp; bcf-vm)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/git-github.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Git &amp; GitHub</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/deploy-operations.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Deploy &amp; Operations</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/ldap-authentication.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">LDAP Authentication</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/sql-handling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">SQL Handling</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/troubleshooting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">VM Troubleshooting Guide</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/change-log.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Change Log</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/legacy-archive.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Legacy / Archive</span></span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#coverage-calculator" id="toc-coverage-calculator" class="nav-link active" data-scroll-target="#coverage-calculator"><span class="header-section-number">3.1</span> Coverage Calculator</a>
+  <ul class="collapse">
+  <li><a href="#contents" id="toc-contents" class="nav-link" data-scroll-target="#contents"><span class="header-section-number">3.1.1</span> Contents</a></li>
+  </ul></li>
+  <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview"><span class="header-section-number">3.2</span> Overview</a></li>
+  <li><a href="#where-the-calculator-lives" id="toc-where-the-calculator-lives" class="nav-link" data-scroll-target="#where-the-calculator-lives"><span class="header-section-number">3.3</span> Where the calculator lives</a></li>
+  <li><a href="#what-the-calculator-can-do" id="toc-what-the-calculator-can-do" class="nav-link" data-scroll-target="#what-the-calculator-can-do"><span class="header-section-number">3.4</span> What the calculator can do</a></li>
+  <li><a href="#reference-genomes-and-genome-sizes" id="toc-reference-genomes-and-genome-sizes" class="nav-link" data-scroll-target="#reference-genomes-and-genome-sizes"><span class="header-section-number">3.5</span> Reference genomes and genome sizes</a></li>
+  <li><a href="#read-layout-modes" id="toc-read-layout-modes" class="nav-link" data-scroll-target="#read-layout-modes"><span class="header-section-number">3.6</span> Read layout modes</a>
+  <ul class="collapse">
+  <li><a href="#paired-end-same-length-for-both-reads" id="toc-paired-end-same-length-for-both-reads" class="nav-link" data-scroll-target="#paired-end-same-length-for-both-reads"><span class="header-section-number">3.6.1</span> Paired-end (same length for both reads)</a></li>
+  <li><a href="#single-end" id="toc-single-end" class="nav-link" data-scroll-target="#single-end"><span class="header-section-number">3.6.2</span> Single-end</a></li>
+  <li><a href="#paired-end-custom-read-1-read-2" id="toc-paired-end-custom-read-1-read-2" class="nav-link" data-scroll-target="#paired-end-custom-read-1-read-2"><span class="header-section-number">3.6.3</span> Paired-end (custom Read 1 / Read 2)</a></li>
+  </ul></li>
+  <li><a href="#read-count-input-units" id="toc-read-count-input-units" class="nav-link" data-scroll-target="#read-count-input-units"><span class="header-section-number">3.7</span> Read-count input units</a></li>
+  <li><a href="#formulas-used" id="toc-formulas-used" class="nav-link" data-scroll-target="#formulas-used"><span class="header-section-number">3.8</span> Formulas used</a>
+  <ul class="collapse">
+  <li><a href="#coverage-from-available-reads" id="toc-coverage-from-available-reads" class="nav-link" data-scroll-target="#coverage-from-available-reads"><span class="header-section-number">3.8.1</span> Coverage from available reads</a></li>
+  <li><a href="#required-reads-for-target-coverage" id="toc-required-reads-for-target-coverage" class="nav-link" data-scroll-target="#required-reads-for-target-coverage"><span class="header-section-number">3.8.2</span> Required reads for target coverage</a></li>
+  </ul></li>
+  <li><a href="#admin-maintenance" id="toc-admin-maintenance" class="nav-link" data-scroll-target="#admin-maintenance"><span class="header-section-number">3.9</span> Admin maintenance</a></li>
+  <li><a href="#validation-checklist" id="toc-validation-checklist" class="nav-link" data-scroll-target="#validation-checklist"><span class="header-section-number">3.10</span> Validation checklist</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Coverage Calculator</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="coverage-calculator" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="coverage-calculator"><span class="header-section-number">3.1</span> Coverage Calculator</h2>
+<section id="contents" class="level3" data-number="3.1.1">
+<h3 data-number="3.1.1" class="anchored" data-anchor-id="contents"><span class="header-section-number">3.1.1</span> Contents</h3>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#where-the-calculator-lives">Where the calculator lives</a></li>
+<li><a href="#what-the-calculator-can-do">What the calculator can do</a></li>
+<li><a href="#reference-genomes-and-genome-sizes">Reference genomes and genome sizes</a></li>
+<li><a href="#read-layout-modes">Read layout modes</a></li>
+<li><a href="#read-count-input-units">Read-count input units</a></li>
+<li><a href="#formulas-used">Formulas used</a></li>
+<li><a href="#admin-maintenance">Admin maintenance</a></li>
+<li><a href="#validation-checklist">Validation checklist</a></li>
+</ul>
+</section>
+</section>
+<section id="overview" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="overview"><span class="header-section-number">3.2</span> Overview</h2>
+<p>The app now includes a dedicated <strong>Coverage Calculator</strong> tab for logged-in users. It is intended as a planning tool for sequencing design and lets users estimate:</p>
+<ul>
+<li>the coverage they can expect from a known number of reads or read pairs</li>
+<li>the number of reads or read pairs they need to reach a desired coverage</li>
+</ul>
+<p>The calculator is implemented in <code>sequencing-app/app.R</code> and is available to:</p>
+<ul>
+<li>regular users: as a second top-level tab next to <strong>Apply for Projects</strong></li>
+<li>administrators: as a new tab alongside <strong>Home</strong>, <strong>Apply for Projects</strong>, and <strong>Administer Projects</strong></li>
+</ul>
+</section>
+<section id="where-the-calculator-lives" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="where-the-calculator-lives"><span class="header-section-number">3.3</span> Where the calculator lives</h2>
+<p>The calculator is rendered as a 50/50 split layout:</p>
+<ul>
+<li>left side: inputs and result card</li>
+<li>right side: definitions, formulas, and usage notes</li>
+</ul>
+<p>On smaller screens, the layout stacks vertically so the calculator remains usable on narrow displays.</p>
+</section>
+<section id="what-the-calculator-can-do" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="what-the-calculator-can-do"><span class="header-section-number">3.4</span> What the calculator can do</h2>
+<p>The first decision in the calculator is the calculation direction:</p>
+<ol type="1">
+<li><strong>Coverage from available reads</strong>
+<ul>
+<li>user enters the number of reads / clusters or read pairs / clusters available</li>
+<li>app estimates the resulting coverage</li>
+</ul></li>
+<li><strong>Required reads for target coverage</strong>
+<ul>
+<li>user enters the desired coverage</li>
+<li>app estimates the required read count</li>
+</ul></li>
+</ol>
+<p>The UI wording changes automatically so the output matches the chosen sequencing layout.</p>
+</section>
+<section id="reference-genomes-and-genome-sizes" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="reference-genomes-and-genome-sizes"><span class="header-section-number">3.5</span> Reference genomes and genome sizes</h2>
+<p>The calculator uses the existing <code>reference_genomes</code> table.</p>
+<p>New database support was added:</p>
+<ul>
+<li>new column: <code>reference_genomes.genome_size_bp</code></li>
+<li>runtime migration: the app adds the column automatically when missing</li>
+<li>seed values: known organisms now receive stored genome sizes in base pairs</li>
+</ul>
+<p>Known genomes currently seeded:</p>
+<ul>
+<li><code>Caenorhabditis elegans</code> -&gt; <code>100.3 Mb</code></li>
+<li><code>Danio rerio - Zebrafish</code> -&gt; <code>1.4 Gb</code></li>
+<li><code>Drosophila melanogaster</code> -&gt; <code>143.7 Mb</code></li>
+<li><code>Drosophila pseudoobscura</code> -&gt; <code>163.3 Mb</code></li>
+<li><code>Escherichia coli</code> -&gt; <code>4.6 Mb</code></li>
+<li><code>Gallus gallus</code> -&gt; <code>1.1 Gb</code></li>
+<li><code>Homo sapiens</code> -&gt; <code>3.1 Gb</code></li>
+<li><code>Mus musculus</code> -&gt; <code>2.7 Gb</code></li>
+<li><code>Saccharomyces cerevisiae - yeast</code> -&gt; <code>12.1 Mb</code></li>
+</ul>
+<p>Legacy short names were also normalized at startup so older local databases such as:</p>
+<ul>
+<li><code>Hsp.GRCh38</code></li>
+<li><code>Mmu.GrCm38</code></li>
+<li><code>Cel.WBcel235</code></li>
+</ul>
+<p>are rewritten to the current full names and keep the correct genome size.</p>
+<p>If a selected entry has no stored genome size, the calculator exposes a manual input with units:</p>
+<ul>
+<li><code>bp</code></li>
+<li><code>Mb</code></li>
+<li><code>Gb</code></li>
+</ul>
+<p>This is used for entries such as:</p>
+<ul>
+<li><code>Custom</code></li>
+<li><code>Others or Mixed</code></li>
+</ul>
+</section>
+<section id="read-layout-modes" class="level2" data-number="3.6">
+<h2 data-number="3.6" class="anchored" data-anchor-id="read-layout-modes"><span class="header-section-number">3.6</span> Read layout modes</h2>
+<p>The calculator now supports three read-layout modes:</p>
+<section id="paired-end-same-length-for-both-reads" class="level3" data-number="3.6.1">
+<h3 data-number="3.6.1" class="anchored" data-anchor-id="paired-end-same-length-for-both-reads"><span class="header-section-number">3.6.1</span> Paired-end (same length for both reads)</h3>
+<p>Use this when both reads have the same length, for example <code>2x150</code>.</p>
+<p>User input:</p>
+<ul>
+<li>one read-length value</li>
+</ul>
+<p>Internal base calculation:</p>
+<pre class="text"><code>total bases per pair = 2 x read length</code></pre>
+</section>
+<section id="single-end" class="level3" data-number="3.6.2">
+<h3 data-number="3.6.2" class="anchored" data-anchor-id="single-end"><span class="header-section-number">3.6.2</span> Single-end</h3>
+<p>Use this when only one read is generated per cluster.</p>
+<p>User input:</p>
+<ul>
+<li>one read-length value</li>
+</ul>
+<p>Internal base calculation:</p>
+<pre class="text"><code>total bases per read = read length</code></pre>
+</section>
+<section id="paired-end-custom-read-1-read-2" class="level3" data-number="3.6.3">
+<h3 data-number="3.6.3" class="anchored" data-anchor-id="paired-end-custom-read-1-read-2"><span class="header-section-number">3.6.3</span> Paired-end (custom Read 1 / Read 2)</h3>
+<p>Use this when <code>Read 1</code> and <code>Read 2</code> differ.</p>
+<p>User input:</p>
+<ul>
+<li><code>Read 1 length</code></li>
+<li><code>Read 2 length</code></li>
+</ul>
+<p>Internal base calculation:</p>
+<pre class="text"><code>total bases per pair = Read 1 length + Read 2 length</code></pre>
+</section>
+</section>
+<section id="read-count-input-units" class="level2" data-number="3.7">
+<h2 data-number="3.7" class="anchored" data-anchor-id="read-count-input-units"><span class="header-section-number">3.7</span> Read-count input units</h2>
+<p>Read-count inputs are now entered in <strong>millions</strong>.</p>
+<p>Examples:</p>
+<ul>
+<li><code>200</code> means <code>200,000,000</code></li>
+<li><code>310</code> means <code>310,000,000</code></li>
+<li><code>0.5</code> means <code>500,000</code></li>
+</ul>
+<p>The result card displays:</p>
+<ul>
+<li>the primary result in millions</li>
+<li>the exact absolute count as a supporting line below</li>
+</ul>
+<p>This keeps large sequencing numbers easier to read without losing precision.</p>
+</section>
+<section id="formulas-used" class="level2" data-number="3.8">
+<h2 data-number="3.8" class="anchored" data-anchor-id="formulas-used"><span class="header-section-number">3.8</span> Formulas used</h2>
+<section id="coverage-from-available-reads" class="level3" data-number="3.8.1">
+<h3 data-number="3.8.1" class="anchored" data-anchor-id="coverage-from-available-reads"><span class="header-section-number">3.8.1</span> Coverage from available reads</h3>
+<p>Single-end:</p>
+<pre class="text"><code>coverage = (reads / clusters) x (read length) / genome size</code></pre>
+<p>Paired-end, same length:</p>
+<pre class="text"><code>coverage = (read pairs / clusters) x (2 x read length) / genome size</code></pre>
+<p>Paired-end, custom:</p>
+<pre class="text"><code>coverage = (read pairs / clusters) x (Read 1 length + Read 2 length) / genome size</code></pre>
+</section>
+<section id="required-reads-for-target-coverage" class="level3" data-number="3.8.2">
+<h3 data-number="3.8.2" class="anchored" data-anchor-id="required-reads-for-target-coverage"><span class="header-section-number">3.8.2</span> Required reads for target coverage</h3>
+<p>Single-end:</p>
+<pre class="text"><code>required reads / clusters = (desired coverage x genome size) / read length</code></pre>
+<p>Paired-end, same length:</p>
+<pre class="text"><code>required read pairs / clusters = (desired coverage x genome size) / (2 x read length)</code></pre>
+<p>Paired-end, custom:</p>
+<pre class="text"><code>required read pairs / clusters = (desired coverage x genome size) / (Read 1 length + Read 2 length)</code></pre>
+<p>The app rounds required counts up with <code>ceiling(...)</code> so the returned target is not underestimated.</p>
+</section>
+</section>
+<section id="admin-maintenance" class="level2" data-number="3.9">
+<h2 data-number="3.9" class="anchored" data-anchor-id="admin-maintenance"><span class="header-section-number">3.9</span> Admin maintenance</h2>
+<p>Genome sizes can now be managed in the admin UI:</p>
+<ol type="1">
+<li>Open <strong>Administer Projects</strong></li>
+<li>Click <strong>Manage Genomes</strong></li>
+<li>Add or edit:
+<ul>
+<li>genome name</li>
+<li>optional genome size</li>
+<li>unit interpretation is stored internally as base pairs</li>
+</ul></li>
+</ol>
+<p>If the size is left empty, the genome remains valid in the dropdown but requires manual size entry in the calculator.</p>
+</section>
+<section id="validation-checklist" class="level2" data-number="3.10">
+<h2 data-number="3.10" class="anchored" data-anchor-id="validation-checklist"><span class="header-section-number">3.10</span> Validation checklist</h2>
+<p>Recommended test cases after deploy:</p>
+<ol type="1">
+<li>Select <code>Homo sapiens</code>, choose paired-end same length, enter <code>150</code>, target <code>30x</code>:
+<ul>
+<li>result should be about <code>310 million</code></li>
+</ul></li>
+<li>Select <code>Homo sapiens</code>, paired-end same length, available reads <code>310</code>:
+<ul>
+<li>result should be about <code>30x</code></li>
+</ul></li>
+<li>Select <code>Escherichia coli</code>, paired-end same length, available reads <code>10</code>, read length <code>150</code>:
+<ul>
+<li>result should be about <code>652.2x</code></li>
+</ul></li>
+<li>Select <code>Custom</code>:
+<ul>
+<li>manual genome-size input should appear</li>
+</ul></li>
+<li>Switch between single-end and paired-end modes:
+<ul>
+<li>read-length fields and labels should update automatically</li>
+</ul></li>
+</ol>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/quick-start.html" class="pagination-link" aria-label="Quick Start">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Quick Start</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/setup-infrastructure.html" class="pagination-link" aria-label="Setup &amp; Infrastructure">
+        <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Setup &amp; Infrastructure</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
