@@ -525,6 +525,117 @@ ui <- fluidPage(
     color: #e74c3c !important;
     font-style: italic;
   }
+  .coverage-calculator-layout {
+    display: flex;
+    gap: 24px;
+    align-items: stretch;
+    margin: 24px 0;
+  }
+  .coverage-panel {
+    flex: 1 1 0;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 24px;
+    color: #333333 !important;
+  }
+  .coverage-panel-title {
+    margin-top: 0;
+    margin-bottom: 12px;
+    color: #2c3e50 !important;
+  }
+  .coverage-section-title {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+    color: #2c3e50 !important;
+  }
+  .coverage-info-section {
+    margin-bottom: 22px;
+  }
+  .coverage-info-section ul {
+    margin: 0;
+    padding-left: 20px;
+  }
+  .coverage-info-section li {
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  .coverage-inline-fields {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .coverage-inline-field {
+    flex: 1 1 220px;
+    min-width: 180px;
+  }
+  .coverage-inline-field-wide {
+    flex: 1 1 280px;
+  }
+  .coverage-inline-field-narrow {
+    flex: 0 0 140px;
+    min-width: 120px;
+  }
+  .coverage-help-text {
+    color: #51606f !important;
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+  .coverage-result-card {
+    background-color: #ffffff;
+    border: 1px solid #d9e3ee;
+    border-left: 4px solid #3498db;
+    border-radius: 6px;
+    padding: 18px;
+    margin-top: 18px;
+  }
+  .coverage-result-warning {
+    border-left-color: #e67e22;
+    background-color: #fff8ef;
+  }
+  .coverage-result-muted {
+    border-left-color: #95a5a6;
+    background-color: #fcfcfc;
+  }
+  .coverage-result-label {
+    font-size: 0.95em;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #51606f !important;
+    margin-bottom: 6px;
+  }
+  .coverage-result-value {
+    font-size: 2em;
+    font-weight: 700;
+    color: #2c3e50 !important;
+    margin-bottom: 10px;
+  }
+  .coverage-supporting-text {
+    color: #51606f !important;
+    margin-bottom: 8px;
+    line-height: 1.45;
+  }
+  .coverage-formula-block {
+    background-color: #ffffff;
+    border: 1px solid #dde4eb;
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+  .coverage-formula {
+    margin-top: 8px;
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 1.02em;
+    line-height: 1.5;
+    color: #2c3e50 !important;
+  }
+  @media (max-width: 991px) {
+    .coverage-calculator-layout {
+      flex-direction: column;
+    }
+  }
 
   .dev-mode-badge {
     display: inline-block;
@@ -867,6 +978,7 @@ server <- function(input, output, session) {
 
       ensure_projects_additional_cost_column(con)
       ensure_users_full_name_column(con)
+      ensure_reference_genome_size_column(con)
       ensure_announcement_tables(con)
       seed_announcement_defaults(con)
       
@@ -983,7 +1095,7 @@ server <- function(input, output, session) {
   # Reactive values for admin management
   admin_data <- reactiveValues(
     users = data.frame(),
-    reference_genomes = c(),
+    reference_genomes = data.frame(),
     budget_holders = data.frame(),
     types = data.frame(),
     service_types = data.frame(),
@@ -1928,6 +2040,444 @@ server <- function(input, output, session) {
     invisible(NULL)
   }
 
+  reference_genome_seed_rows <- function() {
+    data.frame(
+      name = c(
+        "Caenorhabditis elegans",
+        "Danio rerio - Zebrafish",
+        "Drosophila melanogaster",
+        "Drosophila pseudoobscura",
+        "Escherichia coli",
+        "Gallus gallus",
+        "Homo sapiens",
+        "Mus musculus",
+        "Saccharomyces cerevisiae - yeast"
+      ),
+      genome_size_bp = c(
+        100300000,
+        1400000000,
+        143700000,
+        163300000,
+        4600000,
+        1100000000,
+        3100000000,
+        2700000000,
+        12100000
+      ),
+      stringsAsFactors = FALSE
+    )
+  }
+
+  legacy_reference_genome_alias_rows <- function() {
+    data.frame(
+      legacy_name = c(
+        "Hsp.GRCh38",
+        "Mmu.GrCm38",
+        "Cel.WBcel235",
+        "Sce.R64-1-1",
+        "Dme.BDGP6.28",
+        "Dps.3.0.49",
+        "Dre.GRCz11",
+        "Eco.HUSEC2011CHR1"
+      ),
+      canonical_name = c(
+        "Homo sapiens",
+        "Mus musculus",
+        "Caenorhabditis elegans",
+        "Saccharomyces cerevisiae - yeast",
+        "Drosophila melanogaster",
+        "Drosophila pseudoobscura",
+        "Danio rerio - Zebrafish",
+        "Escherichia coli"
+      ),
+      genome_size_bp = c(
+        3100000000,
+        2700000000,
+        100300000,
+        12100000,
+        143700000,
+        163300000,
+        1400000000,
+        4600000
+      ),
+      stringsAsFactors = FALSE
+    )
+  }
+
+  reference_genomes_have_size_column <- function(con) {
+    tryCatch({
+      "genome_size_bp" %in% dbGetQuery(con, "PRAGMA table_info(reference_genomes)")$name
+    }, error = function(e) FALSE)
+  }
+
+  ensure_reference_genome_seed_rows <- function(con) {
+    genome_seeds <- reference_genome_seed_rows()
+
+    for (i in seq_len(nrow(genome_seeds))) {
+      dbExecute(con, "
+        INSERT OR IGNORE INTO reference_genomes (name, genome_size_bp)
+        VALUES (?, ?)
+      ", params = list(
+        genome_seeds$name[[i]],
+        genome_seeds$genome_size_bp[[i]]
+      ))
+    }
+
+    invisible(NULL)
+  }
+
+  migrate_legacy_reference_genome_names <- function(con) {
+    alias_rows <- legacy_reference_genome_alias_rows()
+
+    for (i in seq_len(nrow(alias_rows))) {
+      legacy_name <- alias_rows$legacy_name[[i]]
+      canonical_name <- alias_rows$canonical_name[[i]]
+      canonical_size_bp <- alias_rows$genome_size_bp[[i]]
+
+      legacy_row <- dbGetQuery(
+        con,
+        "
+          SELECT id, name, genome_size_bp
+          FROM reference_genomes
+          WHERE lower(trim(name)) = lower(trim(?))
+          ORDER BY id
+          LIMIT 1
+        ",
+        params = list(legacy_name)
+      )
+
+      if (nrow(legacy_row) == 0) next
+
+      canonical_row <- dbGetQuery(
+        con,
+        "
+          SELECT id, name, genome_size_bp
+          FROM reference_genomes
+          WHERE lower(trim(name)) = lower(trim(?))
+          ORDER BY id
+          LIMIT 1
+        ",
+        params = list(canonical_name)
+      )
+
+      if (nrow(canonical_row) == 0) {
+        dbExecute(
+          con,
+          "
+            UPDATE reference_genomes
+            SET name = ?, genome_size_bp = COALESCE(genome_size_bp, ?)
+            WHERE id = ?
+          ",
+          params = list(
+            canonical_name,
+            canonical_size_bp,
+            legacy_row$id[[1]]
+          )
+        )
+      } else {
+        dbExecute(
+          con,
+          "
+            UPDATE reference_genomes
+            SET genome_size_bp = COALESCE(genome_size_bp, ?)
+            WHERE id = ?
+          ",
+          params = list(
+            canonical_size_bp,
+            canonical_row$id[[1]]
+          )
+        )
+
+        dbExecute(
+          con,
+          "DELETE FROM reference_genomes WHERE id = ?",
+          params = list(legacy_row$id[[1]])
+        )
+      }
+
+      dbExecute(
+        con,
+        "
+          UPDATE projects
+          SET reference_genome = ?
+          WHERE lower(trim(reference_genome)) = lower(trim(?))
+        ",
+        params = list(canonical_name, legacy_name)
+      )
+    }
+
+    invisible(NULL)
+  }
+
+  seed_reference_genome_sizes <- function(con) {
+    genome_seeds <- reference_genome_seed_rows()
+
+    for (i in seq_len(nrow(genome_seeds))) {
+      dbExecute(con, "
+        UPDATE reference_genomes
+        SET genome_size_bp = ?
+        WHERE name = ?
+          AND (genome_size_bp IS NULL OR genome_size_bp <= 0)
+      ", params = list(
+        genome_seeds$genome_size_bp[[i]],
+        genome_seeds$name[[i]]
+      ))
+    }
+
+    invisible(NULL)
+  }
+
+  ensure_reference_genome_size_column <- function(con) {
+    if (!reference_genomes_have_size_column(con)) {
+      dbExecute(con, "ALTER TABLE reference_genomes ADD COLUMN genome_size_bp INTEGER")
+    }
+
+    ensure_reference_genome_seed_rows(con)
+    migrate_legacy_reference_genome_names(con)
+    seed_reference_genome_sizes(con)
+    invisible(NULL)
+  }
+
+  normalize_genome_size_bp <- function(value) {
+    numeric_value <- suppressWarnings(as.numeric(value))
+    if (length(numeric_value) == 0 || is.na(numeric_value) || numeric_value <= 0) {
+      return(NA_real_)
+    }
+
+    round(numeric_value)
+  }
+
+  genome_size_unit_multiplier <- function(unit) {
+    switch(
+      to_scalar_text(unit, "bp"),
+      "Gb" = 1e9,
+      "Mb" = 1e6,
+      "bp" = 1,
+      1
+    )
+  }
+
+  convert_genome_size_to_bp <- function(value, unit) {
+    numeric_value <- suppressWarnings(as.numeric(value))
+    if (length(numeric_value) == 0 || is.na(numeric_value) || numeric_value <= 0) {
+      return(NA_real_)
+    }
+
+    normalize_genome_size_bp(numeric_value * genome_size_unit_multiplier(unit))
+  }
+
+  parse_optional_genome_size_input <- function(value, unit) {
+    numeric_value <- suppressWarnings(as.numeric(value))
+    if (length(numeric_value) == 0 || is.na(numeric_value)) {
+      return(list(valid = TRUE, value = NA_real_, error = NULL))
+    }
+
+    if (numeric_value <= 0) {
+      return(list(
+        valid = FALSE,
+        value = NA_real_,
+        error = "Genome size must be greater than 0 when provided."
+      ))
+    }
+
+    list(
+      valid = TRUE,
+      value = convert_genome_size_to_bp(numeric_value, unit),
+      error = NULL
+    )
+  }
+
+  convert_bp_to_genome_size_unit <- function(value, unit) {
+    numeric_value <- suppressWarnings(as.numeric(value))
+    if (length(numeric_value) == 0 || is.na(numeric_value) || numeric_value <= 0) {
+      return(NA_real_)
+    }
+
+    numeric_value / genome_size_unit_multiplier(unit)
+  }
+
+  preferred_genome_size_unit <- function(value) {
+    numeric_value <- suppressWarnings(as.numeric(value))
+    if (length(numeric_value) == 0 || is.na(numeric_value) || numeric_value <= 0) {
+      return("Mb")
+    }
+
+    if (numeric_value >= 1e9) return("Gb")
+    if (numeric_value >= 1e6) return("Mb")
+    "bp"
+  }
+
+  format_integer_value <- function(value) {
+    numeric_value <- suppressWarnings(as.numeric(value))
+    if (length(numeric_value) == 0 || is.na(numeric_value)) return("")
+
+    prettyNum(
+      format(round(numeric_value), scientific = FALSE, trim = TRUE),
+      big.mark = ",",
+      preserve.width = "none"
+    )
+  }
+
+  read_count_input_multiplier <- function() {
+    1e6
+  }
+
+  convert_millions_to_read_count <- function(value) {
+    numeric_value <- suppressWarnings(as.numeric(value))
+    if (length(numeric_value) == 0 || is.na(numeric_value) || numeric_value <= 0) {
+      return(NA_real_)
+    }
+
+    numeric_value * read_count_input_multiplier()
+  }
+
+  format_read_count_in_millions <- function(value, digits = 2) {
+    numeric_value <- suppressWarnings(as.numeric(value))
+    if (length(numeric_value) == 0 || is.na(numeric_value) || numeric_value < 0) return("")
+
+    paste0(
+      format_trimmed_decimal(numeric_value / read_count_input_multiplier(), digits = digits),
+      " million"
+    )
+  }
+
+  format_trimmed_decimal <- function(value, digits = 2) {
+    numeric_value <- suppressWarnings(as.numeric(value))
+    if (length(numeric_value) == 0 || is.na(numeric_value)) return("")
+
+    formatted <- formatC(numeric_value, format = "f", digits = digits)
+    sub("\\.?0+$", "", formatted)
+  }
+
+  format_genome_size_short <- function(value) {
+    numeric_value <- suppressWarnings(as.numeric(value))
+    if (length(numeric_value) == 0 || is.na(numeric_value) || numeric_value <= 0) {
+      return("Not set")
+    }
+
+    if (numeric_value >= 1e9) {
+      return(paste0(format_trimmed_decimal(numeric_value / 1e9, digits = 2), " Gb"))
+    }
+
+    if (numeric_value >= 1e6) {
+      return(paste0(format_trimmed_decimal(numeric_value / 1e6, digits = 2), " Mb"))
+    }
+
+    paste0(format_integer_value(numeric_value), " bp")
+  }
+
+  format_genome_size_with_bp <- function(value) {
+    numeric_value <- suppressWarnings(as.numeric(value))
+    if (length(numeric_value) == 0 || is.na(numeric_value) || numeric_value <= 0) {
+      return("Custom / not set")
+    }
+
+    paste0(
+      format_genome_size_short(numeric_value),
+      " (",
+      format_integer_value(numeric_value),
+      " bp)"
+    )
+  }
+
+  reference_genome_choices <- function() {
+    genomes <- admin_data$reference_genomes
+    if (is.null(genomes) || nrow(genomes) == 0 || !"name" %in% names(genomes)) {
+      return(c("No reference genomes available" = ""))
+    }
+
+    setNames(genomes$name, genomes$name)
+  }
+
+  reference_genome_choices_with_selected <- function(selected = NULL) {
+    choices <- reference_genome_choices()
+    selected_name <- to_scalar_text(selected, "")
+
+    if (nzchar(selected_name) && !(selected_name %in% unname(choices))) {
+      choices <- c(setNames(selected_name, selected_name), choices)
+    }
+
+    choices
+  }
+
+  reference_genome_name_exists <- function(name, exclude_name = NULL) {
+    genomes <- admin_data$reference_genomes
+    if (is.null(genomes) || nrow(genomes) == 0 || !"name" %in% names(genomes)) {
+      return(FALSE)
+    }
+
+    normalized_names <- normalize_key(genomes$name)
+    target_name <- normalize_key(name)
+    excluded_name <- normalize_key(exclude_name)
+
+    matching_rows <- which(normalized_names == target_name)
+    if (length(matching_rows) == 0) return(FALSE)
+
+    if (!nzchar(excluded_name)) return(TRUE)
+
+    any(normalized_names[matching_rows] != excluded_name)
+  }
+
+  find_reference_genome_row <- function(name) {
+    genomes <- admin_data$reference_genomes
+    if (is.null(genomes) || nrow(genomes) == 0 || !"name" %in% names(genomes)) {
+      return(NULL)
+    }
+
+    matches <- which(normalize_key(genomes$name) == normalize_key(name))
+    if (length(matches) == 0) return(NULL)
+
+    genomes[matches[[1]], , drop = FALSE]
+  }
+
+  get_coverage_read_metrics <- function(input) {
+    read_mode <- to_scalar_text(input$coverage_read_mode, "paired_same")
+
+    if (identical(read_mode, "single")) {
+      read_length <- suppressWarnings(as.numeric(input$coverage_single_read_length))
+      total_bases <- read_length
+
+      return(list(
+        read_mode = read_mode,
+        read1_length = read_length,
+        read2_length = NA_real_,
+        total_bases = total_bases,
+        count_label = "Reads / Clusters",
+        bases_label = "Bases per read",
+        input_description = "Single-end calculations use one read length per sequenced cluster."
+      ))
+    }
+
+    if (identical(read_mode, "paired_custom")) {
+      read1_length <- suppressWarnings(as.numeric(input$coverage_read1_length))
+      read2_length <- suppressWarnings(as.numeric(input$coverage_read2_length))
+      total_bases <- suppressWarnings(read1_length + read2_length)
+
+      return(list(
+        read_mode = read_mode,
+        read1_length = read1_length,
+        read2_length = read2_length,
+        total_bases = total_bases,
+        count_label = "Read Pairs / Clusters",
+        bases_label = "Bases per read pair",
+        input_description = "Custom paired-end calculations use Read 1 length + Read 2 length."
+      ))
+    }
+
+    paired_read_length <- suppressWarnings(as.numeric(input$coverage_paired_read_length))
+    total_bases <- suppressWarnings(2 * paired_read_length)
+
+    list(
+      read_mode = "paired_same",
+      read1_length = paired_read_length,
+      read2_length = paired_read_length,
+      total_bases = total_bases,
+      count_label = "Read Pairs / Clusters",
+      bases_label = "Bases per read pair",
+      input_description = "Paired-end calculations use the same read length for both ends: 2 x read length."
+    )
+  }
+
   normalize_key <- function(x) {
     if (is.null(x) || length(x) == 0) return(character(0))
     values <- as.character(x)
@@ -2053,6 +2603,7 @@ server <- function(input, output, session) {
     tryCatch({
       ensure_projects_additional_cost_column(con)
       ensure_users_full_name_column(con)
+      ensure_reference_genome_size_column(con)
     }, error = function(e) {
       cat("DB MIGRATION ERROR:", e$message, "\n", file = stderr())
       flush.console()
@@ -2327,8 +2878,24 @@ server <- function(input, output, session) {
   load_reference_genomes <- function() {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
-    genomes <- dbGetQuery(con, "SELECT name FROM reference_genomes ORDER BY name")
-    return(genomes$name)
+
+    genomes <- dbGetQuery(
+      con,
+      "SELECT id, name, genome_size_bp FROM reference_genomes ORDER BY lower(name), name"
+    )
+
+    if (nrow(genomes) == 0) {
+      return(data.frame(
+        id = integer(0),
+        name = character(0),
+        genome_size_bp = numeric(0),
+        stringsAsFactors = FALSE
+      ))
+    }
+
+    genomes$name <- trimws(as.character(genomes$name))
+    genomes$genome_size_bp <- suppressWarnings(as.numeric(genomes$genome_size_bp))
+    genomes
   }
   
   # Load types from database
@@ -3148,6 +3715,408 @@ server <- function(input, output, session) {
     announcement_data <- load_announcement_content(con = con, active_only = TRUE)
     announcement_blocks(announcement_data)
   })
+
+  output$coverage_calc_genome_size_ui <- renderUI({
+    req(user$logged_in)
+
+    selected_genome <- to_scalar_text(input$coverage_calc_genome, "")
+    genome_row <- find_reference_genome_row(selected_genome)
+    stored_size_bp <- if (!is.null(genome_row)) {
+      normalize_genome_size_bp(genome_row$genome_size_bp[[1]])
+    } else {
+      NA_real_
+    }
+
+    if (!is.na(stored_size_bp)) {
+      div(
+        class = "coverage-supporting-text",
+        tags$strong("Stored genome size: "),
+        span(format_genome_size_with_bp(stored_size_bp))
+      )
+    } else {
+      tagList(
+        div(
+          class = "coverage-help-text",
+          "This genome does not have a stored size yet. Enter a genome size below."
+        ),
+        div(
+          class = "coverage-inline-fields",
+          div(
+            class = "coverage-inline-field coverage-inline-field-wide",
+            numericInput(
+              "coverage_custom_genome_size",
+              "Genome Size",
+              value = NA,
+              min = 0,
+              step = 0.1
+            )
+          ),
+          div(
+            class = "coverage-inline-field coverage-inline-field-narrow",
+            selectInput(
+              "coverage_custom_genome_unit",
+              "Unit",
+              choices = c("bp", "Mb", "Gb"),
+              selected = "Mb"
+            )
+          )
+        )
+      )
+    }
+  })
+
+  output$coverage_calc_mode_input_ui <- renderUI({
+    req(user$logged_in)
+
+    mode <- to_scalar_text(input$coverage_calc_mode, "coverage")
+    read_metrics <- get_coverage_read_metrics(input)
+
+    if (identical(mode, "read_pairs")) {
+      numericInput(
+        "coverage_target_coverage",
+        "Desired Coverage",
+        value = NA,
+        min = 0,
+        step = 0.1
+      )
+    } else {
+      numericInput(
+        "coverage_read_pairs",
+        paste0("Available ", read_metrics$count_label, " (millions)"),
+        value = NA,
+        min = 0,
+        step = 0.1
+      )
+    }
+  })
+
+  output$coverage_calc_read_length_ui <- renderUI({
+    req(user$logged_in)
+
+    read_mode <- to_scalar_text(input$coverage_read_mode, "paired_same")
+
+    if (identical(read_mode, "single")) {
+      return(
+        numericInput(
+          "coverage_single_read_length",
+          "Read Length",
+          value = 150,
+          min = 0,
+          step = 1
+        )
+      )
+    }
+
+    if (identical(read_mode, "paired_custom")) {
+      return(
+        div(
+          class = "coverage-inline-fields",
+          div(
+            class = "coverage-inline-field",
+            numericInput(
+              "coverage_read1_length",
+              "Read 1 Length",
+              value = 150,
+              min = 0,
+              step = 1
+            )
+          ),
+          div(
+            class = "coverage-inline-field",
+            numericInput(
+              "coverage_read2_length",
+              "Read 2 Length",
+              value = 150,
+              min = 0,
+              step = 1
+            )
+          )
+        )
+      )
+    }
+
+    numericInput(
+      "coverage_paired_read_length",
+      "Read Length For Both Reads",
+      value = 150,
+      min = 0,
+      step = 1
+    )
+  })
+
+  output$coverage_calc_read_mode_help_ui <- renderUI({
+    req(user$logged_in)
+
+    read_metrics <- get_coverage_read_metrics(input)
+
+    div(
+      class = "coverage-help-text",
+      paste(
+        read_metrics$input_description,
+        "Enter read counts in millions, so 200 means 200,000,000."
+      )
+    )
+  })
+
+  output$coverage_calc_result_ui <- renderUI({
+    req(user$logged_in)
+
+    mode <- to_scalar_text(input$coverage_calc_mode, "coverage")
+    selected_genome <- to_scalar_text(input$coverage_calc_genome, "")
+    genome_row <- find_reference_genome_row(selected_genome)
+
+    stored_size_bp <- if (!is.null(genome_row)) {
+      normalize_genome_size_bp(genome_row$genome_size_bp[[1]])
+    } else {
+      NA_real_
+    }
+
+    genome_size_bp <- if (!is.na(stored_size_bp)) {
+      stored_size_bp
+    } else {
+      convert_genome_size_to_bp(
+        input$coverage_custom_genome_size,
+        input$coverage_custom_genome_unit
+      )
+    }
+
+    read_metrics <- get_coverage_read_metrics(input)
+    read_mode <- read_metrics$read_mode
+    read1_length <- read_metrics$read1_length
+    read2_length <- read_metrics$read2_length
+    total_bases <- read_metrics$total_bases
+    count_label <- read_metrics$count_label
+    bases_label <- read_metrics$bases_label
+
+    if (!nzchar(selected_genome)) {
+      return(div(
+        class = "coverage-result-card coverage-result-muted",
+        p("Select an organism and enter your sequencing values to calculate the result.")
+      ))
+    }
+
+    invalid_messages <- character()
+
+    if (identical(read_mode, "single")) {
+      if (!is.na(read1_length) && read1_length <= 0) {
+        invalid_messages <- c(invalid_messages, "Read length must be greater than 0.")
+      }
+    } else if (identical(read_mode, "paired_same")) {
+      if (!is.na(read1_length) && read1_length <= 0) {
+        invalid_messages <- c(invalid_messages, "Paired-end read length must be greater than 0.")
+      }
+    } else {
+      if (!is.na(read1_length) && read1_length <= 0) {
+        invalid_messages <- c(invalid_messages, "Read 1 length must be greater than 0.")
+      }
+      if (!is.na(read2_length) && read2_length <= 0) {
+        invalid_messages <- c(invalid_messages, "Read 2 length must be greater than 0.")
+      }
+    }
+    if (!is.na(genome_size_bp) && genome_size_bp <= 0) {
+      invalid_messages <- c(invalid_messages, "Genome size must be greater than 0.")
+    }
+
+    if (identical(mode, "read_pairs")) {
+      desired_coverage <- suppressWarnings(as.numeric(input$coverage_target_coverage))
+      if (!is.na(desired_coverage) && desired_coverage <= 0) {
+        invalid_messages <- c(invalid_messages, "Desired coverage must be greater than 0.")
+      }
+    } else {
+      available_read_pairs_millions <- suppressWarnings(as.numeric(input$coverage_read_pairs))
+      if (!is.na(available_read_pairs_millions) && available_read_pairs_millions <= 0) {
+        invalid_messages <- c(
+          invalid_messages,
+          paste0("Available ", tolower(count_label), " in millions must be greater than 0.")
+        )
+      }
+    }
+
+    if (length(invalid_messages) > 0) {
+      return(div(
+        class = "coverage-result-card coverage-result-warning",
+        tags$strong("Please correct the highlighted values."),
+        tags$ul(lapply(invalid_messages, tags$li))
+      ))
+    }
+
+    if (is.na(total_bases) || is.na(genome_size_bp) || total_bases <= 0) {
+      return(div(
+        class = "coverage-result-card coverage-result-muted",
+        p("Enter a genome size and read length information to see the calculation.")
+      ))
+    }
+
+    if (identical(mode, "read_pairs")) {
+      desired_coverage <- suppressWarnings(as.numeric(input$coverage_target_coverage))
+      if (is.na(desired_coverage)) {
+        return(div(
+          class = "coverage-result-card coverage-result-muted",
+          p(paste0("Enter the desired coverage to calculate the required ", tolower(count_label), "."))
+        ))
+      }
+
+      required_read_pairs <- ceiling(desired_coverage * genome_size_bp / total_bases)
+
+      div(
+        class = "coverage-result-card",
+        div(class = "coverage-result-label", paste("Required", count_label, "(millions)")),
+        div(class = "coverage-result-value", format_read_count_in_millions(required_read_pairs, digits = 2)),
+        div(class = "coverage-supporting-text",
+            paste0("Selected genome: ", selected_genome)),
+        div(class = "coverage-supporting-text",
+            paste0("Genome size: ", format_genome_size_with_bp(genome_size_bp))),
+        div(class = "coverage-supporting-text",
+            paste0(bases_label, ": ", format_integer_value(total_bases), " bp")),
+        div(class = "coverage-supporting-text",
+            paste0("Desired coverage: ", format_trimmed_decimal(desired_coverage, digits = 1), "x")),
+        div(class = "coverage-supporting-text",
+            paste0("Exact count: ", format_integer_value(required_read_pairs)))
+      )
+    } else {
+      available_read_pairs_millions <- suppressWarnings(as.numeric(input$coverage_read_pairs))
+      if (is.na(available_read_pairs_millions)) {
+        return(div(
+          class = "coverage-result-card coverage-result-muted",
+          p(paste0("Enter available ", tolower(count_label), " in millions to calculate the estimated coverage."))
+        ))
+      }
+
+      available_read_pairs <- convert_millions_to_read_count(available_read_pairs_millions)
+      estimated_coverage <- available_read_pairs * total_bases / genome_size_bp
+
+      div(
+        class = "coverage-result-card",
+        div(class = "coverage-result-label", "Estimated Coverage"),
+        div(class = "coverage-result-value",
+            paste0(format_trimmed_decimal(estimated_coverage, digits = 1), "x")),
+        div(class = "coverage-supporting-text",
+            paste0("Selected genome: ", selected_genome)),
+        div(class = "coverage-supporting-text",
+            paste0("Genome size: ", format_genome_size_with_bp(genome_size_bp))),
+        div(class = "coverage-supporting-text",
+            paste0("Available ", tolower(count_label), ": ", format_read_count_in_millions(available_read_pairs, digits = 2))),
+        div(class = "coverage-supporting-text",
+            paste0("Exact count: ", format_integer_value(available_read_pairs))),
+        div(class = "coverage-supporting-text",
+            paste0(bases_label, ": ", format_integer_value(total_bases), " bp"))
+      )
+    }
+  })
+
+  output$coverage_calculator_ui <- renderUI({
+    req(user$logged_in)
+
+    div(
+      class = "coverage-calculator-layout",
+      div(
+        class = "coverage-panel coverage-panel-inputs",
+        h3("Coverage Calculator", class = "coverage-panel-title"),
+        p(
+          class = "coverage-help-text",
+          "Choose whether you want to estimate coverage from available sequencing or calculate how many read pairs / clusters you should aim for."
+        ),
+        radioButtons(
+          "coverage_calc_mode",
+          "What would you like to calculate?",
+          choices = c(
+            "Coverage from available read pairs / clusters" = "coverage",
+            "Required read pairs / clusters" = "read_pairs"
+          ),
+          selected = "coverage"
+        ),
+        selectInput(
+          "coverage_calc_genome",
+          "Organism / Reference Genome",
+          choices = reference_genome_choices()
+        ),
+        radioButtons(
+          "coverage_read_mode",
+          "Read Layout",
+          choices = c(
+            "Paired-end (same length for both reads)" = "paired_same",
+            "Single-end" = "single",
+            "Paired-end (custom Read 1 / Read 2)" = "paired_custom"
+          ),
+          selected = "paired_same"
+        ),
+        uiOutput("coverage_calc_genome_size_ui"),
+        uiOutput("coverage_calc_read_length_ui"),
+        uiOutput("coverage_calc_mode_input_ui"),
+        uiOutput("coverage_calc_read_mode_help_ui"),
+        uiOutput("coverage_calc_result_ui")
+      ),
+      div(
+        class = "coverage-panel coverage-panel-info",
+        h3("How To Use This Tool", class = "coverage-panel-title"),
+        div(
+          class = "coverage-info-section",
+          h4("Definitions", class = "coverage-section-title"),
+          tags$ul(
+            tags$li(
+              tags$strong("Reads / clusters or read pairs / clusters: "),
+              "The sequenced units available for one library or project. Single-end runs use reads / clusters, while paired-end runs use read pairs / clusters."
+            ),
+            tags$li(
+              tags$strong("Coverage: "),
+              "How many times, on average, each base in the genome is represented by your sequencing reads."
+            ),
+            tags$li(
+              tags$strong("Genome size: "),
+              "The total size of the organism's genome, stored here in base pairs and shown as Mb or Gb for readability."
+            )
+          )
+        ),
+        div(
+          class = "coverage-info-section",
+          h4("Formulas", class = "coverage-section-title"),
+          div(
+            class = "coverage-formula-block",
+            tags$strong("1. Calculate coverage"),
+            div(
+              class = "coverage-formula",
+              "Single-end: coverage = (reads / clusters) x (read length) / genome size"
+            ),
+            div(
+              class = "coverage-formula",
+              "Paired-end, same length: coverage = (read pairs / clusters) x (2 x read length) / genome size"
+            ),
+            div(
+              class = "coverage-formula",
+              "Paired-end, custom: coverage = (read pairs / clusters) x (Read 1 length + Read 2 length) / genome size"
+            )
+          ),
+          div(
+            class = "coverage-formula-block",
+            tags$strong("2. Calculate required read pairs / clusters"),
+            div(
+              class = "coverage-formula",
+              "Single-end: required reads / clusters = (desired coverage x genome size) / read length"
+            ),
+            div(
+              class = "coverage-formula",
+              "Paired-end, same length: required read pairs / clusters = (desired coverage x genome size) / (2 x read length)"
+            ),
+            div(
+              class = "coverage-formula",
+              "Paired-end, custom: required read pairs / clusters = (desired coverage x genome size) / (Read 1 length + Read 2 length)"
+            )
+          )
+        ),
+        div(
+          class = "coverage-info-section",
+          h4("Notes", class = "coverage-section-title"),
+          tags$ul(
+            tags$li("Stored genome sizes are reused automatically when available."),
+            tags$li("For Custom or mixed references, enter a genome size manually."),
+            tags$li("Read-count inputs use millions. Example: 200 means 200,000,000."),
+            tags$li("Choose the read layout that matches your sequencing setup before entering the read length."),
+            tags$li("Results are estimates and assume the sequencing output is usable for the target genome.")
+          )
+        )
+      )
+    )
+  })
   
   # Main content with tabs for admins
   output$main_content <- renderUI({
@@ -3191,14 +4160,26 @@ server <- function(input, output, session) {
           uiOutput("user_interface")
         ),
         tabPanel(
+          "Coverage Calculator",
+          uiOutput("coverage_calculator_ui")
+        ),
+        tabPanel(
           "Administer Projects",
           uiOutput("admin_interface")
         )
       )
     } else {
-      tagList(
-        uiOutput("announcement_blocks_ui"),
-        uiOutput("user_interface")
+      tabsetPanel(
+        id = "user_tabs",
+        tabPanel(
+          "Apply for Projects",
+          uiOutput("announcement_blocks_ui"),
+          uiOutput("user_interface")
+        ),
+        tabPanel(
+          "Coverage Calculator",
+          uiOutput("coverage_calculator_ui")
+        )
       )
     }
   })
@@ -3412,7 +4393,7 @@ server <- function(input, output, session) {
         ),
         column(6,
                selectInput("reference_genome", "Reference Genome *", 
-                           choices = admin_data$reference_genomes),
+                           choices = reference_genome_choices()),
                selectInput("sequencing_depth_id", "Data Amount (Total Reads) *",
                            choices = if(!is.null(admin_data$sequencing_depths) && nrow(admin_data$sequencing_depths) > 0) {
                              setNames(admin_data$sequencing_depths$id, 
@@ -3989,18 +4970,23 @@ server <- function(input, output, session) {
   observeEvent(input$manage_genomes_btn, {
     showModal(modalDialog(
       title = "Reference Genome Management",
-      size = "m",
+      size = "l",
       footer = modalButton("Close"),
       
       h4("Add New Reference Genome"),
       fluidRow(
-        column(8,
+        column(6,
                textInput("new_genome_name", "Genome Name", placeholder = "Enter genome name")
         ),
-        column(4,
-               actionButton("add_genome_btn", "Add Genome", class = "btn-primary")
+        column(3,
+               numericInput("new_genome_size_value", "Genome Size", value = NA, min = 0, step = 0.1)
+        ),
+        column(3,
+               selectInput("new_genome_size_unit", "Unit", choices = c("bp", "Mb", "Gb"), selected = "Mb")
         )
       ),
+      div(style = "font-size: 11px;", helpText("Optional. Leave blank for entries such as Custom or Others or Mixed.")),
+      actionButton("add_genome_btn", "Add Genome", class = "btn-primary"),
       
       hr(),
       h4("Current Reference Genomes"),
@@ -4220,13 +5206,31 @@ server <- function(input, output, session) {
   })
   
   output$genomes_table_admin <- renderDT({
-    genomes_df <- data.frame(name = admin_data$reference_genomes)
+    genomes_df <- admin_data$reference_genomes
+    if (nrow(genomes_df) == 0) {
+      genomes_df <- data.frame(
+        name = character(0),
+        genome_size = character(0),
+        stringsAsFactors = FALSE
+      )
+    } else {
+      genomes_df <- data.frame(
+        name = genomes_df$name,
+        genome_size = vapply(
+          genomes_df$genome_size_bp,
+          format_genome_size_with_bp,
+          character(1)
+        ),
+        stringsAsFactors = FALSE
+      )
+    }
+
     datatable(
       genomes_df,
       selection = 'single',
       options = list(pageLength = 10),
       rownames = FALSE,
-      colnames = c("Reference Genome Name")
+      colnames = c("Reference Genome Name", "Genome Size")
     )
   })
   
@@ -4722,16 +5726,33 @@ server <- function(input, output, session) {
       return()
     }
 
-    old_name <- admin_data$reference_genomes[selected_row]
+    genome_to_edit <- admin_data$reference_genomes[selected_row, , drop = FALSE]
+    old_name <- genome_to_edit$name[[1]]
+    existing_size_bp <- normalize_genome_size_bp(genome_to_edit$genome_size_bp[[1]])
+    existing_size_unit <- preferred_genome_size_unit(existing_size_bp)
+    existing_size_value <- if (is.na(existing_size_bp)) {
+      NA_real_
+    } else {
+      convert_bp_to_genome_size_unit(existing_size_bp, existing_size_unit)
+    }
 
     showModal(modalDialog(
       title = "Edit Reference Genome",
-      size = "m",
+      size = "l",
       footer = tagList(
         modalButton("Cancel"),
         actionButton("update_genome_btn", "Update Genome", class = "btn-primary")
       ),
-      textInput("edit_genome_name", "Genome Name", value = old_name)
+      textInput("edit_genome_name", "Genome Name", value = old_name),
+      fluidRow(
+        column(8,
+               numericInput("edit_genome_size_value", "Genome Size", value = existing_size_value, min = 0, step = 0.1)
+        ),
+        column(4,
+               selectInput("edit_genome_size_unit", "Unit", choices = c("bp", "Mb", "Gb"), selected = existing_size_unit)
+        )
+      ),
+      div(style = "font-size: 11px;", helpText("Optional. Leave blank when the genome size is unknown or not applicable."))
     ))
   })
 
@@ -4739,15 +5760,24 @@ server <- function(input, output, session) {
     selected_row <- input$genomes_table_admin_rows_selected
     if (length(selected_row) == 0) return()
 
-    old_name <- admin_data$reference_genomes[selected_row]
+    genome_to_edit <- admin_data$reference_genomes[selected_row, , drop = FALSE]
+    old_name <- genome_to_edit$name[[1]]
     req(input$edit_genome_name)
     new_name <- trimws(input$edit_genome_name)
+    parsed_genome_size <- parse_optional_genome_size_input(
+      input$edit_genome_size_value,
+      input$edit_genome_size_unit
+    )
 
     if (new_name == "") {
       showNotification("Please enter a genome name", type = "error")
       return()
     }
-    if (new_name %in% admin_data$reference_genomes && new_name != old_name) {
+    if (!parsed_genome_size$valid) {
+      showNotification(parsed_genome_size$error, type = "error")
+      return()
+    }
+    if (reference_genome_name_exists(new_name, exclude_name = old_name)) {
       showNotification("This genome already exists", type = "error")
       return()
     }
@@ -4755,7 +5785,11 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    dbExecute(con, "UPDATE reference_genomes SET name = ? WHERE name = ?", params = list(new_name, old_name))
+    dbExecute(
+      con,
+      "UPDATE reference_genomes SET name = ?, genome_size_bp = ? WHERE name = ?",
+      params = list(new_name, parsed_genome_size$value, old_name)
+    )
 
     removeModal()
     admin_data$reference_genomes <- load_reference_genomes()
@@ -5036,13 +6070,23 @@ server <- function(input, output, session) {
   # Add new reference genome
   observeEvent(input$add_genome_btn, {
     req(input$new_genome_name)
+    new_name <- trimws(input$new_genome_name)
+    parsed_genome_size <- parse_optional_genome_size_input(
+      input$new_genome_size_value,
+      input$new_genome_size_unit
+    )
     
-    if(input$new_genome_name == "") {
+    if(new_name == "") {
       showNotification("Please enter a genome name", type = "error")
       return()
     }
     
-    if(input$new_genome_name %in% admin_data$reference_genomes) {
+    if (!parsed_genome_size$valid) {
+      showNotification(parsed_genome_size$error, type = "error")
+      return()
+    }
+
+    if(reference_genome_name_exists(new_name)) {
       showNotification("This genome already exists", type = "error")
       return()
     }
@@ -5051,12 +6095,14 @@ server <- function(input, output, session) {
     on.exit(dbDisconnect(con))
     
     dbExecute(con, "
-      INSERT INTO reference_genomes (name)
-      VALUES (?)
-    ", params = list(input$new_genome_name))
+      INSERT INTO reference_genomes (name, genome_size_bp)
+      VALUES (?, ?)
+    ", params = list(new_name, parsed_genome_size$value))
     
     admin_data$reference_genomes <- load_reference_genomes()
     updateTextInput(session, "new_genome_name", value = "")
+    updateNumericInput(session, "new_genome_size_value", value = NA)
+    updateSelectInput(session, "new_genome_size_unit", selected = "Mb")
     showNotification("Reference genome added successfully!", type = "message")
   })
   
@@ -5291,7 +6337,7 @@ server <- function(input, output, session) {
       return()
     }
     
-    genome_to_delete <- admin_data$reference_genomes[selected_row]
+    genome_to_delete <- admin_data$reference_genomes$name[selected_row]
     
     showModal(modalDialog(
       title = "Confirm Delete",
@@ -5305,7 +6351,7 @@ server <- function(input, output, session) {
   
   observeEvent(input$confirm_delete_genome_btn, {
     selected_row <- input$genomes_table_admin_rows_selected
-    genome_to_delete <- admin_data$reference_genomes[selected_row]
+    genome_to_delete <- admin_data$reference_genomes$name[selected_row]
     
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
@@ -5459,7 +6505,7 @@ server <- function(input, output, session) {
         ),
         column(6,
                selectInput("edit_reference_genome", "Reference Genome *", 
-                           choices = admin_data$reference_genomes,
+                           choices = reference_genome_choices_with_selected(project$reference_genome),
                            selected = project$reference_genome),
                selectInput("edit_sequencing_depth_id", "Data Amount (Total Reads) *",
                            choices = setNames(admin_data$sequencing_depths$id, 
