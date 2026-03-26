@@ -45,7 +45,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-076ecbd647e1f0418c5051713cd9b730.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-87aed0b8589e23e45aa8556edf37a91b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-ed9188e5bfc5a1c2cadbf1d511711a72.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -74,6 +74,35 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -193,28 +222,22 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#coverage-calculator" id="toc-coverage-calculator" class="nav-link active" data-scroll-target="#coverage-calculator"><span class="header-section-number">3.1</span> Coverage Calculator</a>
+  <li><a href="#coverage-calculator" id="toc-coverage-calculator" class="nav-link active" data-scroll-target="#coverage-calculator"><span class="header-section-number">3.1</span> Coverage Calculator</a></li>
+  <li><a href="#how-to-use-the-tool" id="toc-how-to-use-the-tool" class="nav-link" data-scroll-target="#how-to-use-the-tool"><span class="header-section-number">3.2</span> How to use the tool</a></li>
+  <li><a href="#reference-genomes-and-genome-sizes" id="toc-reference-genomes-and-genome-sizes" class="nav-link" data-scroll-target="#reference-genomes-and-genome-sizes"><span class="header-section-number">3.3</span> Reference genomes and genome sizes</a></li>
+  <li><a href="#read-layout-modes" id="toc-read-layout-modes" class="nav-link" data-scroll-target="#read-layout-modes"><span class="header-section-number">3.4</span> Read layout modes</a>
   <ul class="collapse">
-  <li><a href="#contents" id="toc-contents" class="nav-link" data-scroll-target="#contents"><span class="header-section-number">3.1.1</span> Contents</a></li>
+  <li><a href="#paired-end-same-length-for-both-reads" id="toc-paired-end-same-length-for-both-reads" class="nav-link" data-scroll-target="#paired-end-same-length-for-both-reads"><span class="header-section-number">3.4.1</span> Paired-end (same length for both reads)</a></li>
+  <li><a href="#single-end" id="toc-single-end" class="nav-link" data-scroll-target="#single-end"><span class="header-section-number">3.4.2</span> Single-end</a></li>
+  <li><a href="#paired-end-custom-read-1-read-2" id="toc-paired-end-custom-read-1-read-2" class="nav-link" data-scroll-target="#paired-end-custom-read-1-read-2"><span class="header-section-number">3.4.3</span> Paired-end (custom Read 1 / Read 2)</a></li>
   </ul></li>
-  <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview"><span class="header-section-number">3.2</span> Overview</a></li>
-  <li><a href="#where-the-calculator-lives" id="toc-where-the-calculator-lives" class="nav-link" data-scroll-target="#where-the-calculator-lives"><span class="header-section-number">3.3</span> Where the calculator lives</a></li>
-  <li><a href="#what-the-calculator-can-do" id="toc-what-the-calculator-can-do" class="nav-link" data-scroll-target="#what-the-calculator-can-do"><span class="header-section-number">3.4</span> What the calculator can do</a></li>
-  <li><a href="#reference-genomes-and-genome-sizes" id="toc-reference-genomes-and-genome-sizes" class="nav-link" data-scroll-target="#reference-genomes-and-genome-sizes"><span class="header-section-number">3.5</span> Reference genomes and genome sizes</a></li>
-  <li><a href="#read-layout-modes" id="toc-read-layout-modes" class="nav-link" data-scroll-target="#read-layout-modes"><span class="header-section-number">3.6</span> Read layout modes</a>
+  <li><a href="#read-count-input-units" id="toc-read-count-input-units" class="nav-link" data-scroll-target="#read-count-input-units"><span class="header-section-number">3.5</span> Read-count input units</a></li>
+  <li><a href="#formulas-used" id="toc-formulas-used" class="nav-link" data-scroll-target="#formulas-used"><span class="header-section-number">3.6</span> Formulas used</a>
   <ul class="collapse">
-  <li><a href="#paired-end-same-length-for-both-reads" id="toc-paired-end-same-length-for-both-reads" class="nav-link" data-scroll-target="#paired-end-same-length-for-both-reads"><span class="header-section-number">3.6.1</span> Paired-end (same length for both reads)</a></li>
-  <li><a href="#single-end" id="toc-single-end" class="nav-link" data-scroll-target="#single-end"><span class="header-section-number">3.6.2</span> Single-end</a></li>
-  <li><a href="#paired-end-custom-read-1-read-2" id="toc-paired-end-custom-read-1-read-2" class="nav-link" data-scroll-target="#paired-end-custom-read-1-read-2"><span class="header-section-number">3.6.3</span> Paired-end (custom Read 1 / Read 2)</a></li>
+  <li><a href="#coverage-from-available-reads" id="toc-coverage-from-available-reads" class="nav-link" data-scroll-target="#coverage-from-available-reads"><span class="header-section-number">3.6.1</span> Coverage from available reads</a></li>
+  <li><a href="#required-reads-for-target-coverage" id="toc-required-reads-for-target-coverage" class="nav-link" data-scroll-target="#required-reads-for-target-coverage"><span class="header-section-number">3.6.2</span> Required reads for target coverage</a></li>
   </ul></li>
-  <li><a href="#read-count-input-units" id="toc-read-count-input-units" class="nav-link" data-scroll-target="#read-count-input-units"><span class="header-section-number">3.7</span> Read-count input units</a></li>
-  <li><a href="#formulas-used" id="toc-formulas-used" class="nav-link" data-scroll-target="#formulas-used"><span class="header-section-number">3.8</span> Formulas used</a>
-  <ul class="collapse">
-  <li><a href="#coverage-from-available-reads" id="toc-coverage-from-available-reads" class="nav-link" data-scroll-target="#coverage-from-available-reads"><span class="header-section-number">3.8.1</span> Coverage from available reads</a></li>
-  <li><a href="#required-reads-for-target-coverage" id="toc-required-reads-for-target-coverage" class="nav-link" data-scroll-target="#required-reads-for-target-coverage"><span class="header-section-number">3.8.2</span> Required reads for target coverage</a></li>
-  </ul></li>
-  <li><a href="#admin-maintenance" id="toc-admin-maintenance" class="nav-link" data-scroll-target="#admin-maintenance"><span class="header-section-number">3.9</span> Admin maintenance</a></li>
-  <li><a href="#validation-checklist" id="toc-validation-checklist" class="nav-link" data-scroll-target="#validation-checklist"><span class="header-section-number">3.10</span> Validation checklist</a></li>
+  <li><a href="#admin-maintenance" id="toc-admin-maintenance" class="nav-link" data-scroll-target="#admin-maintenance"><span class="header-section-number">3.7</span> Admin maintenance</a></li>
   </ul>
 </nav>
     </div>
@@ -242,69 +265,66 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="coverage-calculator" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="coverage-calculator"><span class="header-section-number">3.1</span> Coverage Calculator</h2>
-<section id="contents" class="level3" data-number="3.1.1">
-<h3 data-number="3.1.1" class="anchored" data-anchor-id="contents"><span class="header-section-number">3.1.1</span> Contents</h3>
+<p>For easier project planning and calculation, I have now added a <strong>Coverage Calculator</strong> tab for the users. The tool can help wit hthe estimation from two approaches:</p>
 <ul>
-<li><a href="#overview">Overview</a></li>
-<li><a href="#where-the-calculator-lives">Where the calculator lives</a></li>
-<li><a href="#what-the-calculator-can-do">What the calculator can do</a></li>
-<li><a href="#reference-genomes-and-genome-sizes">Reference genomes and genome sizes</a></li>
-<li><a href="#read-layout-modes">Read layout modes</a></li>
-<li><a href="#read-count-input-units">Read-count input units</a></li>
-<li><a href="#formulas-used">Formulas used</a></li>
-<li><a href="#admin-maintenance">Admin maintenance</a></li>
-<li><a href="#validation-checklist">Validation checklist</a></li>
-</ul>
-</section>
-</section>
-<section id="overview" class="level2" data-number="3.2">
-<h2 data-number="3.2" class="anchored" data-anchor-id="overview"><span class="header-section-number">3.2</span> Overview</h2>
-<p>The app now includes a dedicated <strong>Coverage Calculator</strong> tab for logged-in users. It is intended as a planning tool for sequencing design and lets users estimate:</p>
-<ul>
-<li>the coverage they can expect from a known number of reads or read pairs</li>
+<li>the coverage they can expect from a known number of read pairs (we don’t do a lot of single-end reads)</li>
 <li>the number of reads or read pairs they need to reach a desired coverage</li>
 </ul>
-<p>The calculator is implemented in <code>sequencing-app/app.R</code> and is available to:</p>
-<ul>
-<li>regular users: as a second top-level tab next to <strong>Apply for Projects</strong></li>
-<li>administrators: as a new tab alongside <strong>Home</strong>, <strong>Apply for Projects</strong>, and <strong>Administer Projects</strong></li>
-</ul>
+<p>To the right hand side of the calculator I have added some definitions, formulas, and usage notes for the user to help orienting how to use the tool.</p>
 </section>
-<section id="where-the-calculator-lives" class="level2" data-number="3.3">
-<h2 data-number="3.3" class="anchored" data-anchor-id="where-the-calculator-lives"><span class="header-section-number">3.3</span> Where the calculator lives</h2>
-<p>The calculator is rendered as a 50/50 split layout:</p>
-<ul>
-<li>left side: inputs and result card</li>
-<li>right side: definitions, formulas, and usage notes</li>
-</ul>
-<p>On smaller screens, the layout stacks vertically so the calculator remains usable on narrow displays.</p>
-</section>
-<section id="what-the-calculator-can-do" class="level2" data-number="3.4">
-<h2 data-number="3.4" class="anchored" data-anchor-id="what-the-calculator-can-do"><span class="header-section-number">3.4</span> What the calculator can do</h2>
-<p>The first decision in the calculator is the calculation direction:</p>
+<section id="how-to-use-the-tool" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="how-to-use-the-tool"><span class="header-section-number">3.2</span> How to use the tool</h2>
+<p>The user can answer two questions with the tool:</p>
 <ol type="1">
 <li><strong>Coverage from available reads</strong>
 <ul>
-<li>user enters the number of reads / clusters or read pairs / clusters available</li>
-<li>app estimates the resulting coverage</li>
+<li>If the user enters the number of reads (e.g.&nbsp;clusters)=&gt; the app estimates the resulting coverage</li>
 </ul></li>
 <li><strong>Required reads for target coverage</strong>
 <ul>
-<li>user enters the desired coverage</li>
-<li>app estimates the required read count</li>
+<li>If the user enters the desired coverage =&gt; The tool can estimate the required read count to reach it.</li>
 </ul></li>
 </ol>
-<p>The UI wording changes automatically so the output matches the chosen sequencing layout.</p>
+<p>Both questions depends on the genome size, which is why the first parameter of importance for the user to choose is the genome in question.</p>
+<div id="fig-coverage" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-coverage-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-coverage" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-ui" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-ui-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures/left-side.png" class="img-fluid figure-img" data-ref-parent="fig-coverage">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-ui-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) The left side contains the tool itself
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-coverage" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-explain" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-explain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures/right-side.png" class="img-fluid figure-img" data-ref-parent="fig-coverage">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-explain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) On the right we have the explanation and the usage of the toll
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-coverage-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3.1: The UI of the tool is split into two parts for easier utilization.
+</figcaption>
+</figure>
+</div>
 </section>
-<section id="reference-genomes-and-genome-sizes" class="level2" data-number="3.5">
-<h2 data-number="3.5" class="anchored" data-anchor-id="reference-genomes-and-genome-sizes"><span class="header-section-number">3.5</span> Reference genomes and genome sizes</h2>
+<section id="reference-genomes-and-genome-sizes" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="reference-genomes-and-genome-sizes"><span class="header-section-number">3.3</span> Reference genomes and genome sizes</h2>
 <p>The calculator uses the existing <code>reference_genomes</code> table.</p>
-<p>New database support was added:</p>
-<ul>
-<li>new column: <code>reference_genomes.genome_size_bp</code></li>
-<li>runtime migration: the app adds the column automatically when missing</li>
-<li>seed values: known organisms now receive stored genome sizes in base pairs</li>
-</ul>
 <p>Known genomes currently seeded:</p>
 <ul>
 <li><code>Caenorhabditis elegans</code> -&gt; <code>100.3 Mb</code></li>
@@ -317,50 +337,24 @@ ul.task-list li input[type="checkbox"] {
 <li><code>Mus musculus</code> -&gt; <code>2.7 Gb</code></li>
 <li><code>Saccharomyces cerevisiae - yeast</code> -&gt; <code>12.1 Mb</code></li>
 </ul>
-<p>Legacy short names were also normalized at startup so older local databases such as:</p>
-<ul>
-<li><code>Hsp.GRCh38</code></li>
-<li><code>Mmu.GrCm38</code></li>
-<li><code>Cel.WBcel235</code></li>
-</ul>
-<p>are rewritten to the current full names and keep the correct genome size.</p>
-<p>If a selected entry has no stored genome size, the calculator exposes a manual input with units:</p>
-<ul>
-<li><code>bp</code></li>
-<li><code>Mb</code></li>
-<li><code>Gb</code></li>
-</ul>
-<p>This is used for entries such as:</p>
-<ul>
-<li><code>Custom</code></li>
-<li><code>Others or Mixed</code></li>
-</ul>
+<p>Legacy short names were also normalized at startup so older local databases short names are rewritten to the current full names and keep the correct genome size.</p>
+<p>If the user needs to calculate the coverage for an organism, that is not in the list, the genome size can be entered manually given a numeric input with the units <code>bp</code>, <code>Mb</code>, or <code>Gb</code>.</p>
 </section>
-<section id="read-layout-modes" class="level2" data-number="3.6">
-<h2 data-number="3.6" class="anchored" data-anchor-id="read-layout-modes"><span class="header-section-number">3.6</span> Read layout modes</h2>
-<p>The calculator now supports three read-layout modes:</p>
-<section id="paired-end-same-length-for-both-reads" class="level3" data-number="3.6.1">
-<h3 data-number="3.6.1" class="anchored" data-anchor-id="paired-end-same-length-for-both-reads"><span class="header-section-number">3.6.1</span> Paired-end (same length for both reads)</h3>
+<section id="read-layout-modes" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="read-layout-modes"><span class="header-section-number">3.4</span> Read layout modes</h2>
+<p>Even though most of our data is in paired-end mode, the calculator supports three read-layout modes.</p>
+<section id="paired-end-same-length-for-both-reads" class="level3" data-number="3.4.1">
+<h3 data-number="3.4.1" class="anchored" data-anchor-id="paired-end-same-length-for-both-reads"><span class="header-section-number">3.4.1</span> Paired-end (same length for both reads)</h3>
 <p>Use this when both reads have the same length, for example <code>2x150</code>.</p>
-<p>User input:</p>
-<ul>
-<li>one read-length value</li>
-</ul>
-<p>Internal base calculation:</p>
-<pre class="text"><code>total bases per pair = 2 x read length</code></pre>
+<p>While the user needs to only input one read-length value, the internal base calculation will be <code>total bases per pair = 2 x read length</code></p>
 </section>
-<section id="single-end" class="level3" data-number="3.6.2">
-<h3 data-number="3.6.2" class="anchored" data-anchor-id="single-end"><span class="header-section-number">3.6.2</span> Single-end</h3>
+<section id="single-end" class="level3" data-number="3.4.2">
+<h3 data-number="3.4.2" class="anchored" data-anchor-id="single-end"><span class="header-section-number">3.4.2</span> Single-end</h3>
 <p>Use this when only one read is generated per cluster.</p>
-<p>User input:</p>
-<ul>
-<li>one read-length value</li>
-</ul>
-<p>Internal base calculation:</p>
-<pre class="text"><code>total bases per read = read length</code></pre>
+<p>While the user input is one read-length value, the internal base calculation will be <code>total bases per read = read length</code></p>
 </section>
-<section id="paired-end-custom-read-1-read-2" class="level3" data-number="3.6.3">
-<h3 data-number="3.6.3" class="anchored" data-anchor-id="paired-end-custom-read-1-read-2"><span class="header-section-number">3.6.3</span> Paired-end (custom Read 1 / Read 2)</h3>
+<section id="paired-end-custom-read-1-read-2" class="level3" data-number="3.4.3">
+<h3 data-number="3.4.3" class="anchored" data-anchor-id="paired-end-custom-read-1-read-2"><span class="header-section-number">3.4.3</span> Paired-end (custom Read 1 / Read 2)</h3>
 <p>Use this when <code>Read 1</code> and <code>Read 2</code> differ.</p>
 <p>User input:</p>
 <ul>
@@ -371,46 +365,25 @@ ul.task-list li input[type="checkbox"] {
 <pre class="text"><code>total bases per pair = Read 1 length + Read 2 length</code></pre>
 </section>
 </section>
-<section id="read-count-input-units" class="level2" data-number="3.7">
-<h2 data-number="3.7" class="anchored" data-anchor-id="read-count-input-units"><span class="header-section-number">3.7</span> Read-count input units</h2>
-<p>Read-count inputs are now entered in <strong>millions</strong>.</p>
-<p>Examples:</p>
-<ul>
-<li><code>200</code> means <code>200,000,000</code></li>
-<li><code>310</code> means <code>310,000,000</code></li>
-<li><code>0.5</code> means <code>500,000</code></li>
-</ul>
-<p>The result card displays:</p>
-<ul>
-<li>the primary result in millions</li>
-<li>the exact absolute count as a supporting line below</li>
-</ul>
-<p>This keeps large sequencing numbers easier to read without losing precision.</p>
+<section id="read-count-input-units" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="read-count-input-units"><span class="header-section-number">3.5</span> Read-count input units</h2>
+<p>Read-count inputs are now entered in <strong>millions</strong> (for examples <code>200</code> stands for <code>200,000,000</code> reads.)</p>
 </section>
-<section id="formulas-used" class="level2" data-number="3.8">
-<h2 data-number="3.8" class="anchored" data-anchor-id="formulas-used"><span class="header-section-number">3.8</span> Formulas used</h2>
-<section id="coverage-from-available-reads" class="level3" data-number="3.8.1">
-<h3 data-number="3.8.1" class="anchored" data-anchor-id="coverage-from-available-reads"><span class="header-section-number">3.8.1</span> Coverage from available reads</h3>
-<p>Single-end:</p>
-<pre class="text"><code>coverage = (reads / clusters) x (read length) / genome size</code></pre>
-<p>Paired-end, same length:</p>
-<pre class="text"><code>coverage = (read pairs / clusters) x (2 x read length) / genome size</code></pre>
-<p>Paired-end, custom:</p>
-<pre class="text"><code>coverage = (read pairs / clusters) x (Read 1 length + Read 2 length) / genome size</code></pre>
+<section id="formulas-used" class="level2" data-number="3.6">
+<h2 data-number="3.6" class="anchored" data-anchor-id="formulas-used"><span class="header-section-number">3.6</span> Formulas used</h2>
+<section id="coverage-from-available-reads" class="level3" data-number="3.6.1">
+<h3 data-number="3.6.1" class="anchored" data-anchor-id="coverage-from-available-reads"><span class="header-section-number">3.6.1</span> Coverage from available reads</h3>
+<p><span class="math inline">\(coverage = \frac{clusters\ *\ read\ length}{genome\ size}\)</span></p>
+<p>while read-length is always the sum of the two reads if paired-end</p>
 </section>
-<section id="required-reads-for-target-coverage" class="level3" data-number="3.8.2">
-<h3 data-number="3.8.2" class="anchored" data-anchor-id="required-reads-for-target-coverage"><span class="header-section-number">3.8.2</span> Required reads for target coverage</h3>
-<p>Single-end:</p>
-<pre class="text"><code>required reads / clusters = (desired coverage x genome size) / read length</code></pre>
-<p>Paired-end, same length:</p>
-<pre class="text"><code>required read pairs / clusters = (desired coverage x genome size) / (2 x read length)</code></pre>
-<p>Paired-end, custom:</p>
-<pre class="text"><code>required read pairs / clusters = (desired coverage x genome size) / (Read 1 length + Read 2 length)</code></pre>
-<p>The app rounds required counts up with <code>ceiling(...)</code> so the returned target is not underestimated.</p>
+<section id="required-reads-for-target-coverage" class="level3" data-number="3.6.2">
+<h3 data-number="3.6.2" class="anchored" data-anchor-id="required-reads-for-target-coverage"><span class="header-section-number">3.6.2</span> Required reads for target coverage</h3>
+<p><span class="math inline">\(required reads = \frac{desired\ coverage\ *\ genome\ size}{read\ length}\)</span></p>
+<p>The app rounds required counts up, so the returned target is not underestimated.</p>
 </section>
 </section>
-<section id="admin-maintenance" class="level2" data-number="3.9">
-<h2 data-number="3.9" class="anchored" data-anchor-id="admin-maintenance"><span class="header-section-number">3.9</span> Admin maintenance</h2>
+<section id="admin-maintenance" class="level2" data-number="3.7">
+<h2 data-number="3.7" class="anchored" data-anchor-id="admin-maintenance"><span class="header-section-number">3.7</span> Admin maintenance</h2>
 <p>Genome sizes can now be managed in the admin UI:</p>
 <ol type="1">
 <li>Open <strong>Administer Projects</strong></li>
@@ -423,32 +396,6 @@ ul.task-list li input[type="checkbox"] {
 </ul></li>
 </ol>
 <p>If the size is left empty, the genome remains valid in the dropdown but requires manual size entry in the calculator.</p>
-</section>
-<section id="validation-checklist" class="level2" data-number="3.10">
-<h2 data-number="3.10" class="anchored" data-anchor-id="validation-checklist"><span class="header-section-number">3.10</span> Validation checklist</h2>
-<p>Recommended test cases after deploy:</p>
-<ol type="1">
-<li>Select <code>Homo sapiens</code>, choose paired-end same length, enter <code>150</code>, target <code>30x</code>:
-<ul>
-<li>result should be about <code>310 million</code></li>
-</ul></li>
-<li>Select <code>Homo sapiens</code>, paired-end same length, available reads <code>310</code>:
-<ul>
-<li>result should be about <code>30x</code></li>
-</ul></li>
-<li>Select <code>Escherichia coli</code>, paired-end same length, available reads <code>10</code>, read length <code>150</code>:
-<ul>
-<li>result should be about <code>652.2x</code></li>
-</ul></li>
-<li>Select <code>Custom</code>:
-<ul>
-<li>manual genome-size input should appear</li>
-</ul></li>
-<li>Switch between single-end and paired-end modes:
-<ul>
-<li>read-length fields and labels should update automatically</li>
-</ul></li>
-</ol>
 
 
 </section>

@@ -44,7 +44,7 @@
     "href": "chapters/coverage-calculator.html",
     "title": "3  Coverage Calculator",
     "section": "",
-    "text": "3.1 Coverage Calculator",
+    "text": "3.1 Coverage Calculator\nFor easier project planning and calculation, I have now added a Coverage Calculator tab for the users. The tool can help wit hthe estimation from two approaches:\nTo the right hand side of the calculator I have added some definitions, formulas, and usage notes for the user to help orienting how to use the tool.",
     "crumbs": [
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>Coverage Calculator</span>"
     ]
@@ -54,37 +54,17 @@
     "href": "chapters/coverage-calculator.html#coverage-calculator",
     "title": "3  Coverage Calculator",
     "section": "",
-    "text": "3.1.1 Contents\n\nOverview\nWhere the calculator lives\nWhat the calculator can do\nReference genomes and genome sizes\nRead layout modes\nRead-count input units\nFormulas used\nAdmin maintenance\nValidation checklist",
+    "text": "the coverage they can expect from a known number of read pairs (we don’t do a lot of single-end reads)\nthe number of reads or read pairs they need to reach a desired coverage",
     "crumbs": [
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>Coverage Calculator</span>"
     ]
   },
   {
-    "objectID": "chapters/coverage-calculator.html#overview",
-    "href": "chapters/coverage-calculator.html#overview",
+    "objectID": "chapters/coverage-calculator.html#how-to-use-the-tool",
+    "href": "chapters/coverage-calculator.html#how-to-use-the-tool",
     "title": "3  Coverage Calculator",
-    "section": "3.2 Overview",
-    "text": "3.2 Overview\nThe app now includes a dedicated Coverage Calculator tab for logged-in users. It is intended as a planning tool for sequencing design and lets users estimate:\n\nthe coverage they can expect from a known number of reads or read pairs\nthe number of reads or read pairs they need to reach a desired coverage\n\nThe calculator is implemented in sequencing-app/app.R and is available to:\n\nregular users: as a second top-level tab next to Apply for Projects\nadministrators: as a new tab alongside Home, Apply for Projects, and Administer Projects",
-    "crumbs": [
-      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Coverage Calculator</span>"
-    ]
-  },
-  {
-    "objectID": "chapters/coverage-calculator.html#where-the-calculator-lives",
-    "href": "chapters/coverage-calculator.html#where-the-calculator-lives",
-    "title": "3  Coverage Calculator",
-    "section": "3.3 Where the calculator lives",
-    "text": "3.3 Where the calculator lives\nThe calculator is rendered as a 50/50 split layout:\n\nleft side: inputs and result card\nright side: definitions, formulas, and usage notes\n\nOn smaller screens, the layout stacks vertically so the calculator remains usable on narrow displays.",
-    "crumbs": [
-      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Coverage Calculator</span>"
-    ]
-  },
-  {
-    "objectID": "chapters/coverage-calculator.html#what-the-calculator-can-do",
-    "href": "chapters/coverage-calculator.html#what-the-calculator-can-do",
-    "title": "3  Coverage Calculator",
-    "section": "3.4 What the calculator can do",
-    "text": "3.4 What the calculator can do\nThe first decision in the calculator is the calculation direction:\n\nCoverage from available reads\n\nuser enters the number of reads / clusters or read pairs / clusters available\napp estimates the resulting coverage\n\nRequired reads for target coverage\n\nuser enters the desired coverage\napp estimates the required read count\n\n\nThe UI wording changes automatically so the output matches the chosen sequencing layout.",
+    "section": "3.2 How to use the tool",
+    "text": "3.2 How to use the tool\nThe user can answer two questions with the tool:\n\nCoverage from available reads\n\nIf the user enters the number of reads (e.g. clusters)=&gt; the app estimates the resulting coverage\n\nRequired reads for target coverage\n\nIf the user enters the desired coverage =&gt; The tool can estimate the required read count to reach it.\n\n\nBoth questions depends on the genome size, which is why the first parameter of importance for the user to choose is the genome in question.\n\n\n\n\n\n\n\n\n\n\n\n(a) The left side contains the tool itself\n\n\n\n\n\n\n\n\n\n\n\n(b) On the right we have the explanation and the usage of the toll\n\n\n\n\n\n\n\nFigure 3.1: The UI of the tool is split into two parts for easier utilization.",
     "crumbs": [
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>Coverage Calculator</span>"
     ]
@@ -93,8 +73,8 @@
     "objectID": "chapters/coverage-calculator.html#reference-genomes-and-genome-sizes",
     "href": "chapters/coverage-calculator.html#reference-genomes-and-genome-sizes",
     "title": "3  Coverage Calculator",
-    "section": "3.5 Reference genomes and genome sizes",
-    "text": "3.5 Reference genomes and genome sizes\nThe calculator uses the existing reference_genomes table.\nNew database support was added:\n\nnew column: reference_genomes.genome_size_bp\nruntime migration: the app adds the column automatically when missing\nseed values: known organisms now receive stored genome sizes in base pairs\n\nKnown genomes currently seeded:\n\nCaenorhabditis elegans -&gt; 100.3 Mb\nDanio rerio - Zebrafish -&gt; 1.4 Gb\nDrosophila melanogaster -&gt; 143.7 Mb\nDrosophila pseudoobscura -&gt; 163.3 Mb\nEscherichia coli -&gt; 4.6 Mb\nGallus gallus -&gt; 1.1 Gb\nHomo sapiens -&gt; 3.1 Gb\nMus musculus -&gt; 2.7 Gb\nSaccharomyces cerevisiae - yeast -&gt; 12.1 Mb\n\nLegacy short names were also normalized at startup so older local databases such as:\n\nHsp.GRCh38\nMmu.GrCm38\nCel.WBcel235\n\nare rewritten to the current full names and keep the correct genome size.\nIf a selected entry has no stored genome size, the calculator exposes a manual input with units:\n\nbp\nMb\nGb\n\nThis is used for entries such as:\n\nCustom\nOthers or Mixed",
+    "section": "3.3 Reference genomes and genome sizes",
+    "text": "3.3 Reference genomes and genome sizes\nThe calculator uses the existing reference_genomes table.\nKnown genomes currently seeded:\n\nCaenorhabditis elegans -&gt; 100.3 Mb\nDanio rerio - Zebrafish -&gt; 1.4 Gb\nDrosophila melanogaster -&gt; 143.7 Mb\nDrosophila pseudoobscura -&gt; 163.3 Mb\nEscherichia coli -&gt; 4.6 Mb\nGallus gallus -&gt; 1.1 Gb\nHomo sapiens -&gt; 3.1 Gb\nMus musculus -&gt; 2.7 Gb\nSaccharomyces cerevisiae - yeast -&gt; 12.1 Mb\n\nLegacy short names were also normalized at startup so older local databases short names are rewritten to the current full names and keep the correct genome size.\nIf the user needs to calculate the coverage for an organism, that is not in the list, the genome size can be entered manually given a numeric input with the units bp, Mb, or Gb.",
     "crumbs": [
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>Coverage Calculator</span>"
     ]
@@ -103,8 +83,8 @@
     "objectID": "chapters/coverage-calculator.html#read-layout-modes",
     "href": "chapters/coverage-calculator.html#read-layout-modes",
     "title": "3  Coverage Calculator",
-    "section": "3.6 Read layout modes",
-    "text": "3.6 Read layout modes\nThe calculator now supports three read-layout modes:\n\n3.6.1 Paired-end (same length for both reads)\nUse this when both reads have the same length, for example 2x150.\nUser input:\n\none read-length value\n\nInternal base calculation:\ntotal bases per pair = 2 x read length\n\n\n3.6.2 Single-end\nUse this when only one read is generated per cluster.\nUser input:\n\none read-length value\n\nInternal base calculation:\ntotal bases per read = read length\n\n\n3.6.3 Paired-end (custom Read 1 / Read 2)\nUse this when Read 1 and Read 2 differ.\nUser input:\n\nRead 1 length\nRead 2 length\n\nInternal base calculation:\ntotal bases per pair = Read 1 length + Read 2 length",
+    "section": "3.4 Read layout modes",
+    "text": "3.4 Read layout modes\nEven though most of our data is in paired-end mode, the calculator supports three read-layout modes.\n\n3.4.1 Paired-end (same length for both reads)\nUse this when both reads have the same length, for example 2x150.\nWhile the user needs to only input one read-length value, the internal base calculation will be total bases per pair = 2 x read length\n\n\n3.4.2 Single-end\nUse this when only one read is generated per cluster.\nWhile the user input is one read-length value, the internal base calculation will be total bases per read = read length\n\n\n3.4.3 Paired-end (custom Read 1 / Read 2)\nUse this when Read 1 and Read 2 differ.\nUser input:\n\nRead 1 length\nRead 2 length\n\nInternal base calculation:\ntotal bases per pair = Read 1 length + Read 2 length",
     "crumbs": [
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>Coverage Calculator</span>"
     ]
@@ -113,8 +93,8 @@
     "objectID": "chapters/coverage-calculator.html#read-count-input-units",
     "href": "chapters/coverage-calculator.html#read-count-input-units",
     "title": "3  Coverage Calculator",
-    "section": "3.7 Read-count input units",
-    "text": "3.7 Read-count input units\nRead-count inputs are now entered in millions.\nExamples:\n\n200 means 200,000,000\n310 means 310,000,000\n0.5 means 500,000\n\nThe result card displays:\n\nthe primary result in millions\nthe exact absolute count as a supporting line below\n\nThis keeps large sequencing numbers easier to read without losing precision.",
+    "section": "3.5 Read-count input units",
+    "text": "3.5 Read-count input units\nRead-count inputs are now entered in millions (for examples 200 stands for 200,000,000 reads.)",
     "crumbs": [
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>Coverage Calculator</span>"
     ]
@@ -123,8 +103,8 @@
     "objectID": "chapters/coverage-calculator.html#formulas-used",
     "href": "chapters/coverage-calculator.html#formulas-used",
     "title": "3  Coverage Calculator",
-    "section": "3.8 Formulas used",
-    "text": "3.8 Formulas used\n\n3.8.1 Coverage from available reads\nSingle-end:\ncoverage = (reads / clusters) x (read length) / genome size\nPaired-end, same length:\ncoverage = (read pairs / clusters) x (2 x read length) / genome size\nPaired-end, custom:\ncoverage = (read pairs / clusters) x (Read 1 length + Read 2 length) / genome size\n\n\n3.8.2 Required reads for target coverage\nSingle-end:\nrequired reads / clusters = (desired coverage x genome size) / read length\nPaired-end, same length:\nrequired read pairs / clusters = (desired coverage x genome size) / (2 x read length)\nPaired-end, custom:\nrequired read pairs / clusters = (desired coverage x genome size) / (Read 1 length + Read 2 length)\nThe app rounds required counts up with ceiling(...) so the returned target is not underestimated.",
+    "section": "3.6 Formulas used",
+    "text": "3.6 Formulas used\n\n3.6.1 Coverage from available reads\n\\(coverage = \\frac{clusters\\ *\\ read\\ length}{genome\\ size}\\)\nwhile read-length is always the sum of the two reads if paired-end\n\n\n3.6.2 Required reads for target coverage\n\\(required reads = \\frac{desired\\ coverage\\ *\\ genome\\ size}{read\\ length}\\)\nThe app rounds required counts up, so the returned target is not underestimated.",
     "crumbs": [
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>Coverage Calculator</span>"
     ]
@@ -133,18 +113,8 @@
     "objectID": "chapters/coverage-calculator.html#admin-maintenance",
     "href": "chapters/coverage-calculator.html#admin-maintenance",
     "title": "3  Coverage Calculator",
-    "section": "3.9 Admin maintenance",
-    "text": "3.9 Admin maintenance\nGenome sizes can now be managed in the admin UI:\n\nOpen Administer Projects\nClick Manage Genomes\nAdd or edit:\n\ngenome name\noptional genome size\nunit interpretation is stored internally as base pairs\n\n\nIf the size is left empty, the genome remains valid in the dropdown but requires manual size entry in the calculator.",
-    "crumbs": [
-      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Coverage Calculator</span>"
-    ]
-  },
-  {
-    "objectID": "chapters/coverage-calculator.html#validation-checklist",
-    "href": "chapters/coverage-calculator.html#validation-checklist",
-    "title": "3  Coverage Calculator",
-    "section": "3.10 Validation checklist",
-    "text": "3.10 Validation checklist\nRecommended test cases after deploy:\n\nSelect Homo sapiens, choose paired-end same length, enter 150, target 30x:\n\nresult should be about 310 million\n\nSelect Homo sapiens, paired-end same length, available reads 310:\n\nresult should be about 30x\n\nSelect Escherichia coli, paired-end same length, available reads 10, read length 150:\n\nresult should be about 652.2x\n\nSelect Custom:\n\nmanual genome-size input should appear\n\nSwitch between single-end and paired-end modes:\n\nread-length fields and labels should update automatically",
+    "section": "3.7 Admin maintenance",
+    "text": "3.7 Admin maintenance\nGenome sizes can now be managed in the admin UI:\n\nOpen Administer Projects\nClick Manage Genomes\nAdd or edit:\n\ngenome name\noptional genome size\nunit interpretation is stored internally as base pairs\n\n\nIf the size is left empty, the genome remains valid in the dropdown but requires manual size entry in the calculator.",
     "crumbs": [
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>Coverage Calculator</span>"
     ]
