@@ -28,3 +28,7 @@ format:
     toc-depth: 3
     number-sections: true
     code-fold: true
+    grid:
+      body-width: 1425px
+      margin-width: 290px
+      gutter-width: 2rem

@@ -8,62 +8,39 @@ execute:
 
 ## Coverage Calculator
 
-### Contents
+For easier project planning and calculation, I have now added a **Coverage Calculator** tab for the users.
+The tool can help wit hthe estimation from two approaches:
 
-- [Overview](#overview)
-- [Where the calculator lives](#where-the-calculator-lives)
-- [What the calculator can do](#what-the-calculator-can-do)
-- [Reference genomes and genome sizes](#reference-genomes-and-genome-sizes)
-- [Read layout modes](#read-layout-modes)
-- [Read-count input units](#read-count-input-units)
-- [Formulas used](#formulas-used)
-- [Admin maintenance](#admin-maintenance)
-- [Validation checklist](#validation-checklist)
-
-## Overview
-
-The app now includes a dedicated **Coverage Calculator** tab for logged-in users.
-It is intended as a planning tool for sequencing design and lets users estimate:
-
-- the coverage they can expect from a known number of reads or read pairs
+- the coverage they can expect from a known number of read pairs (we don't do a lot of single-end reads)
 - the number of reads or read pairs they need to reach a desired coverage
 
-The calculator is implemented in `sequencing-app/app.R` and is available to:
 
-- regular users: as a second top-level tab next to **Apply for Projects**
-- administrators: as a new tab alongside **Home**, **Apply for Projects**, and **Administer Projects**
+To the right hand side of the calculator I have added some definitions, formulas, and usage notes for the user to help orienting how to use the tool.
 
-## Where the calculator lives
+## How to use the tool
 
-The calculator is rendered as a 50/50 split layout:
-
-- left side: inputs and result card
-- right side: definitions, formulas, and usage notes
-
-On smaller screens, the layout stacks vertically so the calculator remains usable on narrow displays.
-
-## What the calculator can do
-
-The first decision in the calculator is the calculation direction:
+The user can answer two questions with the tool:
 
 1. **Coverage from available reads**
-   - user enters the number of reads / clusters or read pairs / clusters available
-   - app estimates the resulting coverage
+   - If the user enters the number of reads (e.g. clusters)=> the app estimates the resulting coverage
 2. **Required reads for target coverage**
-   - user enters the desired coverage
-   - app estimates the required read count
+   - If the user enters the desired coverage => The tool can estimate the required read count to reach it.
 
-The UI wording changes automatically so the output matches the chosen sequencing layout.
+Both questions depends on the genome size, which is why the first parameter of importance for the user to choose is the genome in question.
+
+::: {#fig-coverage layout-ncol=2 }
+
+![The left side contains the tool itself](Figures/left-side.png){#fig-ui}
+
+![On the right we have the explanation and the usage of the toll](Figures/right-side.png){#fig-explain}
+
+The UI of the tool is split into two parts for easier utilization.
+:::
+
 
 ## Reference genomes and genome sizes
 
 The calculator uses the existing `reference_genomes` table.
-
-New database support was added:
-
-- new column: `reference_genomes.genome_size_bp`
-- runtime migration: the app adds the column automatically when missing
-- seed values: known organisms now receive stored genome sizes in base pairs
 
 Known genomes currently seeded:
 
@@ -77,56 +54,26 @@ Known genomes currently seeded:
 - `Mus musculus` -> `2.7 Gb`
 - `Saccharomyces cerevisiae - yeast` -> `12.1 Mb`
 
-Legacy short names were also normalized at startup so older local databases such as:
+Legacy short names were also normalized at startup so older local databases short names are rewritten to the current full names and keep the correct genome size.
 
-- `Hsp.GRCh38`
-- `Mmu.GrCm38`
-- `Cel.WBcel235`
-
-are rewritten to the current full names and keep the correct genome size.
-
-If a selected entry has no stored genome size, the calculator exposes a manual input with units:
-
-- `bp`
-- `Mb`
-- `Gb`
-
-This is used for entries such as:
-
-- `Custom`
-- `Others or Mixed`
+If the user needs to calculate the coverage for an organism, that is not in the list, the genome size can be entered manually given a numeric input with  the units `bp`, `Mb`, or `Gb`.
 
 ## Read layout modes
 
-The calculator now supports three read-layout modes:
+Even though most of our data is in paired-end mode, the calculator supports three read-layout modes.
 
 ### Paired-end (same length for both reads)
 
 Use this when both reads have the same length, for example `2x150`.
 
-User input:
-
-- one read-length value
-
-Internal base calculation:
-
-```text
-total bases per pair = 2 x read length
-```
+While the user needs to only input one read-length value, the internal base calculation will be `total bases per pair = 2 x read length`
 
 ### Single-end
 
 Use this when only one read is generated per cluster.
 
-User input:
+While the user input is one read-length value, the internal base calculation will be `total bases per read = read length`
 
-- one read-length value
-
-Internal base calculation:
-
-```text
-total bases per read = read length
-```
 
 ### Paired-end (custom Read 1 / Read 2)
 
@@ -145,64 +92,21 @@ total bases per pair = Read 1 length + Read 2 length
 
 ## Read-count input units
 
-Read-count inputs are now entered in **millions**.
-
-Examples:
-
-- `200` means `200,000,000`
-- `310` means `310,000,000`
-- `0.5` means `500,000`
-
-The result card displays:
-
-- the primary result in millions
-- the exact absolute count as a supporting line below
-
-This keeps large sequencing numbers easier to read without losing precision.
+Read-count inputs are now entered in **millions** (for examples `200` stands for `200,000,000` reads.)
 
 ## Formulas used
 
 ### Coverage from available reads
 
-Single-end:
+$coverage = \frac{clusters\ *\ read\ length}{genome\ size}$
 
-```text
-coverage = (reads / clusters) x (read length) / genome size
-```
-
-Paired-end, same length:
-
-```text
-coverage = (read pairs / clusters) x (2 x read length) / genome size
-```
-
-Paired-end, custom:
-
-```text
-coverage = (read pairs / clusters) x (Read 1 length + Read 2 length) / genome size
-```
+while read-length is always the sum of the two reads if paired-end
 
 ### Required reads for target coverage
 
-Single-end:
+$required reads = \frac{desired\ coverage\ *\ genome\ size}{read\ length}$
 
-```text
-required reads / clusters = (desired coverage x genome size) / read length
-```
-
-Paired-end, same length:
-
-```text
-required read pairs / clusters = (desired coverage x genome size) / (2 x read length)
-```
-
-Paired-end, custom:
-
-```text
-required read pairs / clusters = (desired coverage x genome size) / (Read 1 length + Read 2 length)
-```
-
-The app rounds required counts up with `ceiling(...)` so the returned target is not underestimated.
+The app rounds required counts up, so the returned target is not underestimated.
 
 ## Admin maintenance
 
@@ -216,18 +120,3 @@ Genome sizes can now be managed in the admin UI:
    - unit interpretation is stored internally as base pairs
 
 If the size is left empty, the genome remains valid in the dropdown but requires manual size entry in the calculator.
-
-## Validation checklist
-
-Recommended test cases after deploy:
-
-1. Select `Homo sapiens`, choose paired-end same length, enter `150`, target `30x`:
-   - result should be about `310 million`
-2. Select `Homo sapiens`, paired-end same length, available reads `310`:
-   - result should be about `30x`
-3. Select `Escherichia coli`, paired-end same length, available reads `10`, read length `150`:
-   - result should be about `652.2x`
-4. Select `Custom`:
-   - manual genome-size input should appear
-5. Switch between single-end and paired-end modes:
-   - read-length fields and labels should update automatically
