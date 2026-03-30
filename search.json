@@ -24,7 +24,7 @@
     "href": "chapters/quick-start.html",
     "title": "2  Quick Start",
     "section": "",
-    "text": "2.1 Quick Start",
+    "text": "2.1 Quick Start\nThe app UI can be accessed via https://ngs-vm.biochem.mpg.de\nThe older management sytem running using the perl scripts can be accessed via a different port - https://ngs-vm.biochem.mpg.de:9443/",
     "crumbs": [
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Quick Start</span>"
     ]
