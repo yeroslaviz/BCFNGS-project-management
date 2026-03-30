@@ -8,6 +8,10 @@ execute:
 
 ## Quick Start
 
+The app UI can be accessed via  `https://ngs-vm.biochem.mpg.de`
+
+The older management sytem running using the perl scripts can be accessed via a different port -  `https://ngs-vm.biochem.mpg.de:9443/`
+
 ### Contents
 
 - [Local dev — local mode](#local-dev--local-mode)
