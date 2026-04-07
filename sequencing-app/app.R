@@ -309,18 +309,23 @@ ui <- fluidPage(
   .dataTables_wrapper {
     overflow-x: auto;
   }
-  /* Projects table readability (scoped: do not affect admin modal tables) */
-  #projects_table_wrapper {
+  /* Project list readability (scoped: do not affect admin modal tables) */
+  #projects_table_wrapper,
+  #admin_projects_table_wrapper {
     width: 100%;
   }
-  #projects_table_wrapper .dataTables_scrollBody {
+  #projects_table_wrapper .dataTables_scrollBody,
+  #admin_projects_table_wrapper .dataTables_scrollBody {
     overflow-x: auto !important;
   }
-  #projects_table.dataTable {
+  #projects_table.dataTable,
+  #admin_projects_table.dataTable {
     width: 100% !important;
   }
   #projects_table.dataTable th,
-  #projects_table.dataTable td {
+  #projects_table.dataTable td,
+  #admin_projects_table.dataTable th,
+  #admin_projects_table.dataTable td {
     white-space: normal !important;
     word-break: break-word;
     vertical-align: top;
@@ -670,12 +675,14 @@ ui <- fluidPage(
 
       function adjustProjectsTable() {
         if (!window.jQuery || !$.fn || !$.fn.dataTable) return;
-        var tableEl = $('#projects_table');
-        if (tableEl.length === 0) return;
+        ['#projects_table', '#admin_projects_table'].forEach(function(selector) {
+          var tableEl = $(selector);
+          if (tableEl.length === 0) return;
 
-        if ($.fn.dataTable.isDataTable(tableEl[0])) {
-          tableEl.DataTable().columns.adjust();
-        }
+          if ($.fn.dataTable.isDataTable(tableEl[0])) {
+            tableEl.DataTable().columns.adjust();
+          }
+        });
       }
 
       $(document).ready(function() {
@@ -4652,37 +4659,27 @@ server <- function(input, output, session) {
     showNotification("Project created successfully! NGS team notified.", type = "message")
   })
   
-  # Projects table with updated columns - MODIFIED FOR PREFIXED PROJECT IDs
-  output$projects_table <- renderDT({
-    req(projects_data())
-    
-    cat("DEBUG: Projects data dimensions:", dim(projects_data()), "\n")
-    cat("DEBUG: Projects data columns:", names(projects_data()), "\n")
-    cat("DEBUG: Projects data row count:", nrow(projects_data()), "\n")
-    
-    display_data <- projects_data()
-
-    # === ADD THIS CHECK ===
-    if(nrow(display_data) == 0) {
+  build_projects_datatable <- function(display_data,
+                                       include_created_by = FALSE,
+                                       empty_message = "No projects found. Click 'Create New Project' to get started.") {
+    if (nrow(display_data) == 0) {
       return(datatable(
-        data.frame(Message = "No projects found. Click 'Create New Project' to get started."),
+        data.frame(Message = empty_message),
         options = list(dom = 't'),
         rownames = FALSE,
         colnames = ""
       ))
     }
-    
-    # Convert kickoff_meeting to descriptive text
-    if("kickoff_meeting" %in% names(display_data)) {
+
+    if ("kickoff_meeting" %in% names(display_data)) {
       display_data$kickoff_meeting <- ifelse(
-        display_data$kickoff_meeting == 1, 
-        "Yes, I would like to get a support.", 
+        display_data$kickoff_meeting == 1,
+        "Yes, I would like to get a support.",
         "No, I am a self-sufficient user."
       )
     }
-    
-    # Create budget holder display
-    if(all(c("budget_holder_name", "cost_center") %in% names(display_data))) {
+
+    if (all(c("budget_holder_name", "cost_center") %in% names(display_data))) {
       display_data$budget_display <- paste(display_data$budget_holder_name, "-", display_data$cost_center)
     }
 
@@ -4695,76 +4692,92 @@ server <- function(input, output, session) {
         FUN.VALUE = character(1)
       )
     }
-    
-    # Define the columns we want to show (project_id is numeric; we render the P-prefix at display-time)
-    display_columns <- c("project_id", "project_name", "num_samples", "sequencing_platform", 
-                         "reference_genome", "type_name", "service_type", 
-                         "depth_description", "cycles_description", "budget_display",
-                         "responsible_user", "kickoff_meeting", "total_cost", "status")
-    
-    # Add created_by for admins, created_at for all
-    if(user$is_admin) {
-      display_columns <- c(display_columns, "created_by", "created_at")
-    } else {
-      display_columns <- c(display_columns, "created_at")
+
+    current_order <- c(
+      "project_id", "project_name", "num_samples", "sequencing_platform",
+      "reference_genome", "type_name", "service_type", "depth_description",
+      "cycles_description", "budget_display", "responsible_user",
+      "kickoff_meeting", "total_cost", "status"
+    )
+    if (isTRUE(include_created_by)) {
+      current_order <- c(current_order, "created_by")
     }
-    
-    # Select only columns that exist in the data
+    current_order <- c(current_order, "created_at")
+
+    prioritized_order <- c(
+      "project_id",
+      "project_name",
+      "responsible_user",
+      "created_at",
+      "status",
+      "type_name",
+      "service_type"
+    )
+    display_columns <- c(prioritized_order, setdiff(current_order, prioritized_order))
     available_columns <- display_columns[display_columns %in% names(display_data)]
     display_data <- display_data[, available_columns, drop = FALSE]
-    
-    # Define column names
-    column_names <- c(
-      "Project ID", "Project Name", "Samples", "Platform", "Reference", 
-      "Sample Type", "Sample Service Type", "Sequencing Depth", "Sequencing Cycles",
-      "Budget Holder", "Responsible User", "Kick-off Meeting", "Total Cost", "Status"
-    )
-    
-    if(user$is_admin) {
-      column_names <- c(column_names, "Created By", "Created")
-    } else {
-      column_names <- c(column_names, "Created")
-    }
 
-    column_width_defs <- list(
-      list(
-        targets = 0,
-        width = "80px",
-        render = JS("function(data, type, row, meta) { if (type === 'display') return 'P' + data; return data; }")
-      ),   # Project ID (numeric sort, prefixed display)
-      list(targets = 1, width = "180px"),  # Project Name
-      list(targets = 2, width = "70px"),   # Samples
-      list(targets = 3, width = "110px"),  # Platform
-      list(targets = 4, width = "140px"),  # Reference
-      list(targets = 5, width = "190px"),  # Sample Type
-      list(targets = 6, width = "170px"),  # Sample Service Type
-      list(targets = 7, width = "150px"),  # Sequencing Depth
-      list(targets = 8, width = "130px"),  # Sequencing Cycles
-      list(targets = 9, width = "180px"),  # Budget Holder
-      list(targets = 10, width = "130px"), # Responsible User
-      list(targets = 11, width = "240px"), # Kick-off Meeting
-      list(targets = 12, width = "90px"),  # Total Cost
-      list(targets = 13, width = "140px")  # Status
+    column_labels <- c(
+      project_id = "Project ID",
+      project_name = "Project Name",
+      responsible_user = "Responsible User",
+      created_at = "Created",
+      status = "Status",
+      type_name = "Sample Type",
+      service_type = "Sample Service Type",
+      num_samples = "Samples",
+      sequencing_platform = "Platform",
+      reference_genome = "Reference",
+      depth_description = "Sequencing Depth",
+      cycles_description = "Sequencing Cycles",
+      budget_display = "Budget Holder",
+      kickoff_meeting = "Kick-off Meeting",
+      total_cost = "Total Cost",
+      created_by = "Created By"
     )
 
-    if(user$is_admin) {
-      column_width_defs <- c(
-        column_width_defs,
-        list(
-          list(targets = 14, width = "110px"), # Created By
-          list(targets = 15, width = "150px")  # Created
-        )
+    column_widths <- c(
+      project_id = "80px",
+      project_name = "180px",
+      responsible_user = "130px",
+      created_at = "150px",
+      status = "140px",
+      type_name = "190px",
+      service_type = "170px",
+      num_samples = "70px",
+      sequencing_platform = "110px",
+      reference_genome = "140px",
+      depth_description = "150px",
+      cycles_description = "130px",
+      budget_display = "180px",
+      kickoff_meeting = "240px",
+      total_cost = "90px",
+      created_by = "110px"
+    )
+
+    column_width_defs <- lapply(seq_along(available_columns), function(idx) {
+      column_name <- available_columns[[idx]]
+      column_def <- list(
+        targets = idx - 1,
+        width = unname(column_widths[[column_name]])
       )
+
+      if (identical(column_name, "project_id")) {
+        column_def$render <- JS(
+          "function(data, type, row, meta) { if (type === 'display') return 'P' + data; return data; }"
+        )
+      }
+
+      column_def
+    })
+
+    order_target <- if ("project_id" %in% available_columns) {
+      match("project_id", available_columns) - 1
     } else {
-      column_width_defs <- c(
-        column_width_defs,
-        list(
-          list(targets = 14, width = "150px") # Created
-        )
-      )
+      0
     }
 
-    datatable(
+    projects_table <- datatable(
       display_data,
       selection = 'single',
       options = list(
@@ -4773,19 +4786,53 @@ server <- function(input, output, session) {
         scrollX = TRUE,
         scrollCollapse = TRUE,
         columnDefs = column_width_defs,
-        order = list(list(0, "desc"))
+        order = list(list(order_target, "desc"))
       ),
       rownames = FALSE,
-      colnames = column_names
-    ) %>%
-      formatStyle(
-        'status',
-        backgroundColor = styleEqual(
-          names(status_colors),
-          unname(status_colors)
+      colnames = unname(column_labels[available_columns])
+    )
+
+    if ("status" %in% available_columns) {
+      projects_table <- projects_table %>%
+        formatStyle(
+          'status',
+          backgroundColor = styleEqual(
+            names(status_colors),
+            unname(status_colors)
+          )
         )
-      ) %>%
-      formatCurrency('total_cost', currency = "€", digits = 2)
+    }
+
+    if ("total_cost" %in% available_columns) {
+      projects_table <- projects_table %>%
+        formatCurrency('total_cost', currency = "€", digits = 2)
+    }
+
+    projects_table
+  }
+
+  # Projects table with updated columns - MODIFIED FOR PREFIXED PROJECT IDs
+  output$projects_table <- renderDT({
+    req(projects_data())
+
+    cat("DEBUG: Projects data dimensions:", dim(projects_data()), "\n")
+    cat("DEBUG: Projects data columns:", names(projects_data()), "\n")
+    cat("DEBUG: Projects data row count:", nrow(projects_data()), "\n")
+
+    build_projects_datatable(
+      projects_data(),
+      include_created_by = isTRUE(user$is_admin)
+    )
+  })
+
+  output$admin_projects_table <- renderDT({
+    req(projects_data())
+
+    build_projects_datatable(
+      projects_data(),
+      include_created_by = TRUE,
+      empty_message = "No projects found."
+    )
   })
   
   # Load projects when user logs in
