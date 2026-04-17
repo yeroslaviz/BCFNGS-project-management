@@ -984,6 +984,7 @@ server <- function(input, output, session) {
       on.exit(dbDisconnect(con), add = TRUE)
 
       ensure_projects_additional_cost_column(con)
+      ensure_projects_status_schema(con)
       ensure_users_full_name_column(con)
       ensure_reference_genome_size_column(con)
       ensure_announcement_tables(con)
@@ -1951,7 +1952,7 @@ server <- function(input, output, session) {
     "Samples received", 
     "Library preparation",
     "QC done",
-    "Data analysis", 
+    "Sequencing and demultiplexing",
     "Data released",
     "Legacy project"
   )
@@ -1961,7 +1962,7 @@ server <- function(input, output, session) {
     "Samples received" = "#cce7ff",
     "Library preparation" = "#e2e3e5",
     "QC done" = "#d1ecf1",
-    "Data analysis" = "#f8d7da",
+    "Sequencing and demultiplexing" = "#f8d7da",
     "Data released" = "#d4edda",
     "Legacy project" = "#e9ecef"
   )
@@ -1974,6 +1975,10 @@ server <- function(input, output, session) {
     choices
   }
 
+  legacy_status_replacements <- c(
+    "Data analysis" = "Sequencing and demultiplexing"
+  )
+
   projects_has_additional_cost <- function(con) {
     tryCatch({
       "additional_cost" %in% dbGetQuery(con, "PRAGMA table_info(projects)")$name
@@ -1983,6 +1988,179 @@ server <- function(input, output, session) {
   ensure_projects_additional_cost_column <- function(con) {
     if (!projects_has_additional_cost(con)) {
       dbExecute(con, "ALTER TABLE projects ADD COLUMN additional_cost REAL")
+    }
+    invisible(NULL)
+  }
+
+  projects_table_sql <- function(con) {
+    row <- dbGetQuery(con, "
+      SELECT sql
+      FROM sqlite_master
+      WHERE type = 'table' AND name = 'projects'
+    ")
+    if (nrow(row) == 0 || is.null(row$sql[[1]]) || is.na(row$sql[[1]])) {
+      return("")
+    }
+    row$sql[[1]]
+  }
+
+  projects_status_constraint_needs_rebuild <- function(con) {
+    table_sql <- projects_table_sql(con)
+    has_status_check <- grepl("CHECK\\s*\\(\\s*status\\s+IN", table_sql, ignore.case = TRUE)
+    has_old_status <- grepl(names(legacy_status_replacements)[[1]], table_sql, fixed = TRUE)
+    has_new_status <- grepl(unname(legacy_status_replacements)[[1]], table_sql, fixed = TRUE)
+
+    has_status_check && (has_old_status || !has_new_status)
+  }
+
+  ensure_auto_project_id_trigger <- function(con) {
+    dbExecute(con, "DROP TRIGGER IF EXISTS auto_project_id")
+    dbExecute(con, "
+      CREATE TRIGGER IF NOT EXISTS auto_project_id
+      AFTER INSERT ON projects
+      FOR EACH ROW
+      WHEN NEW.project_id IS NULL
+      BEGIN
+        UPDATE projects
+        SET project_id = (SELECT COALESCE(MAX(project_id), 0) + 1 FROM projects)
+        WHERE id = NEW.id;
+      END;
+    ")
+    invisible(NULL)
+  }
+
+  create_projects_table_with_current_statuses <- function(con, table_name = "projects") {
+    table_name_sql <- as.character(dbQuoteIdentifier(con, table_name))
+
+    dbExecute(con, paste0("
+      CREATE TABLE ", table_name_sql, " (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id INTEGER UNIQUE,
+        project_name TEXT NOT NULL,
+        user_id INTEGER NOT NULL,
+        responsible_user TEXT NOT NULL,
+        reference_genome TEXT NOT NULL,
+        service_type_id INTEGER NOT NULL,
+        budget_id INTEGER NOT NULL,
+        description TEXT,
+        num_samples INTEGER,
+        sequencing_platform TEXT,
+        sequencing_depth_id INTEGER NOT NULL,
+        sequencing_cycles_id INTEGER NOT NULL,
+        kickoff_meeting INTEGER,
+        type_id INTEGER,
+        additional_cost REAL,
+        total_cost REAL,
+        status TEXT DEFAULT 'Created' CHECK(status IN (
+          'Created',
+          'Samples received',
+          'Library preparation',
+          'QC done',
+          'Sequencing and demultiplexing',
+          'Data released',
+          'Legacy project'
+        )),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id),
+        FOREIGN KEY (type_id) REFERENCES types (id),
+        FOREIGN KEY (service_type_id) REFERENCES service_types (id),
+        FOREIGN KEY (budget_id) REFERENCES budget_holders (id),
+        FOREIGN KEY (sequencing_depth_id) REFERENCES sequencing_depths (id),
+        FOREIGN KEY (sequencing_cycles_id) REFERENCES sequencing_cycles (id)
+      )
+    "))
+  }
+
+  copy_projects_rows <- function(con, source_table, destination_table = "projects") {
+    source_table_sql <- as.character(dbQuoteIdentifier(con, source_table))
+    destination_table_sql <- as.character(dbQuoteIdentifier(con, destination_table))
+    source_columns <- dbGetQuery(
+      con,
+      paste0("PRAGMA table_info(", source_table_sql, ")")
+    )$name
+    destination_columns <- dbGetQuery(
+      con,
+      paste0("PRAGMA table_info(", destination_table_sql, ")")
+    )$name
+    copy_columns <- destination_columns[destination_columns %in% source_columns]
+
+    insert_columns <- vapply(
+      copy_columns,
+      function(column) as.character(dbQuoteIdentifier(con, column)),
+      character(1)
+    )
+    select_columns <- vapply(copy_columns, function(column) {
+      if (column == "status") {
+        return("
+          CASE
+            WHEN status = 'Data analysis' THEN 'Sequencing and demultiplexing'
+            ELSE status
+          END AS status
+        ")
+      }
+      as.character(dbQuoteIdentifier(con, column))
+    }, character(1))
+
+    dbExecute(
+      con,
+      paste0(
+        "INSERT INTO ", destination_table_sql, " (", paste(insert_columns, collapse = ", "), ") ",
+        "SELECT ", paste(select_columns, collapse = ", "),
+        " FROM ", source_table_sql
+      )
+    )
+  }
+
+  rebuild_projects_status_constraint <- function(con) {
+    new_table <- paste0("projects_status_migration_new_", format(Sys.time(), "%Y%m%d%H%M%S"))
+    new_table_sql <- as.character(dbQuoteIdentifier(con, new_table))
+    previous_foreign_keys <- dbGetQuery(con, "PRAGMA foreign_keys")$foreign_keys[[1]]
+
+    dbExecute(con, "PRAGMA foreign_keys=OFF")
+    dbBegin(con)
+
+    committed <- FALSE
+    tryCatch({
+      create_projects_table_with_current_statuses(con, new_table)
+      copy_projects_rows(con, "projects", new_table)
+      dbExecute(con, "DROP TABLE projects")
+      dbExecute(con, paste("ALTER TABLE", new_table_sql, "RENAME TO projects"))
+      ensure_auto_project_id_trigger(con)
+
+      dbCommit(con)
+      committed <- TRUE
+    }, error = function(e) {
+      if (!committed) {
+        try(dbRollback(con), silent = TRUE)
+      }
+      stop(e)
+    }, finally = {
+      if (isTRUE(previous_foreign_keys == 1)) {
+        dbExecute(con, "PRAGMA foreign_keys=ON")
+      }
+    })
+
+    invisible(NULL)
+  }
+
+  normalize_legacy_project_status_values <- function(con) {
+    dbExecute(con, "
+      UPDATE projects
+      SET status = ?
+      WHERE status = ?
+    ", params = list(
+      unname(legacy_status_replacements)[[1]],
+      names(legacy_status_replacements)[[1]]
+    ))
+    invisible(NULL)
+  }
+
+  ensure_projects_status_schema <- function(con) {
+    if (projects_status_constraint_needs_rebuild(con)) {
+      rebuild_projects_status_constraint(con)
+    } else {
+      normalize_legacy_project_status_values(con)
     }
     invisible(NULL)
   }

@@ -187,7 +187,7 @@ setup_complete_database <- function() {
         'Samples received',
         'Library preparation',
         'QC done',
-        'Data analysis',
+        'Sequencing and demultiplexing',
         'Data released',
         'Legacy project'
       )),

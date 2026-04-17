@@ -24,22 +24,27 @@ def ensure_full_name_column(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE users ADD COLUMN full_name TEXT")
 
 
-def projects_sql_has_legacy_status(conn: sqlite3.Connection) -> bool:
+def projects_sql_has_current_statuses(conn: sqlite3.Connection) -> bool:
     row = conn.execute(
         "SELECT sql FROM sqlite_master WHERE type='table' AND name='projects'"
     ).fetchone()
     if not row or not row[0]:
         return False
-    return "Legacy project" in row[0]
+    table_sql = row[0]
+    return (
+        "Legacy project" in table_sql
+        and "Sequencing and demultiplexing" in table_sql
+        and "Data analysis" not in table_sql
+    )
 
 
-def rebuild_projects_table_with_legacy_status(conn: sqlite3.Connection) -> None:
+def rebuild_projects_table_with_current_statuses(conn: sqlite3.Connection) -> None:
+    conn.commit()
     conn.execute("PRAGMA foreign_keys=OFF")
-    conn.execute("ALTER TABLE projects RENAME TO projects_old")
 
     conn.execute(
         """
-        CREATE TABLE projects (
+        CREATE TABLE projects_new (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           project_id INTEGER UNIQUE,
           project_name TEXT NOT NULL,
@@ -55,13 +60,14 @@ def rebuild_projects_table_with_legacy_status(conn: sqlite3.Connection) -> None:
           sequencing_cycles_id INTEGER NOT NULL,
           kickoff_meeting INTEGER,
           type_id INTEGER,
+          additional_cost REAL,
           total_cost REAL,
           status TEXT DEFAULT 'Created' CHECK(status IN (
             'Created',
             'Samples received',
             'Library preparation',
             'QC done',
-            'Data analysis',
+            'Sequencing and demultiplexing',
             'Data released',
             'Legacy project'
           )),
@@ -93,16 +99,32 @@ def rebuild_projects_table_with_legacy_status(conn: sqlite3.Connection) -> None:
         "sequencing_cycles_id",
         "kickoff_meeting",
         "type_id",
+        "additional_cost",
         "total_cost",
         "status",
         "created_at",
         "updated_at",
     ]
-    col_list = ", ".join(cols)
+    old_cols = {
+        row[1] for row in conn.execute("PRAGMA table_info(projects)").fetchall()
+    }
+    insert_cols = [col for col in cols if col in old_cols]
+    select_cols = [
+        (
+            "CASE WHEN status = 'Data analysis' "
+            "THEN 'Sequencing and demultiplexing' ELSE status END AS status"
+        )
+        if col == "status"
+        else col
+        for col in insert_cols
+    ]
+    col_list = ", ".join(insert_cols)
+    select_list = ", ".join(select_cols)
     conn.execute(
-        f"INSERT INTO projects ({col_list}) SELECT {col_list} FROM projects_old"
+        f"INSERT INTO projects_new ({col_list}) SELECT {select_list} FROM projects"
     )
-    conn.execute("DROP TABLE projects_old")
+    conn.execute("DROP TABLE projects")
+    conn.execute("ALTER TABLE projects_new RENAME TO projects")
 
     conn.execute("DROP TRIGGER IF EXISTS auto_project_id")
     conn.execute(
@@ -290,8 +312,8 @@ def main() -> int:
     conn.row_factory = sqlite3.Row
 
     ensure_full_name_column(conn)
-    if not projects_sql_has_legacy_status(conn):
-        rebuild_projects_table_with_legacy_status(conn)
+    if not projects_sql_has_current_statuses(conn):
+        rebuild_projects_table_with_current_statuses(conn)
 
     legacy_depth_id = ensure_sequencing_depth(conn)
 
