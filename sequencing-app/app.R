@@ -5188,7 +5188,10 @@ server <- function(input, output, session) {
       hr(),
       h4("Existing Users"),
       DTOutput("users_table_admin"),
-      actionButton("delete_user_admin_btn", "Delete Selected User", class = "btn-danger")
+      div(
+        actionButton("edit_user_admin_btn", "Edit Selected", class = "btn-warning"),
+        actionButton("delete_user_admin_btn", "Delete Selected User", class = "btn-danger")
+      )
     ))
   })
   
@@ -6290,6 +6293,151 @@ server <- function(input, output, session) {
     
     load_admin_data()
     showNotification("User added successfully!", type = "message")
+  })
+
+  # Edit user
+  observeEvent(input$edit_user_admin_btn, {
+    selected_row <- input$users_table_admin_rows_selected
+    if (length(selected_row) == 0) {
+      showNotification("Please select a user to edit", type = "warning")
+      return()
+    }
+
+    user_to_edit <- admin_data$users[selected_row, , drop = FALSE]
+    full_name_value <- if ("full_name" %in% names(user_to_edit)) {
+      to_scalar_text(user_to_edit$full_name, user_to_edit$username)
+    } else {
+      to_scalar_text(user_to_edit$username, "")
+    }
+
+    showModal(modalDialog(
+      title = paste("Edit User:", to_scalar_text(user_to_edit$username, "")),
+      size = "m",
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton("update_user_admin_btn", "Update User", class = "btn-primary")
+      ),
+      shinyjs::disabled(
+        textInput("edit_user_username", "Username", value = to_scalar_text(user_to_edit$username, ""))
+      ),
+      tags$small("Username cannot be changed here."),
+      textInput("edit_user_full_name", "Full Name", value = full_name_value),
+      textInput("edit_user_email", "Email *", value = to_scalar_text(user_to_edit$email, "")),
+      textInput("edit_user_phone", "Phone", value = to_scalar_text(user_to_edit$phone, "")),
+      textInput("edit_user_research_group", "Research Group", value = to_scalar_text(user_to_edit$research_group, "")),
+      checkboxInput("edit_user_admin", "Administrator", value = isTRUE(as.logical(user_to_edit$is_admin[[1]]))),
+      passwordInput("edit_user_password", "New Password (optional)", placeholder = "Leave blank to keep the current password"),
+      passwordInput("edit_user_confirm_password", "Confirm New Password", placeholder = "Re-enter the new password")
+    ))
+  })
+
+  observeEvent(input$update_user_admin_btn, {
+    selected_row <- input$users_table_admin_rows_selected
+    if (length(selected_row) == 0) return()
+
+    user_to_edit <- admin_data$users[selected_row, , drop = FALSE]
+    email_value <- trimws(input$edit_user_email %||% "")
+
+    if (email_value == "") {
+      showNotification("Email is required", type = "error")
+      return()
+    }
+
+    if (identical(to_scalar_text(user_to_edit$username, ""), to_scalar_text(user$username, "")) &&
+        !isTRUE(input$edit_user_admin)) {
+      showNotification("You cannot remove your own administrator access", type = "error")
+      return()
+    }
+
+    new_password <- input$edit_user_password %||% ""
+    confirm_password <- input$edit_user_confirm_password %||% ""
+
+    if (nzchar(new_password) || nzchar(confirm_password)) {
+      if (new_password != confirm_password) {
+        showNotification("Passwords do not match", type = "error")
+        return()
+      }
+
+      if (nchar(new_password) < 6) {
+        showNotification("Password must be at least 6 characters", type = "error")
+        return()
+      }
+    }
+
+    full_name_value <- trimws(input$edit_user_full_name %||% "")
+    if (full_name_value == "") {
+      full_name_value <- to_scalar_text(user_to_edit$username, "")
+    }
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+
+    if (users_has_full_name(con)) {
+      if (nzchar(new_password)) {
+        dbExecute(con, "
+          UPDATE users
+          SET full_name = ?, email = ?, phone = ?, research_group = ?, is_admin = ?, password = ?
+          WHERE id = ?
+        ", params = list(
+          full_name_value,
+          email_value,
+          trimws(input$edit_user_phone %||% ""),
+          trimws(input$edit_user_research_group %||% ""),
+          as.integer(isTRUE(input$edit_user_admin)),
+          digest(new_password),
+          user_to_edit$id[[1]]
+        ))
+      } else {
+        dbExecute(con, "
+          UPDATE users
+          SET full_name = ?, email = ?, phone = ?, research_group = ?, is_admin = ?
+          WHERE id = ?
+        ", params = list(
+          full_name_value,
+          email_value,
+          trimws(input$edit_user_phone %||% ""),
+          trimws(input$edit_user_research_group %||% ""),
+          as.integer(isTRUE(input$edit_user_admin)),
+          user_to_edit$id[[1]]
+        ))
+      }
+    } else {
+      if (nzchar(new_password)) {
+        dbExecute(con, "
+          UPDATE users
+          SET email = ?, phone = ?, research_group = ?, is_admin = ?, password = ?
+          WHERE id = ?
+        ", params = list(
+          email_value,
+          trimws(input$edit_user_phone %||% ""),
+          trimws(input$edit_user_research_group %||% ""),
+          as.integer(isTRUE(input$edit_user_admin)),
+          digest(new_password),
+          user_to_edit$id[[1]]
+        ))
+      } else {
+        dbExecute(con, "
+          UPDATE users
+          SET email = ?, phone = ?, research_group = ?, is_admin = ?
+          WHERE id = ?
+        ", params = list(
+          email_value,
+          trimws(input$edit_user_phone %||% ""),
+          trimws(input$edit_user_research_group %||% ""),
+          as.integer(isTRUE(input$edit_user_admin)),
+          user_to_edit$id[[1]]
+        ))
+      }
+    }
+
+    if (identical(to_scalar_text(user_to_edit$username, ""), to_scalar_text(user$username, ""))) {
+      user$full_name <- full_name_value
+      user$is_admin <- isTRUE(input$edit_user_admin)
+    }
+
+    removeModal()
+    load_admin_data()
+    showNotification("User updated successfully!", type = "message")
   })
   
   # Add new reference genome
