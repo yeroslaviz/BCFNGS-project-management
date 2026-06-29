@@ -449,7 +449,26 @@ setup_complete_database <- function() {
   email_templates <- data.frame(
     template_name = c('project_creation'),
     subject = c('New Sequencing Project Created'),
-    body_template = c('Dear {surname} {name},\n\nA new sequencing project has been created under your cost center {cost_center}.\n\nProject Details:\n- Project Name: {project_name}\n- Responsible User: {responsible_user}\n- Number of Samples: {num_samples}\n- Sample Service Type: {service_type}\n- Total Project Costs will be provided soon after project assessment by the NGS core facility.\n\n{cost_warning}\n\nBest regards,\nSequencing Facility Team')
+    body_template = c(paste(
+      c(
+        'Dear NGS Core Facility,',
+        '',
+        'The Group of {name} {surname} has submitted a new sequencing project under the cost center {cost_center}.',
+        '',
+        'Project Details:',
+        '- Project Name: {project_name}',
+        '- Responsible User: {responsible_user}',
+        '- Number of Samples: {num_samples}',
+        '- Sample Service Type: {service_type}',
+        '- Total Project Costs will be provided soon after project assessment by the NGS core facility.',
+        '',
+        '{cost_warning}',
+        '',
+        'Best regards,',
+        'Sequencing Facility Team'
+      ),
+      collapse = '\n'
+    ))
   )
 
   for(i in 1:nrow(email_templates)) {

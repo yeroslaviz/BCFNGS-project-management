@@ -3063,6 +3063,113 @@ server <- function(input, output, session) {
     invisible(NULL)
   }
 
+  project_creation_template_default_body <- function() {
+    paste(
+      c(
+        "Dear NGS Core Facility,",
+        "",
+        "The Group of {name} {surname} has submitted a new sequencing project under the cost center {cost_center}.",
+        "",
+        "Project Details:",
+        "- Project Name: {project_name}",
+        "- Responsible User: {responsible_user}",
+        "- Number of Samples: {num_samples}",
+        "- Sample Service Type: {service_type}",
+        "- Total Project Costs will be provided soon after project assessment by the NGS core facility.",
+        "",
+        "{cost_warning}",
+        "",
+        "Best regards,",
+        "Sequencing Facility Team"
+      ),
+      collapse = "\n"
+    )
+  }
+
+  project_creation_template_legacy_bodies <- function() {
+    intro_lines <- c(
+      "Dear {surname} {name},",
+      "",
+      "A new sequencing project has been created under your cost center {cost_center}.",
+      "",
+      "Project Details:",
+      "- Project Name: {project_name}",
+      "- Responsible User: {responsible_user}",
+      "- Number of Samples: {num_samples}"
+    )
+    closing_lines <- c(
+      "",
+      "{cost_warning}",
+      "",
+      "Best regards,",
+      "Sequencing Facility Team"
+    )
+
+    unique(c(
+      paste(
+        c(
+          intro_lines,
+          "- Service Type: {service_type}",
+          "- Total Estimated Cost: €{total_cost}",
+          closing_lines
+        ),
+        collapse = "\n"
+      ),
+      paste(
+        c(
+          intro_lines,
+          "- Sample Service Type: {service_type}",
+          "- Total Estimated Cost: €{total_cost}",
+          closing_lines
+        ),
+        collapse = "\n"
+      ),
+      paste(
+        c(
+          intro_lines,
+          "- Service Type: {service_type}",
+          "- Total Project Costs will be provided soon after project assessment by the NGS core facility.",
+          closing_lines
+        ),
+        collapse = "\n"
+      ),
+      paste(
+        c(
+          intro_lines,
+          "- Sample Service Type: {service_type}",
+          "- Total Project Costs will be provided soon after project assessment by the NGS core facility.",
+          closing_lines
+        ),
+        collapse = "\n"
+      )
+    ))
+  }
+
+  ensure_project_creation_email_template_body <- function(con) {
+    legacy_bodies <- project_creation_template_legacy_bodies()
+    placeholders <- paste(rep("?", length(legacy_bodies)), collapse = ", ")
+
+    dbExecute(
+      con,
+      paste0(
+        "
+        UPDATE email_templates
+        SET body_template = ?
+        WHERE template_name = 'project_creation'
+          AND body_template IN (",
+        placeholders,
+        ")
+      "
+      ),
+      params = c(
+        list(project_creation_template_default_body()),
+        as.list(legacy_bodies)
+      )
+    )
+
+    invisible(NULL)
+  }
+
   normalize_genome_size_bp <- function(value) {
     numeric_value <- suppressWarnings(as.numeric(value))
     if (
@@ -3550,6 +3657,7 @@ server <- function(input, output, session) {
         ensure_projects_additional_cost_column(con)
         ensure_users_full_name_column(con)
         ensure_reference_genome_size_column(con)
+        ensure_project_creation_email_template_body(con)
       },
       error = function(e) {
         cat("DB MIGRATION ERROR:", e$message, "\n", file = stderr())
@@ -4208,8 +4316,8 @@ server <- function(input, output, session) {
         }
 
         budget_name <- trimws(paste(
-          budget_holder$surname[[1]] %||% "",
-          budget_holder$name[[1]] %||% ""
+          budget_holder$name[[1]] %||% "",
+          budget_holder$surname[[1]] %||% ""
         ))
         if (!nzchar(budget_name)) {
           budget_name <- "Budget holder"
@@ -4271,11 +4379,10 @@ server <- function(input, output, session) {
 
         email_body <- paste0(
           "<html><body style='font-family: Arial, sans-serif;'>",
-          "<p>Dear NGS Core Facility ",
-          ",</p>",
-          "<p>The Group of ",
+          "<p>Dear ",
           htmltools::htmlEscape(budget_name),
-          " has submitted a new sequencing project under the cost center ",
+          ",</p>",
+          "<p>A new sequencing project has been created under your cost center ",
           htmltools::htmlEscape(budget_center),
           ".</p>",
           "<p><strong>Project Details:</strong><br>",
