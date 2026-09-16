@@ -6,8 +6,31 @@ library(RSQLite)
 library(digest)
 library(DT)
 library(shinyWidgets)
-library(mailR)
-library(ldapr)
+
+# Email and LDAP are not needed for local UI testing. Keep both dependencies
+# mandatory in every other mode so production cannot silently lose features.
+local_dependency_bypass <-
+  tolower(Sys.getenv("APP_ENV", "")) == "dev" &&
+  tolower(Sys.getenv("AUTH_MODE", "local")) == "local"
+
+mailr_available <- requireNamespace("mailR", quietly = TRUE)
+if (!mailr_available && !local_dependency_bypass) {
+  stop("The mailR package is required outside local development mode.")
+}
+
+ldapr_available <- requireNamespace("ldapr", quietly = TRUE)
+if (!ldapr_available && !local_dependency_bypass) {
+  stop("The ldapr package is required outside local development mode.")
+}
+
+send_app_mail <- function(...) {
+  if (!mailr_available) {
+    message("APP_ENV=dev: email notification skipped because mailR is unavailable.")
+    return(invisible(NULL))
+  }
+
+  mailR::send.mail(...)
+}
 
 # Shared announcement/service blocks (shown after login in both local + LDAP modes)
 # Content lives in SQLite and is editable by admins via the UI.
@@ -582,6 +605,38 @@ ui <- fluidPage(
     color: #e74c3c !important;
     font-style: italic;
   }
+  .cost-breakdown {
+    margin-top: 12px;
+    padding: 16px;
+    border: 1px solid #d9e2e7;
+    border-radius: 8px;
+    background: #f8fbfc;
+  }
+  .cost-breakdown h4 {
+    margin-top: 0;
+  }
+  .cost-breakdown table {
+    margin-bottom: 14px;
+    background: #ffffff;
+  }
+  .cost-breakdown th {
+    width: 42%;
+    color: #2c4054 !important;
+  }
+  .cost-breakdown td {
+    text-align: right;
+  }
+  .cost-breakdown-subtotal th,
+  .cost-breakdown-subtotal td {
+    border-top: 2px solid #aebdc5 !important;
+  }
+  .cost-breakdown-total th,
+  .cost-breakdown-total td {
+    border-top: 2px solid #2c4054 !important;
+    color: #b00020 !important;
+    font-size: 15px;
+    font-weight: 700;
+  }
   .coverage-calculator-layout {
     display: flex;
     gap: 24px;
@@ -1127,9 +1182,11 @@ server <- function(input, output, session) {
         on.exit(dbDisconnect(con), add = TRUE)
 
         ensure_projects_additional_cost_column(con)
+        ensure_ngs_cost_schema(con)
         ensure_projects_status_schema(con)
         ensure_users_full_name_column(con)
         ensure_reference_genome_size_column(con)
+        ensure_reference_integrity_guards(con)
         ensure_announcement_tables(con)
         seed_announcement_defaults(con)
 
@@ -1141,6 +1198,7 @@ server <- function(input, output, session) {
           "service_types",
           "sequencing_depths",
           "sequencing_cycles",
+          "machine_cycles_options",
           "types",
           "sequencing_platforms",
           "reference_genomes",
@@ -1296,6 +1354,7 @@ server <- function(input, output, session) {
     service_types = data.frame(),
     sequencing_depths = data.frame(),
     sequencing_cycles = data.frame(),
+    machine_cycles_options = data.frame(),
     sequencing_platforms = data.frame()
   )
 
@@ -2197,6 +2256,7 @@ server <- function(input, output, session) {
     admin_data$service_types <- load_service_types()
     admin_data$sequencing_depths <- load_sequencing_depths()
     admin_data$sequencing_cycles <- load_sequencing_cycles()
+    admin_data$machine_cycles_options <- load_machine_cycles_options()
     admin_data$types <- load_types()
     admin_data$sequencing_platforms <- load_sequencing_platforms()
     admin_data$reference_genomes <- load_reference_genomes()
@@ -2538,6 +2598,208 @@ server <- function(input, output, session) {
     invisible(NULL)
   }
 
+  default_machine_cycles_options <- c(
+    "2×60bp NovaSeq",
+    "2× 75bp Aviti",
+    "2× 75bp PE-Seq",
+    "45bp SE-seq - CRISPR"
+  )
+
+  legacy_machine_cycles_map <- c(
+    "2x 60bp NovaSeq" = "2×60bp NovaSeq",
+    "2x 75bp AVITI" = "2× 75bp Aviti",
+    "2x 75bp paired end sequencing" = "2× 75bp PE-Seq",
+    "45bp single end sequencing - CRISPR" = "45bp SE-seq - CRISPR"
+  )
+
+  ensure_ngs_cost_schema <- function(con) {
+    project_columns <- dbGetQuery(con, "PRAGMA table_info(projects)")$name
+    if (!("machine_cycles" %in% project_columns)) {
+      dbExecute(con, "ALTER TABLE projects ADD COLUMN machine_cycles TEXT")
+    }
+
+    cycle_columns <- dbGetQuery(
+      con,
+      "PRAGMA table_info(sequencing_cycles)"
+    )$name
+    if (!("pricing_mode" %in% cycle_columns)) {
+      dbExecute(
+        con,
+        "ALTER TABLE sequencing_cycles ADD COLUMN pricing_mode TEXT NOT NULL DEFAULT 'additional'"
+      )
+    }
+
+    machine_options_table_exists <- dbExistsTable(
+      con,
+      "machine_cycles_options"
+    )
+    dbExecute(
+      con,
+      "
+      CREATE TABLE IF NOT EXISTS machine_cycles_options (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        label TEXT UNIQUE NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+      "
+    )
+    if (!machine_options_table_exists) {
+      for (option_label in default_machine_cycles_options) {
+        dbExecute(
+          con,
+          "INSERT INTO machine_cycles_options (label) VALUES (?)",
+          params = list(option_label)
+        )
+      }
+    }
+
+    pricing_assignments <- list(
+      upto_150 = c(
+        "upto 100/150 cycles (2x60 or 2x 75)",
+        names(legacy_machine_cycles_map)
+      ),
+      upto_300 = "upto 200/300 cycles (2x 110 or 2x150)",
+      additional = c(
+        "upto 600 cycels (2x 300bp)",
+        "ONT - Nanopore sequencing "
+      )
+    )
+    for (pricing_mode in names(pricing_assignments)) {
+      for (description in pricing_assignments[[pricing_mode]]) {
+        dbExecute(
+          con,
+          "UPDATE sequencing_cycles SET pricing_mode = ? WHERE cycles_description = ?",
+          params = list(pricing_mode, description)
+        )
+      }
+    }
+
+    for (legacy_label in names(legacy_machine_cycles_map)) {
+      dbExecute(
+        con,
+        "
+        UPDATE projects
+        SET machine_cycles = ?
+        WHERE (machine_cycles IS NULL OR trim(machine_cycles) = '')
+          AND sequencing_cycles_id IN (
+            SELECT id FROM sequencing_cycles WHERE cycles_description = ?
+          )
+        ",
+        params = list(
+          unname(legacy_machine_cycles_map[[legacy_label]]),
+          legacy_label
+        )
+      )
+    }
+
+    invisible(NULL)
+  }
+
+  ensure_reference_integrity_guards <- function(con) {
+    guard_triggers <- c(
+      protect_users_in_use = "
+        CREATE TRIGGER IF NOT EXISTS protect_users_in_use
+        BEFORE DELETE ON users
+        WHEN EXISTS (
+          SELECT 1 FROM projects
+          WHERE user_id = OLD.id
+             OR lower(trim(responsible_user)) = lower(trim(OLD.username))
+             OR (
+               OLD.full_name IS NOT NULL
+               AND trim(OLD.full_name) <> ''
+               AND lower(trim(responsible_user)) = lower(trim(OLD.full_name))
+             )
+             OR lower(trim(responsible_user)) LIKE
+                ('%(' || lower(trim(OLD.username)) || ')')
+        )
+        BEGIN
+          SELECT RAISE(ABORT, 'User is referenced by one or more projects');
+        END",
+      protect_budget_holders_in_use = "
+        CREATE TRIGGER IF NOT EXISTS protect_budget_holders_in_use
+        BEFORE DELETE ON budget_holders
+        WHEN EXISTS (SELECT 1 FROM projects WHERE budget_id = OLD.id)
+        BEGIN
+          SELECT RAISE(ABORT, 'Budget holder is referenced by one or more projects');
+        END",
+      protect_service_types_in_use = "
+        CREATE TRIGGER IF NOT EXISTS protect_service_types_in_use
+        BEFORE DELETE ON service_types
+        WHEN EXISTS (SELECT 1 FROM projects WHERE service_type_id = OLD.id)
+        BEGIN
+          SELECT RAISE(ABORT, 'Sample service type is referenced by one or more projects');
+        END",
+      protect_sequencing_depths_in_use = "
+        CREATE TRIGGER IF NOT EXISTS protect_sequencing_depths_in_use
+        BEFORE DELETE ON sequencing_depths
+        WHEN EXISTS (SELECT 1 FROM projects WHERE sequencing_depth_id = OLD.id)
+        BEGIN
+          SELECT RAISE(ABORT, 'Sequencing depth is referenced by one or more projects');
+        END",
+      protect_sequencing_cycles_in_use = "
+        CREATE TRIGGER IF NOT EXISTS protect_sequencing_cycles_in_use
+        BEFORE DELETE ON sequencing_cycles
+        WHEN EXISTS (SELECT 1 FROM projects WHERE sequencing_cycles_id = OLD.id)
+        BEGIN
+          SELECT RAISE(ABORT, 'Sequencing cycle is referenced by one or more projects');
+        END",
+      protect_types_in_use = "
+        CREATE TRIGGER IF NOT EXISTS protect_types_in_use
+        BEFORE DELETE ON types
+        WHEN EXISTS (SELECT 1 FROM projects WHERE type_id = OLD.id)
+        BEGIN
+          SELECT RAISE(ABORT, 'Sample type is referenced by one or more projects');
+        END",
+      protect_reference_genomes_in_use = "
+        CREATE TRIGGER IF NOT EXISTS protect_reference_genomes_in_use
+        BEFORE DELETE ON reference_genomes
+        WHEN EXISTS (
+          SELECT 1 FROM projects
+          WHERE lower(trim(reference_genome)) = lower(trim(OLD.name))
+        )
+        BEGIN
+          SELECT RAISE(ABORT, 'Reference genome is referenced by one or more projects');
+        END",
+      protect_reference_genome_renames_in_use = "
+        CREATE TRIGGER IF NOT EXISTS protect_reference_genome_renames_in_use
+        BEFORE UPDATE OF name ON reference_genomes
+        WHEN lower(trim(NEW.name)) <> lower(trim(OLD.name))
+          AND EXISTS (
+            SELECT 1 FROM projects
+            WHERE lower(trim(reference_genome)) = lower(trim(OLD.name))
+          )
+        BEGIN
+          SELECT RAISE(ABORT, 'Update project values before renaming this reference genome');
+        END",
+      protect_sequencing_platforms_in_use = "
+        CREATE TRIGGER IF NOT EXISTS protect_sequencing_platforms_in_use
+        BEFORE DELETE ON sequencing_platforms
+        WHEN EXISTS (
+          SELECT 1 FROM projects
+          WHERE lower(trim(sequencing_platform)) = lower(trim(OLD.name))
+        )
+        BEGIN
+          SELECT RAISE(ABORT, 'Sequencing platform is referenced by one or more projects');
+        END",
+      protect_sequencing_platform_renames_in_use = "
+        CREATE TRIGGER IF NOT EXISTS protect_sequencing_platform_renames_in_use
+        BEFORE UPDATE OF name ON sequencing_platforms
+        WHEN lower(trim(NEW.name)) <> lower(trim(OLD.name))
+          AND EXISTS (
+            SELECT 1 FROM projects
+            WHERE lower(trim(sequencing_platform)) = lower(trim(OLD.name))
+          )
+        BEGIN
+          SELECT RAISE(ABORT, 'Update project values before renaming this sequencing platform');
+        END"
+    )
+
+    for (trigger_sql in unname(guard_triggers)) {
+      dbExecute(con, trigger_sql)
+    }
+    invisible(NULL)
+  }
+
   projects_table_sql <- function(con) {
     row <- dbGetQuery(
       con,
@@ -2617,6 +2879,7 @@ server <- function(input, output, session) {
         description TEXT,
         num_samples INTEGER,
         sequencing_platform TEXT,
+        machine_cycles TEXT,
         sequencing_depth_id INTEGER NOT NULL,
         sequencing_cycles_id INTEGER NOT NULL,
         kickoff_meeting INTEGER,
@@ -2978,6 +3241,16 @@ server <- function(input, output, session) {
         params = list(canonical_name)
       )
 
+      dbExecute(
+        con,
+        "
+          UPDATE projects
+          SET reference_genome = ?
+          WHERE lower(trim(reference_genome)) = lower(trim(?))
+        ",
+        params = list(canonical_name, legacy_name)
+      )
+
       if (nrow(canonical_row) == 0) {
         dbExecute(
           con,
@@ -3013,15 +3286,6 @@ server <- function(input, output, session) {
         )
       }
 
-      dbExecute(
-        con,
-        "
-          UPDATE projects
-          SET reference_genome = ?
-          WHERE lower(trim(reference_genome)) = lower(trim(?))
-        ",
-        params = list(canonical_name, legacy_name)
-      )
     }
 
     invisible(NULL)
@@ -3367,6 +3631,35 @@ server <- function(input, output, session) {
     choices
   }
 
+  id_choices_with_selected <- function(ids, labels, selected, missing_label) {
+    choices <- setNames(as.character(ids), as.character(labels))
+    selected_id <- to_scalar_text(selected, "")
+    if (nzchar(selected_id) && !(selected_id %in% unname(choices))) {
+      choices <- c(
+        setNames(
+          selected_id,
+          paste0("[Missing ", missing_label, " ID ", selected_id, "]")
+        ),
+        choices
+      )
+    }
+    choices
+  }
+
+  text_choices_with_selected <- function(values, selected) {
+    values <- unique(as.character(values))
+    values <- values[!is.na(values) & nzchar(trimws(values))]
+    choices <- setNames(values, values)
+    selected_value <- to_scalar_text(selected, "")
+    if (nzchar(selected_value) && !(selected_value %in% unname(choices))) {
+      choices <- c(
+        setNames(selected_value, paste0(selected_value, " (stored value)")),
+        choices
+      )
+    }
+    choices
+  }
+
   reference_genome_name_exists <- function(name, exclude_name = NULL) {
     genomes <- admin_data$reference_genomes
     if (is.null(genomes) || nrow(genomes) == 0 || !"name" %in% names(genomes)) {
@@ -3655,8 +3948,10 @@ server <- function(input, output, session) {
     tryCatch(
       {
         ensure_projects_additional_cost_column(con)
+        ensure_ngs_cost_schema(con)
         ensure_users_full_name_column(con)
         ensure_reference_genome_size_column(con)
+        ensure_reference_integrity_guards(con)
         ensure_project_creation_email_template_body(con)
       },
       error = function(e) {
@@ -3665,6 +3960,29 @@ server <- function(input, output, session) {
       }
     )
     con
+  }
+
+  delete_lookup_safely <- function(con, sql, params, item_label) {
+    tryCatch(
+      {
+        dbExecute(con, sql, params = params)
+        TRUE
+      },
+      error = function(e) {
+        showNotification(
+          paste0(
+            "Cannot delete ",
+            item_label,
+            ". ",
+            conditionMessage(e),
+            ". Existing projects were not changed."
+          ),
+          type = "error",
+          duration = 12
+        )
+        FALSE
+      }
+    )
   }
 
   format_responsible_display <- function(value, con = NULL) {
@@ -3981,9 +4299,18 @@ server <- function(input, output, session) {
     on.exit(dbDisconnect(con))
     cycles <- dbGetQuery(
       con,
-      "SELECT id, cycles_description FROM sequencing_cycles ORDER BY cycles_description"
+      "SELECT id, cycles_description, pricing_mode FROM sequencing_cycles ORDER BY cycles_description"
     )
     return(cycles)
+  }
+
+  load_machine_cycles_options <- function() {
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+    dbGetQuery(
+      con,
+      "SELECT id, label FROM machine_cycles_options ORDER BY lower(label), label"
+    )
   }
 
   # Load reference genomes from database
@@ -4056,7 +4383,218 @@ server <- function(input, output, session) {
     admin_data$service_types <- load_service_types()
     admin_data$sequencing_depths <- load_sequencing_depths()
     admin_data$sequencing_cycles <- load_sequencing_cycles()
+    admin_data$machine_cycles_options <- load_machine_cycles_options()
     admin_data$sequencing_platforms <- load_sequencing_platforms()
+  }
+
+  format_euro_amount <- function(value) {
+    paste0("€", format_cost_amount(value))
+  }
+
+  pricing_mode_label <- function(pricing_mode) {
+    switch(
+      as.character(pricing_mode %||% "additional"),
+      upto_150 = "Up to 150 cycles",
+      upto_300 = "Up to 300 cycles",
+      additional = "Manual / Additional cost",
+      "Manual / Additional cost"
+    )
+  }
+
+  calculate_cost_breakdown <- function(
+    num_samples,
+    service_type_id,
+    sequencing_depth_id,
+    sequencing_cycles_id,
+    additional_cost = 0
+  ) {
+    sample_count <- suppressWarnings(as.numeric(num_samples))
+    if (length(sample_count) == 0 || is.na(sample_count) || sample_count < 0) {
+      sample_count <- 0
+    }
+
+    service_id <- suppressWarnings(as.numeric(service_type_id))
+    depth_id <- suppressWarnings(as.numeric(sequencing_depth_id))
+    cycles_id <- suppressWarnings(as.numeric(sequencing_cycles_id))
+    service_id <- if (length(service_id) == 0) NA_real_ else service_id[[1]]
+    depth_id <- if (length(depth_id) == 0) NA_real_ else depth_id[[1]]
+    cycles_id <- if (length(cycles_id) == 0) NA_real_ else cycles_id[[1]]
+
+    service_type <- admin_data$service_types[
+      !is.na(service_id) & admin_data$service_types$id == service_id,
+      ,
+      drop = FALSE
+    ]
+    sequencing_depth <- admin_data$sequencing_depths[
+      !is.na(depth_id) & admin_data$sequencing_depths$id == depth_id,
+      ,
+      drop = FALSE
+    ]
+    sequencing_cycles <- admin_data$sequencing_cycles[
+      !is.na(cycles_id) & admin_data$sequencing_cycles$id == cycles_id,
+      ,
+      drop = FALSE
+    ]
+
+    warnings <- character(0)
+    service_label <- "Sample service"
+    service_unit_cost <- 0
+    if (nrow(service_type) > 0) {
+      service_label <- trimws(as.character(service_type$service_type[[1]]))
+      service_unit_cost <- suppressWarnings(as.numeric(
+        service_type$costs_per_sample[[1]]
+      ))
+      if (is.na(service_unit_cost) || service_unit_cost < 0) {
+        service_unit_cost <- 0
+      }
+    } else if (!is.na(service_id)) {
+      warnings <- c(warnings, "The selected sample service no longer exists; its automatic cost is €0.00.")
+    }
+    preparation_cost <- sample_count * service_unit_cost
+
+    depth_label <- "Data amount not selected"
+    if (nrow(sequencing_depth) > 0) {
+      depth_label <- trimws(as.character(
+        sequencing_depth$depth_description[[1]]
+      ))
+    } else if (!is.na(depth_id)) {
+      warnings <- c(warnings, "The selected data amount no longer exists; its automatic sequencing cost is €0.00.")
+    }
+
+    cycles_label <- "Read length not selected"
+    pricing_mode <- "additional"
+    if (nrow(sequencing_cycles) > 0) {
+      cycles_label <- trimws(as.character(
+        sequencing_cycles$cycles_description[[1]]
+      ))
+      pricing_mode <- as.character(
+        sequencing_cycles$pricing_mode[[1]] %||% "additional"
+      )
+    } else if (!is.na(cycles_id)) {
+      warnings <- c(warnings, "The selected read length no longer exists; its automatic sequencing cost is €0.00.")
+    }
+
+    sequencing_cost <- 0
+    if (nrow(sequencing_depth) > 0 && nrow(sequencing_cycles) > 0) {
+      if (identical(depth_label, "other")) {
+        pricing_mode <- "additional"
+        warnings <- c(warnings, "The 'other' data amount is charged through Additional cost.")
+      } else if (identical(pricing_mode, "upto_150")) {
+        sequencing_cost <- suppressWarnings(as.numeric(
+          sequencing_depth$cost_upto_150_cycles[[1]]
+        ))
+      } else if (identical(pricing_mode, "upto_300")) {
+        sequencing_cost <- suppressWarnings(as.numeric(
+          sequencing_depth$cost_upto_300_cycles[[1]]
+        ))
+      } else {
+        warnings <- c(
+          warnings,
+          paste0("", cycles_label, " is charged through Additional cost.")
+        )
+      }
+    }
+    if (length(sequencing_cost) == 0 || is.na(sequencing_cost) || sequencing_cost < 0) {
+      sequencing_cost <- 0
+    }
+
+    additional <- suppressWarnings(as.numeric(additional_cost))
+    if (length(additional) == 0 || is.na(additional) || additional < 0) {
+      additional <- 0
+    }
+    base_cost <- preparation_cost + sequencing_cost
+
+    list(
+      num_samples = sample_count,
+      service_label = service_label,
+      service_unit_cost = service_unit_cost,
+      preparation_cost = preparation_cost,
+      depth_label = depth_label,
+      cycles_label = cycles_label,
+      pricing_mode = pricing_mode,
+      pricing_mode_label = pricing_mode_label(pricing_mode),
+      sequencing_cost = sequencing_cost,
+      base_cost = base_cost,
+      additional_cost = additional,
+      total_cost = base_cost + additional,
+      warnings = unique(warnings)
+    )
+  }
+
+  cost_breakdown_ui <- function(breakdown) {
+    sequencing_detail <- if (identical(
+      breakdown$pricing_mode,
+      "additional"
+    )) {
+      paste0(
+        breakdown$cycles_label,
+        " — charged through Additional cost"
+      )
+    } else {
+      paste0(
+        breakdown$cycles_label,
+        " (",
+        breakdown$pricing_mode_label,
+        ") = ",
+        format_euro_amount(breakdown$sequencing_cost)
+      )
+    }
+
+    div(
+      class = "cost-breakdown",
+      h4("Cost breakdown"),
+      tags$table(
+        class = "table table-condensed",
+        tags$tbody(
+          tags$tr(
+            tags$th("Number of samples"),
+            tags$td(format(breakdown$num_samples, trim = TRUE))
+          ),
+          tags$tr(
+            tags$th(breakdown$service_label),
+            tags$td(paste0(
+              format(breakdown$num_samples, trim = TRUE),
+              " × ",
+              format_euro_amount(breakdown$service_unit_cost),
+              " = ",
+              format_euro_amount(breakdown$preparation_cost)
+            ))
+          ),
+          tags$tr(
+            tags$th(breakdown$depth_label),
+            tags$td(sequencing_detail)
+          ),
+          tags$tr(
+            class = "cost-breakdown-subtotal",
+            tags$th("Base cost"),
+            tags$td(format_euro_amount(breakdown$base_cost))
+          ),
+          tags$tr(
+            tags$th("Additional cost"),
+            tags$td(format_euro_amount(breakdown$additional_cost))
+          ),
+          tags$tr(
+            class = "cost-breakdown-total",
+            tags$th("Total cost"),
+            tags$td(format_euro_amount(breakdown$total_cost))
+          )
+        )
+      ),
+      div(
+        class = "form-group",
+        tags$label("Total cost"),
+        tags$input(
+          class = "form-control",
+          type = "text",
+          value = format_euro_amount(breakdown$total_cost),
+          readonly = "readonly"
+        )
+      ),
+      lapply(
+        breakdown$warnings,
+        function(message) p(class = "cost-warning", message)
+      )
+    )
   }
 
   # Calculate base sequencing cost (without admin-entered additional costs)
@@ -4066,41 +4604,13 @@ server <- function(input, output, session) {
     sequencing_depth_id,
     sequencing_cycles_id
   ) {
-    if (
-      is.null(num_samples) ||
-        is.null(service_type_id) ||
-        is.null(sequencing_depth_id) ||
-        is.null(sequencing_cycles_id)
-    ) {
-      return(0)
-    }
-
-    service_type <- admin_data$service_types[
-      admin_data$service_types$id == as.numeric(service_type_id),
-    ]
-    sequencing_depth <- admin_data$sequencing_depths[
-      admin_data$sequencing_depths$id == as.numeric(sequencing_depth_id),
-    ]
-
-    if (nrow(service_type) == 0 || nrow(sequencing_depth) == 0) {
-      return(0)
-    }
-
-    prep_cost <- service_type$costs_per_sample * as.numeric(num_samples)
-
-    # Check if "other" is selected for sequencing depth
-    if (sequencing_depth$depth_description == "other") {
-      return(prep_cost)
-    }
-
-    # Determine which cost column to use based on sequencing cycles
-    if (sequencing_cycles_id == "1") {
-      seq_cost <- sequencing_depth$cost_upto_150_cycles
-    } else {
-      seq_cost <- sequencing_depth$cost_upto_300_cycles
-    }
-
-    prep_cost + ifelse(is.na(seq_cost), 0, seq_cost)
+    calculate_cost_breakdown(
+      num_samples,
+      service_type_id,
+      sequencing_depth_id,
+      sequencing_cycles_id,
+      additional_cost = 0
+    )$base_cost
   }
 
   # Calculate total cost (base + optional additional costs)
@@ -4111,17 +4621,13 @@ server <- function(input, output, session) {
     sequencing_cycles_id,
     additional_cost = 0
   ) {
-    base_cost <- calculate_base_cost(
+    calculate_cost_breakdown(
       num_samples,
       service_type_id,
       sequencing_depth_id,
-      sequencing_cycles_id
-    )
-    add_cost <- suppressWarnings(as.numeric(additional_cost))
-    if (length(add_cost) == 0 || is.na(add_cost) || add_cost < 0) {
-      add_cost <- 0
-    }
-    base_cost + add_cost
+      sequencing_cycles_id,
+      additional_cost
+    )$total_cost
   }
 
   # Send email notification
@@ -4257,7 +4763,7 @@ server <- function(input, output, session) {
         }
 
         # Send email
-        send.mail(
+        send_app_mail(
           from = "ngs@biochem.mpg.de",
           # NOTE: Admin notifications are currently disabled; to re-enable,
           # include `admin_emails` below and uncomment the query above.
@@ -4411,7 +4917,7 @@ server <- function(input, output, session) {
           "</body></html>"
         )
 
-        send.mail(
+        send_app_mail(
           from = "ngs@biochem.mpg.de",
           to = recipients,
           encoding = "utf-8",
@@ -4555,7 +5061,7 @@ server <- function(input, output, session) {
           "The NGS sequencing facility"
         )
 
-        send.mail(
+        send_app_mail(
           from = "ngs@biochem.mpg.de",
           to = recipients,
           encoding = "utf-8",
@@ -5708,9 +6214,9 @@ server <- function(input, output, session) {
     on.exit(dbDisconnect(con))
 
     created_by_expr <- if (users_has_full_name(con)) {
-      "COALESCE(NULLIF(u.full_name, ''), u.username)"
+      "COALESCE(NULLIF(u.full_name, ''), u.username, NULLIF(p.responsible_user, ''), '[Missing user ID ' || p.user_id || ']')"
     } else {
-      "u.username"
+      "COALESCE(u.username, NULLIF(p.responsible_user, ''), '[Missing user ID ' || p.user_id || ']')"
     }
 
     if (user$is_admin) {
@@ -5720,11 +6226,15 @@ server <- function(input, output, session) {
           "
         SELECT p.*, ",
           created_by_expr,
-          " as created_by, t.name as type_name,
-               bh.name as budget_holder_name, bh.surname as budget_holder_surname, bh.cost_center,
-               st.service_type, sd.depth_description, sc.cycles_description
+          " as created_by,
+               COALESCE(t.name, '[Missing sample type ID ' || p.type_id || ']') as type_name,
+               COALESCE(bh.name, '[Missing budget holder ID ' || p.budget_id || ']') as budget_holder_name,
+               bh.surname as budget_holder_surname, bh.cost_center,
+               COALESCE(st.service_type, '[Missing service type ID ' || p.service_type_id || ']') as service_type,
+               COALESCE(sd.depth_description, '[Missing depth ID ' || p.sequencing_depth_id || ']') as depth_description,
+               COALESCE(sc.cycles_description, '[Missing cycles ID ' || p.sequencing_cycles_id || ']') as cycles_description
         FROM projects p 
-        JOIN users u ON p.user_id = u.id
+        LEFT JOIN users u ON p.user_id = u.id
         LEFT JOIN types t ON p.type_id = t.id
         LEFT JOIN budget_holders bh ON p.budget_id = bh.id
         LEFT JOIN service_types st ON p.service_type_id = st.id
@@ -5749,11 +6259,15 @@ server <- function(input, output, session) {
           "
         SELECT p.*, ",
           created_by_expr,
-          " as created_by, t.name as type_name,
-               bh.name as budget_holder_name, bh.surname as budget_holder_surname, bh.cost_center,
-               st.service_type, sd.depth_description, sc.cycles_description
+          " as created_by,
+               COALESCE(t.name, '[Missing sample type ID ' || p.type_id || ']') as type_name,
+               COALESCE(bh.name, '[Missing budget holder ID ' || p.budget_id || ']') as budget_holder_name,
+               bh.surname as budget_holder_surname, bh.cost_center,
+               COALESCE(st.service_type, '[Missing service type ID ' || p.service_type_id || ']') as service_type,
+               COALESCE(sd.depth_description, '[Missing depth ID ' || p.sequencing_depth_id || ']') as depth_description,
+               COALESCE(sc.cycles_description, '[Missing cycles ID ' || p.sequencing_cycles_id || ']') as cycles_description
         FROM projects p 
-        JOIN users u ON p.user_id = u.id
+        LEFT JOIN users u ON p.user_id = u.id
         LEFT JOIN types t ON p.type_id = t.id
         LEFT JOIN budget_holders bh ON p.budget_id = bh.id
         LEFT JOIN service_types st ON p.service_type_id = st.id
@@ -5913,6 +6427,17 @@ server <- function(input, output, session) {
             actionButton(
               "manage_sequencing_cycles_btn",
               "Manage Cycles",
+              class = "btn-primary"
+            )
+          )
+        ),
+        column(
+          4,
+          wellPanel(
+            h4("Maschine / Cycles"),
+            actionButton(
+              "manage_machine_cycles_btn",
+              "Manage Maschine / Cycles",
               class = "btn-primary"
             )
           )
@@ -6147,11 +6672,7 @@ server <- function(input, output, session) {
       fluidRow(
         column(
           12,
-          div(
-            class = "cost-calculation",
-            h4("Cost Calculation"),
-            uiOutput("cost_calculation_display")
-          )
+          uiOutput("cost_calculation_display")
         )
       ),
       tags$small("* Required fields")
@@ -6206,46 +6727,14 @@ server <- function(input, output, session) {
 
   # Dynamic cost calculation
   output$cost_calculation_display <- renderUI({
-    base_cost <- calculate_base_cost(
+    breakdown <- calculate_cost_breakdown(
       input$num_samples,
       input$service_type_id,
       input$sequencing_depth_id,
-      input$sequencing_cycles_id
+      input$sequencing_cycles_id,
+      additional_cost = 0
     )
-
-    service_type <- admin_data$service_types[
-      admin_data$service_types$id == as.numeric(input$service_type_id),
-    ]
-    sequencing_depth <- admin_data$sequencing_depths[
-      admin_data$sequencing_depths$id == as.numeric(input$sequencing_depth_id),
-    ]
-
-    prep_cost <- if (nrow(service_type) > 0) {
-      service_type$costs_per_sample * as.numeric(input$num_samples)
-    } else {
-      0
-    }
-    sequencing_cost <- base_cost - prep_cost
-
-    tagList(
-      p(paste0("Preparation Cost: €", format_cost_amount(prep_cost))),
-      p(paste0("Sequencing Cost: €", format_cost_amount(sequencing_cost))),
-      p("Additional costs:"),
-      p(
-        class = "cost-total",
-        paste0("Total Estimated Cost: €", format_cost_amount(base_cost))
-      ),
-      if (
-        !is.null(sequencing_depth) &&
-          nrow(sequencing_depth) > 0 &&
-          sequencing_depth$depth_description == "other"
-      ) {
-        p(
-          class = "cost-warning",
-          "Note: 'Other' sequencing depth selected. These costs are preliminary. Please contact us to discuss your specific needs."
-        )
-      }
-    )
+    cost_breakdown_ui(breakdown)
   })
 
   get_or_create_budget_holder <- function(
@@ -6844,7 +7333,7 @@ server <- function(input, output, session) {
       h4("Add New Sequencing Cycle"),
       fluidRow(
         column(
-          8,
+          6,
           textInput(
             "new_cycles_description",
             "Cycles Description",
@@ -6852,11 +7341,25 @@ server <- function(input, output, session) {
           )
         ),
         column(
-          4,
+          3,
+          selectInput(
+            "new_cycles_pricing_mode",
+            "Pricing",
+            choices = c(
+              "Up to 150 cycles" = "upto_150",
+              "Up to 300 cycles" = "upto_300",
+              "Additional cost only" = "additional"
+            ),
+            selected = "additional"
+          )
+        ),
+        column(
+          3,
           actionButton(
             "add_sequencing_cycles_btn",
             "Add Cycles",
-            class = "btn-primary"
+            class = "btn-primary",
+            style = "margin-top: 25px;"
           )
         )
       ),
@@ -6867,6 +7370,44 @@ server <- function(input, output, session) {
       actionButton(
         "delete_sequencing_cycles_btn",
         "Delete Selected Cycles",
+        class = "btn-danger"
+      )
+    ))
+  })
+
+  observeEvent(input$manage_machine_cycles_btn, {
+    showModal(modalDialog(
+      title = "Maschine / Cycles Management",
+      size = "m",
+      footer = modalButton("Close"),
+
+      h4("Add New Maschine / Cycles Option"),
+      fluidRow(
+        column(
+          9,
+          textInput(
+            "new_machine_cycles_label",
+            "Maschine / Cycles",
+            placeholder = "e.g., 2×100bp NovaSeq"
+          )
+        ),
+        column(
+          3,
+          actionButton(
+            "add_machine_cycles_btn",
+            "Add Option",
+            class = "btn-primary",
+            style = "margin-top: 25px;"
+          )
+        )
+      ),
+
+      hr(),
+      h4("Current Maschine / Cycles Options"),
+      DTOutput("machine_cycles_table_admin"),
+      actionButton(
+        "delete_machine_cycles_btn",
+        "Delete Selected Option",
         class = "btn-danger"
       )
     ))
@@ -7230,14 +7771,37 @@ server <- function(input, output, session) {
   output$sequencing_cycles_table_admin <- renderDT({
     cycles_df <- admin_data$sequencing_cycles
     if (nrow(cycles_df) > 0) {
-      cycles_df <- cycles_df[, c("id", "cycles_description"), drop = FALSE] # KEEP AS DATA FRAME
+      cycles_df$pricing <- vapply(
+        cycles_df$pricing_mode,
+        pricing_mode_label,
+        character(1)
+      )
+      cycles_df <- cycles_df[, c(
+        "id",
+        "cycles_description",
+        "pricing"
+      ), drop = FALSE]
     }
     datatable(
       cycles_df,
       selection = 'single',
       options = list(pageLength = 10),
       rownames = FALSE,
-      colnames = c("ID", "Cycles Description") # UPDATE COLUMN NAMES
+      colnames = c("ID", "Cycles Description", "Pricing")
+    )
+  })
+
+  output$machine_cycles_table_admin <- renderDT({
+    machine_df <- admin_data$machine_cycles_options
+    if (nrow(machine_df) > 0) {
+      machine_df <- machine_df[, c("id", "label"), drop = FALSE]
+    }
+    datatable(
+      machine_df,
+      selection = "single",
+      options = list(pageLength = 10),
+      rownames = FALSE,
+      colnames = c("ID", "Maschine / Cycles")
     )
   })
 
@@ -8306,15 +8870,54 @@ server <- function(input, output, session) {
     dbExecute(
       con,
       "
-      INSERT INTO sequencing_cycles (cycles_description)
-      VALUES (?)
+      INSERT INTO sequencing_cycles (cycles_description, pricing_mode)
+      VALUES (?, ?)
     ",
-      params = list(input$new_cycles_description)
+      params = list(
+        trimws(input$new_cycles_description),
+        input$new_cycles_pricing_mode %||% "additional"
+      )
     )
 
     admin_data$sequencing_cycles <- load_sequencing_cycles()
     updateTextInput(session, "new_cycles_description", value = "")
+    updateSelectInput(
+      session,
+      "new_cycles_pricing_mode",
+      selected = "additional"
+    )
     showNotification("Sequencing cycles added successfully!", type = "message")
+  })
+
+  observeEvent(input$add_machine_cycles_btn, {
+    new_label <- trimws(to_scalar_text(input$new_machine_cycles_label, ""))
+    if (!nzchar(new_label)) {
+      showNotification(
+        "Please enter a Maschine / Cycles option",
+        type = "error"
+      )
+      return()
+    }
+
+    existing_labels <- tolower(trimws(
+      as.character(admin_data$machine_cycles_options$label)
+    ))
+    if (tolower(new_label) %in% existing_labels) {
+      showNotification("This option already exists", type = "error")
+      return()
+    }
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+    dbExecute(
+      con,
+      "INSERT INTO machine_cycles_options (label) VALUES (?)",
+      params = list(new_label)
+    )
+
+    admin_data$machine_cycles_options <- load_machine_cycles_options()
+    updateTextInput(session, "new_machine_cycles_label", value = "")
+    showNotification("Maschine / Cycles option added", type = "message")
   })
 
   # Add new user (admin)
@@ -8727,11 +9330,14 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    dbExecute(
+    if (!delete_lookup_safely(
       con,
       "DELETE FROM budget_holders WHERE id = ?",
-      params = list(bh_to_delete$id)
-    )
+      list(bh_to_delete$id),
+      "budget holder"
+    )) {
+      return()
+    }
 
     removeModal()
     load_admin_data()
@@ -8776,11 +9382,14 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    dbExecute(
+    if (!delete_lookup_safely(
       con,
       "DELETE FROM service_types WHERE service_type = ?",
-      params = list(service_to_delete)
-    )
+      list(service_to_delete),
+      "sample service type"
+    )) {
+      return()
+    }
 
     removeModal()
     admin_data$service_types <- load_service_types()
@@ -8834,11 +9443,14 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    dbExecute(
+    if (!delete_lookup_safely(
       con,
       "DELETE FROM sequencing_depths WHERE depth_description = ?",
-      params = list(depth_to_delete)
-    )
+      list(depth_to_delete),
+      "sequencing depth"
+    )) {
+      return()
+    }
 
     removeModal()
     admin_data$sequencing_depths <- load_sequencing_depths()
@@ -8881,24 +9493,164 @@ server <- function(input, output, session) {
 
   observeEvent(input$confirm_delete_sequencing_cycles_btn, {
     selected_row <- input$sequencing_cycles_table_admin_rows_selected
-    cycles_to_delete <- admin_data$sequencing_cycles[
+    cycle_to_delete <- admin_data$sequencing_cycles[
       selected_row,
-      "cycles_description"
+      ,
+      drop = FALSE
     ]
+    cycles_to_delete <- as.character(cycle_to_delete$cycles_description[[1]])
+    cycle_id_to_delete <- as.integer(cycle_to_delete$id[[1]])
 
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    dbExecute(
+    projects_using <- dbGetQuery(
       con,
-      "DELETE FROM sequencing_cycles WHERE cycles_description = ?",
-      params = list(cycles_to_delete)
+      "SELECT COUNT(*) AS n FROM projects WHERE sequencing_cycles_id = ?",
+      params = list(cycle_id_to_delete)
+    )$n[[1]]
+
+    replacement_id <- NA_integer_
+    if (projects_using > 0 && cycles_to_delete %in% names(legacy_machine_cycles_map)) {
+      replacement <- dbGetQuery(
+        con,
+        "
+        SELECT id
+        FROM sequencing_cycles
+        WHERE pricing_mode = 'upto_150' AND id <> ?
+        ORDER BY CASE
+          WHEN cycles_description = 'upto 100/150 cycles (2x60 or 2x 75)' THEN 0
+          ELSE 1
+        END, id
+        LIMIT 1
+        ",
+        params = list(cycle_id_to_delete)
+      )
+      if (nrow(replacement) == 0) {
+        showNotification(
+          "Create an 'Up to 150 cycles' pricing option before deleting this entry.",
+          type = "error",
+          duration = 10
+        )
+        return()
+      }
+      replacement_id <- as.integer(replacement$id[[1]])
+    } else if (projects_using > 0) {
+      showNotification(
+        paste0(
+          "This cycle option is used by ",
+          projects_using,
+          " project(s) and cannot be deleted."
+        ),
+        type = "error",
+        duration = 10
+      )
+      return()
+    }
+
+    delete_result <- tryCatch(
+      {
+        dbWithTransaction(con, {
+          if (!is.na(replacement_id)) {
+            dbExecute(
+              con,
+              "
+              UPDATE projects
+              SET machine_cycles = CASE
+                    WHEN machine_cycles IS NULL OR trim(machine_cycles) = '' THEN ?
+                    ELSE machine_cycles
+                  END,
+                  sequencing_cycles_id = ?
+              WHERE sequencing_cycles_id = ?
+              ",
+              params = list(
+                unname(legacy_machine_cycles_map[[cycles_to_delete]]),
+                replacement_id,
+                cycle_id_to_delete
+              )
+            )
+          }
+          dbExecute(
+            con,
+            "DELETE FROM sequencing_cycles WHERE id = ?",
+            params = list(cycle_id_to_delete)
+          )
+        })
+        TRUE
+      },
+      error = function(e) {
+        showNotification(
+          paste("Could not delete the cycle option:", conditionMessage(e)),
+          type = "error",
+          duration = 10
+        )
+        FALSE
+      }
     )
+    if (!isTRUE(delete_result)) {
+      return()
+    }
 
     removeModal()
     admin_data$sequencing_cycles <- load_sequencing_cycles()
+    load_projects()
     showNotification(
       "Sequencing cycles deleted successfully!",
+      type = "message"
+    )
+  })
+
+  observeEvent(input$delete_machine_cycles_btn, {
+    selected_row <- input$machine_cycles_table_admin_rows_selected
+    if (length(selected_row) == 0) {
+      showNotification("Please select an option to delete", type = "warning")
+      return()
+    }
+
+    option_to_delete <- admin_data$machine_cycles_options[
+      selected_row[1],
+      ,
+      drop = FALSE
+    ]
+    showModal(modalDialog(
+      title = "Confirm Delete",
+      paste0(
+        "Remove '",
+        option_to_delete$label[[1]],
+        "' from future dropdown choices? Existing project values will be preserved."
+      ),
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton(
+          "confirm_delete_machine_cycles_btn",
+          "Delete",
+          class = "btn-danger"
+        )
+      )
+    ))
+  })
+
+  observeEvent(input$confirm_delete_machine_cycles_btn, {
+    selected_row <- input$machine_cycles_table_admin_rows_selected
+    req(length(selected_row) > 0)
+    option_to_delete <- admin_data$machine_cycles_options[
+      selected_row[1],
+      ,
+      drop = FALSE
+    ]
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+    dbExecute(
+      con,
+      "DELETE FROM machine_cycles_options WHERE id = ?",
+      params = list(option_to_delete$id[[1]])
+    )
+
+    removeModal()
+    admin_data$machine_cycles_options <- load_machine_cycles_options()
+    showNotification(
+      "Option removed; existing project values were preserved.",
       type = "message"
     )
   })
@@ -8939,11 +9691,14 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    dbExecute(
+    if (!delete_lookup_safely(
       con,
       "DELETE FROM users WHERE id = ?",
-      params = list(user_to_delete$id)
-    )
+      list(user_to_delete$id),
+      "user"
+    )) {
+      return()
+    }
 
     removeModal()
     load_admin_data()
@@ -8988,11 +9743,14 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    dbExecute(
+    if (!delete_lookup_safely(
       con,
       "DELETE FROM reference_genomes WHERE name = ?",
-      params = list(genome_to_delete)
-    )
+      list(genome_to_delete),
+      "reference genome"
+    )) {
+      return()
+    }
 
     removeModal()
     admin_data$reference_genomes <- load_reference_genomes()
@@ -9033,11 +9791,14 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    dbExecute(
+    if (!delete_lookup_safely(
       con,
       "DELETE FROM types WHERE name = ?",
-      params = list(type_to_delete)
-    )
+      list(type_to_delete),
+      "sample type"
+    )) {
+      return()
+    }
 
     removeModal()
     admin_data$types <- load_types()
@@ -9082,11 +9843,14 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    dbExecute(
+    if (!delete_lookup_safely(
       con,
       "DELETE FROM sequencing_platforms WHERE name = ?",
-      params = list(platform_to_delete)
-    )
+      list(platform_to_delete),
+      "sequencing platform"
+    )) {
+      return()
+    }
 
     removeModal()
     admin_data$sequencing_platforms <- load_sequencing_platforms()
@@ -9131,6 +9895,29 @@ server <- function(input, output, session) {
       project_additional <- NA_real_
     }
     edit_existing_additional_cost(project_additional)
+
+    machine_cycles_value <- trimws(to_scalar_text(project$machine_cycles, ""))
+    configured_machine_cycles <- admin_data$machine_cycles_options$label
+    if (is.null(configured_machine_cycles)) {
+      configured_machine_cycles <- character(0)
+    }
+    configured_machine_cycles <- trimws(as.character(configured_machine_cycles))
+    configured_machine_cycles <- configured_machine_cycles[
+      nzchar(configured_machine_cycles)
+    ]
+    machine_choices <- c(
+      "Not specified" = "",
+      setNames(configured_machine_cycles, configured_machine_cycles)
+    )
+    if (
+      nzchar(machine_cycles_value) &&
+        !(machine_cycles_value %in% unname(machine_choices))
+    ) {
+      machine_choices <- c(
+        machine_choices,
+        setNames(machine_cycles_value, machine_cycles_value)
+      )
+    }
 
     current_responsible <- trimws(as.character(
       project$responsible_user[[1]] %||% ""
@@ -9189,29 +9976,67 @@ server <- function(input, output, session) {
           selectInput(
             "edit_sequencing_platform",
             "Sequencing Platform *",
-            choices = admin_data$sequencing_platforms$name,
+            choices = text_choices_with_selected(
+              admin_data$sequencing_platforms$name,
+              project$sequencing_platform
+            ),
             selected = project$sequencing_platform
           ),
           selectInput(
             "edit_type_id",
             "Sample Type *",
-            choices = setNames(admin_data$types$id, admin_data$types$name),
+            choices = id_choices_with_selected(
+              admin_data$types$id,
+              admin_data$types$name,
+              project$type_id,
+              "sample type"
+            ),
             selected = project$type_id
           ),
           selectInput(
             "edit_service_type_id",
             "Sample Service Type *",
-            choices = setNames(
+            choices = id_choices_with_selected(
               admin_data$service_types$id,
               paste(
                 admin_data$service_types$service_type,
                 "- €",
                 admin_data$service_types$costs_per_sample,
                 "/sample"
-              )
+              ),
+              project$service_type_id,
+              "service type"
             ),
             selected = project$service_type_id
-          )
+          ),
+          if (isTRUE(user$is_admin)) {
+            selectizeInput(
+              "edit_machine_cycles",
+              "Maschine / Cycles",
+              choices = machine_choices,
+              selected = machine_cycles_value,
+              options = list(
+                create = TRUE,
+                persist = FALSE,
+                placeholder = "Select an option or enter custom text"
+              )
+            )
+          } else {
+            div(
+              class = "form-group",
+              tags$label("Maschine / Cycles"),
+              tags$input(
+                class = "form-control",
+                type = "text",
+                value = if (nzchar(machine_cycles_value)) {
+                  machine_cycles_value
+                } else {
+                  "Not specified"
+                },
+                readonly = "readonly"
+              )
+            )
+          }
         ),
         column(
           6,
@@ -9226,9 +10051,11 @@ server <- function(input, output, session) {
           selectInput(
             "edit_sequencing_depth_id",
             "Data Amount (Total Reads) *",
-            choices = setNames(
+            choices = id_choices_with_selected(
               admin_data$sequencing_depths$id,
-              admin_data$sequencing_depths$depth_description
+              admin_data$sequencing_depths$depth_description,
+              project$sequencing_depth_id,
+              "depth"
             ),
             selected = project$sequencing_depth_id
           ),
@@ -9241,9 +10068,11 @@ server <- function(input, output, session) {
           selectInput(
             "edit_sequencing_cycles_id",
             "Read Length (Cycles) *",
-            choices = setNames(
+            choices = id_choices_with_selected(
               admin_data$sequencing_cycles$id,
-              admin_data$sequencing_cycles$cycles_description
+              admin_data$sequencing_cycles$cycles_description,
+              project$sequencing_cycles_id,
+              "cycles"
             ),
             selected = project$sequencing_cycles_id
           ),
@@ -9257,14 +10086,16 @@ server <- function(input, output, session) {
             "edit_budget_id",
             "Budget Holder *",
             choices = c(
-              setNames(
-                as.character(admin_data$budget_holders$id),
+              id_choices_with_selected(
+                admin_data$budget_holders$id,
                 paste(
                   admin_data$budget_holders$name,
                   admin_data$budget_holders$surname,
                   "-",
                   admin_data$budget_holders$cost_center
-                )
+                ),
+                project$budget_id,
+                "budget holder"
               ),
               "Other / not listed" = "other"
             ),
@@ -9332,11 +10163,7 @@ server <- function(input, output, session) {
       fluidRow(
         column(
           12,
-          div(
-            class = "cost-calculation",
-            h4("Cost Calculation"),
-            uiOutput("edit_cost_calculation_display")
-          )
+          uiOutput("edit_cost_calculation_display")
         )
       ),
       if (user$is_admin) {
@@ -9357,28 +10184,6 @@ server <- function(input, output, session) {
 
   # Edit cost calculation
   output$edit_cost_calculation_display <- renderUI({
-    base_cost <- calculate_base_cost(
-      input$edit_num_samples,
-      input$edit_service_type_id,
-      input$edit_sequencing_depth_id,
-      input$edit_sequencing_cycles_id
-    )
-
-    service_type <- admin_data$service_types[
-      admin_data$service_types$id == as.numeric(input$edit_service_type_id),
-    ]
-    sequencing_depth <- admin_data$sequencing_depths[
-      admin_data$sequencing_depths$id ==
-        as.numeric(input$edit_sequencing_depth_id),
-    ]
-
-    prep_cost <- if (nrow(service_type) > 0) {
-      service_type$costs_per_sample * as.numeric(input$edit_num_samples)
-    } else {
-      0
-    }
-    sequencing_cost <- base_cost - prep_cost
-
     stored_additional <- edit_existing_additional_cost()
     additional_source <- if (isTRUE(user$is_admin)) {
       input$edit_additional_cost
@@ -9399,7 +10204,7 @@ server <- function(input, output, session) {
     } else {
       0
     }
-    total_cost <- calculate_total_cost(
+    breakdown <- calculate_cost_breakdown(
       input$edit_num_samples,
       input$edit_service_type_id,
       input$edit_sequencing_depth_id,
@@ -9407,34 +10212,10 @@ server <- function(input, output, session) {
       additional_cost
     )
 
-    additional_line <- if (
-      parsed_additional$valid && !parsed_additional$empty
-    ) {
-      paste0("Additional costs: €", format_cost_amount(parsed_additional$value))
-    } else {
-      "Additional costs:"
-    }
-
     tagList(
-      p(paste0("Preparation Cost: €", format_cost_amount(prep_cost))),
-      p(paste0("Sequencing Cost: €", format_cost_amount(sequencing_cost))),
-      p(additional_line),
-      p(
-        class = "cost-total",
-        paste0("Total Estimated Cost: €", format_cost_amount(total_cost))
-      ),
+      cost_breakdown_ui(breakdown),
       if (isTRUE(user$is_admin) && !parsed_additional$valid) {
         p(class = "cost-warning", parsed_additional$error)
-      },
-      if (
-        !is.null(sequencing_depth) &&
-          nrow(sequencing_depth) > 0 &&
-          sequencing_depth$depth_description == "other"
-      ) {
-        p(
-          class = "cost-warning",
-          "Note: 'Other' sequencing depth selected. These costs are preliminary. Please contact us to discuss your specific needs."
-        )
       }
     )
   })
@@ -9591,6 +10372,10 @@ server <- function(input, output, session) {
       con,
       fallback = scalar_text(project$responsible_user, "")
     )
+    machine_cycles_value <- scalar_text(project$machine_cycles, "")
+    if (isTRUE(user$is_admin)) {
+      machine_cycles_value <- trimws(scalar_text(input$edit_machine_cycles, ""))
+    }
 
     if (user$is_admin) {
       dbExecute(
@@ -9599,7 +10384,7 @@ server <- function(input, output, session) {
         UPDATE projects 
         SET project_name = ?, reference_genome = ?, service_type_id = ?, 
             budget_id = ?, responsible_user = ?, description = ?, updated_at = CURRENT_TIMESTAMP,
-            num_samples = ?, sequencing_platform = ?, sequencing_depth_id = ?,
+            num_samples = ?, sequencing_platform = ?, machine_cycles = ?, sequencing_depth_id = ?,
             sequencing_cycles_id = ?, kickoff_meeting = ?, status = ?,
             type_id = ?, additional_cost = ?, total_cost = ?
         WHERE id = ?
@@ -9613,6 +10398,7 @@ server <- function(input, output, session) {
           scalar_text(input$edit_project_description),
           input$edit_num_samples,
           scalar_text(input$edit_sequencing_platform),
+          machine_cycles_value,
           as.numeric(input$edit_sequencing_depth_id),
           as.numeric(input$edit_sequencing_cycles_id),
           kickoff_value,
@@ -10218,48 +11004,101 @@ server <- function(input, output, session) {
   ##################################################################
 
   ##################################################################
-  # AUTOMATIC BI-WEEKLY BACKUPS (COMMENTED OUT)
+  # AUTOMATIC BI-WEEKLY BACKUPS
   ##################################################################
-  #
-  # To activate automatic bi-weekly backups, remove the # comments below
-  # and adjust the backup directory path if needed.
-  #
-  # observe({
-  #   # Check if backup needed (every 14 days)
-  #   invalidateLater(14 * 24 * 60 * 60 * 1000) # 14 days in milliseconds
-  #
-  #   backup_dir <- "ngs_project_management_sql_backups"
-  #   if (!dir.exists(backup_dir)) dir.create(backup_dir)
-  #
-  #   # Create backup filename with bi-weekly indicator
-  #   current_date <- Sys.Date()
-  #   bi_week <- as.numeric(format(current_date, "%U")) %/% 2  # Bi-weekly indicator
-  #   backup_file <- file.path(backup_dir, paste0("backup_", format(current_date, "%Y"), "_biweek_", bi_week, ".sqlite"))
-  #
-  #   if (!file.exists(backup_file) && file.exists("sequencing_projects.db")) {
-  #     tryCatch({
-  #       file.copy("sequencing_projects.db", backup_file)
-  #       cat("Automatic bi-weekly backup created:", backup_file, "\n")
-  #
-  #       # Log the automatic backup
-  #       con <- get_db_connection()
-  #       file_info <- file.info("sequencing_projects.db")
-  #       dbExecute(con, "
-  #         INSERT INTO backup_logs (backup_timestamp, backup_size, backed_up_by)
-  #         VALUES (?, ?, ?)
-  #       ", params = list(
-  #         format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
-  #         file_info$size,
-  #         'auto_backup_system'
-  #       ))
-  #       dbDisconnect(con)
-  #
-  #     }, error = function(e) {
-  #       cat("Automatic backup failed:", e$message, "\n")
-  #     })
-  #   }
-  # })
-  #
+
+  observe({
+    invalidateLater(14 * 24 * 60 * 60 * 1000, session)
+
+    backup_dir <- Sys.getenv(
+      "DB_BACKUP_DIR",
+      "/srv/shiny-server/DB_backup"
+    )
+    if (!dir.exists(backup_dir)) {
+      dir.create(backup_dir, recursive = TRUE)
+    }
+
+    current_date <- Sys.Date()
+    iso_week <- as.integer(format(current_date, "%V"))
+    bi_week <- ((iso_week - 1L) %/% 2L) + 1L
+    backup_file <- file.path(
+      backup_dir,
+      paste0(
+        "backup_",
+        format(current_date, "%G"),
+        "_biweek_",
+        sprintf("%02d", bi_week),
+        ".sqlite"
+      )
+    )
+
+    if (!file.exists(backup_file) && file.exists("sequencing_projects.db")) {
+      source_con <- NULL
+      backup_con <- NULL
+      log_con <- NULL
+      temporary_backup <- tempfile(
+        pattern = "sequencing_backup_",
+        tmpdir = backup_dir,
+        fileext = ".tmp"
+      )
+
+      tryCatch(
+        {
+          source_con <- dbConnect(
+            RSQLite::SQLite(),
+            "sequencing_projects.db"
+          )
+          backup_con <- dbConnect(RSQLite::SQLite(), temporary_backup)
+          RSQLite::sqliteCopyDatabase(source_con, backup_con)
+          dbDisconnect(backup_con)
+          backup_con <- NULL
+          dbDisconnect(source_con)
+          source_con <- NULL
+
+          backup_created <- file.rename(temporary_backup, backup_file)
+          if (!backup_created && !file.exists(backup_file)) {
+            stop("Could not move the completed backup into place")
+          }
+
+          if (backup_created) {
+            cat("Automatic bi-weekly backup created:", backup_file, "\n")
+            log_con <- get_db_connection()
+            file_info <- file.info(backup_file)
+            dbExecute(
+              log_con,
+              "
+              INSERT INTO backup_logs (backup_timestamp, backup_size, backed_up_by)
+              VALUES (?, ?, ?)
+              ",
+              params = list(
+                format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
+                file_info$size,
+                "auto_backup_system"
+              )
+            )
+          }
+        },
+        error = function(e) {
+          cat("Automatic bi-weekly backup failed:", e$message, "\n")
+        },
+        finally = {
+          if (!is.null(backup_con) && dbIsValid(backup_con)) {
+            dbDisconnect(backup_con)
+          }
+          if (!is.null(source_con) && dbIsValid(source_con)) {
+            dbDisconnect(source_con)
+          }
+          if (!is.null(log_con) && dbIsValid(log_con)) {
+            dbDisconnect(log_con)
+          }
+          if (file.exists(temporary_backup)) {
+            unlink(temporary_backup)
+          }
+        }
+      )
+    }
+  })
+
   ##################################################################
   # END AUTOMATIC BI-WEEKLY BACKUPS
   ##################################################################

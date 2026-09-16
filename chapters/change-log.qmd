@@ -10,6 +10,7 @@ execute:
 
 ### Contents
 
+- [Changes on 16.09.2026](#changes-on-16.09.2026)
 - [Changes on 25.03.2026](#changes-on-25.03.2026)
 - [Changes on 03.03.2026](#changes-on-03.03.2026)
 - [Changes on 02.03.2026](#changes-on-02.03.2026)
@@ -24,6 +25,65 @@ execute:
 - [Changes on 09.02.2026](#changes-on-09.02.2026)
 - [Changes on 06.02.2026](#changes-on-06.02.2026)
 - [Changes on 14.11.2026](#changes-on-14.11.2026)
+
+## Changes on 16.09.2026
+
+1. Audited the NGS project cost calculation against the latest production database backup and the BCFMS implementation:
+   - confirmed that sample service cost is multiplied by the number of samples
+   - made sequencing-cycle pricing explicit through `sequencing_cycles.pricing_mode`
+   - retained separate pricing for up to 150 and up to 300 cycles
+   - classified `upto 600 cycels (2x 300bp)` and `ONT - Nanopore sequencing` as manual/additional-cost options
+   - added warnings when a selected option requires an administrator-entered additional cost or references missing lookup data.
+2. Replaced the single cost result with an itemized **Cost breakdown**, following the BCFMS display:
+   - number of samples
+   - sample service type and per-sample calculation
+   - data amount/read-length contribution
+   - base cost
+   - additional cost
+   - total cost.
+3. Added the admin-controlled **Maschine / Cycles** project field:
+   - stored in the new `projects.machine_cycles` column
+   - displayed directly below **Sample Service Type** in the left column of Edit Project
+   - editable by administrators and read-only for regular users
+   - supports predefined choices and administrator-entered custom text.
+4. Seeded the initial Maschine / Cycles choices:
+   - `2×60bp NovaSeq`
+   - `2× 75bp Aviti`
+   - `2× 75bp PE-Seq`
+   - `45bp SE-seq - CRISPR`.
+5. Added **Maschine / Cycles Management** to the Administrator Panel:
+   - choices are now stored in `machine_cycles_options` instead of only being hard-coded
+   - administrators can add or remove dropdown options
+   - removing an option does not erase the text already stored on existing projects.
+6. Added a data-preserving migration for the four legacy machine/read-length entries:
+   - their values are copied into `projects.machine_cycles`
+   - projects are reassigned to the generic up-to-150-cycle pricing entry when the legacy cycle option is deleted
+   - historical machine/cycle information and the existing cost category are preserved.
+7. Added database-level reference-integrity guards for all project lookup menus:
+   - referenced users, budget holders, sample types, sample service types, sequencing depths, sequencing cycles, reference genomes, and sequencing platforms cannot be deleted
+   - referenced text-based reference genomes and sequencing platforms cannot be renamed without migrating project values first
+   - failed deletion attempts now show a user-facing error and leave existing projects unchanged.
+8. Improved handling of previously broken lookup references:
+   - projects remain visible through `LEFT JOIN` queries even when an old lookup row is missing
+   - project tables and edit dialogs show explicit labels such as `[Missing depth ID …]`
+   - missing selections are preserved in Edit Project instead of silently switching to the first available option.
+9. Audited both database backups for historical lookup loss:
+   - the September backup contains 953 projects, of which 857 have at least one missing numeric lookup reference
+   - 846 of the affected projects are marked `Legacy project`; 11 are non-legacy projects
+   - the April backup already contains almost the same missing references, so most deleted labels cannot be reconstructed reliably from that backup
+   - only a small number of budget-holder and sequencing-depth labels have exact recoverable ID matches; no automatic merge was performed.
+10. Simplified local development startup:
+    - `mailR`/`rJava` and `ldapr` are optional only when `APP_ENV=dev` and `AUTH_MODE=local`
+    - local UI testing can run without Java, email delivery, or LDAP
+    - production and LDAP modes still require those dependencies.
+11. Enabled automatic biweekly database backups:
+    - uses SQLite's online backup API for a consistent live snapshot
+    - creates at most one backup per two-week ISO calendar period
+    - records successful automatic backups in `backup_logs`
+    - defaults to `/srv/shiny-server/DB_backup`
+    - supports an override through `DB_BACKUP_DIR`.
+12. Updated `setup_database.R` for fresh installations with the new project column, explicit cycle pricing, Maschine / Cycles option table and defaults, and foreign-key enforcement.
+13. Validated the changes with R parse checks, whitespace checks, temporary copies of the production backup, cost-resolution tests, deletion/migration tests, database-trigger tests, full admin project loading, and an automatic-backup integrity check.
 
 ## Changes on 25.03.2026
 

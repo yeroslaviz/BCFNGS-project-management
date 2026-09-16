@@ -20,6 +20,7 @@ setup_complete_database <- function() {
 
   # Connect to new SQLite database
   con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
+  dbExecute(con, "PRAGMA foreign_keys = ON")
 
   # Users table
   dbExecute(con, "
@@ -75,6 +76,15 @@ setup_complete_database <- function() {
     CREATE TABLE IF NOT EXISTS sequencing_cycles (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       cycles_description TEXT UNIQUE NOT NULL,
+      pricing_mode TEXT NOT NULL DEFAULT 'additional',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  ")
+
+  dbExecute(con, "
+    CREATE TABLE IF NOT EXISTS machine_cycles_options (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      label TEXT UNIQUE NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   ")
@@ -176,6 +186,7 @@ setup_complete_database <- function() {
       description TEXT,
       num_samples INTEGER,
       sequencing_platform TEXT,
+      machine_cycles TEXT,
       sequencing_depth_id INTEGER NOT NULL,
       sequencing_cycles_id INTEGER NOT NULL,
       kickoff_meeting INTEGER,
@@ -372,14 +383,32 @@ setup_complete_database <- function() {
   # Insert sequencing cycles
   sequencing_cycles <- data.frame(
     cycles_description = c('upto 100/150 cycles (2x60 or 2x 75)',
-                           'upto 200/300 cycles (2x 110 or 2x150)')
+                           'upto 200/300 cycles (2x 110 or 2x150)'),
+    pricing_mode = c('upto_150', 'upto_300')
   )
 
   for(i in 1:nrow(sequencing_cycles)) {
     dbExecute(con, "
-      INSERT OR IGNORE INTO sequencing_cycles (cycles_description)
-      VALUES (?)
-    ", params = list(sequencing_cycles$cycles_description[i]))
+      INSERT OR IGNORE INTO sequencing_cycles (cycles_description, pricing_mode)
+      VALUES (?, ?)
+    ", params = list(
+      sequencing_cycles$cycles_description[i],
+      sequencing_cycles$pricing_mode[i]
+    ))
+  }
+
+  default_machine_cycles_options <- c(
+    "2×60bp NovaSeq",
+    "2× 75bp Aviti",
+    "2× 75bp PE-Seq",
+    "45bp SE-seq - CRISPR"
+  )
+  for(option_label in default_machine_cycles_options) {
+    dbExecute(
+      con,
+      "INSERT OR IGNORE INTO machine_cycles_options (label) VALUES (?)",
+      params = list(option_label)
+    )
   }
 
   # Insert default types
