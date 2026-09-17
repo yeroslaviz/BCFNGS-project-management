@@ -10,6 +10,7 @@ execute:
 
 ### Contents
 
+- [Changes on 17.09.2026](#changes-on-17.09.2026)
 - [Changes on 16.09.2026](#changes-on-16.09.2026)
 - [Changes on 25.03.2026](#changes-on-25.03.2026)
 - [Changes on 03.03.2026](#changes-on-03.03.2026)
@@ -25,6 +26,24 @@ execute:
 - [Changes on 09.02.2026](#changes-on-09.02.2026)
 - [Changes on 06.02.2026](#changes-on-06.02.2026)
 - [Changes on 14.11.2026](#changes-on-14.11.2026)
+
+## Changes on 17.09.2026
+
+1. Added an administrator-only **Unlock Costs** action to the Edit Project window for projects with locked cost snapshots.
+2. Unlocking requires a written reason and records a durable audit entry in `project_cost_unlock_log`, including:
+   - project and previous snapshot identifiers
+   - previous locked total
+   - administrator username
+   - unlock reason and timestamp
+   - subsequent relock username and timestamp.
+3. Added a safe correction workflow for Data released projects:
+   - unlocking removes the active snapshot but retains its amount in the audit log
+   - the project remains deliberately unlocked across database connections and app restarts
+   - the administrator table displays `Unlocked · Admin override`
+   - Edit Project displays the administrator, time, and reason for the override
+   - saving the corrected Data released project calculates its current total, creates a new immutable snapshot, and closes the audit entry as relocked.
+4. Updated project deletion and fresh-database setup to include the new unlock audit table.
+5. Validated the complete locked → unlocked → persistent override → relocked lifecycle against a temporary copy of the September production backup.
 
 ## Changes on 16.09.2026
 

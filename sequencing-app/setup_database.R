@@ -270,6 +270,28 @@ setup_complete_database <- function() {
     )
   ")
 
+  dbExecute(con, "
+    CREATE TABLE IF NOT EXISTS project_cost_unlock_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      project_row_id INTEGER NOT NULL,
+      project_public_id INTEGER,
+      previous_snapshot_id INTEGER,
+      previous_locked_total REAL,
+      unlock_reason TEXT NOT NULL,
+      unlocked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      unlocked_by TEXT NOT NULL,
+      relocked_at DATETIME,
+      relocked_by TEXT,
+      FOREIGN KEY (project_row_id) REFERENCES projects (id)
+    )
+  ")
+
+  dbExecute(con, "
+    CREATE UNIQUE INDEX IF NOT EXISTS one_open_cost_unlock_per_project
+    ON project_cost_unlock_log (project_row_id)
+    WHERE relocked_at IS NULL
+  ")
+
   # Create trigger to auto-generate project_id - MODIFIED FOR PREFIX
   dbExecute(con, "
     CREATE TRIGGER IF NOT EXISTS auto_project_id

@@ -1203,6 +1203,7 @@ server <- function(input, output, session) {
           "sequencing_cycles",
           "machine_cycles_options",
           "project_cost_snapshots",
+          "project_cost_unlock_log",
           "types",
           "sequencing_platforms",
           "reference_genomes",
@@ -2906,6 +2907,32 @@ server <- function(input, output, session) {
       )
       "
     )
+    dbExecute(
+      con,
+      "
+      CREATE TABLE IF NOT EXISTS project_cost_unlock_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_row_id INTEGER NOT NULL,
+        project_public_id INTEGER,
+        previous_snapshot_id INTEGER,
+        previous_locked_total REAL,
+        unlock_reason TEXT NOT NULL,
+        unlocked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        unlocked_by TEXT NOT NULL,
+        relocked_at DATETIME,
+        relocked_by TEXT,
+        FOREIGN KEY (project_row_id) REFERENCES projects (id)
+      )
+      "
+    )
+    dbExecute(
+      con,
+      "
+      CREATE UNIQUE INDEX IF NOT EXISTS one_open_cost_unlock_per_project
+      ON project_cost_unlock_log (project_row_id)
+      WHERE relocked_at IS NULL
+      "
+    )
     invisible(NULL)
   }
 
@@ -3093,6 +3120,15 @@ server <- function(input, output, session) {
         locked_by
       )
     )
+    dbExecute(
+      con,
+      "
+      UPDATE project_cost_unlock_log
+      SET relocked_at = CURRENT_TIMESTAMP, relocked_by = ?
+      WHERE project_row_id = ? AND relocked_at IS NULL
+      ",
+      params = list(locked_by, project_row_id)
+    )
     invisible(TRUE)
   }
 
@@ -3103,7 +3139,11 @@ server <- function(input, output, session) {
       SELECT p.id
       FROM projects p
       LEFT JOIN project_cost_snapshots pcs ON pcs.project_row_id = p.id
-      WHERE p.status = 'Data released' AND pcs.id IS NULL
+      LEFT JOIN project_cost_unlock_log pcul
+        ON pcul.project_row_id = p.id AND pcul.relocked_at IS NULL
+      WHERE p.status = 'Data released'
+        AND pcs.id IS NULL
+        AND pcul.id IS NULL
       ORDER BY p.id
       "
     )
@@ -6669,7 +6709,11 @@ server <- function(input, output, session) {
                pcs.review_reason AS cost_review_reason,
                pcs.review_note AS cost_review_note,
                pcs.locked_at AS cost_locked_at,
+               pcul.unlocked_at AS cost_unlocked_at,
+               pcul.unlocked_by AS cost_unlocked_by,
+               pcul.unlock_reason AS cost_unlock_reason,
                CASE
+                 WHEN pcs.id IS NULL AND pcul.id IS NOT NULL THEN 'Unlocked · Admin override'
                  WHEN pcs.id IS NULL THEN 'Unlocked'
                  WHEN pcs.review_status = 'needs_review' THEN 'Review required'
                  WHEN pcs.review_status = 'reviewed' THEN 'Locked · Reviewed'
@@ -6683,6 +6727,8 @@ server <- function(input, output, session) {
         LEFT JOIN sequencing_depths sd ON p.sequencing_depth_id = sd.id
         LEFT JOIN sequencing_cycles sc ON p.sequencing_cycles_id = sc.id
         LEFT JOIN project_cost_snapshots pcs ON pcs.project_row_id = p.id
+        LEFT JOIN project_cost_unlock_log pcul
+          ON pcul.project_row_id = p.id AND pcul.relocked_at IS NULL
         ORDER BY p.project_id DESC
       "
         )
@@ -6714,7 +6760,11 @@ server <- function(input, output, session) {
                pcs.review_reason AS cost_review_reason,
                pcs.review_note AS cost_review_note,
                pcs.locked_at AS cost_locked_at,
+               pcul.unlocked_at AS cost_unlocked_at,
+               pcul.unlocked_by AS cost_unlocked_by,
+               pcul.unlock_reason AS cost_unlock_reason,
                CASE
+                 WHEN pcs.id IS NULL AND pcul.id IS NOT NULL THEN 'Unlocked · Admin override'
                  WHEN pcs.id IS NULL THEN 'Unlocked'
                  WHEN pcs.review_status = 'needs_review' THEN 'Review required'
                  WHEN pcs.review_status = 'reviewed' THEN 'Locked · Reviewed'
@@ -6728,6 +6778,8 @@ server <- function(input, output, session) {
         LEFT JOIN sequencing_depths sd ON p.sequencing_depth_id = sd.id
         LEFT JOIN sequencing_cycles sc ON p.sequencing_cycles_id = sc.id
         LEFT JOIN project_cost_snapshots pcs ON pcs.project_row_id = p.id
+        LEFT JOIN project_cost_unlock_log pcul
+          ON pcul.project_row_id = p.id AND pcul.relocked_at IS NULL
         WHERE lower(trim(p.responsible_user)) = lower(trim(?))
            OR lower(trim(p.responsible_user)) = lower(trim(?))
            OR lower(trim(p.responsible_user)) = lower(trim(?))
@@ -7615,11 +7667,23 @@ server <- function(input, output, session) {
         formatStyle(
           "cost_status",
           backgroundColor = styleEqual(
-            c("Unlocked", "Locked", "Locked · Reviewed", "Review required"),
-            c("#f3f4f6", "#d1fae5", "#dbeafe", "#fee2e2")
+            c(
+              "Unlocked",
+              "Unlocked · Admin override",
+              "Locked",
+              "Locked · Reviewed",
+              "Review required"
+            ),
+            c("#f3f4f6", "#fef3c7", "#d1fae5", "#dbeafe", "#fee2e2")
           ),
-          fontWeight = styleEqual("Review required", "bold"),
-          color = styleEqual("Review required", "#991b1b")
+          fontWeight = styleEqual(
+            c("Review required", "Unlocked · Admin override"),
+            c("bold", "bold")
+          ),
+          color = styleEqual(
+            c("Review required", "Unlocked · Admin override"),
+            c("#991b1b", "#92400e")
+          )
         )
     }
 
@@ -7650,7 +7714,11 @@ server <- function(input, output, session) {
     } else if (identical(cost_filter, "review")) {
       display_data <- display_data[display_data$cost_status == "Review required", , drop = FALSE]
     } else if (identical(cost_filter, "unlocked")) {
-      display_data <- display_data[display_data$cost_status == "Unlocked", , drop = FALSE]
+      display_data <- display_data[
+        grepl("^Unlocked", display_data$cost_status),
+        ,
+        drop = FALSE
+      ]
     }
 
     build_projects_datatable(
@@ -10762,6 +10830,12 @@ server <- function(input, output, session) {
     dbDisconnect(con_snapshot)
     edit_cost_snapshot(snapshot)
     cost_is_locked <- nrow(snapshot) > 0
+    cost_override_open <- identical(
+      to_scalar_text(project$cost_status, ""),
+      "Unlocked · Admin override"
+    )
+    cost_fields_read_only <- cost_is_locked ||
+      (cost_override_open && !isTRUE(user$is_admin))
 
     machine_cycles_value <- trimws(to_scalar_text(project$machine_cycles, ""))
     configured_machine_cycles <- admin_data$machine_cycles_options$label
@@ -10822,6 +10896,14 @@ server <- function(input, output, session) {
             style = "background-color: #a1d99b; border-color: #8bcf84; color: #1b4332;"
           )
         },
+        if (isTRUE(user$is_admin) && cost_is_locked) {
+          actionButton(
+            "unlock_project_cost_btn",
+            "Unlock Costs",
+            class = "btn-warning",
+            icon = icon("unlock")
+          )
+        },
         actionButton(
           "update_project_btn",
           "Update Project",
@@ -10836,6 +10918,28 @@ server <- function(input, output, session) {
           ) "alert alert-danger" else "alert alert-success",
           tags$strong("Project cost is locked."),
           " Cost-related fields are read-only. The locked total will not change when lookup prices are edited or archived."
+        )
+      } else if (cost_override_open) {
+        div(
+          class = "alert alert-warning",
+          tags$strong("Project costs are temporarily unlocked by an administrator."),
+          tags$br(),
+          paste0(
+            "Unlocked by ",
+            to_scalar_text(project$cost_unlocked_by, "administrator"),
+            if (
+              nzchar(to_scalar_text(project$cost_unlocked_at, ""))
+            ) paste0(" on ", to_scalar_text(project$cost_unlocked_at, "")) else "",
+            "."
+          ),
+          tags$br(),
+          paste0("Reason: ", to_scalar_text(project$cost_unlock_reason, "Not provided")),
+          tags$br(),
+          if (isTRUE(user$is_admin)) {
+            "Saving this Data released project will calculate the corrected total and lock a new snapshot."
+          } else {
+            "Only an administrator can change and relock the cost fields during this override."
+          }
         )
       },
 
@@ -11071,7 +11175,7 @@ server <- function(input, output, session) {
       }
     ))
 
-    if (cost_is_locked) {
+    if (cost_fields_read_only) {
       session$onFlushed(function() {
         for (input_id in c(
           "edit_num_samples",
@@ -11084,6 +11188,140 @@ server <- function(input, output, session) {
         }
       }, once = TRUE)
     }
+  })
+
+  observeEvent(input$unlock_project_cost_btn, {
+    if (!isTRUE(user$is_admin)) {
+      showNotification("Only administrators can unlock project costs.", type = "error")
+      return()
+    }
+
+    selected_row <- input$projects_table_rows_selected
+    projects <- projects_data()
+    if (
+      is.null(selected_row) || length(selected_row) == 0 ||
+        is.null(projects) || nrow(projects) < selected_row[[1]]
+    ) {
+      showNotification("Select the project again before unlocking costs.", type = "warning")
+      return()
+    }
+
+    project <- projects[selected_row[[1]], , drop = FALSE]
+    if (is.na(project$cost_locked_at[[1]])) {
+      showNotification("This project cost is already unlocked.", type = "message")
+      return()
+    }
+
+    showModal(modalDialog(
+      title = "Unlock Project Costs",
+      size = "m",
+      p(
+        paste0(
+          "Project P", project$project_id[[1]], " — ", project$project_name[[1]]
+        )
+      ),
+      div(
+        class = "alert alert-warning",
+        "Unlocking permits the cost-driving fields to be changed. The previous locked total remains in the audit log. When the Data released project is saved, its corrected total will be locked again."
+      ),
+      textAreaInput(
+        "unlock_cost_reason",
+        "Reason for unlocking *",
+        rows = 4,
+        placeholder = "Explain what must be corrected."
+      ),
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton(
+          "confirm_unlock_project_cost_btn",
+          "Unlock Costs",
+          class = "btn-warning"
+        )
+      )
+    ))
+  })
+
+  observeEvent(input$confirm_unlock_project_cost_btn, {
+    if (!isTRUE(user$is_admin)) {
+      showNotification("Only administrators can unlock project costs.", type = "error")
+      return()
+    }
+
+    reason <- trimws(to_scalar_text(input$unlock_cost_reason, ""))
+    if (!nzchar(reason)) {
+      showNotification("A reason is required to unlock costs.", type = "error")
+      return()
+    }
+
+    selected_row <- input$projects_table_rows_selected
+    projects <- projects_data()
+    if (
+      is.null(selected_row) || length(selected_row) == 0 ||
+        is.null(projects) || nrow(projects) < selected_row[[1]]
+    ) {
+      showNotification("The selected project is no longer available.", type = "warning")
+      return()
+    }
+    project <- projects[selected_row[[1]], , drop = FALSE]
+    project_row_id <- project$id[[1]]
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+    unlocked <- tryCatch(
+      {
+        dbWithTransaction(con, {
+          snapshot <- dbGetQuery(
+            con,
+            "SELECT id, locked_total FROM project_cost_snapshots WHERE project_row_id = ? LIMIT 1",
+            params = list(project_row_id)
+          )
+          if (nrow(snapshot) == 0) {
+            stop("The cost snapshot is no longer locked.")
+          }
+          dbExecute(
+            con,
+            "
+            INSERT INTO project_cost_unlock_log (
+              project_row_id, project_public_id, previous_snapshot_id,
+              previous_locked_total, unlock_reason, unlocked_by
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            ",
+            params = list(
+              project_row_id,
+              project$project_id[[1]],
+              snapshot$id[[1]],
+              snapshot$locked_total[[1]],
+              reason,
+              user$username
+            )
+          )
+          dbExecute(
+            con,
+            "DELETE FROM project_cost_snapshots WHERE project_row_id = ?",
+            params = list(project_row_id)
+          )
+        })
+        TRUE
+      },
+      error = function(e) {
+        showNotification(
+          paste("Could not unlock project costs:", conditionMessage(e)),
+          type = "error",
+          duration = 10
+        )
+        FALSE
+      }
+    )
+    if (!isTRUE(unlocked)) return()
+
+    edit_cost_snapshot(NULL)
+    removeModal()
+    load_projects()
+    showNotification(
+      "Costs unlocked. Reopen Edit Project, make the correction, and save to lock the new total.",
+      type = "warning",
+      duration = 12
+    )
   })
 
   # Edit cost calculation
@@ -11152,6 +11390,12 @@ server <- function(input, output, session) {
       "cost_locked_at" %in% names(project) &&
       !is.na(project$cost_locked_at[[1]]) &&
       nzchar(as.character(project$cost_locked_at[[1]]))
+    cost_override_open <- identical(
+      to_scalar_text(project$cost_status, ""),
+      "Unlocked · Admin override"
+    )
+    preserve_cost_fields <- cost_is_locked ||
+      (cost_override_open && !isTRUE(user$is_admin))
 
     can_edit <- user$is_admin ||
       project$user_id == user$user_id ||
@@ -11250,7 +11494,7 @@ server <- function(input, output, session) {
 
     # Locked released-project costs always preserve their stored total and
     # cost-driving selections. Unlocked projects use the current lookup rates.
-    if (cost_is_locked) {
+    if (preserve_cost_fields) {
       additional_cost_value <- existing_additional_cost
       total_cost <- suppressWarnings(as.numeric(project$total_cost[[1]]))
       num_samples_value <- project$num_samples[[1]]
@@ -11367,12 +11611,15 @@ server <- function(input, output, session) {
       )
     }
 
-    if (new_status_for_update == "Data released") {
+    if (
+      new_status_for_update == "Data released" &&
+        (!cost_override_open || isTRUE(user$is_admin))
+    ) {
       create_project_cost_snapshot(
         con,
         project_id,
         locked_by = user$username,
-        source = "status_transition"
+        source = if (cost_override_open) "admin_relock" else "status_transition"
       )
     }
 
@@ -11645,6 +11892,11 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
+    dbExecute(
+      con,
+      "DELETE FROM project_cost_unlock_log WHERE project_row_id = ?",
+      params = list(project_id)
+    )
     dbExecute(
       con,
       "DELETE FROM project_cost_snapshots WHERE project_row_id = ?",
