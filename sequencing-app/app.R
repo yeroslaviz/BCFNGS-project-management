@@ -1183,10 +1183,13 @@ server <- function(input, output, session) {
 
         ensure_projects_additional_cost_column(con)
         ensure_ngs_cost_schema(con)
+        ensure_archive_schema(con)
         ensure_projects_status_schema(con)
         ensure_users_full_name_column(con)
         ensure_reference_genome_size_column(con)
         ensure_reference_integrity_guards(con)
+        ensure_cost_snapshot_schema(con)
+        backfill_released_cost_snapshots(con)
         ensure_announcement_tables(con)
         seed_announcement_defaults(con)
 
@@ -1199,6 +1202,7 @@ server <- function(input, output, session) {
           "sequencing_depths",
           "sequencing_cycles",
           "machine_cycles_options",
+          "project_cost_snapshots",
           "types",
           "sequencing_platforms",
           "reference_genomes",
@@ -1340,6 +1344,9 @@ server <- function(input, output, session) {
   )
   projects_data <- reactiveVal()
   edit_existing_additional_cost <- reactiveVal(NA_real_)
+  edit_cost_snapshot <- reactiveVal(NULL)
+  cost_review_data <- reactiveVal(data.frame())
+  archived_entries_data <- reactiveVal(data.frame())
   announcement_refresh <- reactiveVal(0)
   announcement_items_current <- reactiveVal(data.frame())
   announcement_editing_item_id <- reactiveVal(NULL)
@@ -2242,6 +2249,17 @@ server <- function(input, output, session) {
   }
 
   complete_login <- function(user_data) {
+    if (
+      "is_active" %in% names(user_data) &&
+        !isTRUE(as.logical(user_data$is_active[[1]]))
+    ) {
+      showNotification(
+        "This account is archived. Please contact an administrator.",
+        type = "error",
+        duration = 10
+      )
+      return(invisible(FALSE))
+    }
     user$logged_in <- TRUE
     user$username <- user_data$username
     full_name_val <- scalar_text(user_data$full_name)
@@ -2267,6 +2285,7 @@ server <- function(input, output, session) {
     if (user$is_admin) {
       load_admin_data()
     }
+    invisible(TRUE)
   }
 
   show_profile_modal <- function(username, attrs, is_new) {
@@ -2330,6 +2349,19 @@ server <- function(input, output, session) {
       "SELECT * FROM users WHERE username = ?",
       params = list(username)
     )
+    if (
+      nrow(user_data) == 1 &&
+        "is_active" %in% names(user_data) &&
+        !isTRUE(as.logical(user_data$is_active[[1]]))
+    ) {
+      showNotification(
+        "This account is archived. Please contact an administrator.",
+        type = "error",
+        duration = 10
+      )
+      ldap_login_blocked(TRUE)
+      return()
+    }
     attrs <- ldap_lookup_user(username)
     attrs$email <- scalar_text(attrs$email)
     attrs$phone <- scalar_text(attrs$phone)
@@ -2695,6 +2727,47 @@ server <- function(input, output, session) {
     invisible(NULL)
   }
 
+  ensure_archive_schema <- function(con) {
+    archive_tables <- c(
+      "users",
+      "budget_holders",
+      "service_types",
+      "sequencing_depths",
+      "sequencing_cycles",
+      "sequencing_platforms",
+      "types",
+      "reference_genomes",
+      "machine_cycles_options"
+    )
+    for (table_name in archive_tables) {
+      fields <- dbListFields(con, table_name)
+      table_sql <- as.character(dbQuoteIdentifier(con, table_name))
+      if (!("is_active" %in% fields)) {
+        dbExecute(
+          con,
+          paste0(
+            "ALTER TABLE ",
+            table_sql,
+            " ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1"
+          )
+        )
+      }
+      if (!("archived_at" %in% fields)) {
+        dbExecute(
+          con,
+          paste0("ALTER TABLE ", table_sql, " ADD COLUMN archived_at DATETIME")
+        )
+      }
+      if (!("archived_by" %in% fields)) {
+        dbExecute(
+          con,
+          paste0("ALTER TABLE ", table_sql, " ADD COLUMN archived_by TEXT")
+        )
+      }
+    }
+    invisible(NULL)
+  }
+
   ensure_reference_integrity_guards <- function(con) {
     guard_triggers <- c(
       protect_users_in_use = "
@@ -2798,6 +2871,253 @@ server <- function(input, output, session) {
       dbExecute(con, trigger_sql)
     }
     invisible(NULL)
+  }
+
+  ensure_cost_snapshot_schema <- function(con) {
+    dbExecute(
+      con,
+      "
+      CREATE TABLE IF NOT EXISTS project_cost_snapshots (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_row_id INTEGER UNIQUE NOT NULL,
+        project_public_id INTEGER,
+        num_samples REAL,
+        service_type_label TEXT,
+        service_unit_cost REAL,
+        service_subtotal REAL,
+        depth_label TEXT,
+        cycles_label TEXT,
+        pricing_mode TEXT,
+        sequencing_cost REAL,
+        additional_cost REAL,
+        base_cost REAL,
+        calculated_total REAL,
+        locked_total REAL NOT NULL,
+        completeness TEXT NOT NULL DEFAULT 'complete',
+        review_status TEXT NOT NULL DEFAULT 'complete',
+        review_reason TEXT,
+        review_note TEXT,
+        source TEXT NOT NULL,
+        locked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        locked_by TEXT,
+        reviewed_at DATETIME,
+        reviewed_by TEXT,
+        FOREIGN KEY (project_row_id) REFERENCES projects (id)
+      )
+      "
+    )
+    invisible(NULL)
+  }
+
+  create_project_cost_snapshot <- function(
+    con,
+    project_row_id,
+    locked_by = "system",
+    source = "status_transition"
+  ) {
+    existing <- dbGetQuery(
+      con,
+      "SELECT id FROM project_cost_snapshots WHERE project_row_id = ?",
+      params = list(project_row_id)
+    )
+    if (nrow(existing) > 0) {
+      return(invisible(FALSE))
+    }
+
+    row <- dbGetQuery(
+      con,
+      "
+      SELECT
+        p.id AS project_row_id,
+        p.project_id AS project_public_id,
+        p.num_samples,
+        p.service_type_id,
+        p.sequencing_depth_id,
+        p.sequencing_cycles_id,
+        p.additional_cost,
+        p.total_cost AS stored_total,
+        st.service_type AS service_type_label,
+        st.costs_per_sample AS service_unit_cost,
+        sd.depth_description AS depth_label,
+        sd.cost_upto_150_cycles,
+        sd.cost_upto_300_cycles,
+        sc.cycles_description AS cycles_label,
+        sc.pricing_mode
+      FROM projects p
+      LEFT JOIN service_types st ON st.id = p.service_type_id
+      LEFT JOIN sequencing_depths sd ON sd.id = p.sequencing_depth_id
+      LEFT JOIN sequencing_cycles sc ON sc.id = p.sequencing_cycles_id
+      WHERE p.id = ?
+      LIMIT 1
+      ",
+      params = list(project_row_id)
+    )
+    if (nrow(row) == 0) {
+      return(invisible(FALSE))
+    }
+
+    scalar_number <- function(value) {
+      value <- suppressWarnings(as.numeric(value[[1]]))
+      if (length(value) == 0 || is.na(value)) NA_real_ else value
+    }
+    scalar_label <- function(value, fallback) {
+      if (length(value) == 0 || is.na(value[[1]]) || !nzchar(trimws(value[[1]]))) {
+        fallback
+      } else {
+        trimws(as.character(value[[1]]))
+      }
+    }
+    snapshot_currency <- function(value) {
+      if (is.na(value)) return("(unavailable)")
+      paste0(
+        "€",
+        format(
+          round(as.numeric(value), 2),
+          nsmall = 2,
+          big.mark = ",",
+          scientific = FALSE,
+          trim = TRUE
+        )
+      )
+    }
+
+    sample_count <- scalar_number(row$num_samples)
+    service_unit_cost <- scalar_number(row$service_unit_cost)
+    additional_cost <- scalar_number(row$additional_cost)
+    if (is.na(additional_cost)) additional_cost <- 0
+    stored_total <- scalar_number(row$stored_total)
+    pricing_mode <- scalar_label(row$pricing_mode, "")
+
+    missing_parts <- character(0)
+    if (is.na(service_unit_cost)) missing_parts <- c(missing_parts, "sample service")
+    if (is.na(row$depth_label[[1]])) missing_parts <- c(missing_parts, "sequencing depth")
+    if (!nzchar(pricing_mode)) missing_parts <- c(missing_parts, "read length/cycles")
+
+    service_subtotal <- if (!is.na(sample_count) && !is.na(service_unit_cost)) {
+      sample_count * service_unit_cost
+    } else {
+      NA_real_
+    }
+    sequencing_cost <- NA_real_
+    if (!is.na(row$depth_label[[1]]) && nzchar(pricing_mode)) {
+      if (identical(pricing_mode, "upto_150")) {
+        sequencing_cost <- scalar_number(row$cost_upto_150_cycles)
+      } else if (identical(pricing_mode, "upto_300")) {
+        sequencing_cost <- scalar_number(row$cost_upto_300_cycles)
+      } else if (identical(pricing_mode, "additional")) {
+        sequencing_cost <- 0
+      }
+    }
+    if (is.na(sequencing_cost) && !"sequencing depth" %in% missing_parts && !"read length/cycles" %in% missing_parts) {
+      missing_parts <- c(missing_parts, "sequencing price")
+    }
+
+    base_cost <- if (!is.na(service_subtotal) && !is.na(sequencing_cost)) {
+      service_subtotal + sequencing_cost
+    } else {
+      NA_real_
+    }
+    calculated_total <- if (!is.na(base_cost)) base_cost + additional_cost else NA_real_
+    locked_total <- if (!is.na(stored_total)) {
+      stored_total
+    } else if (!is.na(calculated_total)) {
+      calculated_total
+    } else {
+      0
+    }
+
+    review_status <- "complete"
+    completeness <- "complete"
+    review_reason <- ""
+    if (length(missing_parts) > 0) {
+      review_status <- "needs_review"
+      completeness <- "incomplete"
+      review_reason <- paste0(
+        "Historical lookup data is missing: ",
+        paste(unique(missing_parts), collapse = ", "),
+        ". The stored total was preserved."
+      )
+    } else if (is.na(stored_total)) {
+      review_status <- "needs_review"
+      review_reason <- "No stored total was available; the current calculated total was locked."
+    } else if (is.na(calculated_total) || abs(stored_total - calculated_total) >= 0.01) {
+      review_status <- "needs_review"
+      review_reason <- paste0(
+        "Stored total ",
+        snapshot_currency(stored_total),
+        " differs from the current calculation ",
+        snapshot_currency(calculated_total),
+        ". The stored total was preserved."
+      )
+    }
+
+    dbExecute(
+      con,
+      "
+      INSERT INTO project_cost_snapshots (
+        project_row_id, project_public_id, num_samples,
+        service_type_label, service_unit_cost, service_subtotal,
+        depth_label, cycles_label, pricing_mode, sequencing_cost,
+        additional_cost, base_cost, calculated_total, locked_total,
+        completeness, review_status, review_reason, source, locked_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ",
+      params = list(
+        row$project_row_id[[1]],
+        row$project_public_id[[1]],
+        sample_count,
+        scalar_label(
+          row$service_type_label,
+          paste0("[Missing service type ID ", row$service_type_id[[1]], "]")
+        ),
+        service_unit_cost,
+        service_subtotal,
+        scalar_label(
+          row$depth_label,
+          paste0("[Missing depth ID ", row$sequencing_depth_id[[1]], "]")
+        ),
+        scalar_label(
+          row$cycles_label,
+          paste0("[Missing cycles ID ", row$sequencing_cycles_id[[1]], "]")
+        ),
+        if (nzchar(pricing_mode)) pricing_mode else NA_character_,
+        sequencing_cost,
+        additional_cost,
+        base_cost,
+        calculated_total,
+        locked_total,
+        completeness,
+        review_status,
+        review_reason,
+        source,
+        locked_by
+      )
+    )
+    invisible(TRUE)
+  }
+
+  backfill_released_cost_snapshots <- function(con) {
+    rows <- dbGetQuery(
+      con,
+      "
+      SELECT p.id
+      FROM projects p
+      LEFT JOIN project_cost_snapshots pcs ON pcs.project_row_id = p.id
+      WHERE p.status = 'Data released' AND pcs.id IS NULL
+      ORDER BY p.id
+      "
+    )
+    if (nrow(rows) > 0) {
+      for (project_row_id in rows$id) {
+        create_project_cost_snapshot(
+          con,
+          project_row_id,
+          locked_by = "migration",
+          source = "legacy_stored_total"
+        )
+      }
+    }
+    invisible(nrow(rows))
   }
 
   projects_table_sql <- function(con) {
@@ -3631,14 +3951,28 @@ server <- function(input, output, session) {
     choices
   }
 
-  id_choices_with_selected <- function(ids, labels, selected, missing_label) {
+  id_choices_with_selected <- function(
+    ids,
+    labels,
+    selected,
+    missing_label,
+    selected_label = NULL
+  ) {
     choices <- setNames(as.character(ids), as.character(labels))
     selected_id <- to_scalar_text(selected, "")
     if (nzchar(selected_id) && !(selected_id %in% unname(choices))) {
+      stored_label <- trimws(to_scalar_text(selected_label, ""))
+      display_label <- if (
+        nzchar(stored_label) && !grepl("^\\[Missing ", stored_label)
+      ) {
+        paste0(stored_label, " (archived)")
+      } else {
+        paste0("[Missing ", missing_label, " ID ", selected_id, "]")
+      }
       choices <- c(
         setNames(
           selected_id,
-          paste0("[Missing ", missing_label, " ID ", selected_id, "]")
+          display_label
         ),
         choices
       )
@@ -3653,7 +3987,10 @@ server <- function(input, output, session) {
     selected_value <- to_scalar_text(selected, "")
     if (nzchar(selected_value) && !(selected_value %in% unname(choices))) {
       choices <- c(
-        setNames(selected_value, paste0(selected_value, " (stored value)")),
+        setNames(
+          selected_value,
+          paste0(selected_value, " (archived or stored value)")
+        ),
         choices
       )
     }
@@ -3812,7 +4149,7 @@ server <- function(input, output, session) {
     ensure_users_full_name_column(con)
     users <- dbGetQuery(
       con,
-      "SELECT username, full_name FROM users ORDER BY username"
+      "SELECT username, full_name FROM users WHERE is_active = 1 ORDER BY username"
     )
     if (nrow(users) == 0) {
       return(data.frame(
@@ -3949,9 +4286,12 @@ server <- function(input, output, session) {
       {
         ensure_projects_additional_cost_column(con)
         ensure_ngs_cost_schema(con)
+        ensure_archive_schema(con)
         ensure_users_full_name_column(con)
         ensure_reference_genome_size_column(con)
         ensure_reference_integrity_guards(con)
+        ensure_cost_snapshot_schema(con)
+        backfill_released_cost_snapshots(con)
         ensure_project_creation_email_template_body(con)
       },
       error = function(e) {
@@ -3960,29 +4300,6 @@ server <- function(input, output, session) {
       }
     )
     con
-  }
-
-  delete_lookup_safely <- function(con, sql, params, item_label) {
-    tryCatch(
-      {
-        dbExecute(con, sql, params = params)
-        TRUE
-      },
-      error = function(e) {
-        showNotification(
-          paste0(
-            "Cannot delete ",
-            item_label,
-            ". ",
-            conditionMessage(e),
-            ". Existing projects were not changed."
-          ),
-          type = "error",
-          duration = 12
-        )
-        FALSE
-      }
-    )
   }
 
   format_responsible_display <- function(value, con = NULL) {
@@ -4266,7 +4583,7 @@ server <- function(input, output, session) {
     on.exit(dbDisconnect(con))
     holders <- dbGetQuery(
       con,
-      "SELECT id, name, surname, cost_center, email FROM budget_holders ORDER BY name, surname"
+      "SELECT id, name, surname, cost_center, email FROM budget_holders WHERE is_active = 1 ORDER BY name, surname"
     )
     return(holders)
   }
@@ -4277,7 +4594,7 @@ server <- function(input, output, session) {
     on.exit(dbDisconnect(con))
     service_types <- dbGetQuery(
       con,
-      "SELECT id, service_type, kit, costs_per_sample FROM service_types ORDER BY service_type"
+      "SELECT id, service_type, kit, costs_per_sample FROM service_types WHERE is_active = 1 ORDER BY service_type"
     )
     return(service_types)
   }
@@ -4288,7 +4605,7 @@ server <- function(input, output, session) {
     on.exit(dbDisconnect(con))
     depths <- dbGetQuery(
       con,
-      "SELECT id, depth_description, cost_upto_150_cycles, cost_upto_300_cycles FROM sequencing_depths ORDER BY depth_description"
+      "SELECT id, depth_description, cost_upto_150_cycles, cost_upto_300_cycles FROM sequencing_depths WHERE is_active = 1 ORDER BY depth_description"
     )
     return(depths)
   }
@@ -4299,7 +4616,7 @@ server <- function(input, output, session) {
     on.exit(dbDisconnect(con))
     cycles <- dbGetQuery(
       con,
-      "SELECT id, cycles_description, pricing_mode FROM sequencing_cycles ORDER BY cycles_description"
+      "SELECT id, cycles_description, pricing_mode FROM sequencing_cycles WHERE is_active = 1 ORDER BY cycles_description"
     )
     return(cycles)
   }
@@ -4309,7 +4626,7 @@ server <- function(input, output, session) {
     on.exit(dbDisconnect(con))
     dbGetQuery(
       con,
-      "SELECT id, label FROM machine_cycles_options ORDER BY lower(label), label"
+      "SELECT id, label FROM machine_cycles_options WHERE is_active = 1 ORDER BY lower(label), label"
     )
   }
 
@@ -4320,7 +4637,7 @@ server <- function(input, output, session) {
 
     genomes <- dbGetQuery(
       con,
-      "SELECT id, name, genome_size_bp FROM reference_genomes ORDER BY lower(name), name"
+      "SELECT id, name, genome_size_bp FROM reference_genomes WHERE is_active = 1 ORDER BY lower(name), name"
     )
 
     if (nrow(genomes) == 0) {
@@ -4343,7 +4660,10 @@ server <- function(input, output, session) {
   load_types <- function() {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
-    types <- dbGetQuery(con, "SELECT id, name FROM types ORDER BY name")
+    types <- dbGetQuery(
+      con,
+      "SELECT id, name FROM types WHERE is_active = 1 ORDER BY name"
+    )
     return(types)
   }
 
@@ -4353,7 +4673,7 @@ server <- function(input, output, session) {
     on.exit(dbDisconnect(con))
     platforms <- dbGetQuery(
       con,
-      "SELECT id, name FROM sequencing_platforms ORDER BY name"
+      "SELECT id, name FROM sequencing_platforms WHERE is_active = 1 ORDER BY name"
     )
     return(platforms)
   }
@@ -4367,12 +4687,12 @@ server <- function(input, output, session) {
     if (users_has_full_name(con)) {
       admin_data$users <- dbGetQuery(
         con,
-        "SELECT id, username, full_name, email, phone, research_group, is_admin FROM users"
+        "SELECT id, username, full_name, email, phone, research_group, is_admin FROM users WHERE is_active = 1"
       )
     } else {
       admin_data$users <- dbGetQuery(
         con,
-        "SELECT id, username, email, phone, research_group, is_admin FROM users"
+        "SELECT id, username, email, phone, research_group, is_admin FROM users WHERE is_active = 1"
       )
     }
 
@@ -4435,6 +4755,39 @@ server <- function(input, output, session) {
       ,
       drop = FALSE
     ]
+
+    # Archived lookup rows remain valid for existing projects. They are hidden
+    # from new-project menus, but their stored prices must still be available
+    # until the project reaches Data released and receives an immutable snapshot.
+    if (
+      (nrow(service_type) == 0 && !is.na(service_id)) ||
+        (nrow(sequencing_depth) == 0 && !is.na(depth_id)) ||
+        (nrow(sequencing_cycles) == 0 && !is.na(cycles_id))
+    ) {
+      con_lookup <- get_db_connection()
+      on.exit(dbDisconnect(con_lookup), add = TRUE)
+      if (nrow(service_type) == 0 && !is.na(service_id)) {
+        service_type <- dbGetQuery(
+          con_lookup,
+          "SELECT id, service_type, kit, costs_per_sample FROM service_types WHERE id = ?",
+          params = list(service_id)
+        )
+      }
+      if (nrow(sequencing_depth) == 0 && !is.na(depth_id)) {
+        sequencing_depth <- dbGetQuery(
+          con_lookup,
+          "SELECT id, depth_description, cost_upto_150_cycles, cost_upto_300_cycles FROM sequencing_depths WHERE id = ?",
+          params = list(depth_id)
+        )
+      }
+      if (nrow(sequencing_cycles) == 0 && !is.na(cycles_id)) {
+        sequencing_cycles <- dbGetQuery(
+          con_lookup,
+          "SELECT id, cycles_description, pricing_mode FROM sequencing_cycles WHERE id = ?",
+          params = list(cycles_id)
+        )
+      }
+    }
 
     warnings <- character(0)
     service_label <- "Sample service"
@@ -4594,6 +4947,84 @@ server <- function(input, output, session) {
         breakdown$warnings,
         function(message) p(class = "cost-warning", message)
       )
+    )
+  }
+
+  load_project_cost_snapshot <- function(con, project_row_id) {
+    dbGetQuery(
+      con,
+      "SELECT * FROM project_cost_snapshots WHERE project_row_id = ? LIMIT 1",
+      params = list(project_row_id)
+    )
+  }
+
+  cost_snapshot_ui <- function(snapshot) {
+    if (is.null(snapshot) || nrow(snapshot) == 0) return(NULL)
+
+    numeric_or_zero <- function(value) {
+      value <- suppressWarnings(as.numeric(value[[1]]))
+      if (length(value) == 0 || is.na(value)) 0 else value
+    }
+    text_or <- function(value, fallback) {
+      if (length(value) == 0 || is.na(value[[1]]) || !nzchar(value[[1]])) {
+        fallback
+      } else {
+        as.character(value[[1]])
+      }
+    }
+    pricing_mode <- text_or(snapshot$pricing_mode, "additional")
+    breakdown <- list(
+      num_samples = numeric_or_zero(snapshot$num_samples),
+      service_label = text_or(snapshot$service_type_label, "Sample service"),
+      service_unit_cost = numeric_or_zero(snapshot$service_unit_cost),
+      preparation_cost = numeric_or_zero(snapshot$service_subtotal),
+      depth_label = text_or(snapshot$depth_label, "Data amount unavailable"),
+      cycles_label = text_or(snapshot$cycles_label, "Read length unavailable"),
+      pricing_mode = pricing_mode,
+      pricing_mode_label = pricing_mode_label(pricing_mode),
+      sequencing_cost = numeric_or_zero(snapshot$sequencing_cost),
+      base_cost = numeric_or_zero(snapshot$base_cost),
+      additional_cost = numeric_or_zero(snapshot$additional_cost),
+      total_cost = numeric_or_zero(snapshot$locked_total),
+      warnings = character(0)
+    )
+
+    status_class <- if (identical(snapshot$review_status[[1]], "needs_review")) {
+      "alert alert-danger"
+    } else {
+      "alert alert-success"
+    }
+    status_text <- if (identical(snapshot$review_status[[1]], "needs_review")) {
+      "Cost locked — administrator review required"
+    } else if (identical(snapshot$review_status[[1]], "reviewed")) {
+      "Cost locked — reviewed"
+    } else {
+      "Cost locked"
+    }
+
+    tagList(
+      div(
+        class = status_class,
+        tags$strong(status_text),
+        tags$br(),
+        paste0("Locked total: ", format_euro_amount(snapshot$locked_total[[1]])),
+        if (!is.na(snapshot$locked_at[[1]])) {
+          tagList(tags$br(), paste0("Locked: ", snapshot$locked_at[[1]]))
+        },
+        if (
+          !is.na(snapshot$review_reason[[1]]) &&
+            nzchar(snapshot$review_reason[[1]])
+        ) {
+          tagList(tags$br(), snapshot$review_reason[[1]])
+        },
+        if (
+          !is.na(snapshot$review_note[[1]]) &&
+            nzchar(snapshot$review_note[[1]])
+        ) {
+          tagList(tags$br(), paste0("Review note: ", snapshot$review_note[[1]]))
+        }
+      ),
+      cost_breakdown_ui(breakdown)
     )
   }
 
@@ -5565,7 +5996,7 @@ server <- function(input, output, session) {
 
     user_data <- dbGetQuery(
       con,
-      "SELECT * FROM users WHERE username = ?",
+      "SELECT * FROM users WHERE username = ? AND is_active = 1",
       params = list(input$login_username)
     )
 
@@ -6232,7 +6663,18 @@ server <- function(input, output, session) {
                bh.surname as budget_holder_surname, bh.cost_center,
                COALESCE(st.service_type, '[Missing service type ID ' || p.service_type_id || ']') as service_type,
                COALESCE(sd.depth_description, '[Missing depth ID ' || p.sequencing_depth_id || ']') as depth_description,
-               COALESCE(sc.cycles_description, '[Missing cycles ID ' || p.sequencing_cycles_id || ']') as cycles_description
+               COALESCE(sc.cycles_description, '[Missing cycles ID ' || p.sequencing_cycles_id || ']') as cycles_description,
+               pcs.locked_total, pcs.completeness AS cost_completeness,
+               pcs.review_status AS cost_review_status,
+               pcs.review_reason AS cost_review_reason,
+               pcs.review_note AS cost_review_note,
+               pcs.locked_at AS cost_locked_at,
+               CASE
+                 WHEN pcs.id IS NULL THEN 'Unlocked'
+                 WHEN pcs.review_status = 'needs_review' THEN 'Review required'
+                 WHEN pcs.review_status = 'reviewed' THEN 'Locked · Reviewed'
+                 ELSE 'Locked'
+               END AS cost_status
         FROM projects p 
         LEFT JOIN users u ON p.user_id = u.id
         LEFT JOIN types t ON p.type_id = t.id
@@ -6240,6 +6682,7 @@ server <- function(input, output, session) {
         LEFT JOIN service_types st ON p.service_type_id = st.id
         LEFT JOIN sequencing_depths sd ON p.sequencing_depth_id = sd.id
         LEFT JOIN sequencing_cycles sc ON p.sequencing_cycles_id = sc.id
+        LEFT JOIN project_cost_snapshots pcs ON pcs.project_row_id = p.id
         ORDER BY p.project_id DESC
       "
         )
@@ -6265,7 +6708,18 @@ server <- function(input, output, session) {
                bh.surname as budget_holder_surname, bh.cost_center,
                COALESCE(st.service_type, '[Missing service type ID ' || p.service_type_id || ']') as service_type,
                COALESCE(sd.depth_description, '[Missing depth ID ' || p.sequencing_depth_id || ']') as depth_description,
-               COALESCE(sc.cycles_description, '[Missing cycles ID ' || p.sequencing_cycles_id || ']') as cycles_description
+               COALESCE(sc.cycles_description, '[Missing cycles ID ' || p.sequencing_cycles_id || ']') as cycles_description,
+               pcs.locked_total, pcs.completeness AS cost_completeness,
+               pcs.review_status AS cost_review_status,
+               pcs.review_reason AS cost_review_reason,
+               pcs.review_note AS cost_review_note,
+               pcs.locked_at AS cost_locked_at,
+               CASE
+                 WHEN pcs.id IS NULL THEN 'Unlocked'
+                 WHEN pcs.review_status = 'needs_review' THEN 'Review required'
+                 WHEN pcs.review_status = 'reviewed' THEN 'Locked · Reviewed'
+                 ELSE 'Locked'
+               END AS cost_status
         FROM projects p 
         LEFT JOIN users u ON p.user_id = u.id
         LEFT JOIN types t ON p.type_id = t.id
@@ -6273,6 +6727,7 @@ server <- function(input, output, session) {
         LEFT JOIN service_types st ON p.service_type_id = st.id
         LEFT JOIN sequencing_depths sd ON p.sequencing_depth_id = sd.id
         LEFT JOIN sequencing_cycles sc ON p.sequencing_cycles_id = sc.id
+        LEFT JOIN project_cost_snapshots pcs ON pcs.project_row_id = p.id
         WHERE lower(trim(p.responsible_user)) = lower(trim(?))
            OR lower(trim(p.responsible_user)) = lower(trim(?))
            OR lower(trim(p.responsible_user)) = lower(trim(?))
@@ -6463,6 +6918,30 @@ server <- function(input, output, session) {
               class = "btn-primary"
             )
           )
+        ),
+        column(
+          4,
+          wellPanel(
+            h4("Cost Review"),
+            uiOutput("cost_review_summary_ui"),
+            actionButton(
+              "manage_cost_review_btn",
+              "Review Flagged Projects",
+              class = "btn-warning"
+            )
+          )
+        ),
+        column(
+          4,
+          wellPanel(
+            h4("Archived Entries"),
+            p("View or reactivate archived dropdown entries."),
+            actionButton(
+              "manage_archived_entries_btn",
+              "Manage Archived Entries",
+              class = "btn-default"
+            )
+          )
         )
       ),
 
@@ -6494,6 +6973,22 @@ server <- function(input, output, session) {
       # END DATABASE BACKUP/RESTORE FEATURES
       ##################################################################
 
+      fluidRow(
+        column(
+          4,
+          selectInput(
+            "admin_cost_filter",
+            "Project cost filter",
+            choices = c(
+              "All projects" = "all",
+              "Locked" = "locked",
+              "Review required" = "review",
+              "Unlocked" = "unlocked"
+            ),
+            selected = "all"
+          )
+        )
+      ),
       div(
         class = "projects-table",
         DTOutput("admin_projects_table")
@@ -6751,10 +7246,18 @@ server <- function(input, output, session) {
 
     existing <- dbGetQuery(
       con,
-      "SELECT id FROM budget_holders WHERE name = ? AND surname = ? AND cost_center = ?",
+      "SELECT id, is_active FROM budget_holders WHERE name = ? AND surname = ? AND cost_center = ? ORDER BY is_active DESC, id LIMIT 1",
       params = list(name, surname, cost_center)
     )
     if (nrow(existing) > 0) {
+      if (!isTRUE(as.logical(existing$is_active[[1]]))) {
+        dbExecute(
+          con,
+          "UPDATE budget_holders SET is_active = 1, archived_at = NULL, archived_by = NULL, email = ? WHERE id = ?",
+          params = list(email, existing$id[[1]])
+        )
+        admin_data$budget_holders <- load_budget_holders()
+      }
       return(existing$id[1])
     }
 
@@ -6992,7 +7495,7 @@ server <- function(input, output, session) {
       "status"
     )
     if (isTRUE(include_created_by)) {
-      current_order <- c(current_order, "created_by")
+      current_order <- c(current_order, "cost_status", "created_by")
     }
     current_order <- c(current_order, "created_at")
 
@@ -7030,6 +7533,7 @@ server <- function(input, output, session) {
       budget_display = "Budget Holder",
       kickoff_meeting = "Kick-off Meeting",
       total_cost = "Total Cost",
+      cost_status = "Cost Status",
       created_by = "Created By"
     )
 
@@ -7049,6 +7553,7 @@ server <- function(input, output, session) {
       budget_display = "180px",
       kickoff_meeting = "240px",
       total_cost = "90px",
+      cost_status = "120px",
       created_by = "110px"
     )
 
@@ -7105,6 +7610,19 @@ server <- function(input, output, session) {
         formatCurrency('total_cost', currency = "€", digits = 2)
     }
 
+    if ("cost_status" %in% available_columns) {
+      projects_table <- projects_table %>%
+        formatStyle(
+          "cost_status",
+          backgroundColor = styleEqual(
+            c("Unlocked", "Locked", "Locked · Reviewed", "Review required"),
+            c("#f3f4f6", "#d1fae5", "#dbeafe", "#fee2e2")
+          ),
+          fontWeight = styleEqual("Review required", "bold"),
+          color = styleEqual("Review required", "#991b1b")
+        )
+    }
+
     projects_table
   }
 
@@ -7125,11 +7643,347 @@ server <- function(input, output, session) {
   output$admin_projects_table <- renderDT({
     req(projects_data())
 
+    display_data <- projects_data()
+    cost_filter <- input$admin_cost_filter %||% "all"
+    if (identical(cost_filter, "locked")) {
+      display_data <- display_data[display_data$cost_status != "Unlocked", , drop = FALSE]
+    } else if (identical(cost_filter, "review")) {
+      display_data <- display_data[display_data$cost_status == "Review required", , drop = FALSE]
+    } else if (identical(cost_filter, "unlocked")) {
+      display_data <- display_data[display_data$cost_status == "Unlocked", , drop = FALSE]
+    }
+
     build_projects_datatable(
-      projects_data(),
+      display_data,
       include_created_by = TRUE,
       empty_message = "No projects found."
     )
+  })
+
+  load_cost_review_projects <- function() {
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+    dbGetQuery(
+      con,
+      "
+      SELECT
+        pcs.id AS snapshot_id,
+        p.id AS project_row_id,
+        p.project_id,
+        p.project_name,
+        p.status,
+        pcs.locked_total,
+        pcs.completeness,
+        pcs.review_reason,
+        pcs.review_note,
+        pcs.locked_at
+      FROM project_cost_snapshots pcs
+      JOIN projects p ON p.id = pcs.project_row_id
+      WHERE pcs.review_status = 'needs_review'
+      ORDER BY p.project_id DESC
+      "
+    )
+  }
+
+  output$cost_review_summary_ui <- renderUI({
+    req(user$logged_in, user$is_admin)
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+    count <- dbGetQuery(
+      con,
+      "SELECT COUNT(*) AS n FROM project_cost_snapshots WHERE review_status = 'needs_review'"
+    )$n[[1]]
+    if (count > 0) {
+      tags$p(
+        style = "color:#991b1b;font-weight:700;",
+        paste(count, "project(s) require review")
+      )
+    } else {
+      tags$p(style = "color:#166534;", "No flagged projects")
+    }
+  })
+
+  observeEvent(input$manage_cost_review_btn, {
+    cost_review_data(load_cost_review_projects())
+    showModal(modalDialog(
+      title = "Cost Review",
+      size = "l",
+      footer = modalButton("Close"),
+      p(
+        "Locked totals are preserved. Marking a project reviewed records the note but does not recalculate its price."
+      ),
+      DTOutput("cost_review_table_admin"),
+      textAreaInput(
+        "cost_review_note",
+        "Review note (optional)",
+        rows = 3,
+        placeholder = "Document what was checked or why the stored total is accepted."
+      ),
+      actionButton(
+        "mark_cost_reviewed_btn",
+        "Mark Selected as Reviewed",
+        class = "btn-success"
+      )
+    ))
+  })
+
+  output$cost_review_table_admin <- renderDT({
+    review_df <- cost_review_data()
+    if (is.null(review_df) || nrow(review_df) == 0) {
+      return(datatable(
+        data.frame(Message = "No projects require cost review."),
+        options = list(dom = "t"),
+        rownames = FALSE
+      ))
+    }
+    display <- review_df[, c(
+      "project_id",
+      "project_name",
+      "status",
+      "locked_total",
+      "completeness",
+      "review_reason",
+      "locked_at"
+    ), drop = FALSE]
+    datatable(
+      display,
+      selection = "single",
+      options = list(pageLength = 10, scrollX = TRUE),
+      rownames = FALSE,
+      colnames = c(
+        "Project ID",
+        "Project Name",
+        "Status",
+        "Locked Total",
+        "Breakdown",
+        "Reason",
+        "Locked At"
+      )
+    ) %>% formatCurrency("locked_total", currency = "€", digits = 2)
+  })
+
+  observeEvent(input$mark_cost_reviewed_btn, {
+    selected <- input$cost_review_table_admin_rows_selected
+    review_df <- cost_review_data()
+    if (length(selected) == 0 || nrow(review_df) < selected[1]) {
+      showNotification("Select a flagged project first", type = "warning")
+      return()
+    }
+
+    snapshot_id <- review_df$snapshot_id[[selected[1]]]
+    note <- trimws(to_scalar_text(input$cost_review_note, ""))
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+    dbExecute(
+      con,
+      "
+      UPDATE project_cost_snapshots
+      SET review_status = 'reviewed', review_note = ?,
+          reviewed_at = CURRENT_TIMESTAMP, reviewed_by = ?
+      WHERE id = ?
+      ",
+      params = list(note, user$username, snapshot_id)
+    )
+    cost_review_data(load_cost_review_projects())
+    load_projects()
+    showNotification("Cost review recorded; the locked total was unchanged.", type = "message")
+  })
+
+  archived_category_config <- list(
+    users = list(
+      table = "users",
+      label_sql = "username || CASE WHEN COALESCE(full_name, '') = '' THEN '' ELSE ' — ' || full_name END"
+    ),
+    budget_holders = list(
+      table = "budget_holders",
+      label_sql = "name || ' ' || surname || ' — ' || cost_center"
+    ),
+    service_types = list(
+      table = "service_types",
+      label_sql = "service_type"
+    ),
+    sequencing_depths = list(
+      table = "sequencing_depths",
+      label_sql = "depth_description"
+    ),
+    sequencing_cycles = list(
+      table = "sequencing_cycles",
+      label_sql = "cycles_description"
+    ),
+    machine_cycles_options = list(
+      table = "machine_cycles_options",
+      label_sql = "label"
+    ),
+    reference_genomes = list(
+      table = "reference_genomes",
+      label_sql = "name"
+    ),
+    types = list(table = "types", label_sql = "name"),
+    sequencing_platforms = list(
+      table = "sequencing_platforms",
+      label_sql = "name"
+    )
+  )
+
+  archived_category_choices <- c(
+    "Users" = "users",
+    "Budget Holders" = "budget_holders",
+    "Sample Service Types" = "service_types",
+    "Sequencing Depths" = "sequencing_depths",
+    "Read Lengths (Cycles)" = "sequencing_cycles",
+    "Maschine / Cycles" = "machine_cycles_options",
+    "Reference Genomes" = "reference_genomes",
+    "Sample Types" = "types",
+    "Sequencing Platforms" = "sequencing_platforms"
+  )
+
+  load_archived_entries <- function(category = "users") {
+    config <- archived_category_config[[category]]
+    if (is.null(config)) {
+      return(data.frame())
+    }
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+    dbGetQuery(
+      con,
+      paste0(
+        "SELECT id, ",
+        config$label_sql,
+        " AS label, archived_at, archived_by FROM ",
+        config$table,
+        " WHERE is_active = 0 ORDER BY archived_at DESC, id DESC"
+      )
+    )
+  }
+
+  archive_lookup_record <- function(con, table_name, id) {
+    allowed_tables <- vapply(
+      archived_category_config,
+      function(config) config$table,
+      character(1)
+    )
+    stopifnot(table_name %in% allowed_tables)
+    dbExecute(
+      con,
+      paste0(
+        "UPDATE ", table_name,
+        " SET is_active = 0, archived_at = CURRENT_TIMESTAMP, archived_by = ?",
+        " WHERE id = ? AND is_active = 1"
+      ),
+      params = list(user$username, id)
+    )
+  }
+
+  archived_duplicate_exists <- function(
+    con,
+    table_name,
+    column_name,
+    value,
+    item_label
+  ) {
+    allowed_pairs <- c(
+      "service_types.service_type",
+      "sequencing_depths.depth_description",
+      "sequencing_cycles.cycles_description",
+      "machine_cycles_options.label",
+      "reference_genomes.name",
+      "types.name",
+      "sequencing_platforms.name"
+    )
+    stopifnot(paste(table_name, column_name, sep = ".") %in% allowed_pairs)
+    archived <- dbGetQuery(
+      con,
+      paste0(
+        "SELECT id FROM ", table_name,
+        " WHERE is_active = 0 AND lower(trim(", column_name,
+        ")) = lower(trim(?)) LIMIT 1"
+      ),
+      params = list(value)
+    )
+    if (nrow(archived) == 0) return(FALSE)
+
+    showNotification(
+      paste0(
+        "This ", item_label,
+        " is archived. Reactivate it from Archived Entries instead of creating a duplicate."
+      ),
+      type = "warning",
+      duration = 10
+    )
+    TRUE
+  }
+
+  observeEvent(input$manage_archived_entries_btn, {
+    archived_entries_data(load_archived_entries("users"))
+    showModal(modalDialog(
+      title = "Archived Entries",
+      size = "l",
+      footer = modalButton("Close"),
+      p(
+        "Archived entries are hidden from new-project dropdowns but remain attached to existing projects. Reactivating restores them to their original menu."
+      ),
+      selectInput(
+        "archived_entry_category",
+        "Category",
+        choices = archived_category_choices,
+        selected = "users"
+      ),
+      DTOutput("archived_entries_table_admin"),
+      actionButton(
+        "reactivate_archived_entry_btn",
+        "Reactivate Selected Entry",
+        class = "btn-success"
+      )
+    ))
+  })
+
+  observeEvent(input$archived_entry_category, {
+    req(user$logged_in, user$is_admin)
+    archived_entries_data(load_archived_entries(input$archived_entry_category))
+  }, ignoreInit = TRUE)
+
+  output$archived_entries_table_admin <- renderDT({
+    archived_df <- archived_entries_data()
+    if (is.null(archived_df) || nrow(archived_df) == 0) {
+      return(datatable(
+        data.frame(Message = "No archived entries in this category."),
+        options = list(dom = "t"),
+        rownames = FALSE
+      ))
+    }
+    datatable(
+      archived_df[, c("label", "archived_at", "archived_by"), drop = FALSE],
+      selection = "single",
+      options = list(pageLength = 10, scrollX = TRUE),
+      rownames = FALSE,
+      colnames = c("Entry", "Archived At", "Archived By")
+    )
+  })
+
+  observeEvent(input$reactivate_archived_entry_btn, {
+    category <- input$archived_entry_category
+    config <- archived_category_config[[category]]
+    archived_df <- archived_entries_data()
+    selected <- input$archived_entries_table_admin_rows_selected
+    if (is.null(config) || length(selected) == 0 || nrow(archived_df) < selected[[1]]) {
+      showNotification("Select an archived entry first", type = "warning")
+      return()
+    }
+
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con))
+    dbExecute(
+      con,
+      paste0(
+        "UPDATE ", config$table,
+        " SET is_active = 1, archived_at = NULL, archived_by = NULL",
+        " WHERE id = ?"
+      ),
+      params = list(archived_df$id[[selected[[1]]]])
+    )
+    load_admin_data()
+    archived_entries_data(load_archived_entries(category))
+    showNotification("Entry reactivated successfully", type = "message")
   })
 
   # Load projects when user logs in
@@ -7190,8 +8044,8 @@ server <- function(input, output, session) {
         ),
         actionButton(
           "delete_budget_holder_btn",
-          "Delete Selected Budget Holder",
-          class = "btn-danger"
+          "Archive Selected Budget Holder",
+          class = "btn-warning"
         )
       )
     ))
@@ -7251,8 +8105,8 @@ server <- function(input, output, session) {
         ),
         actionButton(
           "delete_service_type_btn",
-          "Delete Selected Sample Service Type",
-          class = "btn-danger"
+          "Archive Selected Sample Service Type",
+          class = "btn-warning"
         )
       )
     ))
@@ -7316,8 +8170,8 @@ server <- function(input, output, session) {
         ),
         actionButton(
           "delete_sequencing_depth_btn",
-          "Delete Selected Depth",
-          class = "btn-danger"
+          "Archive Selected Depth",
+          class = "btn-warning"
         )
       )
     ))
@@ -7369,8 +8223,8 @@ server <- function(input, output, session) {
       DTOutput("sequencing_cycles_table_admin"),
       actionButton(
         "delete_sequencing_cycles_btn",
-        "Delete Selected Cycles",
-        class = "btn-danger"
+        "Archive Selected Cycles",
+        class = "btn-warning"
       )
     ))
   })
@@ -7407,8 +8261,8 @@ server <- function(input, output, session) {
       DTOutput("machine_cycles_table_admin"),
       actionButton(
         "delete_machine_cycles_btn",
-        "Delete Selected Option",
-        class = "btn-danger"
+        "Archive Selected Option",
+        class = "btn-warning"
       )
     ))
   })
@@ -7472,8 +8326,8 @@ server <- function(input, output, session) {
         ),
         actionButton(
           "delete_user_admin_btn",
-          "Delete Selected User",
-          class = "btn-danger"
+          "Archive Selected User",
+          class = "btn-warning"
         )
       )
     ))
@@ -7530,8 +8384,8 @@ server <- function(input, output, session) {
         actionButton("edit_genome_btn", "Edit Selected", class = "btn-warning"),
         actionButton(
           "delete_genome_btn",
-          "Delete Selected Genome",
-          class = "btn-danger"
+          "Archive Selected Genome",
+          class = "btn-warning"
         )
       )
     ))
@@ -7566,8 +8420,8 @@ server <- function(input, output, session) {
         actionButton("edit_type_btn", "Edit Selected", class = "btn-warning"),
         actionButton(
           "delete_type_btn",
-          "Delete Selected Sample Type",
-          class = "btn-danger"
+          "Archive Selected Sample Type",
+          class = "btn-warning"
         )
       )
     ))
@@ -7610,8 +8464,8 @@ server <- function(input, output, session) {
         ),
         actionButton(
           "delete_sequencing_platform_btn",
-          "Delete Selected Platform",
-          class = "btn-danger"
+          "Archive Selected Platform",
+          class = "btn-warning"
         )
       )
     ))
@@ -8308,6 +9162,14 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
+    if (archived_duplicate_exists(
+      con,
+      "service_types",
+      "service_type",
+      input$new_service_type,
+      "sample service type"
+    )) return()
+
     dbExecute(
       con,
       "
@@ -8746,6 +9608,14 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
+    if (archived_duplicate_exists(
+      con,
+      "sequencing_depths",
+      "depth_description",
+      input$new_depth_description,
+      "sequencing depth"
+    )) return()
+
     dbExecute(
       con,
       "
@@ -8867,6 +9737,14 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
+    if (archived_duplicate_exists(
+      con,
+      "sequencing_cycles",
+      "cycles_description",
+      input$new_cycles_description,
+      "sequencing cycle"
+    )) return()
+
     dbExecute(
       con,
       "
@@ -8909,6 +9787,13 @@ server <- function(input, output, session) {
 
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
+    if (archived_duplicate_exists(
+      con,
+      "machine_cycles_options",
+      "label",
+      new_label,
+      "Maschine / Cycles option"
+    )) return()
     dbExecute(
       con,
       "INSERT INTO machine_cycles_options (label) VALUES (?)",
@@ -9210,6 +10095,14 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
+    if (archived_duplicate_exists(
+      con,
+      "reference_genomes",
+      "name",
+      new_name,
+      "reference genome"
+    )) return()
+
     dbExecute(
       con,
       "
@@ -9242,6 +10135,14 @@ server <- function(input, output, session) {
 
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
+
+    if (archived_duplicate_exists(
+      con,
+      "types",
+      "name",
+      input$new_type_name,
+      "sample type"
+    )) return()
 
     dbExecute(
       con,
@@ -9276,6 +10177,14 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
+    if (archived_duplicate_exists(
+      con,
+      "sequencing_platforms",
+      "name",
+      input$new_sequencing_platform_name,
+      "sequencing platform"
+    )) return()
+
     dbExecute(
       con,
       "INSERT INTO sequencing_platforms (name) VALUES (?)",
@@ -9289,14 +10198,14 @@ server <- function(input, output, session) {
     )
   })
 
-  # === DELETE HANDLERS ===
+  # === ARCHIVE HANDLERS ===
 
-  # Delete budget holder
+  # Archive budget holder
   observeEvent(input$delete_budget_holder_btn, {
     selected_row <- input$budget_holders_table_admin_rows_selected
     if (length(selected_row) == 0) {
       showNotification(
-        "Please select a budget holder to delete",
+        "Please select a budget holder to archive",
         type = "warning"
       )
       return()
@@ -9305,9 +10214,9 @@ server <- function(input, output, session) {
     bh_to_delete <- admin_data$budget_holders[selected_row, ]
 
     showModal(modalDialog(
-      title = "Confirm Delete",
+      title = "Confirm Archive",
       paste(
-        "Are you sure you want to delete budget holder:",
+        "Archive this budget holder so it is hidden from new projects:",
         bh_to_delete$name,
         bh_to_delete$surname,
         "?"
@@ -9316,8 +10225,8 @@ server <- function(input, output, session) {
         modalButton("Cancel"),
         actionButton(
           "confirm_delete_budget_holder_btn",
-          "Delete",
-          class = "btn-danger"
+          "Archive",
+          class = "btn-warning"
         )
       )
     ))
@@ -9330,26 +10239,19 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    if (!delete_lookup_safely(
-      con,
-      "DELETE FROM budget_holders WHERE id = ?",
-      list(bh_to_delete$id),
-      "budget holder"
-    )) {
-      return()
-    }
+    archive_lookup_record(con, "budget_holders", bh_to_delete$id[[1]])
 
     removeModal()
     load_admin_data()
-    showNotification("Budget holder deleted successfully!", type = "message")
+    showNotification("Budget holder archived successfully!", type = "message")
   })
 
-  # Delete sample service type
+  # Archive sample service type
   observeEvent(input$delete_service_type_btn, {
     selected_row <- input$service_types_table_admin_rows_selected
     if (length(selected_row) == 0) {
       showNotification(
-        "Please select a sample service type to delete",
+        "Please select a sample service type to archive",
         type = "warning"
       )
       return()
@@ -9358,9 +10260,9 @@ server <- function(input, output, session) {
     service_to_delete <- admin_data$service_types[selected_row, "service_type"]
 
     showModal(modalDialog(
-      title = "Confirm Delete",
+      title = "Confirm Archive",
       paste(
-        "Are you sure you want to delete sample service type:",
+        "Archive this sample service type so it is hidden from new projects:",
         service_to_delete,
         "?"
       ),
@@ -9368,8 +10270,8 @@ server <- function(input, output, session) {
         modalButton("Cancel"),
         actionButton(
           "confirm_delete_service_type_btn",
-          "Delete",
-          class = "btn-danger"
+          "Archive",
+          class = "btn-warning"
         )
       )
     ))
@@ -9377,34 +10279,27 @@ server <- function(input, output, session) {
 
   observeEvent(input$confirm_delete_service_type_btn, {
     selected_row <- input$service_types_table_admin_rows_selected
-    service_to_delete <- admin_data$service_types[selected_row, "service_type"]
+    service_to_delete <- admin_data$service_types[selected_row, , drop = FALSE]
 
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    if (!delete_lookup_safely(
-      con,
-      "DELETE FROM service_types WHERE service_type = ?",
-      list(service_to_delete),
-      "sample service type"
-    )) {
-      return()
-    }
+    archive_lookup_record(con, "service_types", service_to_delete$id[[1]])
 
     removeModal()
     admin_data$service_types <- load_service_types()
     showNotification(
-      "Sample service type deleted successfully!",
+      "Sample service type archived successfully!",
       type = "message"
     )
   })
 
-  # Delete sequencing depth
+  # Archive sequencing depth
   observeEvent(input$delete_sequencing_depth_btn, {
     selected_row <- input$sequencing_depths_table_admin_rows_selected
     if (length(selected_row) == 0) {
       showNotification(
-        "Please select a sequencing depth to delete",
+        "Please select a sequencing depth to archive",
         type = "warning"
       )
       return()
@@ -9416,9 +10311,9 @@ server <- function(input, output, session) {
     ]
 
     showModal(modalDialog(
-      title = "Confirm Delete",
+      title = "Confirm Archive",
       paste(
-        "Are you sure you want to delete sequencing depth:",
+        "Archive this sequencing depth so it is hidden from new projects:",
         depth_to_delete,
         "?"
       ),
@@ -9426,8 +10321,8 @@ server <- function(input, output, session) {
         modalButton("Cancel"),
         actionButton(
           "confirm_delete_sequencing_depth_btn",
-          "Delete",
-          class = "btn-danger"
+          "Archive",
+          class = "btn-warning"
         )
       )
     ))
@@ -9435,34 +10330,24 @@ server <- function(input, output, session) {
 
   observeEvent(input$confirm_delete_sequencing_depth_btn, {
     selected_row <- input$sequencing_depths_table_admin_rows_selected
-    depth_to_delete <- admin_data$sequencing_depths[
-      selected_row,
-      "depth_description"
-    ]
+    depth_to_delete <- admin_data$sequencing_depths[selected_row, , drop = FALSE]
 
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    if (!delete_lookup_safely(
-      con,
-      "DELETE FROM sequencing_depths WHERE depth_description = ?",
-      list(depth_to_delete),
-      "sequencing depth"
-    )) {
-      return()
-    }
+    archive_lookup_record(con, "sequencing_depths", depth_to_delete$id[[1]])
 
     removeModal()
     admin_data$sequencing_depths <- load_sequencing_depths()
-    showNotification("Sequencing depth deleted successfully!", type = "message")
+    showNotification("Sequencing depth archived successfully!", type = "message")
   })
 
-  # Delete sequencing cycles
+  # Archive sequencing cycles
   observeEvent(input$delete_sequencing_cycles_btn, {
     selected_row <- input$sequencing_cycles_table_admin_rows_selected
     if (length(selected_row) == 0) {
       showNotification(
-        "Please select a sequencing cycle to delete",
+        "Please select a sequencing cycle to archive",
         type = "warning"
       )
       return()
@@ -9474,9 +10359,9 @@ server <- function(input, output, session) {
     ]
 
     showModal(modalDialog(
-      title = "Confirm Delete",
+      title = "Confirm Archive",
       paste(
-        "Are you sure you want to delete sequencing cycle:",
+        "Archive this sequencing cycle so it is hidden from new projects:",
         cycles_to_delete,
         "?"
       ),
@@ -9484,8 +10369,8 @@ server <- function(input, output, session) {
         modalButton("Cancel"),
         actionButton(
           "confirm_delete_sequencing_cycles_btn",
-          "Delete",
-          class = "btn-danger"
+          "Archive",
+          class = "btn-warning"
         )
       )
     ))
@@ -9517,7 +10402,7 @@ server <- function(input, output, session) {
         "
         SELECT id
         FROM sequencing_cycles
-        WHERE pricing_mode = 'upto_150' AND id <> ?
+        WHERE pricing_mode = 'upto_150' AND is_active = 1 AND id <> ?
         ORDER BY CASE
           WHEN cycles_description = 'upto 100/150 cycles (2x60 or 2x 75)' THEN 0
           ELSE 1
@@ -9528,27 +10413,16 @@ server <- function(input, output, session) {
       )
       if (nrow(replacement) == 0) {
         showNotification(
-          "Create an 'Up to 150 cycles' pricing option before deleting this entry.",
+          "Create an active 'Up to 150 cycles' pricing option before archiving this legacy entry.",
           type = "error",
           duration = 10
         )
         return()
       }
       replacement_id <- as.integer(replacement$id[[1]])
-    } else if (projects_using > 0) {
-      showNotification(
-        paste0(
-          "This cycle option is used by ",
-          projects_using,
-          " project(s) and cannot be deleted."
-        ),
-        type = "error",
-        duration = 10
-      )
-      return()
     }
 
-    delete_result <- tryCatch(
+    archive_result <- tryCatch(
       {
         dbWithTransaction(con, {
           if (!is.na(replacement_id)) {
@@ -9570,24 +10444,20 @@ server <- function(input, output, session) {
               )
             )
           }
-          dbExecute(
-            con,
-            "DELETE FROM sequencing_cycles WHERE id = ?",
-            params = list(cycle_id_to_delete)
-          )
+          archive_lookup_record(con, "sequencing_cycles", cycle_id_to_delete)
         })
         TRUE
       },
       error = function(e) {
         showNotification(
-          paste("Could not delete the cycle option:", conditionMessage(e)),
+          paste("Could not archive the cycle option:", conditionMessage(e)),
           type = "error",
           duration = 10
         )
         FALSE
       }
     )
-    if (!isTRUE(delete_result)) {
+    if (!isTRUE(archive_result)) {
       return()
     }
 
@@ -9595,7 +10465,7 @@ server <- function(input, output, session) {
     admin_data$sequencing_cycles <- load_sequencing_cycles()
     load_projects()
     showNotification(
-      "Sequencing cycles deleted successfully!",
+      "Sequencing cycles archived successfully!",
       type = "message"
     )
   })
@@ -9603,7 +10473,7 @@ server <- function(input, output, session) {
   observeEvent(input$delete_machine_cycles_btn, {
     selected_row <- input$machine_cycles_table_admin_rows_selected
     if (length(selected_row) == 0) {
-      showNotification("Please select an option to delete", type = "warning")
+      showNotification("Please select an option to archive", type = "warning")
       return()
     }
 
@@ -9613,9 +10483,9 @@ server <- function(input, output, session) {
       drop = FALSE
     ]
     showModal(modalDialog(
-      title = "Confirm Delete",
+      title = "Confirm Archive",
       paste0(
-        "Remove '",
+        "Archive '",
         option_to_delete$label[[1]],
         "' from future dropdown choices? Existing project values will be preserved."
       ),
@@ -9623,8 +10493,8 @@ server <- function(input, output, session) {
         modalButton("Cancel"),
         actionButton(
           "confirm_delete_machine_cycles_btn",
-          "Delete",
-          class = "btn-danger"
+          "Archive",
+          class = "btn-warning"
         )
       )
     ))
@@ -9641,45 +10511,45 @@ server <- function(input, output, session) {
 
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
-    dbExecute(
+    archive_lookup_record(
       con,
-      "DELETE FROM machine_cycles_options WHERE id = ?",
-      params = list(option_to_delete$id[[1]])
+      "machine_cycles_options",
+      option_to_delete$id[[1]]
     )
 
     removeModal()
     admin_data$machine_cycles_options <- load_machine_cycles_options()
     showNotification(
-      "Option removed; existing project values were preserved.",
+      "Option archived; existing project values were preserved.",
       type = "message"
     )
   })
 
-  # Delete user
+  # Archive user
   observeEvent(input$delete_user_admin_btn, {
     selected_row <- input$users_table_admin_rows_selected
     if (length(selected_row) == 0) {
-      showNotification("Please select a user to delete", type = "warning")
+      showNotification("Please select a user to archive", type = "warning")
       return()
     }
 
     user_to_delete <- admin_data$users[selected_row, ]
 
     if (user_to_delete$username == user$username) {
-      showNotification("You cannot delete your own account", type = "error")
+      showNotification("You cannot archive your own account", type = "error")
       return()
     }
 
     showModal(modalDialog(
-      title = "Confirm Delete",
+      title = "Confirm Archive",
       paste(
-        "Are you sure you want to delete user:",
+        "Archive this user and prevent future logins:",
         user_to_delete$username,
         "?"
       ),
       footer = tagList(
         modalButton("Cancel"),
-        actionButton("confirm_delete_user_btn", "Delete", class = "btn-danger")
+        actionButton("confirm_delete_user_btn", "Archive", class = "btn-warning")
       )
     ))
   })
@@ -9691,26 +10561,34 @@ server <- function(input, output, session) {
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    if (!delete_lookup_safely(
-      con,
-      "DELETE FROM users WHERE id = ?",
-      list(user_to_delete$id),
-      "user"
-    )) {
+    if (identical(as.integer(user_to_delete$id[[1]]), as.integer(user$user_id))) {
+      showNotification("You cannot archive your own account", type = "error")
       return()
     }
+    if (isTRUE(as.logical(user_to_delete$is_admin[[1]]))) {
+      active_admins <- dbGetQuery(
+        con,
+        "SELECT COUNT(*) AS n FROM users WHERE is_admin = 1 AND is_active = 1 AND id <> ?",
+        params = list(user_to_delete$id[[1]])
+      )$n[[1]]
+      if (active_admins == 0) {
+        showNotification("At least one active administrator is required", type = "error")
+        return()
+      }
+    }
+    archive_lookup_record(con, "users", user_to_delete$id[[1]])
 
     removeModal()
     load_admin_data()
-    showNotification("User deleted successfully!", type = "message")
+    showNotification("User archived successfully!", type = "message")
   })
 
-  # Delete reference genome
+  # Archive reference genome
   observeEvent(input$delete_genome_btn, {
     selected_row <- input$genomes_table_admin_rows_selected
     if (length(selected_row) == 0) {
       showNotification(
-        "Please select a reference genome to delete",
+        "Please select a reference genome to archive",
         type = "warning"
       )
       return()
@@ -9719,9 +10597,9 @@ server <- function(input, output, session) {
     genome_to_delete <- admin_data$reference_genomes$name[selected_row]
 
     showModal(modalDialog(
-      title = "Confirm Delete",
+      title = "Confirm Archive",
       paste(
-        "Are you sure you want to delete reference genome:",
+        "Archive this reference genome so it is hidden from new projects:",
         genome_to_delete,
         "?"
       ),
@@ -9729,8 +10607,8 @@ server <- function(input, output, session) {
         modalButton("Cancel"),
         actionButton(
           "confirm_delete_genome_btn",
-          "Delete",
-          class = "btn-danger"
+          "Archive",
+          class = "btn-warning"
         )
       )
     ))
@@ -9738,31 +10616,24 @@ server <- function(input, output, session) {
 
   observeEvent(input$confirm_delete_genome_btn, {
     selected_row <- input$genomes_table_admin_rows_selected
-    genome_to_delete <- admin_data$reference_genomes$name[selected_row]
+    genome_to_delete <- admin_data$reference_genomes[selected_row, , drop = FALSE]
 
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    if (!delete_lookup_safely(
-      con,
-      "DELETE FROM reference_genomes WHERE name = ?",
-      list(genome_to_delete),
-      "reference genome"
-    )) {
-      return()
-    }
+    archive_lookup_record(con, "reference_genomes", genome_to_delete$id[[1]])
 
     removeModal()
     admin_data$reference_genomes <- load_reference_genomes()
-    showNotification("Reference genome deleted successfully!", type = "message")
+    showNotification("Reference genome archived successfully!", type = "message")
   })
 
-  # Delete type
+  # Archive type
   observeEvent(input$delete_type_btn, {
     selected_row <- input$types_table_admin_rows_selected
     if (length(selected_row) == 0) {
       showNotification(
-        "Please select a sample type to delete",
+        "Please select a sample type to archive",
         type = "warning"
       )
       return()
@@ -9771,46 +10642,39 @@ server <- function(input, output, session) {
     type_to_delete <- admin_data$types[selected_row, "name"]
 
     showModal(modalDialog(
-      title = "Confirm Delete",
+      title = "Confirm Archive",
       paste(
-        "Are you sure you want to delete sample type:",
+        "Archive this sample type so it is hidden from new projects:",
         type_to_delete,
         "?"
       ),
       footer = tagList(
         modalButton("Cancel"),
-        actionButton("confirm_delete_type_btn", "Delete", class = "btn-danger")
+        actionButton("confirm_delete_type_btn", "Archive", class = "btn-warning")
       )
     ))
   })
 
   observeEvent(input$confirm_delete_type_btn, {
     selected_row <- input$types_table_admin_rows_selected
-    type_to_delete <- admin_data$types[selected_row, "name"]
+    type_to_delete <- admin_data$types[selected_row, , drop = FALSE]
 
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    if (!delete_lookup_safely(
-      con,
-      "DELETE FROM types WHERE name = ?",
-      list(type_to_delete),
-      "sample type"
-    )) {
-      return()
-    }
+    archive_lookup_record(con, "types", type_to_delete$id[[1]])
 
     removeModal()
     admin_data$types <- load_types()
-    showNotification("Sample type deleted successfully!", type = "message")
+    showNotification("Sample type archived successfully!", type = "message")
   })
 
-  # Delete sequencing platform
+  # Archive sequencing platform
   observeEvent(input$delete_sequencing_platform_btn, {
     selected_row <- input$sequencing_platforms_table_admin_rows_selected
     if (length(selected_row) == 0) {
       showNotification(
-        "Please select a sequencing platform to delete",
+        "Please select a sequencing platform to archive",
         type = "warning"
       )
       return()
@@ -9819,9 +10683,9 @@ server <- function(input, output, session) {
     platform_to_delete <- admin_data$sequencing_platforms[selected_row, "name"]
 
     showModal(modalDialog(
-      title = "Confirm Delete",
+      title = "Confirm Archive",
       paste(
-        "Are you sure you want to delete sequencing platform:",
+        "Archive this sequencing platform so it is hidden from new projects:",
         platform_to_delete,
         "?"
       ),
@@ -9829,8 +10693,8 @@ server <- function(input, output, session) {
         modalButton("Cancel"),
         actionButton(
           "confirm_delete_sequencing_platform_btn",
-          "Delete",
-          class = "btn-danger"
+          "Archive",
+          class = "btn-warning"
         )
       )
     ))
@@ -9838,24 +10702,21 @@ server <- function(input, output, session) {
 
   observeEvent(input$confirm_delete_sequencing_platform_btn, {
     selected_row <- input$sequencing_platforms_table_admin_rows_selected
-    platform_to_delete <- admin_data$sequencing_platforms[selected_row, "name"]
+    platform_to_delete <- admin_data$sequencing_platforms[selected_row, , drop = FALSE]
 
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
 
-    if (!delete_lookup_safely(
+    archive_lookup_record(
       con,
-      "DELETE FROM sequencing_platforms WHERE name = ?",
-      list(platform_to_delete),
-      "sequencing platform"
-    )) {
-      return()
-    }
+      "sequencing_platforms",
+      platform_to_delete$id[[1]]
+    )
 
     removeModal()
     admin_data$sequencing_platforms <- load_sequencing_platforms()
     showNotification(
-      "Sequencing platform deleted successfully!",
+      "Sequencing platform archived successfully!",
       type = "message"
     )
   })
@@ -9896,6 +10757,12 @@ server <- function(input, output, session) {
     }
     edit_existing_additional_cost(project_additional)
 
+    con_snapshot <- get_db_connection()
+    snapshot <- load_project_cost_snapshot(con_snapshot, project$id[[1]])
+    dbDisconnect(con_snapshot)
+    edit_cost_snapshot(snapshot)
+    cost_is_locked <- nrow(snapshot) > 0
+
     machine_cycles_value <- trimws(to_scalar_text(project$machine_cycles, ""))
     configured_machine_cycles <- admin_data$machine_cycles_options$label
     if (is.null(configured_machine_cycles)) {
@@ -9915,7 +10782,10 @@ server <- function(input, output, session) {
     ) {
       machine_choices <- c(
         machine_choices,
-        setNames(machine_cycles_value, machine_cycles_value)
+        setNames(
+          machine_cycles_value,
+          paste0(machine_cycles_value, " (archived or custom)")
+        )
       )
     }
 
@@ -9945,7 +10815,7 @@ server <- function(input, output, session) {
       size = "l",
       footer = tagList(
         modalButton("Cancel"),
-        if (user$is_admin) {
+        if (user$is_admin && !cost_is_locked) {
           actionButton(
             "send_notification_btn",
             "Notifications",
@@ -9958,6 +10828,16 @@ server <- function(input, output, session) {
           class = "btn-primary"
         )
       ),
+
+      if (cost_is_locked) {
+        div(
+          class = if (
+            identical(snapshot$review_status[[1]], "needs_review")
+          ) "alert alert-danger" else "alert alert-success",
+          tags$strong("Project cost is locked."),
+          " Cost-related fields are read-only. The locked total will not change when lookup prices are edited or archived."
+        )
+      },
 
       fluidRow(
         column(
@@ -9989,7 +10869,8 @@ server <- function(input, output, session) {
               admin_data$types$id,
               admin_data$types$name,
               project$type_id,
-              "sample type"
+              "sample type",
+              project$type_name
             ),
             selected = project$type_id
           ),
@@ -10005,7 +10886,8 @@ server <- function(input, output, session) {
                 "/sample"
               ),
               project$service_type_id,
-              "service type"
+              "service type",
+              project$service_type
             ),
             selected = project$service_type_id
           ),
@@ -10055,7 +10937,8 @@ server <- function(input, output, session) {
               admin_data$sequencing_depths$id,
               admin_data$sequencing_depths$depth_description,
               project$sequencing_depth_id,
-              "depth"
+              "depth",
+              project$depth_description
             ),
             selected = project$sequencing_depth_id
           ),
@@ -10072,7 +10955,8 @@ server <- function(input, output, session) {
               admin_data$sequencing_cycles$id,
               admin_data$sequencing_cycles$cycles_description,
               project$sequencing_cycles_id,
-              "cycles"
+              "cycles",
+              project$cycles_description
             ),
             selected = project$sequencing_cycles_id
           ),
@@ -10095,7 +10979,13 @@ server <- function(input, output, session) {
                   admin_data$budget_holders$cost_center
                 ),
                 project$budget_id,
-                "budget holder"
+                "budget holder",
+                paste(
+                  project$budget_holder_name,
+                  project$budget_holder_surname,
+                  "-",
+                  project$cost_center
+                )
               ),
               "Other / not listed" = "other"
             ),
@@ -10180,10 +11070,29 @@ server <- function(input, output, session) {
         )
       }
     ))
+
+    if (cost_is_locked) {
+      session$onFlushed(function() {
+        for (input_id in c(
+          "edit_num_samples",
+          "edit_service_type_id",
+          "edit_sequencing_depth_id",
+          "edit_sequencing_cycles_id",
+          "edit_additional_cost"
+        )) {
+          shinyjs::disable(input_id)
+        }
+      }, once = TRUE)
+    }
   })
 
   # Edit cost calculation
   output$edit_cost_calculation_display <- renderUI({
+    snapshot <- edit_cost_snapshot()
+    if (!is.null(snapshot) && nrow(snapshot) > 0) {
+      return(cost_snapshot_ui(snapshot))
+    }
+
     stored_additional <- edit_existing_additional_cost()
     additional_source <- if (isTRUE(user$is_admin)) {
       input$edit_additional_cost
@@ -10239,6 +11148,10 @@ server <- function(input, output, session) {
 
     project <- projects[selected_row[1], , drop = FALSE]
     project_id <- project$id[[1]]
+    cost_is_locked <-
+      "cost_locked_at" %in% names(project) &&
+      !is.na(project$cost_locked_at[[1]]) &&
+      nzchar(as.character(project$cost_locked_at[[1]]))
 
     can_edit <- user$is_admin ||
       project$user_id == user$user_id ||
@@ -10322,7 +11235,7 @@ server <- function(input, output, session) {
     }
 
     additional_cost_value <- existing_additional_cost
-    if (user$is_admin) {
+    if (user$is_admin && !cost_is_locked) {
       parsed_additional <- parse_additional_cost(input$edit_additional_cost)
       if (!parsed_additional$valid) {
         showNotification(parsed_additional$error, type = "error")
@@ -10335,14 +11248,28 @@ server <- function(input, output, session) {
       }
     }
 
-    # Calculate total cost (base + additional costs if present)
-    total_cost <- calculate_total_cost(
-      input$edit_num_samples,
-      input$edit_service_type_id,
-      input$edit_sequencing_depth_id,
-      input$edit_sequencing_cycles_id,
-      additional_cost_value
-    )
+    # Locked released-project costs always preserve their stored total and
+    # cost-driving selections. Unlocked projects use the current lookup rates.
+    if (cost_is_locked) {
+      additional_cost_value <- existing_additional_cost
+      total_cost <- suppressWarnings(as.numeric(project$total_cost[[1]]))
+      num_samples_value <- project$num_samples[[1]]
+      service_type_value <- project$service_type_id[[1]]
+      sequencing_depth_value <- project$sequencing_depth_id[[1]]
+      sequencing_cycles_value <- project$sequencing_cycles_id[[1]]
+    } else {
+      total_cost <- calculate_total_cost(
+        input$edit_num_samples,
+        input$edit_service_type_id,
+        input$edit_sequencing_depth_id,
+        input$edit_sequencing_cycles_id,
+        additional_cost_value
+      )
+      num_samples_value <- input$edit_num_samples
+      service_type_value <- input$edit_service_type_id
+      sequencing_depth_value <- input$edit_sequencing_depth_id
+      sequencing_cycles_value <- input$edit_sequencing_cycles_id
+    }
 
     con <- get_db_connection()
     on.exit(dbDisconnect(con))
@@ -10392,15 +11319,15 @@ server <- function(input, output, session) {
         params = list(
           scalar_text(input$edit_project_name),
           scalar_text(input$edit_reference_genome),
-          as.numeric(input$edit_service_type_id),
+          as.numeric(service_type_value),
           as.numeric(budget_id_value),
           responsible_user_value,
           scalar_text(input$edit_project_description),
-          input$edit_num_samples,
+          num_samples_value,
           scalar_text(input$edit_sequencing_platform),
           machine_cycles_value,
-          as.numeric(input$edit_sequencing_depth_id),
-          as.numeric(input$edit_sequencing_cycles_id),
+          as.numeric(sequencing_depth_value),
+          as.numeric(sequencing_cycles_value),
           kickoff_value,
           new_status_for_update,
           as.numeric(input$edit_type_id),
@@ -10424,19 +11351,28 @@ server <- function(input, output, session) {
         params = list(
           scalar_text(input$edit_project_name),
           scalar_text(input$edit_reference_genome),
-          as.numeric(input$edit_service_type_id),
+          as.numeric(service_type_value),
           as.numeric(budget_id_value),
           responsible_user_value,
           scalar_text(input$edit_project_description),
-          input$edit_num_samples,
+          num_samples_value,
           scalar_text(input$edit_sequencing_platform),
-          as.numeric(input$edit_sequencing_depth_id),
-          as.numeric(input$edit_sequencing_cycles_id),
+          as.numeric(sequencing_depth_value),
+          as.numeric(sequencing_cycles_value),
           kickoff_value,
           as.numeric(input$edit_type_id),
           total_cost,
           project_id
         )
+      )
+    }
+
+    if (new_status_for_update == "Data released") {
+      create_project_cost_snapshot(
+        con,
+        project_id,
+        locked_by = user$username,
+        source = "status_transition"
       )
     }
 
@@ -10711,6 +11647,11 @@ server <- function(input, output, session) {
 
     dbExecute(
       con,
+      "DELETE FROM project_cost_snapshots WHERE project_row_id = ?",
+      params = list(project_id)
+    )
+    dbExecute(
+      con,
       "DELETE FROM projects WHERE id = ?",
       params = list(project_id)
     )
@@ -10819,6 +11760,15 @@ server <- function(input, output, session) {
             project_id
           )
         )
+
+        if (new_status == "Data released") {
+          create_project_cost_snapshot(
+            con,
+            project_id,
+            locked_by = user$username,
+            source = "status_transition"
+          )
+        }
 
         removeModal()
         load_projects()

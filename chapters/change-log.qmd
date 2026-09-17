@@ -53,11 +53,11 @@ execute:
    - `45bp SE-seq - CRISPR`.
 5. Added **Maschine / Cycles Management** to the Administrator Panel:
    - choices are now stored in `machine_cycles_options` instead of only being hard-coded
-   - administrators can add or remove dropdown options
-   - removing an option does not erase the text already stored on existing projects.
+   - administrators can add or archive dropdown options
+   - archiving an option does not erase the text already stored on existing projects.
 6. Added a data-preserving migration for the four legacy machine/read-length entries:
    - their values are copied into `projects.machine_cycles`
-   - projects are reassigned to the generic up-to-150-cycle pricing entry when the legacy cycle option is deleted
+   - projects are reassigned to the generic up-to-150-cycle pricing entry when the legacy cycle option is archived
    - historical machine/cycle information and the existing cost category are preserved.
 7. Added database-level reference-integrity guards for all project lookup menus:
    - referenced users, budget holders, sample types, sample service types, sequencing depths, sequencing cycles, reference genomes, and sequencing platforms cannot be deleted
@@ -84,6 +84,40 @@ execute:
     - supports an override through `DB_BACKUP_DIR`.
 12. Updated `setup_database.R` for fresh installations with the new project column, explicit cycle pricing, Maschine / Cycles option table and defaults, and foreign-key enforcement.
 13. Validated the changes with R parse checks, whitespace checks, temporary copies of the production backup, cost-resolution tests, deletion/migration tests, database-trigger tests, full admin project loading, and an automatic-backup integrity check.
+14. Replaced destructive deletion with **archive/reactivate** handling for all project lookup menus:
+   - users
+   - budget holders
+   - sample service types
+   - sequencing depths
+   - read lengths/cycles
+   - Maschine / Cycles options
+   - reference genomes
+   - sample types
+   - sequencing platforms
+   - archived entries are hidden from active admin tables and new-project dropdowns, but remain attached to existing projects and retain their historical prices
+   - existing projects show an archived label instead of silently switching to another menu entry.
+15. Added an **Archived Entries** area to the Administrator Panel:
+   - archived rows are separated by category to keep active management lists clean
+   - administrators can inspect who archived an entry and when
+   - a selected entry can be reactivated without recreating it or changing project references
+   - archived users can no longer log in; the current administrator and the last active administrator cannot be archived.
+16. Added immutable cost snapshots for projects whose status is **Data released**:
+   - the stored `projects.total_cost` is copied to `project_cost_snapshots.locked_total`
+   - later changes to prices, labels, or archived lookup entries do not alter the locked amount
+   - cost-driving fields are read-only in Edit Project once a snapshot exists
+   - changing an existing project to Data released creates the snapshot in the same update flow.
+17. Backfilled and audited the 84 existing Data released projects from the September backup:
+   - all 84 receive a locked snapshot
+   - 64 have complete lookup data and match the current formula
+   - 13 have complete lookup data but a stored total that differs from the current formula
+   - 7 have incomplete historical lookup data
+   - the 20 projects in the last two groups are flagged for administrator review, while their stored totals remain unchanged.
+18. Added cost-review indicators in the requested administrator locations:
+   - a **Cost Review** list in the Administrator Panel
+   - a **Cost Status** column and filter in the administrator project table
+   - a warning banner and locked cost breakdown in Edit Project
+   - administrators can record a review note and mark a flag reviewed without recalculating the locked total.
+19. Re-tested the migration against a temporary copy of the September production backup, including all 84 snapshots, the 20 review flags, archive/reactivate behavior, preservation of archived pricing, database deletion guards, and locked-total stability after a price change.
 
 ## Changes on 25.03.2026
 

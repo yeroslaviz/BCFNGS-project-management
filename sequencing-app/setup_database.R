@@ -33,6 +33,9 @@ setup_complete_database <- function() {
       phone TEXT,
       research_group TEXT,
       is_admin INTEGER DEFAULT 0,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      archived_at DATETIME,
+      archived_by TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   ")
@@ -45,6 +48,9 @@ setup_complete_database <- function() {
       surname TEXT NOT NULL,
       cost_center TEXT NOT NULL,
       email TEXT NOT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      archived_at DATETIME,
+      archived_by TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   ")
@@ -56,6 +62,9 @@ setup_complete_database <- function() {
       service_type TEXT UNIQUE NOT NULL,
       kit TEXT NOT NULL,
       costs_per_sample REAL NOT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      archived_at DATETIME,
+      archived_by TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   ")
@@ -67,6 +76,9 @@ setup_complete_database <- function() {
       depth_description TEXT UNIQUE NOT NULL,
       cost_upto_150_cycles REAL,
       cost_upto_300_cycles REAL,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      archived_at DATETIME,
+      archived_by TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   ")
@@ -77,6 +89,9 @@ setup_complete_database <- function() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       cycles_description TEXT UNIQUE NOT NULL,
       pricing_mode TEXT NOT NULL DEFAULT 'additional',
+      is_active INTEGER NOT NULL DEFAULT 1,
+      archived_at DATETIME,
+      archived_by TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   ")
@@ -85,6 +100,9 @@ setup_complete_database <- function() {
     CREATE TABLE IF NOT EXISTS machine_cycles_options (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       label TEXT UNIQUE NOT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      archived_at DATETIME,
+      archived_by TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   ")
@@ -94,6 +112,9 @@ setup_complete_database <- function() {
     CREATE TABLE IF NOT EXISTS sequencing_platforms (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT UNIQUE NOT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      archived_at DATETIME,
+      archived_by TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   ")
@@ -103,6 +124,9 @@ setup_complete_database <- function() {
     CREATE TABLE IF NOT EXISTS types (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT UNIQUE NOT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      archived_at DATETIME,
+      archived_by TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   ")
@@ -113,6 +137,9 @@ setup_complete_database <- function() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT UNIQUE NOT NULL,
       genome_size_bp INTEGER,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      archived_at DATETIME,
+      archived_by TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   ")
@@ -210,6 +237,36 @@ setup_complete_database <- function() {
       FOREIGN KEY (budget_id) REFERENCES budget_holders (id),
       FOREIGN KEY (sequencing_depth_id) REFERENCES sequencing_depths (id),
       FOREIGN KEY (sequencing_cycles_id) REFERENCES sequencing_cycles (id)
+    )
+  ")
+
+  dbExecute(con, "
+    CREATE TABLE IF NOT EXISTS project_cost_snapshots (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      project_row_id INTEGER UNIQUE NOT NULL,
+      project_public_id INTEGER,
+      num_samples REAL,
+      service_type_label TEXT,
+      service_unit_cost REAL,
+      service_subtotal REAL,
+      depth_label TEXT,
+      cycles_label TEXT,
+      pricing_mode TEXT,
+      sequencing_cost REAL,
+      additional_cost REAL,
+      base_cost REAL,
+      calculated_total REAL,
+      locked_total REAL NOT NULL,
+      completeness TEXT NOT NULL DEFAULT 'complete',
+      review_status TEXT NOT NULL DEFAULT 'complete',
+      review_reason TEXT,
+      review_note TEXT,
+      source TEXT NOT NULL,
+      locked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      locked_by TEXT,
+      reviewed_at DATETIME,
+      reviewed_by TEXT,
+      FOREIGN KEY (project_row_id) REFERENCES projects (id)
     )
   ")
 
