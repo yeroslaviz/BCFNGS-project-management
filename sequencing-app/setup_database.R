@@ -241,6 +241,22 @@ setup_complete_database <- function() {
   ")
 
   dbExecute(con, "
+    CREATE TABLE IF NOT EXISTS project_status_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      project_id INTEGER NOT NULL,
+      status TEXT NOT NULL,
+      changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      changed_by TEXT,
+      FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
+    )
+  ")
+
+  dbExecute(con, "
+    CREATE INDEX IF NOT EXISTS idx_project_status_history_project_id
+    ON project_status_history (project_id, changed_at, id)
+  ")
+
+  dbExecute(con, "
     CREATE TABLE IF NOT EXISTS project_cost_snapshots (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       project_row_id INTEGER UNIQUE NOT NULL,
@@ -714,6 +730,15 @@ setup_complete_database <- function() {
       sample_projects$status[i]
     ))
   }
+
+  dbExecute(con, "
+    INSERT INTO project_status_history (project_id, status, changed_at, changed_by)
+    SELECT p.id, p.status, COALESCE(p.updated_at, p.created_at, CURRENT_TIMESTAMP), 'setup_database.R'
+    FROM projects p
+    WHERE NOT EXISTS (
+      SELECT 1 FROM project_status_history h WHERE h.project_id = p.id
+    )
+  ")
 
   dbDisconnect(con)
   message("New database created successfully with all modifications!")

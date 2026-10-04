@@ -415,6 +415,50 @@ ui <- fluidPage(
   .status-sequencing-in-progress { background-color: #e2e3e5 !important; color: #333333 !important; }
   .status-data-delivered { background-color: #d1ecf1 !important; color: #333333 !important; }
   .status-project-completed { background-color: #d4edda !important; color: #333333 !important; }
+  .edit-status-current {
+    margin-bottom: 8px;
+  }
+  .edit-status-readonly-label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .edit-status-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    border-radius: 999px;
+    padding: 3px 10px;
+    color: #263238 !important;
+    font-weight: 700;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .edit-status-history {
+    margin: 2px 0 18px 0;
+    padding: 0;
+  }
+  .edit-status-history-title {
+    margin: 0 0 6px 0;
+    color: #607d8b !important;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .edit-status-history-row {
+    display: grid;
+    grid-template-columns: max-content max-content;
+    gap: 10px;
+    justify-content: start;
+    align-items: center;
+    min-height: 34px;
+    padding: 4px 0;
+  }
+  .edit-status-history-date {
+    color: #607d8b !important;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
   .home-page {
     text-align: center;
     padding: 40px 20px;
@@ -1185,6 +1229,7 @@ server <- function(input, output, session) {
         ensure_ngs_cost_schema(con)
         ensure_archive_schema(con)
         ensure_projects_status_schema(con)
+        ensure_project_status_history_schema(con)
         ensure_users_full_name_column(con)
         ensure_reference_genome_size_column(con)
         ensure_reference_integrity_guards(con)
@@ -1204,6 +1249,7 @@ server <- function(input, output, session) {
           "machine_cycles_options",
           "project_cost_snapshots",
           "project_cost_unlock_log",
+          "project_status_history",
           "types",
           "sequencing_platforms",
           "reference_genomes",
@@ -2595,6 +2641,89 @@ server <- function(input, output, session) {
     "Legacy project" = "#e9ecef"
   )
 
+  edit_status_colors <- c(
+    "Created" = "#D73027",
+    "Samples received" = "#FDAE61",
+    "Library preparation" = "#FEE08B",
+    "QC done" = "#D9EF8B",
+    "Sequencing and demultiplexing" = "#91CF60",
+    "Data released" = "#1A9850",
+    "Legacy project" = "#E9ECEF"
+  )
+
+  edit_status_color <- function(status) {
+    color <- unname(edit_status_colors[[to_scalar_text(status, "")]])
+    if (length(color) == 0 || is.na(color) || !nzchar(color)) {
+      "#E9ECEF"
+    } else {
+      color
+    }
+  }
+
+  edit_status_badge <- function(status) {
+    status_value <- to_scalar_text(status, "Created")
+    span(
+      class = "edit-status-badge",
+      style = paste0("background-color:", edit_status_color(status_value), ";"),
+      status_value
+    )
+  }
+
+  status_history_date <- function(value) {
+    value <- to_scalar_text(value, "")
+    if (!nzchar(value)) return("")
+    if (grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}", value)) {
+      return(substr(value, 1, 10))
+    }
+    parsed <- suppressWarnings(as.POSIXct(value))
+    if (is.na(parsed)) value else format(parsed, "%Y-%m-%d")
+  }
+
+  load_project_status_history <- function(con, project_id) {
+    dbGetQuery(
+      con,
+      "
+      SELECT id, status, changed_at, changed_by
+      FROM project_status_history
+      WHERE project_id = ?
+      ORDER BY changed_at, id
+      ",
+      params = list(project_id)
+    )
+  }
+
+  project_status_history_ui <- function(history, current_status) {
+    if (is.null(history) || nrow(history) == 0) return(NULL)
+
+    previous <- history
+    last_row <- nrow(previous)
+    if (
+      last_row > 0 &&
+        identical(
+          to_scalar_text(previous$status[[last_row]], ""),
+          to_scalar_text(current_status, "")
+        )
+    ) {
+      previous <- previous[-last_row, , drop = FALSE]
+    }
+    if (nrow(previous) == 0) return(NULL)
+
+    div(
+      class = "edit-status-history",
+      div(class = "edit-status-history-title", "Completed statuses"),
+      lapply(seq_len(nrow(previous)), function(i) {
+        div(
+          class = "edit-status-history-row",
+          edit_status_badge(previous$status[[i]]),
+          span(
+            class = "edit-status-history-date",
+            status_history_date(previous$changed_at[[i]])
+          )
+        )
+      })
+    )
+  }
+
   make_status_choices <- function(current_status = NULL) {
     choices <- status_options
     if (
@@ -3395,6 +3524,49 @@ server <- function(input, output, session) {
     } else {
       normalize_legacy_project_status_values(con)
     }
+    invisible(NULL)
+  }
+
+  ensure_project_status_history_schema <- function(con) {
+    dbExecute(
+      con,
+      "
+      CREATE TABLE IF NOT EXISTS project_status_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id INTEGER NOT NULL,
+        status TEXT NOT NULL,
+        changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        changed_by TEXT,
+        FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
+      )
+      "
+    )
+    dbExecute(
+      con,
+      "
+      CREATE INDEX IF NOT EXISTS idx_project_status_history_project_id
+      ON project_status_history (project_id, changed_at, id)
+      "
+    )
+    dbExecute(
+      con,
+      "
+      INSERT INTO project_status_history (
+        project_id, status, changed_at, changed_by
+      )
+      SELECT
+        p.id,
+        COALESCE(NULLIF(trim(p.status), ''), 'Created'),
+        COALESCE(NULLIF(p.updated_at, ''), NULLIF(p.created_at, ''), CURRENT_TIMESTAMP),
+        'migration'
+      FROM projects p
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM project_status_history h
+        WHERE h.project_id = p.id
+      )
+      "
+    )
     invisible(NULL)
   }
 
@@ -4327,6 +4499,7 @@ server <- function(input, output, session) {
         ensure_projects_additional_cost_column(con)
         ensure_ngs_cost_schema(con)
         ensure_archive_schema(con)
+        ensure_project_status_history_schema(con)
         ensure_users_full_name_column(con)
         ensure_reference_genome_size_column(con)
         ensure_reference_integrity_guards(con)
@@ -7408,41 +7581,59 @@ server <- function(input, output, session) {
       fallback = user$username
     )
 
-    # Insert project
-    dbExecute(
-      con,
-      "
-    INSERT INTO projects 
-    (project_name, user_id, responsible_user, reference_genome, service_type_id, 
-     budget_id, description, num_samples, sequencing_platform, sequencing_depth_id, 
-     sequencing_cycles_id, kickoff_meeting, type_id, total_cost, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Created')
-  ",
-      params = list(
-        input$project_name,
-        user$user_id,
-        responsible_user_value,
-        input$reference_genome,
-        as.numeric(input$service_type_id),
-        as.numeric(budget_id_value),
-        input$project_description,
-        input$num_samples,
-        input$sequencing_platform,
-        as.numeric(input$sequencing_depth_id),
-        as.numeric(input$sequencing_cycles_id),
-        as.numeric(input$kickoff_meeting),
-        as.numeric(input$type_id),
-        total_cost
+    # Insert the project and its initial status as one atomic change.
+    created_project <- dbWithTransaction(con, {
+      dbExecute(
+        con,
+        "
+        INSERT INTO projects
+        (project_name, user_id, responsible_user, reference_genome, service_type_id,
+         budget_id, description, num_samples, sequencing_platform, sequencing_depth_id,
+         sequencing_cycles_id, kickoff_meeting, type_id, total_cost, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Created')
+        ",
+        params = list(
+          input$project_name,
+          user$user_id,
+          responsible_user_value,
+          input$reference_genome,
+          as.numeric(input$service_type_id),
+          as.numeric(budget_id_value),
+          input$project_description,
+          input$num_samples,
+          input$sequencing_platform,
+          as.numeric(input$sequencing_depth_id),
+          as.numeric(input$sequencing_cycles_id),
+          as.numeric(input$kickoff_meeting),
+          as.numeric(input$type_id),
+          total_cost
+        )
       )
-    )
+
+      new_row_id <- dbGetQuery(
+        con,
+        "SELECT last_insert_rowid() AS id"
+      )$id[[1]]
+      project_id_value <- dbGetQuery(
+        con,
+        "SELECT project_id FROM projects WHERE id = ?",
+        params = list(as.numeric(new_row_id))
+      )$project_id[[1]]
+      dbExecute(
+        con,
+        "
+        INSERT INTO project_status_history (
+          project_id, status, changed_at, changed_by
+        ) VALUES (?, 'Created', CURRENT_TIMESTAMP, ?)
+        ",
+        params = list(new_row_id, user$username)
+      )
+      list(row_id = new_row_id, project_id = project_id_value)
+    })
 
     # Resolve the auto-generated project_id for email subject (P<number>)
-    new_row_id <- dbGetQuery(con, "SELECT last_insert_rowid() AS id")$id
-    project_id_value <- dbGetQuery(
-      con,
-      "SELECT project_id FROM projects WHERE id = ?",
-      params = list(as.numeric(new_row_id))
-    )$project_id
+    new_row_id <- created_project$row_id
+    project_id_value <- created_project$project_id
     project_code <- if (
       !is.null(project_id_value) &&
         length(project_id_value) > 0 &&
@@ -10827,6 +11018,10 @@ server <- function(input, output, session) {
 
     con_snapshot <- get_db_connection()
     snapshot <- load_project_cost_snapshot(con_snapshot, project$id[[1]])
+    status_history <- load_project_status_history(
+      con_snapshot,
+      project$id[[1]]
+    )
     dbDisconnect(con_snapshot)
     edit_cost_snapshot(snapshot)
     cost_is_locked <- nrow(snapshot) > 0
@@ -11160,19 +11355,29 @@ server <- function(input, output, session) {
           uiOutput("edit_cost_calculation_display")
         )
       ),
-      if (user$is_admin) {
-        fluidRow(
-          column(
-            12,
+      fluidRow(
+        column(
+          12,
+          if (isTRUE(user$is_admin)) {
             selectInput(
               "edit_project_status",
               "Project Status *",
               choices = make_status_choices(project$status),
               selected = project$status
             )
-          )
+          } else {
+            div(
+              class = "edit-status-current form-group",
+              tags$label(
+                class = "edit-status-readonly-label",
+                "Project Status"
+              ),
+              edit_status_badge(project$status)
+            )
+          },
+          project_status_history_ui(status_history, project$status)
         )
-      }
+      )
     ))
 
     if (cost_fields_read_only) {
@@ -11456,6 +11661,13 @@ server <- function(input, output, session) {
     should_send_data_released_email <- user$is_admin &&
       old_status != "Data released" &&
       new_status_for_update == "Data released"
+    status_changed <- isTRUE(user$is_admin) &&
+      !identical(new_status_for_update, old_status)
+    status_changed_at <- if (status_changed) {
+      format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+    } else {
+      NULL
+    }
 
     kickoff_default <- suppressWarnings(as.numeric(project$kickoff_meeting[[
       1
@@ -11548,80 +11760,117 @@ server <- function(input, output, session) {
       machine_cycles_value <- trimws(scalar_text(input$edit_machine_cycles, ""))
     }
 
-    if (user$is_admin) {
-      dbExecute(
-        con,
-        "
-        UPDATE projects 
-        SET project_name = ?, reference_genome = ?, service_type_id = ?, 
-            budget_id = ?, responsible_user = ?, description = ?, updated_at = CURRENT_TIMESTAMP,
-            num_samples = ?, sequencing_platform = ?, machine_cycles = ?, sequencing_depth_id = ?,
-            sequencing_cycles_id = ?, kickoff_meeting = ?, status = ?,
-            type_id = ?, additional_cost = ?, total_cost = ?
-        WHERE id = ?
-      ",
-        params = list(
-          scalar_text(input$edit_project_name),
-          scalar_text(input$edit_reference_genome),
-          as.numeric(service_type_value),
-          as.numeric(budget_id_value),
-          responsible_user_value,
-          scalar_text(input$edit_project_description),
-          num_samples_value,
-          scalar_text(input$edit_sequencing_platform),
-          machine_cycles_value,
-          as.numeric(sequencing_depth_value),
-          as.numeric(sequencing_cycles_value),
-          kickoff_value,
-          new_status_for_update,
-          as.numeric(input$edit_type_id),
-          additional_cost_value,
-          total_cost,
-          project_id
-        )
-      )
-    } else {
-      dbExecute(
-        con,
-        "
-        UPDATE projects 
-        SET project_name = ?, reference_genome = ?, service_type_id = ?, 
-            budget_id = ?, responsible_user = ?, description = ?, updated_at = CURRENT_TIMESTAMP,
-            num_samples = ?, sequencing_platform = ?, sequencing_depth_id = ?,
-            sequencing_cycles_id = ?, kickoff_meeting = ?,
-            type_id = ?, total_cost = ?
-        WHERE id = ?
-      ",
-        params = list(
-          scalar_text(input$edit_project_name),
-          scalar_text(input$edit_reference_genome),
-          as.numeric(service_type_value),
-          as.numeric(budget_id_value),
-          responsible_user_value,
-          scalar_text(input$edit_project_description),
-          num_samples_value,
-          scalar_text(input$edit_sequencing_platform),
-          as.numeric(sequencing_depth_value),
-          as.numeric(sequencing_cycles_value),
-          kickoff_value,
-          as.numeric(input$edit_type_id),
-          total_cost,
-          project_id
-        )
-      )
-    }
+    update_succeeded <- tryCatch(
+      {
+        dbWithTransaction(con, {
+          if (user$is_admin) {
+            dbExecute(
+              con,
+              "
+              UPDATE projects
+              SET project_name = ?, reference_genome = ?, service_type_id = ?,
+                  budget_id = ?, responsible_user = ?, description = ?, updated_at = CURRENT_TIMESTAMP,
+                  num_samples = ?, sequencing_platform = ?, machine_cycles = ?, sequencing_depth_id = ?,
+                  sequencing_cycles_id = ?, kickoff_meeting = ?, status = ?,
+                  type_id = ?, additional_cost = ?, total_cost = ?
+              WHERE id = ?
+              ",
+              params = list(
+                scalar_text(input$edit_project_name),
+                scalar_text(input$edit_reference_genome),
+                as.numeric(service_type_value),
+                as.numeric(budget_id_value),
+                responsible_user_value,
+                scalar_text(input$edit_project_description),
+                num_samples_value,
+                scalar_text(input$edit_sequencing_platform),
+                machine_cycles_value,
+                as.numeric(sequencing_depth_value),
+                as.numeric(sequencing_cycles_value),
+                kickoff_value,
+                new_status_for_update,
+                as.numeric(input$edit_type_id),
+                additional_cost_value,
+                total_cost,
+                project_id
+              )
+            )
+          } else {
+            dbExecute(
+              con,
+              "
+              UPDATE projects
+              SET project_name = ?, reference_genome = ?, service_type_id = ?,
+                  budget_id = ?, responsible_user = ?, description = ?, updated_at = CURRENT_TIMESTAMP,
+                  num_samples = ?, sequencing_platform = ?, sequencing_depth_id = ?,
+                  sequencing_cycles_id = ?, kickoff_meeting = ?,
+                  type_id = ?, total_cost = ?
+              WHERE id = ?
+              ",
+              params = list(
+                scalar_text(input$edit_project_name),
+                scalar_text(input$edit_reference_genome),
+                as.numeric(service_type_value),
+                as.numeric(budget_id_value),
+                responsible_user_value,
+                scalar_text(input$edit_project_description),
+                num_samples_value,
+                scalar_text(input$edit_sequencing_platform),
+                as.numeric(sequencing_depth_value),
+                as.numeric(sequencing_cycles_value),
+                kickoff_value,
+                as.numeric(input$edit_type_id),
+                total_cost,
+                project_id
+              )
+            )
+          }
 
-    if (
-      new_status_for_update == "Data released" &&
-        (!cost_override_open || isTRUE(user$is_admin))
-    ) {
-      create_project_cost_snapshot(
-        con,
-        project_id,
-        locked_by = user$username,
-        source = if (cost_override_open) "admin_relock" else "status_transition"
-      )
-    }
+          if (status_changed) {
+            dbExecute(
+              con,
+              "
+              INSERT INTO project_status_history (
+                project_id, status, changed_at, changed_by
+              ) VALUES (?, ?, ?, ?)
+              ",
+              params = list(
+                project_id,
+                new_status_for_update,
+                status_changed_at,
+                user$username
+              )
+            )
+          }
+
+          if (
+            new_status_for_update == "Data released" &&
+              (!cost_override_open || isTRUE(user$is_admin))
+          ) {
+            create_project_cost_snapshot(
+              con,
+              project_id,
+              locked_by = user$username,
+              source = if (cost_override_open) {
+                "admin_relock"
+              } else {
+                "status_transition"
+              }
+            )
+          }
+        })
+        TRUE
+      },
+      error = function(e) {
+        showNotification(
+          paste("Project update failed:", conditionMessage(e)),
+          type = "error",
+          duration = 12
+        )
+        FALSE
+      }
+    )
+    if (!isTRUE(update_succeeded)) return()
 
     removeModal()
     load_projects()
@@ -11894,6 +12143,11 @@ server <- function(input, output, session) {
 
     dbExecute(
       con,
+      "DELETE FROM project_status_history WHERE project_id = ?",
+      params = list(project_id)
+    )
+    dbExecute(
+      con,
       "DELETE FROM project_cost_unlock_log WHERE project_row_id = ?",
       params = list(project_id)
     )
@@ -12000,27 +12254,50 @@ server <- function(input, output, session) {
 
     tryCatch(
       {
-        dbExecute(
-          con,
-          "
-        UPDATE projects
-        SET status = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      ",
-          params = list(
-            new_status,
-            project_id
-          )
-        )
-
-        if (new_status == "Data released") {
-          create_project_cost_snapshot(
-            con,
-            project_id,
-            locked_by = user$username,
-            source = "status_transition"
-          )
+        status_changed <- !identical(new_status, old_status)
+        status_changed_at <- if (status_changed) {
+          format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+        } else {
+          NULL
         }
+
+        dbWithTransaction(con, {
+          dbExecute(
+            con,
+            "
+            UPDATE projects
+            SET status = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            ",
+            params = list(new_status, project_id)
+          )
+
+          if (status_changed) {
+            dbExecute(
+              con,
+              "
+              INSERT INTO project_status_history (
+                project_id, status, changed_at, changed_by
+              ) VALUES (?, ?, ?, ?)
+              ",
+              params = list(
+                project_id,
+                new_status,
+                status_changed_at,
+                user$username
+              )
+            )
+          }
+
+          if (new_status == "Data released") {
+            create_project_cost_snapshot(
+              con,
+              project_id,
+              locked_by = user$username,
+              source = "status_transition"
+            )
+          }
+        })
 
         removeModal()
         load_projects()

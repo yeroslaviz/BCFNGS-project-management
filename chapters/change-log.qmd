@@ -10,6 +10,7 @@ execute:
 
 ### Contents
 
+- [Changes on 04.10.2026](#changes-on-04.10.2026)
 - [Changes on 17.09.2026](#changes-on-17.09.2026)
 - [Changes on 16.09.2026](#changes-on-16.09.2026)
 - [Changes on 25.03.2026](#changes-on-25.03.2026)
@@ -26,6 +27,35 @@ execute:
 - [Changes on 09.02.2026](#changes-on-09.02.2026)
 - [Changes on 06.02.2026](#changes-on-06.02.2026)
 - [Changes on 14.11.2026](#changes-on-14.11.2026)
+
+## Changes on 04.10.2026
+
+1. Added durable project-status history in the new `project_status_history` table:
+   - stores the internal project row ID, status, change timestamp, and responsible username
+   - indexes history by project, timestamp, and history-row ID
+   - deletes associated history when a project is deleted.
+2. Added an idempotent migration for existing projects:
+   - creates exactly one baseline history row where none exists
+   - uses the project's current status and `updated_at`, falling back to `created_at`
+   - identifies the source as `migration`
+   - the baseline date is approximate because earlier status transitions were not recorded historically.
+3. Added transactional history recording to every supported status-change path:
+   - newly created projects receive an initial `Created` entry
+   - Edit Project and the separate Update Project Status dialog add a row only when the status genuinely changes
+   - project creation/status changes and their corresponding history entries now succeed or roll back together
+   - saving without changing the status does not create duplicate history.
+4. Added a visible status history directly below **Project Status** in Edit Project:
+   - administrators retain the editable status dropdown
+   - regular users see a read-only current-status badge
+   - all users see completed statuses oldest-to-newest with a `YYYY-MM-DD` date
+   - the current status is excluded from the completed-status list.
+5. Applied the BCFMS status palette to the Edit Project status display only. Existing project-table status colors remain unchanged.
+6. Preserved the existing Data released notification and immutable cost-snapshot behavior while making the status and cost-lock update part of the same transaction.
+7. Validated the change against disposable databases:
+   - a copied production backup created 953 baseline rows for 953 projects and did not duplicate them on reconnect
+   - a clean database setup created one baseline row for each sample project
+   - new-project creation, both status-change interfaces, unchanged-status saves, history ordering/current-status exclusion, deletion cleanup, administrator and regular-user displays, and all status colors were verified
+   - a forced history-write failure confirmed that the project status update is rolled back.
 
 ## Changes on 17.09.2026
 
