@@ -18,6 +18,34 @@ execute:
 - [Backups (summary)](#backups-summary)
 - [ngs-vm Cutover (443/9443)](#ngs-vm-cutover-4439443)
 
+## Runtime identity and sample-sheet storage
+
+The app runs as `ngs-shiny-user` with deployed-file ownership group `b_ngs`.
+The account receives direct read/write ACL access to
+`/fs/pool/pool-ngs-public`; membership in the legacy `shiny` group is not
+required. Before deployment, configure Shiny Server with
+`run_as ngs-shiny-user;` and confirm the identity exists:
+
+```bash
+getent passwd ngs-shiny-user
+getent group b_ngs
+id ngs-shiny-user
+```
+
+The deployment defaults are:
+
+```bash
+APP_RUN_USER=ngs-shiny-user
+APP_RUN_GROUP=b_ngs
+NGS_LOCAL_UPLOAD_FALLBACK=/srv/ngs-app-data/uploads_pending_pool
+```
+
+The app requires `NGS_UPLOAD_ROOT=/fs/pool/pool-ngs-public` and verifies that
+the path is an actual mount before writing. If it is missing or unwritable,
+the uploaded workbook is saved below the local fallback and an error report is
+sent to `omicsdesk@biochem.mpg.de`. Pending fallback folders remain in place
+until an operator verifies and synchronizes them to the pool.
+
 ## Project Deletion Permissions
 
 Deletion is **admin-only**:
@@ -66,6 +94,10 @@ sudo cp /etc/apache2/sites-enabled/01-main.conf \
 ```{bash}
 ./scripts/deploy.sh
 ```
+
+The deploy fails before changing the application if `ngs-shiny-user` or
+`b_ngs` is unavailable. The pool mount may be absent because the local fallback
+is created during deployment.
 
 4.  Restart services.
 
@@ -221,7 +253,7 @@ Restore snapshot:
 ```bash
 sudo systemctl stop shiny-server
 sudo cp /srv/shiny-server/sequencing-app/sequencing_projects.db.bak.<timestamp> /srv/shiny-server/sequencing-app/sequencing_projects.db
-sudo chown shiny:shiny /srv/shiny-server/sequencing-app/sequencing_projects.db
+sudo chown ngs-shiny-user:b_ngs /srv/shiny-server/sequencing-app/sequencing_projects.db
 sudo systemctl start shiny-server
 ```
 

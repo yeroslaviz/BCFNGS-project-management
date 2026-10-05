@@ -38,7 +38,7 @@ Verify:
 
 ```bash
 ldapsearch -x -H ldaps://ldap01.example.internal:636 -b "dc=biochem,dc=mpg,dc=de" "(uid=<user>)" mail
-sudo -u shiny Rscript --vanilla -e 'library(ldapr); cat("ldapr OK\n")'
+sudo -u ngs-shiny-user Rscript --vanilla -e 'library(ldapr); cat("ldapr OK\n")'
 ```
 
 Note:

@@ -10,6 +10,7 @@ execute:
 
 ### Contents
 
+- [Changes on 05.10.2026](#changes-on-05.10.2026)
 - [Changes on 04.10.2026](#changes-on-04.10.2026)
 - [Changes on 17.09.2026](#changes-on-17.09.2026)
 - [Changes on 16.09.2026](#changes-on-16.09.2026)
@@ -27,6 +28,26 @@ execute:
 - [Changes on 09.02.2026](#changes-on-09.02.2026)
 - [Changes on 06.02.2026](#changes-on-06.02.2026)
 - [Changes on 14.11.2026](#changes-on-14.11.2026)
+
+## Changes on 05.10.2026
+
+1. Added the v6 NGS Excel sample-sheet template to the main project view and
+   new-project dialog with matching green download buttons.
+2. Added optional `.xlsx` upload and validation for the `project_metadata`
+   sheet. `SampleName`, `SampleType`, and `Volume` are required;
+   `Description_Condition (optional)` and `Concentration (optional)` may be
+   empty; `ProjectNumber` must remain blank; and facility-generated
+   `SampleIndex`/`DataName` values may not be replaced.
+3. Added an administrator setting that switches future project submissions
+   between optional and mandatory sample-sheet upload without redeployment.
+4. Attached valid uploaded workbooks to project-creation email and stored them
+   under `P####_<LDAP username>` in `/fs/pool/pool-ngs-public`.
+5. Added persistent local fallback storage at
+   `/srv/ngs-app-data/uploads_pending_pool`, detailed failure alerts to
+   `omicsdesk@biochem.mpg.de`, and database metadata/checksums for each upload.
+6. Prepared deployment for `ngs-shiny-user:b_ngs`, including fallback
+   ownership, dependency checks, mount verification, and updated operational
+   documentation. The service account does not need the legacy `shiny` group.
 
 ## Changes on 04.10.2026
 

@@ -64,7 +64,8 @@ Manual steps still required after package install:
 - Install Shiny Server from the `.deb` package (see [bcf-vm Step 2](#bcf-install-shiny-server)).
 - Install Java + R mail dependencies for email notifications (see [bcf-vm Step 2b](#bcf-java-mail)).
 - Install LDAP client/build dependencies + `ldapr` (see [bcf-vm Step 2d](#bcf-ldap-deps)).
-- Ensure the `shiny` user exists and app-folder permissions are correct (see [bcf-vm Step 2c](#bcf-shiny-user-perms)).
+- Ensure `ngs-shiny-user` and group `b_ngs` exist and app-folder permissions
+  are correct (see [bcf-vm Step 2c](#bcf-shiny-user-perms)).
 - Configure Apache vhost, LDAP, and systemd environment (see [bcf-vm Step 6](#bcf-configure-ldap-systemd), [bcf-vm Step 7](#bcf-configure-apache-vhost), and [ngs-vm Step 2](#ngs-parallel-shiny-vhost)).
 
 ## GitHub connection on a fresh VM
@@ -91,7 +92,7 @@ If this fails, do not continue with clone/deploy until SSH access is fixed.
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y git curl rsync apache2 apache2-utils openssl sqlite3 ldap-utils \
+sudo apt-get install -y git curl rsync apache2 apache2-utils openssl sqlite3 ldap-utils util-linux \
   build-essential libcurl4-openssl-dev libssl-dev libxml2-dev r-base
 ```
 
@@ -114,23 +115,35 @@ This is for **email notifications**, not for LDAP auth itself.
 sudo apt-get install -y default-jdk
 sudo R CMD javareconf
 sudo Rscript --vanilla -e 'install.packages(c("rJava","mailR"), repos="https://cloud.r-project.org")'
+sudo Rscript --vanilla -e 'install.packages("readxl", repos="https://cloud.r-project.org")'
 ```
 
 Apply the same on `ngs-vm` and `bcf-vm`.
 
-### 2c) Create `shiny` user + app-folder permissions {#bcf-shiny-user-perms}
+### 2c) Configure the dedicated NGS runtime identity {#bcf-shiny-user-perms}
 
-Shiny Server runs the app as the `shiny` service user.
+Shiny Server runs this app as the centrally provisioned
+`ngs-shiny-user:b_ngs` identity. Do not create a second local account and do
+not add it to the legacy `shiny` group.
 
 ```bash
-getent passwd shiny || sudo useradd --system --home /var/lib/shiny-server --shell /usr/sbin/nologin shiny
-sudo mkdir -p /srv/shiny-server/sequencing-app
-sudo chown -R shiny:shiny /srv/shiny-server/sequencing-app
-sudo chmod 755 /srv/shiny-server /srv/shiny-server/sequencing-app
-sudo usermod -a -G shiny "$USER"
+getent passwd ngs-shiny-user
+getent group b_ngs
+id ngs-shiny-user
 ```
 
-If you are configuring a different account, replace `"$USER"` with that username.
+Set `run_as ngs-shiny-user;` in `/etc/shiny-server/shiny-server.conf`, then
+prepare the application and persistent fallback directories:
+
+```bash
+sudo install -d -o ngs-shiny-user -g b_ngs -m 0755 /srv/shiny-server/sequencing-app
+sudo install -d -o ngs-shiny-user -g b_ngs -m 0750 /srv/ngs-app-data/uploads_pending_pool
+```
+
+IT should grant `ngs-shiny-user` direct read/write ACL access to the NFS mount
+`/fs/pool/pool-ngs-public`. The app can start before that mount is ready; it
+uses `/srv/ngs-app-data/uploads_pending_pool` and alerts omicsdesk while the
+pool is unavailable.
 
 ### 2d) LDAP packages (Ubuntu + R) {#bcf-ldap-deps}
 
@@ -167,7 +180,7 @@ Quick checks:
 
 ```bash
 ldapsearch -x -H ldaps://ldap01.example.internal:636 -b "dc=biochem,dc=mpg,dc=de" "(uid=<user>)" mail
-sudo -u shiny Rscript --vanilla -e 'library(ldapr); cat("ldapr OK\n")'
+sudo -u ngs-shiny-user Rscript --vanilla -e 'library(ldapr); cat("ldapr OK\n")'
 ```
 
 If `ldapsearch` only works with `LDAPTLS_REQCERT=never`, your `/etc/ldap/ldap.conf` trust settings are incomplete or incorrect.
@@ -188,14 +201,14 @@ sudo openssl req -x509 -nodes -days 365 \
 cd /home/<user>
 git clone git@github.com:example-org/example-repo.git
 sudo rsync -av /home/<user>/BCFNGS-project-management/sequencing-app/ /srv/shiny-server/sequencing-app/
-sudo chown -R shiny:shiny /srv/shiny-server/sequencing-app
+sudo chown -R ngs-shiny-user:b_ngs /srv/shiny-server/sequencing-app
 ```
 
 ### 5) Initialize the SQLite DB
 
 ```bash
 cd /srv/shiny-server/sequencing-app
-sudo -u shiny Rscript setup_database.R
+sudo -u ngs-shiny-user Rscript setup_database.R
 ```
 
 ### 6) Configure LDAP mode (systemd override) {#bcf-configure-ldap-systemd}
@@ -231,9 +244,12 @@ AUTH_MODE=ldap
 LDAP_URI=ldaps://ldap01.example.internal:636,ldaps://ldap02.example.internal:636,ldaps://ldap03.example.internal:636
 LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
 TRUST_PROXY_AUTH_USER_QUERY=1
+NGS_UPLOAD_ROOT=/fs/pool/pool-ngs-public
+NGS_LOCAL_UPLOAD_FALLBACK=/srv/ngs-app-data/uploads_pending_pool
+NGS_POOL_ALERT_EMAIL=omicsdesk@biochem.mpg.de
 # LDAP_DEBUG=1   # only while debugging
 EOF
-sudo chown shiny:shiny /srv/shiny-server/sequencing-app/.Renviron
+sudo chown ngs-shiny-user:b_ngs /srv/shiny-server/sequencing-app/.Renviron
 sudo chmod 640 /srv/shiny-server/sequencing-app/.Renviron
 sudo systemctl restart shiny-server
 ```
@@ -445,7 +461,7 @@ sudo chmod o+x /home/exampleuser
 Then run import:
 
 ```bash
-sudo -u shiny python3 /home/exampleuser/example-repo/scripts/import_legacy_projects.py \
+sudo -u ngs-shiny-user python3 /home/exampleuser/example-repo/scripts/import_legacy_projects.py \
   --db /srv/shiny-server/sequencing-app/sequencing_projects.db \
   --csv /home/exampleuser/example-repo/exports/legacy_projects.utf8.csv
 
@@ -455,10 +471,10 @@ sudo systemctl start shiny-server
 ### Step 5) Verify import
 
 ```bash
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+sudo -u ngs-shiny-user sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
 "SELECT COUNT(*) FROM projects WHERE status='Legacy project';"
 
-sudo -u shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
+sudo -u ngs-shiny-user sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db \
 "SELECT project_id, project_name, responsible_user, status FROM projects WHERE status='Legacy project' ORDER BY project_id LIMIT 5;"
 ```
 
@@ -571,7 +587,7 @@ Optional rebuild:
 ```bash
 cd /srv/shiny-server/sequencing-app
 sudo systemctl stop shiny-server
-sudo -u shiny Rscript setup_database.R
+sudo -u ngs-shiny-user Rscript setup_database.R
 sudo systemctl start shiny-server
 ```
 
@@ -580,7 +596,7 @@ Restore snapshot:
 ```bash
 sudo systemctl stop shiny-server
 sudo cp /srv/shiny-server/sequencing-app/sequencing_projects.db.bak.<timestamp> /srv/shiny-server/sequencing-app/sequencing_projects.db
-sudo chown shiny:shiny /srv/shiny-server/sequencing-app/sequencing_projects.db
+sudo chown ngs-shiny-user:b_ngs /srv/shiny-server/sequencing-app/sequencing_projects.db
 sudo systemctl start shiny-server
 ```
 

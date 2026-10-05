@@ -9,6 +9,9 @@
 .backup/
 backup/
 archive/
+
+# Microsoft Office lock files
+~$*
 # Keep legacy tree ignored, but track the active Apache template.
 mpiseq2/*
 !mpiseq2/ngs-vm_01-main.conf

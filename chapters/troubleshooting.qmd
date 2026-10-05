@@ -14,6 +14,7 @@ execute:
 - [Git / GitHub](#git--github)
 - [Apache / LDAP](#apache--ldap)
 - [ngs-vm Cutover (443/9443)](#ngs-vm-cutover-4439443)
+- [Sample-sheet storage](#sample-sheet-storage)
 - [SQL (moved)](#sql-moved)
 - [Auth mode switching](#auth-mode-switching)
 - [Apache proxy](#apache-proxy)
@@ -352,7 +353,7 @@ LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
 TRUST_PROXY_AUTH_USER_QUERY=1
 LDAP_DEBUG=1
 EOF
-sudo chown shiny:shiny /srv/shiny-server/sequencing-app/.Renviron
+sudo chown ngs-shiny-user:b_ngs /srv/shiny-server/sequencing-app/.Renviron
 sudo chmod 640 /srv/shiny-server/sequencing-app/.Renviron
 sudo systemctl restart shiny-server
 ```
@@ -441,6 +442,34 @@ sudo apache2ctl -t
 sudo systemctl restart apache2
 ```
 
+## Sample-sheet storage
+
+The NFS destination is `/fs/pool/pool-ngs-public`. The application deliberately
+requires this path to be an active mount; an ordinary local directory with the
+same name is not accepted as pool storage.
+
+Run the manual checks as the actual Shiny worker identity:
+
+```bash
+id ngs-shiny-user
+sudo -u ngs-shiny-user mountpoint -q /fs/pool/pool-ngs-public
+sudo -u ngs-shiny-user test -w /fs/pool/pool-ngs-public
+sudo -u ngs-shiny-user test -w /srv/ngs-app-data/uploads_pending_pool
+```
+
+If the pool check fails, a submitted workbook is saved below
+`/srv/ngs-app-data/uploads_pending_pool/P####_username/` and omicsdesk receives
+the pool error. Inspect pending submissions with:
+
+```bash
+sudo -u ngs-shiny-user find /srv/ngs-app-data/uploads_pending_pool -maxdepth 2 -type f
+```
+
+If both pool and fallback fail, the project is still created, the temporary
+upload is attached to the NGS creation email, and the database records
+`storage_status = 'failed'`. Check the Shiny log if the omicsdesk alert also
+fails.
+
 ## SQL (moved)
 
 All SQL database commands and explanations are documented in the **SQL Handling** chapter (`chapters/sql-handling.qmd`).  
@@ -455,7 +484,7 @@ If you see `sqlite3.OperationalError: attempt to write a readonly database` when
 
 ```bash
 sudo systemctl stop shiny-server
-sudo -u shiny <your command here>
+sudo -u ngs-shiny-user <your command here>
 sudo systemctl start shiny-server
 ```
 

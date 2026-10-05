@@ -7,6 +7,12 @@ library(digest)
 library(DT)
 library(shinyWidgets)
 
+if (!requireNamespace("readxl", quietly = TRUE)) {
+  stop("The readxl package is required to validate NGS sample sheets.")
+}
+
+source("sample_sheet_helpers.R", local = TRUE)
+
 # Email and LDAP are not needed for local UI testing. Keep both dependencies
 # mandatory in every other mode so production cannot silently lose features.
 local_dependency_bypass <-
@@ -787,6 +793,28 @@ ui <- fluidPage(
     line-height: 1.5;
     color: #2c3e50 !important;
   }
+  .sample-sheet-download,
+  .sample-sheet-download:visited {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: auto !important;
+    background-color: #1d3825 !important;
+    border-color: #1d3825 !important;
+    color: #ffffff !important;
+  }
+  .sample-sheet-download:hover,
+  .sample-sheet-download:focus {
+    background-color: #294f35 !important;
+    border-color: #294f35 !important;
+    color: #ffffff !important;
+  }
+  .sample-sheet-download .glyphicon {
+    color: #ffffff !important;
+  }
+  .sample-sheet-upload {
+    margin-top: 12px;
+  }
   @media (max-width: 991px) {
     .coverage-calculator-layout {
       flex-direction: column;
@@ -1230,6 +1258,7 @@ server <- function(input, output, session) {
         ensure_archive_schema(con)
         ensure_projects_status_schema(con)
         ensure_project_status_history_schema(con)
+        ensure_sample_sheet_schema(con)
         ensure_users_full_name_column(con)
         ensure_reference_genome_size_column(con)
         ensure_reference_integrity_guards(con)
@@ -1250,6 +1279,8 @@ server <- function(input, output, session) {
           "project_cost_snapshots",
           "project_cost_unlock_log",
           "project_status_history",
+          "app_settings",
+          "project_sample_sheets",
           "types",
           "sequencing_platforms",
           "reference_genomes",
@@ -1397,6 +1428,7 @@ server <- function(input, output, session) {
   announcement_refresh <- reactiveVal(0)
   announcement_items_current <- reactiveVal(data.frame())
   announcement_editing_item_id <- reactiveVal(NULL)
+  sample_sheet_settings_refresh <- reactiveVal(0L)
   max_announcement_chars <- 4000L
 
   # Reactive values for admin management
@@ -2896,6 +2928,88 @@ server <- function(input, output, session) {
       }
     }
     invisible(NULL)
+  }
+
+  ensure_sample_sheet_schema <- function(con) {
+    dbExecute(
+      con,
+      "
+      CREATE TABLE IF NOT EXISTS app_settings (
+        setting_key TEXT PRIMARY KEY,
+        setting_value TEXT NOT NULL,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_by TEXT
+      )
+      "
+    )
+    dbExecute(
+      con,
+      "
+      INSERT OR IGNORE INTO app_settings (
+        setting_key, setting_value, updated_by
+      ) VALUES ('sample_sheet_required', '0', 'migration')
+      "
+    )
+    dbExecute(
+      con,
+      "
+      CREATE TABLE IF NOT EXISTS project_sample_sheets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_row_id INTEGER UNIQUE NOT NULL,
+        original_name TEXT NOT NULL,
+        stored_name TEXT NOT NULL,
+        stored_path TEXT,
+        storage_root TEXT,
+        storage_status TEXT NOT NULL,
+        storage_error TEXT,
+        sha256 TEXT NOT NULL,
+        uploaded_by TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (project_row_id) REFERENCES projects (id) ON DELETE CASCADE
+      )
+      "
+    )
+    dbExecute(
+      con,
+      "
+      CREATE INDEX IF NOT EXISTS idx_project_sample_sheets_status
+      ON project_sample_sheets (storage_status, created_at)
+      "
+    )
+    invisible(NULL)
+  }
+
+  sample_sheet_upload_required <- function(con = NULL) {
+    close_connection <- FALSE
+    if (is.null(con)) {
+      con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
+      close_connection <- TRUE
+    }
+    on.exit(if (close_connection) dbDisconnect(con), add = TRUE)
+    ensure_sample_sheet_schema(con)
+    value <- dbGetQuery(
+      con,
+      "SELECT setting_value FROM app_settings WHERE setting_key = 'sample_sheet_required' LIMIT 1"
+    )
+    nrow(value) > 0 && ngs_env_flag_value(value$setting_value[[1]])
+  }
+
+  set_sample_sheet_upload_required <- function(con, required, updated_by) {
+    dbExecute(
+      con,
+      "
+      INSERT INTO app_settings (
+        setting_key, setting_value, updated_at, updated_by
+      ) VALUES ('sample_sheet_required', ?, CURRENT_TIMESTAMP, ?)
+      ON CONFLICT(setting_key) DO UPDATE SET
+        setting_value = excluded.setting_value,
+        updated_at = CURRENT_TIMESTAMP,
+        updated_by = excluded.updated_by
+      ",
+      params = list(if (isTRUE(required)) "1" else "0", updated_by)
+    )
+    invisible(required)
   }
 
   ensure_reference_integrity_guards <- function(con) {
@@ -4499,6 +4613,7 @@ server <- function(input, output, session) {
         ensure_projects_additional_cost_column(con)
         ensure_ngs_cost_schema(con)
         ensure_archive_schema(con)
+        ensure_sample_sheet_schema(con)
         ensure_project_status_history_schema(con)
         ensure_users_full_name_column(con)
         ensure_reference_genome_size_column(con)
@@ -5278,7 +5393,8 @@ server <- function(input, output, session) {
   send_project_creation_email <- function(
     project_data,
     budget_holder,
-    user_email
+    user_email,
+    attachment_path = NULL
   ) {
     tryCatch(
       {
@@ -5406,8 +5522,9 @@ server <- function(input, output, session) {
           subject <- paste(project_data$project_code, subject_base, sep = " - ")
         }
 
-        # Send email
-        send_app_mail(
+        # Send email. The stored copy is preferred; when both storage targets
+        # failed, the Shiny upload remains available for this request.
+        mail_args <- list(
           from = "ngs@biochem.mpg.de",
           # NOTE: Admin notifications are currently disabled; to re-enable,
           # include `admin_emails` below and uncomment the query above.
@@ -5424,6 +5541,11 @@ server <- function(input, output, session) {
           ),
           send = TRUE
         )
+        attachment_path <- ngs_scalar_text(attachment_path)
+        if (nzchar(attachment_path) && file.exists(attachment_path)) {
+          mail_args$attach.files <- attachment_path
+        }
+        do.call(send_app_mail, mail_args)
 
         cat("DEBUG: Email sent successfully\n")
         return(list(success = TRUE, message = "Email sent successfully"))
@@ -5431,6 +5553,69 @@ server <- function(input, output, session) {
       error = function(e) {
         cat("DEBUG: Error occurred:", e$message, "\n")
         return(list(success = FALSE, error = e$message))
+      }
+    )
+  }
+
+  send_sample_sheet_storage_alert <- function(project_code, username, storage) {
+    recipient <- Sys.getenv(
+      "NGS_POOL_ALERT_EMAIL",
+      "omicsdesk@biochem.mpg.de"
+    )
+    status_text <- if (identical(storage$status, "fallback")) {
+      "The NGS pool was unavailable. The sample sheet was stored in the local fallback."
+    } else {
+      "Neither the NGS pool nor the local fallback could store the sample sheet."
+    }
+    body <- paste(
+      status_text,
+      paste("Project:", project_code),
+      paste("Authenticated submitter:", username),
+      paste("Configured pool:", Sys.getenv(
+        "NGS_UPLOAD_ROOT",
+        "/fs/pool/pool-ngs-public"
+      )),
+      paste("Configured fallback:", Sys.getenv(
+        "NGS_LOCAL_UPLOAD_FALLBACK",
+        "/srv/ngs-app-data/uploads_pending_pool"
+      )),
+      paste("Storage status:", storage$status),
+      paste("Storage errors:", ngs_sample_sheet_storage_error(storage)),
+      if (identical(storage$status, "fallback")) {
+        paste("Stored file:", storage$path)
+      } else {
+        "The temporary upload was attached to the NGS project-creation email."
+      },
+      sep = "\n"
+    )
+
+    tryCatch(
+      {
+        send_app_mail(
+          from = "ngs@biochem.mpg.de",
+          to = recipient,
+          encoding = "utf-8",
+          subject = paste(project_code, "sample sheet storage warning", sep = " - "),
+          body = body,
+          smtp = list(
+            host.name = "msx.biochem.mpg.de",
+            port = 25,
+            ssl = FALSE,
+            tls = FALSE,
+            authenticate = FALSE
+          ),
+          send = TRUE
+        )
+        list(success = TRUE, message = "Storage warning sent")
+      },
+      error = function(e) {
+        cat(
+          "SAMPLE SHEET STORAGE ALERT ERROR:",
+          conditionMessage(e),
+          "\n",
+          file = stderr()
+        )
+        list(success = FALSE, error = conditionMessage(e))
       }
     )
   }
@@ -6974,6 +7159,25 @@ server <- function(input, output, session) {
     projects_data(projects)
   }
 
+  sample_sheet_download_handler <- function() {
+    downloadHandler(
+      filename = function() "NGS_sampleSheet_template.xlsx",
+      contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      content = function(file) {
+        template_path <- ngs_sample_sheet_template_path()
+        if (!file.exists(template_path)) {
+          stop("The NGS sample-sheet template is not available on the server.")
+        }
+        if (!file.copy(template_path, file, overwrite = TRUE)) {
+          stop("The NGS sample-sheet template could not be prepared for download.")
+        }
+      }
+    )
+  }
+
+  output$download_sample_sheet_main <- sample_sheet_download_handler()
+  output$download_sample_sheet_modal <- sample_sheet_download_handler()
+
   # Regular user interface (project application)
   output$user_interface <- renderUI({
     if (!user$logged_in) {
@@ -7005,17 +7209,23 @@ server <- function(input, output, session) {
         }
       ),
 
-      if (user$is_admin) {
-        div(
-          class = "action-buttons",
+      div(
+        class = "action-buttons",
+        if (user$is_admin) {
           actionButton(
             "update_status_btn",
             "Update Project Status",
             class = "btn-info",
             icon = icon("sync")
           )
+        },
+        downloadButton(
+          "download_sample_sheet_main",
+          "Download Sample Sheet Template",
+          class = "sample-sheet-download",
+          icon = icon("download")
         )
-      },
+      ),
 
       div(
         class = "projects-table",
@@ -7147,6 +7357,13 @@ server <- function(input, output, session) {
         column(
           4,
           wellPanel(
+            h4("Sample Sheet Requirement"),
+            uiOutput("sample_sheet_requirement_admin_ui")
+          )
+        ),
+        column(
+          4,
+          wellPanel(
             h4("Cost Review"),
             uiOutput("cost_review_summary_ui"),
             actionButton(
@@ -7221,8 +7438,53 @@ server <- function(input, output, session) {
     )
   })
 
+  output$sample_sheet_requirement_admin_ui <- renderUI({
+    req(user$logged_in, user$is_admin)
+    sample_sheet_settings_refresh()
+    required <- sample_sheet_upload_required()
+    tagList(
+      checkboxInput(
+        "admin_sample_sheet_required",
+        "Require a completed sample sheet for new projects",
+        value = required
+      ),
+      p(
+        if (required) {
+          "Current setting: required."
+        } else {
+          "Current setting: optional. Uploaded files are always validated."
+        }
+      ),
+      actionButton(
+        "save_sample_sheet_requirement_btn",
+        "Save Requirement",
+        class = "btn-success"
+      )
+    )
+  })
+
+  observeEvent(input$save_sample_sheet_requirement_btn, {
+    req(user$logged_in, user$is_admin)
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con), add = TRUE)
+    set_sample_sheet_upload_required(
+      con,
+      isTRUE(input$admin_sample_sheet_required),
+      user$username
+    )
+    sample_sheet_settings_refresh(sample_sheet_settings_refresh() + 1L)
+    showNotification(
+      paste0(
+        "Sample sheet upload is now ",
+        if (isTRUE(input$admin_sample_sheet_required)) "required." else "optional."
+      ),
+      type = "message"
+    )
+  })
+
   # New project modal with cost calculation
   observeEvent(input$new_project_btn, {
+    sample_sheet_required_now <- sample_sheet_upload_required()
     showModal(modalDialog(
       title = "Create New Sequencing Project",
       size = "l",
@@ -7285,6 +7547,34 @@ server <- function(input, output, session) {
             } else {
               c("No sample service types available" = "")
             }
+          ),
+          downloadButton(
+            "download_sample_sheet_modal",
+            "Download Sample Sheet Template",
+            class = "sample-sheet-download",
+            icon = icon("download")
+          ),
+          div(
+            class = "sample-sheet-upload",
+            fileInput(
+              "sample_sheet_upload",
+              if (isTRUE(sample_sheet_required_now)) {
+                "Completed Sample Sheet *"
+              } else {
+                "Completed Sample Sheet (optional)"
+              },
+              accept = c(
+                ".xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              )
+            ),
+            helpText(
+              if (isTRUE(sample_sheet_required_now)) {
+                "A valid completed sample sheet is required to create this project."
+              } else {
+                "You may submit the project without a sample sheet. Any uploaded sheet must be valid."
+              }
+            )
           )
         ),
         column(
@@ -7543,6 +7833,41 @@ server <- function(input, output, session) {
       }
     }
 
+    sample_sheet_required_now <- sample_sheet_upload_required()
+    sample_sheet_upload <- input$sample_sheet_upload
+    has_sample_sheet <- !is.null(sample_sheet_upload) &&
+      nrow(sample_sheet_upload) > 0
+
+    if (isTRUE(sample_sheet_required_now) && !has_sample_sheet) {
+      showNotification(
+        "A completed NGS sample sheet is required to create this project.",
+        type = "error",
+        duration = 10
+      )
+      return()
+    }
+
+    sample_sheet_result <- NULL
+    if (has_sample_sheet) {
+      sample_sheet_result <- ngs_validate_sample_sheet(
+        sample_sheet_upload$datapath[[1]],
+        sample_sheet_upload$name[[1]],
+        input$num_samples
+      )
+      if (!isTRUE(sample_sheet_result$valid)) {
+        showNotification(
+          tagList(
+            tags$strong("Sample sheet validation failed."),
+            tags$ul(lapply(sample_sheet_result$errors, tags$li))
+          ),
+          type = "error",
+          duration = NULL,
+          closeButton = TRUE
+        )
+        return()
+      }
+    }
+
     # Calculate total cost
     total_cost <- calculate_total_cost(
       input$num_samples,
@@ -7619,6 +7944,54 @@ server <- function(input, output, session) {
         "SELECT project_id FROM projects WHERE id = ?",
         params = list(as.numeric(new_row_id))
       )$project_id[[1]]
+
+      sample_sheet_storage <- NULL
+      if (has_sample_sheet) {
+        project_code_for_storage <- if (
+          !is.null(project_id_value) && !is.na(project_id_value)
+        ) {
+          paste0("P", project_id_value)
+        } else {
+          paste0("P-row-", new_row_id)
+        }
+        sample_sheet_storage <- ngs_store_sample_sheet(
+          sample_sheet_upload$datapath[[1]],
+          project_code_for_storage,
+          user$username
+        )
+        dbExecute(
+          con,
+          "
+          INSERT INTO project_sample_sheets (
+            project_row_id, original_name, stored_name, stored_path,
+            storage_root, storage_status, storage_error, sha256,
+            uploaded_by, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          ",
+          params = list(
+            new_row_id,
+            sample_sheet_upload$name[[1]],
+            sample_sheet_storage$stored_name,
+            if (is.na(sample_sheet_storage$path)) {
+              NA_character_
+            } else {
+              sample_sheet_storage$path
+            },
+            if (is.na(sample_sheet_storage$root)) {
+              NA_character_
+            } else {
+              sample_sheet_storage$root
+            },
+            sample_sheet_storage$status,
+            ngs_sample_sheet_storage_error(sample_sheet_storage),
+            digest::digest(
+              file = sample_sheet_upload$datapath[[1]],
+              algo = "sha256"
+            ),
+            user$username
+          )
+        )
+      }
       dbExecute(
         con,
         "
@@ -7628,12 +8001,17 @@ server <- function(input, output, session) {
         ",
         params = list(new_row_id, user$username)
       )
-      list(row_id = new_row_id, project_id = project_id_value)
+      list(
+        row_id = new_row_id,
+        project_id = project_id_value,
+        sample_sheet_storage = sample_sheet_storage
+      )
     })
 
     # Resolve the auto-generated project_id for email subject (P<number>)
     new_row_id <- created_project$row_id
     project_id_value <- created_project$project_id
+    sample_sheet_storage <- created_project$sample_sheet_storage
     project_code <- if (
       !is.null(project_id_value) &&
         length(project_id_value) > 0 &&
@@ -7672,13 +8050,94 @@ server <- function(input, output, session) {
     removeModal()
     load_projects()
 
-    # Send email notification
-    send_project_creation_email(project_data, budget_holder, user_email)
+    attachment_path <- NULL
+    if (has_sample_sheet) {
+      attachment_path <- if (
+        !is.null(sample_sheet_storage) &&
+          sample_sheet_storage$status %in% c("pool", "fallback") &&
+          file.exists(sample_sheet_storage$path)
+      ) {
+        sample_sheet_storage$path
+      } else {
+        sample_sheet_upload$datapath[[1]]
+      }
+    }
 
-    showNotification(
-      "Project created successfully! NGS team notified.",
-      type = "message"
+    email_result <- send_project_creation_email(
+      project_data,
+      budget_holder,
+      user_email,
+      attachment_path = attachment_path
     )
+
+    storage_alert_result <- NULL
+    if (
+      has_sample_sheet &&
+        !is.null(sample_sheet_storage) &&
+        !identical(sample_sheet_storage$status, "pool")
+    ) {
+      storage_alert_result <- send_sample_sheet_storage_alert(
+        project_code,
+        user$username,
+        sample_sheet_storage
+      )
+    }
+
+    if (!isTRUE(email_result$success)) {
+      showNotification(
+        paste0(
+          "Project created, but the NGS project-creation email failed: ",
+          email_result$error %||% "unknown email error"
+        ),
+        type = "warning",
+        duration = 15
+      )
+    } else if (
+      has_sample_sheet &&
+        !is.null(sample_sheet_storage) &&
+        identical(sample_sheet_storage$status, "failed")
+    ) {
+      showNotification(
+        paste(
+          "Project created and the sample sheet was attached to the NGS email,",
+          "but neither permanent storage location was available. Omicsdesk was notified."
+        ),
+        type = "warning",
+        duration = 15
+      )
+    } else if (
+      has_sample_sheet &&
+        !is.null(sample_sheet_storage) &&
+        identical(sample_sheet_storage$status, "fallback")
+    ) {
+      showNotification(
+        paste(
+          "Project created and the NGS team was notified.",
+          "The sample sheet is in local fallback storage; omicsdesk was notified."
+        ),
+        type = "warning",
+        duration = 12
+      )
+    } else {
+      showNotification(
+        "Project created successfully! NGS team notified.",
+        type = "message"
+      )
+    }
+
+    if (
+      !is.null(storage_alert_result) &&
+        !isTRUE(storage_alert_result$success)
+    ) {
+      showNotification(
+        paste0(
+          "The storage warning email to omicsdesk also failed: ",
+          storage_alert_result$error %||% "unknown email error"
+        ),
+        type = "error",
+        duration = 15
+      )
+    }
   })
 
   build_projects_datatable <- function(

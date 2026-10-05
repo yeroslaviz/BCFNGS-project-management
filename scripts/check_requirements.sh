@@ -35,6 +35,7 @@ packages=(
   openssl
   sqlite3
   ldap-utils
+  util-linux
   libldap2-dev
   libsasl2-dev
   default-jdk
@@ -54,7 +55,7 @@ check_missing_r_packages() {
     [[ -n "${pkg}" ]] && missing_r_packages+=("${pkg}")
   done < <(
     Rscript --vanilla -e '
-      pkgs <- c("shiny","shinyjs","DBI","RSQLite","digest","DT","shinyWidgets","rJava","mailR","ldapr")
+      pkgs <- c("shiny","shinyjs","DBI","RSQLite","digest","DT","shinyWidgets","readxl","rJava","mailR","ldapr")
       missing <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
       if (length(missing)) writeLines(missing)
     ' 2>/dev/null || true
@@ -67,7 +68,7 @@ for pkg in "${packages[@]}"; do
   fi
 done
 
-for tool in git curl rsync apache2ctl sqlite3 ldapsearch java javac; do
+for tool in git curl rsync apache2ctl sqlite3 ldapsearch mountpoint java javac; do
   if ! command -v "$tool" >/dev/null 2>&1; then
     missing_tools+=("$tool")
   fi
@@ -149,10 +150,10 @@ if ((INSTALL_R == 1)); then
     echo "Installing missing R packages..."
     if [[ $EUID -eq 0 ]]; then
       Rscript --vanilla -e \
-        'install.packages(c("shiny","shinyjs","DBI","RSQLite","digest","DT","shinyWidgets","rJava","mailR","ldapr"), repos="https://cloud.r-project.org")'
+        'install.packages(c("shiny","shinyjs","DBI","RSQLite","digest","DT","shinyWidgets","readxl","rJava","mailR","ldapr"), repos="https://cloud.r-project.org")'
     else
       sudo Rscript --vanilla -e \
-        'install.packages(c("shiny","shinyjs","DBI","RSQLite","digest","DT","shinyWidgets","rJava","mailR","ldapr"), repos="https://cloud.r-project.org")'
+        'install.packages(c("shiny","shinyjs","DBI","RSQLite","digest","DT","shinyWidgets","readxl","rJava","mailR","ldapr"), repos="https://cloud.r-project.org")'
     fi
   else
     echo "No R packages need installation."

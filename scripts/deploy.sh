@@ -14,14 +14,16 @@ set -euo pipefail
 #
 # 2. Fixes ownership of the deployed folder:
 #
-#     - shiny:shiny on everything under /srv/shiny-server/sequencing-app
+#     - APP_RUN_USER:APP_RUN_GROUP on everything under /srv/shiny-server/sequencing-app
 #
 # 3. Makes the DB writable:
 #    - sequencing_projects.db
 #
-# 4. Restarts Shiny Server
+# 4. Creates the persistent sample-sheet fallback outside the rsync target.
 #
-# 5. Runs LDAP smoke tests (unless SKIP_SMOKE_TEST=1):
+# 5. Restarts Shiny Server
+#
+# 6. Runs LDAP smoke tests (unless SKIP_SMOKE_TEST=1):
 #    - expects 302 canonicalization to ?auth_user=<authenticated user>
 #    - expects tampered auth_user to be rewritten
 #    - expects final 200 after redirects
@@ -31,6 +33,9 @@ set -euo pipefail
 APP_SOURCE="/home/yeroslaviz/BCFNGS-project-management/sequencing-app/"
 APP_TARGET="/srv/shiny-server/sequencing-app/"
 APP_DB="${APP_TARGET}sequencing_projects.db"
+PERSISTENT_UPLOAD_FALLBACK="${NGS_LOCAL_UPLOAD_FALLBACK:-/srv/ngs-app-data/uploads_pending_pool}"
+APP_RUN_USER="${APP_RUN_USER:-ngs-shiny-user}"
+APP_RUN_GROUP="${APP_RUN_GROUP:-b_ngs}"
 PUBLIC_BASE_URL="${PUBLIC_BASE_URL:-https://ngs-testing-vm.biochem.mpg.de}"
 APP_PATH="/sequencing-app/"
 APP_URL="${PUBLIC_BASE_URL%/}${APP_PATH}"
@@ -145,10 +150,21 @@ EOF
 
 echo "Deploying Shiny app..."
 
+if ! getent passwd "${APP_RUN_USER}" >/dev/null; then
+  echo "Deploy failed: runtime user ${APP_RUN_USER} does not exist." >&2
+  echo "Provision the service account or explicitly override APP_RUN_USER and APP_RUN_GROUP." >&2
+  exit 1
+fi
+if ! getent group "${APP_RUN_GROUP}" >/dev/null; then
+  echo "Deploy failed: runtime group ${APP_RUN_GROUP} does not exist." >&2
+  exit 1
+fi
+
 if sudo rsync -av --delete --exclude 'sequencing_projects.db' --exclude '.Renviron' "${APP_SOURCE}" "${APP_TARGET}"; then
-  sudo chown -R shiny:shiny "${APP_TARGET}"
+  sudo install -d -o "${APP_RUN_USER}" -g "${APP_RUN_GROUP}" -m 0750 "${PERSISTENT_UPLOAD_FALLBACK}"
+  sudo chown -R "${APP_RUN_USER}:${APP_RUN_GROUP}" "${APP_TARGET}"
   if [ -f "${APP_DB}" ]; then
-    sudo chmod 666 "${APP_DB}"
+    sudo chmod 660 "${APP_DB}"
   else
     echo "Note: DB file not found at ${APP_DB} (skipping chmod)."
   fi

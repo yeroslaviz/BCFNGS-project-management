@@ -63,7 +63,22 @@ sudo systemctl edit shiny-server
 Environment=AUTH_MODE=ldap
 Environment=LDAP_URI=ldaps://ldap01.example.internal:636,ldaps://ldap02.example.internal:636,ldaps://ldap03.example.internal:636
 Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
+Environment=NGS_UPLOAD_ROOT=/fs/pool/pool-ngs-public
+Environment=NGS_LOCAL_UPLOAD_FALLBACK=/srv/ngs-app-data/uploads_pending_pool
+Environment=NGS_POOL_ALERT_EMAIL=omicsdesk@biochem.mpg.de
 ```
+
+The application worker must run as the dedicated service identity. In
+`/etc/shiny-server/shiny-server.conf`, set:
+
+```text
+run_as ngs-shiny-user;
+```
+
+The account is provisioned as `ngs-shiny-user:b_ngs`. It does not need to be
+added to the `shiny` group. The deployment script creates the local fallback
+with this ownership. If `/fs/pool/pool-ngs-public` is not mounted, validated
+sample sheets are stored in the fallback and omicsdesk receives an alert.
 
 ```bash
 sudo systemctl restart shiny-server

@@ -199,6 +199,22 @@ setup_complete_database <- function() {
   )
   ")
 
+  # Persistent application settings editable by administrators.
+  dbExecute(con, "
+    CREATE TABLE IF NOT EXISTS app_settings (
+      setting_key TEXT PRIMARY KEY,
+      setting_value TEXT NOT NULL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_by TEXT
+    )
+  ")
+
+  dbExecute(con, "
+    INSERT OR IGNORE INTO app_settings (
+      setting_key, setting_value, updated_by
+    ) VALUES ('sample_sheet_required', '0', 'database_setup')
+  ")
+
   # Projects table with all modifications
   dbExecute(con, "
     CREATE TABLE IF NOT EXISTS projects (
@@ -284,6 +300,32 @@ setup_complete_database <- function() {
       reviewed_by TEXT,
       FOREIGN KEY (project_row_id) REFERENCES projects (id)
     )
+  ")
+
+  # One submitted NGS sample sheet per project. A failed storage attempt is
+  # retained as metadata so administrators can see that only the email copy
+  # was available.
+  dbExecute(con, "
+    CREATE TABLE IF NOT EXISTS project_sample_sheets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      project_row_id INTEGER UNIQUE NOT NULL,
+      original_name TEXT NOT NULL,
+      stored_name TEXT NOT NULL,
+      stored_path TEXT,
+      storage_root TEXT,
+      storage_status TEXT NOT NULL,
+      storage_error TEXT,
+      sha256 TEXT NOT NULL,
+      uploaded_by TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (project_row_id) REFERENCES projects (id) ON DELETE CASCADE
+    )
+  ")
+
+  dbExecute(con, "
+    CREATE INDEX IF NOT EXISTS idx_project_sample_sheets_status
+    ON project_sample_sheets (storage_status, created_at)
   ")
 
   dbExecute(con, "

@@ -199,10 +199,9 @@ git clone git@github.com:example-org/example-repo.git
 ### Configure the Shiny app folder
 
 ```bash
-sudo usermod -a -G shiny $USER
 sudo mv /srv/shiny-server/sequencing-app /srv/shiny-server/sequencing-app.backup 2>/dev/null || true
-sudo mkdir -p /srv/shiny-server/sequencing-app
-sudo chown -R $USER:shiny /srv/shiny-server/sequencing-app
+sudo install -d -o ngs-shiny-user -g b_ngs -m 0755 /srv/shiny-server/sequencing-app
+sudo install -d -o ngs-shiny-user -g b_ngs -m 0750 /srv/ngs-app-data/uploads_pending_pool
 ```
 
 Deploy the app files:
@@ -211,6 +210,10 @@ Deploy the app files:
 cd /home/<your-user>/BCFNGS-project-management
 ./scripts/deploy.sh
 ```
+
+Set `run_as ngs-shiny-user;` in `/etc/shiny-server/shiny-server.conf` before
+restarting Shiny Server. The service account already uses primary group
+`b_ngs`; membership in the legacy `shiny` group is not needed.
 
 ### Install required R packages
 
@@ -225,6 +228,7 @@ install.packages(c(
   "digest",
   "DT",
   "shinyWidgets",
+  "readxl",
   "mailR",
   "ldapr"
 ))
@@ -247,6 +251,9 @@ Add:
 Environment=AUTH_MODE=ldap
 Environment=LDAP_URI=ldaps://ldap01.example.internal:636,ldaps://ldap02.example.internal:636,ldaps://ldap03.example.internal:636
 Environment=LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de
+Environment=NGS_UPLOAD_ROOT=/fs/pool/pool-ngs-public
+Environment=NGS_LOCAL_UPLOAD_FALLBACK=/srv/ngs-app-data/uploads_pending_pool
+Environment=NGS_POOL_ALERT_EMAIL=omicsdesk@biochem.mpg.de
 # Optional debug (dev only):
 # Environment=APP_ENV=dev
 # Environment=LDAP_DEBUG=1
@@ -258,7 +265,8 @@ Then restart:
 sudo systemctl restart shiny-server
 ```
 
-Alternative: `/home/shiny/.Renviron` (simpler, less explicit).
+The app-local `/srv/shiny-server/sequencing-app/.Renviron` is also supported.
+Own it with `ngs-shiny-user:b_ngs` and mode `0640`.
 
 ### Configure LDAP trust (OpenLDAP client)
 
