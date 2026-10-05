@@ -92,7 +92,7 @@ If this fails, do not continue with clone/deploy until SSH access is fixed.
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y git curl rsync apache2 apache2-utils openssl sqlite3 ldap-utils util-linux \
+sudo apt-get install -y git curl rsync zip unzip apache2 apache2-utils openssl sqlite3 ldap-utils util-linux \
   build-essential libcurl4-openssl-dev libssl-dev libxml2-dev r-base
 ```
 

@@ -63,6 +63,40 @@ test_that("facility-generated values may be blank or unchanged only", {
   expect_true(checked_blank$valid)
 })
 
+test_that("assigned project number is written to rows and worksheet name", {
+  source_workbook <- file.path(
+    repo_prefix,
+    "sequencing-app",
+    "NGS_sampleSheet_template.xlsx"
+  )
+  finalized <- ngs_assign_project_number(
+    source_workbook,
+    "P1111",
+    c(4L, 5L),
+    sample_rows()
+  )
+  on.exit(unlink(finalized, force = TRUE), add = TRUE)
+
+  expect_true(file.exists(finalized))
+  expect_identical(readxl::excel_sheets(finalized), c("Example", "P1111"))
+  assigned <- suppressMessages(readxl::read_excel(
+    finalized,
+    sheet = "P1111",
+    col_names = FALSE,
+    col_types = "text",
+    .name_repair = "minimal"
+  ))
+  expect_identical(assigned[[6]][4:5], c("P1111", "P1111"))
+  expect_identical(
+    assigned[[8]][4:5],
+    c("P1111_Sample01_sample-a", "P1111_Sample02_sample-b")
+  )
+  expect_identical(
+    readxl::excel_sheets(source_workbook),
+    c("Example", "project_metadata")
+  )
+})
+
 test_that("storage uses pool, fallback, and failed statuses", {
   old_values <- Sys.getenv(c(
     "NGS_UPLOAD_ROOT",

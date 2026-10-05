@@ -7906,8 +7906,18 @@ server <- function(input, output, session) {
       fallback = user$username
     )
 
+    finalized_sample_sheet_path <- NULL
+    on.exit({
+      if (
+        !is.null(finalized_sample_sheet_path) &&
+          nzchar(finalized_sample_sheet_path)
+      ) {
+        unlink(finalized_sample_sheet_path, force = TRUE)
+      }
+    }, add = TRUE)
+
     # Insert the project and its initial status as one atomic change.
-    created_project <- dbWithTransaction(con, {
+    created_project <- tryCatch(dbWithTransaction(con, {
       dbExecute(
         con,
         "
@@ -7947,15 +7957,22 @@ server <- function(input, output, session) {
 
       sample_sheet_storage <- NULL
       if (has_sample_sheet) {
-        project_code_for_storage <- if (
-          !is.null(project_id_value) && !is.na(project_id_value)
+        if (
+          is.null(project_id_value) ||
+            length(project_id_value) == 0L ||
+            is.na(project_id_value)
         ) {
-          paste0("P", project_id_value)
-        } else {
-          paste0("P-row-", new_row_id)
+          stop("The project number could not be assigned to the sample sheet.")
         }
-        sample_sheet_storage <- ngs_store_sample_sheet(
+        project_code_for_storage <- paste0("P", project_id_value)
+        finalized_sample_sheet_path <- ngs_assign_project_number(
           sample_sheet_upload$datapath[[1]],
+          project_code_for_storage,
+          sample_sheet_result$excel_rows,
+          sample_sheet_result$data
+        )
+        sample_sheet_storage <- ngs_store_sample_sheet(
+          finalized_sample_sheet_path,
           project_code_for_storage,
           user$username
         )
@@ -7985,7 +8002,7 @@ server <- function(input, output, session) {
             sample_sheet_storage$status,
             ngs_sample_sheet_storage_error(sample_sheet_storage),
             digest::digest(
-              file = sample_sheet_upload$datapath[[1]],
+              file = finalized_sample_sheet_path,
               algo = "sha256"
             ),
             user$username
@@ -8004,14 +8021,24 @@ server <- function(input, output, session) {
       list(
         row_id = new_row_id,
         project_id = project_id_value,
-        sample_sheet_storage = sample_sheet_storage
+        sample_sheet_storage = sample_sheet_storage,
+        finalized_sample_sheet_path = finalized_sample_sheet_path
       )
+    }), error = function(e) {
+      showNotification(
+        paste0("Project creation failed: ", conditionMessage(e)),
+        type = "error",
+        duration = 15
+      )
+      NULL
     })
+    if (is.null(created_project)) return()
 
     # Resolve the auto-generated project_id for email subject (P<number>)
     new_row_id <- created_project$row_id
     project_id_value <- created_project$project_id
     sample_sheet_storage <- created_project$sample_sheet_storage
+    finalized_sample_sheet_path <- created_project$finalized_sample_sheet_path
     project_code <- if (
       !is.null(project_id_value) &&
         length(project_id_value) > 0 &&
@@ -8059,7 +8086,7 @@ server <- function(input, output, session) {
       ) {
         sample_sheet_storage$path
       } else {
-        sample_sheet_upload$datapath[[1]]
+        finalized_sample_sheet_path
       }
     }
 

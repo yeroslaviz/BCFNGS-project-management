@@ -263,6 +263,349 @@ ngs_validate_sample_sheet <- function(path, original_name, expected_rows) {
   )
 }
 
+ngs_read_binary_text <- function(path) {
+  size <- file.info(path)$size[[1]]
+  if (is.na(size)) stop("Could not determine file size: ", path)
+  rawToChar(readBin(path, what = "raw", n = size))
+}
+
+ngs_write_binary_text <- function(path, value) {
+  connection <- file(path, open = "wb")
+  on.exit(close(connection), add = TRUE)
+  writeBin(charToRaw(value), connection)
+  invisible(path)
+}
+
+ngs_xml_escape <- function(value) {
+  value <- as.character(value)
+  value <- gsub("&", "&amp;", value, fixed = TRUE)
+  value <- gsub("<", "&lt;", value, fixed = TRUE)
+  value <- gsub(">", "&gt;", value, fixed = TRUE)
+  value <- gsub('"', "&quot;", value, fixed = TRUE)
+  value <- gsub("'", "&apos;", value, fixed = TRUE)
+  value
+}
+
+ngs_regex_escape <- function(value) {
+  gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", value)
+}
+
+ngs_xml_tags <- function(xml, pattern) {
+  positions <- gregexpr(pattern, xml, perl = TRUE)[[1]]
+  if (identical(positions[[1]], -1L)) return(character(0))
+  lengths <- attr(positions, "match.length")
+  substring(xml, positions, positions + lengths - 1L)
+}
+
+ngs_replace_once <- function(text, old, new, description) {
+  location <- regexpr(old, text, fixed = TRUE)[[1]]
+  if (location < 1) stop("Could not update ", description, ".")
+  paste0(
+    substr(text, 1L, location - 1L),
+    new,
+    substr(text, location + nchar(old), nchar(text))
+  )
+}
+
+ngs_set_inline_string_cell <- function(sheet_xml, cell_reference, value) {
+  row_number <- sub("^[A-Z]+", "", cell_reference)
+  row_pattern <- paste0(
+    "(?s)<row\\b[^>]*\\br=\"",
+    ngs_regex_escape(row_number),
+    "\"[^>]*>.*?</row>"
+  )
+  row_tags <- ngs_xml_tags(sheet_xml, row_pattern)
+  if (length(row_tags) != 1L) {
+    stop("Could not find Excel row ", row_number, " in the sample sheet.")
+  }
+  row_tag <- row_tags[[1]]
+  cell_pattern <- paste0(
+    "(?s)<c\\b[^>]*\\br=\"",
+    ngs_regex_escape(cell_reference),
+    "\"[^>]*?(?:/>|>.*?</c>)"
+  )
+  cell_tags <- ngs_xml_tags(row_tag, cell_pattern)
+  escaped_value <- ngs_xml_escape(value)
+
+  if (length(cell_tags) == 1L) {
+    cell_tag <- cell_tags[[1]]
+    opening <- sub("(?s)^(<c\\b[^>]*)(?:/>|>.*)$", "\\1", cell_tag, perl = TRUE)
+    opening <- sub("/\\s*$", "", opening, perl = TRUE)
+    opening <- gsub('\\s+t="[^"]*"', "", opening, perl = TRUE)
+    new_cell <- paste0(
+      opening,
+      ' t="inlineStr"><is><t>',
+      escaped_value,
+      "</t></is></c>"
+    )
+    new_row <- ngs_replace_once(row_tag, cell_tag, new_cell, cell_reference)
+  } else if (length(cell_tags) == 0L) {
+    new_cell <- paste0(
+      '<c r="', cell_reference, '" t="inlineStr"><is><t>',
+      escaped_value,
+      "</t></is></c>"
+    )
+    next_column_pattern <- paste0(
+      '<c\\b[^>]*\\br="[G-Z]+',
+      ngs_regex_escape(row_number),
+      '"'
+    )
+    next_position <- regexpr(next_column_pattern, row_tag, perl = TRUE)[[1]]
+    if (next_position > 0L) {
+      new_row <- paste0(
+        substr(row_tag, 1L, next_position - 1L),
+        new_cell,
+        substr(row_tag, next_position, nchar(row_tag))
+      )
+    } else {
+      new_row <- sub("</row>$", paste0(new_cell, "</row>"), row_tag)
+    }
+  } else {
+    stop("The workbook contains duplicate cell ", cell_reference, ".")
+  }
+
+  ngs_replace_once(sheet_xml, row_tag, new_row, paste("Excel row", row_number))
+}
+
+ngs_set_formula_cached_value <- function(sheet_xml, cell_reference, value) {
+  cell_pattern <- paste0(
+    "(?s)<c\\b[^>]*\\br=\"",
+    ngs_regex_escape(cell_reference),
+    "\"[^>]*?>.*?</c>"
+  )
+  cell_tags <- ngs_xml_tags(sheet_xml, cell_pattern)
+  if (length(cell_tags) == 0L) return(sheet_xml)
+  if (length(cell_tags) != 1L || !grepl("<f(?:\\s|>)", cell_tags[[1]], perl = TRUE)) {
+    stop("Could not update the cached formula result for ", cell_reference, ".")
+  }
+
+  cell_tag <- cell_tags[[1]]
+  updated_cell <- if (grepl("(?s)<v>.*?</v>", cell_tag, perl = TRUE)) {
+    sub(
+      "(?s)<v>.*?</v>",
+      paste0("<v>", ngs_xml_escape(value), "</v>"),
+      cell_tag,
+      perl = TRUE
+    )
+  } else {
+    sub(
+      "</c>$",
+      paste0("<v>", ngs_xml_escape(value), "</v></c>"),
+      cell_tag
+    )
+  }
+  ngs_replace_once(sheet_xml, cell_tag, updated_cell, cell_reference)
+}
+
+ngs_assign_project_number <- function(
+  source,
+  project_code,
+  excel_rows,
+  sample_data = NULL
+) {
+  project_code <- ngs_scalar_text(project_code)
+  if (!grepl("^P[0-9]+$", project_code)) {
+    stop("Cannot finalize the sample sheet without a valid project code.")
+  }
+  excel_rows <- suppressWarnings(as.integer(excel_rows))
+  if (length(excel_rows) == 0L || anyNA(excel_rows) || any(excel_rows < 4L)) {
+    stop("Cannot finalize the sample sheet without valid sample-row numbers.")
+  }
+  if (!is.null(sample_data) && nrow(sample_data) != length(excel_rows)) {
+    stop("Sample-sheet rows changed before project-number assignment.")
+  }
+  if (!file.exists(source)) stop("The uploaded sample sheet could not be found.")
+
+  zip_tool <- Sys.which("zip")
+  unzip_tool <- Sys.which("unzip")
+  if (!nzchar(zip_tool) || !nzchar(unzip_tool)) {
+    stop("The zip and unzip commands are required to finalize sample sheets.")
+  }
+
+  work_dir <- tempfile("ngs-sample-sheet-")
+  dir.create(work_dir, recursive = TRUE)
+  on.exit(unlink(work_dir, recursive = TRUE, force = TRUE), add = TRUE)
+
+  archive_listing <- tryCatch(
+    utils::unzip(source, list = TRUE),
+    error = function(e) stop("Could not inspect the uploaded workbook: ", conditionMessage(e))
+  )
+  archive_names <- gsub("\\\\", "/", archive_listing$Name)
+  unsafe_archive_name <-
+    grepl("^/", archive_names) |
+    grepl("^[A-Za-z]:", archive_names) |
+    grepl("(^|/)\\.\\.(/|$)", archive_names)
+  if (any(unsafe_archive_name)) {
+    stop("The uploaded workbook contains unsafe archive paths.")
+  }
+  if (sum(archive_listing$Length, na.rm = TRUE) > 100 * 1024^2) {
+    stop("The uploaded workbook expands beyond the 100 MB safety limit.")
+  }
+
+  extracted <- tryCatch(
+    utils::unzip(source, exdir = work_dir),
+    error = function(e) stop("Could not unpack the uploaded workbook: ", conditionMessage(e))
+  )
+  if (length(extracted) == 0L) stop("The uploaded workbook is empty.")
+
+  workbook_path <- file.path(work_dir, "xl", "workbook.xml")
+  relationships_path <- file.path(work_dir, "xl", "_rels", "workbook.xml.rels")
+  if (!file.exists(workbook_path) || !file.exists(relationships_path)) {
+    stop("The uploaded file is not a valid Excel workbook.")
+  }
+
+  workbook_xml <- ngs_read_binary_text(workbook_path)
+  sheet_tags <- ngs_xml_tags(workbook_xml, "<sheet\\b[^>]*/>")
+  metadata_tags <- sheet_tags[
+    grepl('name="project_metadata"', sheet_tags, fixed = TRUE)
+  ]
+  if (length(metadata_tags) != 1L) {
+    stop("The workbook must contain exactly one project_metadata sheet.")
+  }
+  metadata_tag <- metadata_tags[[1]]
+  if (any(grepl(
+    paste0('name="', ngs_xml_escape(project_code), '"'),
+    sheet_tags,
+    fixed = TRUE
+  ))) {
+    stop("The workbook already contains a worksheet named ", project_code, ".")
+  }
+  relationship_id <- sub(
+    '.*\\br:id="([^"]+)".*',
+    "\\1",
+    metadata_tag,
+    perl = TRUE
+  )
+  if (identical(relationship_id, metadata_tag)) {
+    stop("Could not resolve the project_metadata worksheet relationship.")
+  }
+
+  relationships_xml <- ngs_read_binary_text(relationships_path)
+  relationship_tags <- ngs_xml_tags(relationships_xml, "<Relationship\\b[^>]*/>")
+  target_tags <- relationship_tags[
+    grepl(paste0('Id="', relationship_id, '"'), relationship_tags, fixed = TRUE)
+  ]
+  if (length(target_tags) != 1L) {
+    stop("Could not resolve the project_metadata worksheet file.")
+  }
+  worksheet_target <- sub(
+    '.*\\bTarget="([^"]+)".*',
+    "\\1",
+    target_tags[[1]],
+    perl = TRUE
+  )
+  if (
+    identical(worksheet_target, target_tags[[1]]) ||
+      grepl("(^|/)\\.\\.(/|$)", worksheet_target)
+  ) {
+    stop("The project_metadata worksheet has an unsafe workbook path.")
+  }
+  worksheet_path <- file.path(work_dir, "xl", worksheet_target)
+  if (!file.exists(worksheet_path)) {
+    stop("The project_metadata worksheet file is missing.")
+  }
+
+  renamed_tag <- sub(
+    'name="project_metadata"',
+    paste0('name="', project_code, '"'),
+    metadata_tag,
+    fixed = TRUE
+  )
+  workbook_xml <- ngs_replace_once(
+    workbook_xml,
+    metadata_tag,
+    renamed_tag,
+    "worksheet name"
+  )
+  calc_tags <- ngs_xml_tags(workbook_xml, "<calcPr\\b[^>]*/>")
+  if (length(calc_tags) == 1L) {
+    calc_tag <- calc_tags[[1]]
+    updated_calc_tag <- gsub(
+      '\\s+(calcMode|fullCalcOnLoad|forceFullCalc)="[^"]*"',
+      "",
+      calc_tag,
+      perl = TRUE
+    )
+    updated_calc_tag <- sub(
+      "/>$",
+      ' calcMode="auto" fullCalcOnLoad="1" forceFullCalc="1"/>',
+      updated_calc_tag
+    )
+    workbook_xml <- ngs_replace_once(
+      workbook_xml,
+      calc_tag,
+      updated_calc_tag,
+      "workbook calculation settings"
+    )
+  }
+  ngs_write_binary_text(workbook_path, workbook_xml)
+
+  worksheet_xml <- ngs_read_binary_text(worksheet_path)
+  for (i in seq_along(excel_rows)) {
+    excel_row <- excel_rows[[i]]
+    worksheet_xml <- ngs_set_inline_string_cell(
+      worksheet_xml,
+      paste0("F", excel_row),
+      project_code
+    )
+    if (!is.null(sample_data)) {
+      data_name <- paste(
+        project_code,
+        ngs_cell_text(sample_data$SampleIndex[[i]]),
+        ngs_cell_text(sample_data$SampleName[[i]]),
+        sep = "_"
+      )
+      worksheet_xml <- ngs_set_formula_cached_value(
+        worksheet_xml,
+        paste0("H", excel_row),
+        data_name
+      )
+    }
+  }
+  ngs_write_binary_text(worksheet_path, worksheet_xml)
+
+  output <- tempfile(
+    paste0("NGS_sampleSheet_", project_code, "_"),
+    fileext = ".xlsx"
+  )
+  archive_files <- list.files(
+    work_dir,
+    all.files = TRUE,
+    no.. = TRUE,
+    recursive = FALSE,
+    include.dirs = TRUE
+  )
+  zip_command <- paste(
+    "cd",
+    shQuote(work_dir),
+    "&&",
+    shQuote(zip_tool),
+    "-q -r -X",
+    shQuote(output),
+    paste(vapply(archive_files, shQuote, character(1)), collapse = " ")
+  )
+  zip_status <- suppressWarnings(system(
+    zip_command,
+    ignore.stdout = TRUE,
+    ignore.stderr = TRUE
+  ))
+  if (!identical(as.integer(zip_status), 0L) || !file.exists(output)) {
+    stop("Could not create the finalized sample sheet.")
+  }
+
+  integrity_status <- suppressWarnings(system2(
+    unzip_tool,
+    args = c("-tqq", shQuote(output)),
+    stdout = FALSE,
+    stderr = FALSE
+  ))
+  if (!identical(as.integer(integrity_status), 0L)) {
+    unlink(output, force = TRUE)
+    stop("The finalized sample sheet failed its ZIP integrity check.")
+  }
+  output
+}
+
 ngs_pool_mount_status <- function(root) {
   root <- ngs_scalar_text(root)
   if (!nzchar(root)) return(list(ok = FALSE, error = "No pool root is configured."))

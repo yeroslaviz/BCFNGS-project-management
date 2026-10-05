@@ -34,6 +34,8 @@ packages=(
   apache2-utils
   openssl
   sqlite3
+  zip
+  unzip
   ldap-utils
   util-linux
   libldap2-dev
@@ -68,7 +70,7 @@ for pkg in "${packages[@]}"; do
   fi
 done
 
-for tool in git curl rsync apache2ctl sqlite3 ldapsearch mountpoint java javac; do
+for tool in git curl rsync apache2ctl sqlite3 zip unzip ldapsearch mountpoint java javac; do
   if ! command -v "$tool" >/dev/null 2>&1; then
     missing_tools+=("$tool")
   fi

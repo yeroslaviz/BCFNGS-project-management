@@ -40,8 +40,11 @@ execute:
    `SampleIndex`/`DataName` values may not be replaced.
 3. Added an administrator setting that switches future project submissions
    between optional and mandatory sample-sheet upload without redeployment.
-4. Attached valid uploaded workbooks to project-creation email and stored them
-   under `P####_<LDAP username>` in `/fs/pool/pool-ngs-public`.
+4. After project creation, finalized valid uploaded workbooks by filling the
+   assigned `P####` into `ProjectNumber` for every validated sample row and
+   renaming `project_metadata` to `P####`. The finalized workbook is attached
+   to the project-creation email and stored under `P####_<LDAP username>` in
+   `/fs/pool/pool-ngs-public`.
 5. Added persistent local fallback storage at
    `/srv/ngs-app-data/uploads_pending_pool`, detailed failure alerts to
    `omicsdesk@biochem.mpg.de`, and database metadata/checksums for each upload.
@@ -64,6 +67,8 @@ execute:
 11. Added a login-shell traversal preflight matching Shiny Server's launch
     behavior, so deployment stops with a path-permission diagnostic when the
     runtime account cannot enter the deployed application directory.
+12. Added `zip`/`unzip` deployment requirements for lossless finalization of
+    submitted `.xlsx` workbooks without another R package dependency.
 
 ## Changes on 04.10.2026
 

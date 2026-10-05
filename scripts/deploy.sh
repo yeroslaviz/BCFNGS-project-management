@@ -164,10 +164,12 @@ if ! getent group "${APP_RUN_GROUP}" >/dev/null; then
   exit 1
 fi
 
-if ! command -v Rscript >/dev/null 2>&1; then
-  echo "Deploy failed: Rscript is not available." >&2
-  exit 1
-fi
+for required_tool in Rscript zip unzip; do
+  if ! command -v "${required_tool}" >/dev/null 2>&1; then
+    echo "Deploy failed: ${required_tool} is not available." >&2
+    exit 1
+  fi
+done
 
 missing_r_packages="$(
   sudo -u "${APP_RUN_USER}" Rscript --vanilla -e '
