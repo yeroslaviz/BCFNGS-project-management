@@ -217,6 +217,11 @@ if sudo rsync -av --delete --exclude 'sequencing_projects.db' --exclude '.Renvir
     echo "Deploy failed: ${APP_RUN_USER} cannot write to ${APP_DIRECTORY}." >&2
     exit 1
   fi
+  if ! sudo -iu "${APP_RUN_USER}" bash -c 'cd "$1"' _ "${APP_DIRECTORY}"; then
+    echo "Deploy failed: the ${APP_RUN_USER} login shell cannot enter ${APP_DIRECTORY}." >&2
+    echo "Inspect every path component with: namei -l ${APP_DIRECTORY}" >&2
+    exit 1
+  fi
   if ! sudo -u "${APP_RUN_USER}" sqlite3 "${APP_DB}" \
     'PRAGMA schema_version;' >/dev/null; then
     echo "Deploy failed: ${APP_RUN_USER} cannot open ${APP_DB}." >&2

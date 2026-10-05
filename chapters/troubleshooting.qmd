@@ -487,6 +487,27 @@ sudo systemctl start shiny-server
 The result must be `ok`. If the database file is absent, restore the existing
 production database from backup instead of initializing an empty replacement.
 
+If the Shiny log says `cd: /srv/shiny-server/sequencing-app: Permission
+denied`, inspect every directory component and test the same login-shell path
+used by Shiny Server:
+
+```bash
+namei -l /srv/shiny-server/sequencing-app
+sudo -iu ngs-shiny-user bash -c \
+  'cd /srv/shiny-server/sequencing-app && pwd'
+```
+
+Grant the service account execute/traverse permission on the blocking parent
+directory. Prefer a user-specific ACL when `setfacl` is available:
+
+```bash
+sudo setfacl -m u:ngs-shiny-user:--x /srv/shiny-server
+```
+
+The application directory itself remains owned by `ngs-shiny-user:b_ngs` with
+mode `0750`. The deploy script tests login-shell traversal before restarting
+Shiny Server.
+
 The NFS destination is `/fs/pool/pool-ngs-public`. The application deliberately
 requires this path to be an active mount; an ordinary local directory with the
 same name is not accepted as pool storage.

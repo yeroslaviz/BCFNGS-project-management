@@ -61,6 +61,9 @@ execute:
 10. Fixed the production-database existence guard to run with elevated access
     after the app directory is restricted to `0750`; deployment users outside
     `b_ngs` no longer receive a false "database not found" result.
+11. Added a login-shell traversal preflight matching Shiny Server's launch
+    behavior, so deployment stops with a path-permission diagnostic when the
+    runtime account cannot enter the deployed application directory.
 
 ## Changes on 04.10.2026
 
