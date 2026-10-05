@@ -444,6 +444,49 @@ sudo systemctl restart apache2
 
 ## Sample-sheet storage
 
+If Shiny reports that the application exited during initialization with
+`The readxl package is required`, install the dependency into the system R
+library and verify it as the application worker:
+
+```bash
+sudo Rscript --vanilla -e 'install.packages("readxl", repos="https://cloud.r-project.org")'
+sudo -u ngs-shiny-user Rscript --vanilla -e 'stopifnot(requireNamespace("readxl", quietly=TRUE)); packageVersion("readxl")'
+sudo systemctl restart shiny-server
+```
+
+The deployment script now performs this runtime-package check before syncing
+or restarting the application.
+
+If the application reports `unable to open database file` after switching the
+worker identity, do not run `setup_database.R`; that script recreates the
+database. Stop Shiny, repair ownership on the existing database and its parent
+directory, then test SQLite as the worker:
+
+```bash
+sudo systemctl stop shiny-server
+sudo chown ngs-shiny-user:b_ngs /srv/shiny-server/sequencing-app
+sudo chmod 0750 /srv/shiny-server/sequencing-app
+sudo find /srv/shiny-server/sequencing-app -maxdepth 1 -type f \
+  \( -name 'sequencing_projects.db' \
+  -o -name 'sequencing_projects.db-wal' \
+  -o -name 'sequencing_projects.db-shm' \
+  -o -name 'sequencing_projects.db-journal' \) \
+  -exec chown ngs-shiny-user:b_ngs {} +
+sudo find /srv/shiny-server/sequencing-app -maxdepth 1 -type f \
+  \( -name 'sequencing_projects.db' \
+  -o -name 'sequencing_projects.db-wal' \
+  -o -name 'sequencing_projects.db-shm' \
+  -o -name 'sequencing_projects.db-journal' \) \
+  -exec chmod 0660 {} +
+sudo -u ngs-shiny-user sqlite3 \
+  /srv/shiny-server/sequencing-app/sequencing_projects.db \
+  'PRAGMA quick_check;'
+sudo systemctl start shiny-server
+```
+
+The result must be `ok`. If the database file is absent, restore the existing
+production database from backup instead of initializing an empty replacement.
+
 The NFS destination is `/fs/pool/pool-ngs-public`. The application deliberately
 requires this path to be an active mount; an ordinary local directory with the
 same name is not accepted as pool storage.

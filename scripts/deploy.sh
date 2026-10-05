@@ -32,6 +32,7 @@ set -euo pipefail
 
 APP_SOURCE="/home/yeroslaviz/BCFNGS-project-management/sequencing-app/"
 APP_TARGET="/srv/shiny-server/sequencing-app/"
+APP_DIRECTORY="${APP_TARGET%/}"
 APP_DB="${APP_TARGET}sequencing_projects.db"
 PERSISTENT_UPLOAD_FALLBACK="${NGS_LOCAL_UPLOAD_FALLBACK:-/srv/ngs-app-data/uploads_pending_pool}"
 APP_RUN_USER="${APP_RUN_USER:-ngs-shiny-user}"
@@ -71,6 +72,12 @@ extract_location() {
        }'
 }
 
+curl_config_escape() {
+  # Keep LDAP credentials out of the process list while preserving characters
+  # that have special meaning inside curl's double-quoted config values.
+  printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
 run_ldap_smoke_tests() {
   if [ "${SKIP_SMOKE_TEST:-0}" = "1" ]; then
     echo "Skipping LDAP smoke tests (SKIP_SMOKE_TEST=1)."
@@ -93,7 +100,7 @@ run_ldap_smoke_tests() {
   local ldap_password="${LDAP_TEST_PASSWORD:-}"
   local tampered_user="${TAMPERED_AUTH_USER:-yeroslaviz}"
   local headers status location expected_location final_status
-  local netrc_file app_host
+  local curl_config_file escaped_user escaped_password
 
   if [ -z "${ldap_user}" ]; then
     read -r -p "LDAP smoke test username [yeroslaviz-test]: " ldap_user
@@ -112,38 +119,35 @@ run_ldap_smoke_tests() {
     tampered_user="${ldap_user}-tampered"
   fi
 
-  app_host="$(printf "%s" "${APP_URL}" | sed -E 's#^https?://([^/]+)/?.*#\1#')"
-  netrc_file="$(mktemp)"
-  chmod 600 "${netrc_file}"
-  cat > "${netrc_file}" <<EOF
-machine ${app_host}
-login ${ldap_user}
-password ${ldap_password}
-EOF
-  trap 'rm -f "${netrc_file}"' EXIT
+  curl_config_file="$(mktemp)"
+  chmod 600 "${curl_config_file}"
+  escaped_user="$(curl_config_escape "${ldap_user}")"
+  escaped_password="$(curl_config_escape "${ldap_password}")"
+  printf 'user = "%s:%s"\n' "${escaped_user}" "${escaped_password}" > "${curl_config_file}"
+  trap 'rm -f "${curl_config_file}"' EXIT
 
   expected_location="${APP_URL}?auth_user=${ldap_user}"
 
-  headers="$(curl -k -sS -D - -o /dev/null --netrc-file "${netrc_file}" "${APP_URL}")"
+  headers="$(curl -k -sS -D - -o /dev/null --config "${curl_config_file}" "${APP_URL}")"
   status="$(printf "%s\n" "${headers}" | extract_http_code)"
   location="$(printf "%s\n" "${headers}" | extract_location)"
   if [ "${status}" != "302" ] || [ "${location}" != "${expected_location}" ]; then
     smoke_fail "Expected 302 + Location=${expected_location} for ${APP_URL}, got status=${status}, location=${location:-<missing>}."
   fi
 
-  headers="$(curl -k -sS -D - -o /dev/null --netrc-file "${netrc_file}" "${APP_URL}?auth_user=${tampered_user}")"
+  headers="$(curl -k -sS -D - -o /dev/null --config "${curl_config_file}" "${APP_URL}?auth_user=${tampered_user}")"
   status="$(printf "%s\n" "${headers}" | extract_http_code)"
   location="$(printf "%s\n" "${headers}" | extract_location)"
   if [ "${status}" != "302" ] || [ "${location}" != "${expected_location}" ]; then
     smoke_fail "Tampered auth_user was not canonicalized. Expected 302 + Location=${expected_location}, got status=${status}, location=${location:-<missing>}."
   fi
 
-  final_status="$(curl -k -sS -L -o /dev/null -w "%{http_code}" --netrc-file "${netrc_file}" "${APP_URL}")"
+  final_status="$(curl -k -sS -L -o /dev/null -w "%{http_code}" --config "${curl_config_file}" "${APP_URL}")"
   if [ "${final_status}" != "200" ]; then
     smoke_fail "Final app response after redirects is ${final_status} (expected 200)."
   fi
 
-  rm -f "${netrc_file}"
+  rm -f "${curl_config_file}"
   trap - EXIT
   echo "LDAP smoke tests passed."
 }
@@ -160,14 +164,65 @@ if ! getent group "${APP_RUN_GROUP}" >/dev/null; then
   exit 1
 fi
 
+if ! command -v Rscript >/dev/null 2>&1; then
+  echo "Deploy failed: Rscript is not available." >&2
+  exit 1
+fi
+
+missing_r_packages="$(
+  sudo -u "${APP_RUN_USER}" Rscript --vanilla -e '
+    packages <- c(
+      "shiny", "shinyjs", "DBI", "RSQLite", "digest", "DT",
+      "shinyWidgets", "readxl", "rJava", "mailR", "ldapr"
+    )
+    missing <- packages[
+      !vapply(packages, requireNamespace, logical(1), quietly = TRUE)
+    ]
+    if (length(missing)) cat(paste(missing, collapse = " "))
+  '
+)"
+if [ -n "${missing_r_packages}" ]; then
+  echo "Deploy failed: ${APP_RUN_USER} cannot load required R packages: ${missing_r_packages}" >&2
+  echo "Install them first, then verify with:" >&2
+  echo "  sudo -u ${APP_RUN_USER} Rscript --vanilla -e 'stopifnot(requireNamespace(\"readxl\", quietly=TRUE))'" >&2
+  exit 1
+fi
+
 if sudo rsync -av --delete --exclude 'sequencing_projects.db' --exclude '.Renviron' "${APP_SOURCE}" "${APP_TARGET}"; then
   sudo install -d -o "${APP_RUN_USER}" -g "${APP_RUN_GROUP}" -m 0750 "${PERSISTENT_UPLOAD_FALLBACK}"
   sudo chown -R "${APP_RUN_USER}:${APP_RUN_GROUP}" "${APP_TARGET}"
-  if [ -f "${APP_DB}" ]; then
-    sudo chmod 660 "${APP_DB}"
-  else
-    echo "Note: DB file not found at ${APP_DB} (skipping chmod)."
+  sudo chown "${APP_RUN_USER}:${APP_RUN_GROUP}" "${APP_DIRECTORY}"
+  sudo chmod 0750 "${APP_DIRECTORY}"
+
+  if [ ! -f "${APP_DB}" ]; then
+    echo "Deploy failed: production database not found at ${APP_DB}." >&2
+    echo "Restore the existing database from backup; do not run setup_database.R over production." >&2
+    exit 1
   fi
+
+  sudo find "${APP_DIRECTORY}" -maxdepth 1 -type f \
+    \( -name 'sequencing_projects.db' \
+    -o -name 'sequencing_projects.db-wal' \
+    -o -name 'sequencing_projects.db-shm' \
+    -o -name 'sequencing_projects.db-journal' \) \
+    -exec chown "${APP_RUN_USER}:${APP_RUN_GROUP}" {} +
+  sudo find "${APP_DIRECTORY}" -maxdepth 1 -type f \
+    \( -name 'sequencing_projects.db' \
+    -o -name 'sequencing_projects.db-wal' \
+    -o -name 'sequencing_projects.db-shm' \
+    -o -name 'sequencing_projects.db-journal' \) \
+    -exec chmod 0660 {} +
+
+  if ! sudo -u "${APP_RUN_USER}" test -w "${APP_DIRECTORY}"; then
+    echo "Deploy failed: ${APP_RUN_USER} cannot write to ${APP_DIRECTORY}." >&2
+    exit 1
+  fi
+  if ! sudo -u "${APP_RUN_USER}" sqlite3 "${APP_DB}" \
+    'PRAGMA schema_version;' >/dev/null; then
+    echo "Deploy failed: ${APP_RUN_USER} cannot open ${APP_DB}." >&2
+    exit 1
+  fi
+
   sudo systemctl restart shiny-server
   echo "Deployment complete."
   run_ldap_smoke_tests

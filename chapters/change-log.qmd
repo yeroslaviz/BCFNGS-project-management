@@ -48,6 +48,16 @@ execute:
 6. Prepared deployment for `ngs-shiny-user:b_ngs`, including fallback
    ownership, dependency checks, mount verification, and updated operational
    documentation. The service account does not need the legacy `shiny` group.
+7. Added a deployment preflight that checks all required R packages as the
+   actual `ngs-shiny-user` worker before application files are synchronized or
+   Shiny Server is restarted.
+8. Changed LDAP smoke-test credential handling from an unquoted `.netrc` entry
+   to a protected curl configuration file so passwords containing spaces,
+   quotes, or backslashes are preserved correctly.
+9. Added a pre-restart SQLite gate that repairs database sidecar ownership and
+   verifies both the application directory and production database as
+   `ngs-shiny-user`. Deployment now stops if the database is absent or cannot
+   be opened.
 
 ## Changes on 04.10.2026
 
