@@ -58,6 +58,9 @@ execute:
    verifies both the application directory and production database as
    `ngs-shiny-user`. Deployment now stops if the database is absent or cannot
    be opened.
+10. Fixed the production-database existence guard to run with elevated access
+    after the app directory is restricted to `0750`; deployment users outside
+    `b_ngs` no longer receive a false "database not found" result.
 
 ## Changes on 04.10.2026
 

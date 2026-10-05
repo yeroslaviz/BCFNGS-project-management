@@ -194,7 +194,7 @@ if sudo rsync -av --delete --exclude 'sequencing_projects.db' --exclude '.Renvir
   sudo chown "${APP_RUN_USER}:${APP_RUN_GROUP}" "${APP_DIRECTORY}"
   sudo chmod 0750 "${APP_DIRECTORY}"
 
-  if [ ! -f "${APP_DB}" ]; then
+  if ! sudo test -f "${APP_DB}"; then
     echo "Deploy failed: production database not found at ${APP_DB}." >&2
     echo "Restore the existing database from backup; do not run setup_database.R over production." >&2
     exit 1
