@@ -165,6 +165,7 @@ setup_complete_database <- function() {
       panel_id INTEGER NOT NULL,
       display_order INTEGER NOT NULL,
       markdown_text TEXT NOT NULL,
+      background_style TEXT NOT NULL DEFAULT 'default',
       is_active INTEGER NOT NULL DEFAULT 1,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_by TEXT,

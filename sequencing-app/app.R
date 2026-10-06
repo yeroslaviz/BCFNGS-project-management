@@ -86,6 +86,36 @@ default_announcement_seed <- function() {
   )
 }
 
+announcement_box_background_choices <- c(
+  "Default (white)" = "default",
+  "Light blue" = "light-blue",
+  "Light yellow" = "light-yellow",
+  "Light green" = "light-green",
+  "Light red" = "light-red",
+  "Lavender" = "lavender",
+  "Light gray" = "light-gray",
+  "Dark blue" = "dark-blue"
+)
+
+normalize_announcement_box_background <- function(value) {
+  if (is.null(value) || length(value) == 0 || is.na(value[1])) {
+    return("default")
+  }
+  value <- as.character(value[1])
+  if (length(value) != 1 || is.na(value) ||
+      !value %in% unname(announcement_box_background_choices)) {
+    return("default")
+  }
+  value
+}
+
+announcement_box_background_label <- function(value) {
+  value <- normalize_announcement_box_background(value)
+  names(announcement_box_background_choices)[
+    match(value, unname(announcement_box_background_choices))
+  ]
+}
+
 is_safe_markdown_href <- function(href) {
   href <- trimws(tolower(href))
   grepl("^(https?://|mailto:|smb://)", href)
@@ -107,17 +137,32 @@ render_inline_markdown <- function(text) {
 
   remaining <- as.character(text)
   out <- character()
-  pattern <- "\\[([^\\]]+)\\]\\(([^)]+)\\)"
+  patterns <- list(
+    link = "\\[([^\\]]+)\\]\\(([^)]+)\\)",
+    color = "\\[color=(#[0-9A-Fa-f]{6})\\](.*?)\\[/color\\]"
+  )
 
   while (nchar(remaining) > 0) {
-    match_pos <- regexec(pattern, remaining, perl = TRUE)
-    match_vals <- regmatches(remaining, match_pos)[[1]]
+    matches <- lapply(patterns, function(pattern) {
+      match_pos <- regexec(pattern, remaining, perl = TRUE)
+      list(
+        pos = match_pos,
+        vals = regmatches(remaining, match_pos)[[1]]
+      )
+    })
+    starts <- vapply(matches, function(match) {
+      if (length(match$vals) == 0) Inf else as.integer(match$pos[[1]][1])
+    }, numeric(1))
 
-    if (length(match_vals) == 0) {
+    if (all(is.infinite(starts))) {
       out <- c(out, escape_inline_markdown(remaining))
       break
     }
 
+    match_type <- names(which.min(starts))
+    selected_match <- matches[[match_type]]
+    match_pos <- selected_match$pos
+    match_vals <- selected_match$vals
     start <- as.integer(match_pos[[1]][1])
     len <- attr(match_pos[[1]], "match.length")[1]
 
@@ -125,22 +170,37 @@ render_inline_markdown <- function(text) {
       out <- c(out, escape_inline_markdown(substr(remaining, 1, start - 1)))
     }
 
-    label <- match_vals[2]
-    href <- trimws(match_vals[3])
+    if (identical(match_type, "link")) {
+      label <- match_vals[2]
+      href <- trimws(match_vals[3])
 
-    if (is_safe_markdown_href(href)) {
+      if (is_safe_markdown_href(href)) {
+        out <- c(
+          out,
+          paste0(
+            '<a href="',
+            htmltools::htmlEscape(href, attribute = TRUE),
+            '">',
+            escape_inline_markdown(label),
+            "</a>"
+          )
+        )
+      } else {
+        out <- c(out, escape_inline_markdown(match_vals[1]))
+      }
+    } else {
+      color <- toupper(match_vals[2])
+      colored_text <- match_vals[3]
       out <- c(
         out,
         paste0(
-          '<a href="',
-          htmltools::htmlEscape(href, attribute = TRUE),
-          '">',
-          escape_inline_markdown(label),
-          "</a>"
+          '<span class="markdown-colored-text" style="color:',
+          color,
+          ';">',
+          render_inline_markdown(colored_text),
+          "</span>"
         )
       )
-    } else {
-      out <- c(out, escape_inline_markdown(match_vals[1]))
     }
 
     next_start <- start + len
@@ -300,11 +360,18 @@ announcement_blocks <- function(announcement_data) {
       )
     } else {
       for (i in seq_len(nrow(panel_items))) {
+        background_style <- normalize_announcement_box_background(
+          if ("background_style" %in% names(panel_items)) {
+            panel_items$background_style[i]
+          } else {
+            "default"
+          }
+        )
         content_nodes <- c(
           content_nodes,
           list(
             div(
-              class = "info-box",
+              class = paste0("info-box info-box--", background_style),
               HTML(markdown_lite_to_html(panel_items$markdown_text[i]))
             )
           )
@@ -540,6 +607,41 @@ ui <- fluidPage(
     padding: 10px 12px;
     margin: 8px 0;
     line-height: 1.45;
+  }
+  .info-box--light-blue {
+    background-color: #eaf4ff;
+    border-color: #9bc7ed;
+  }
+  .info-box--light-yellow {
+    background-color: #fff7d6;
+    border-color: #e4cc68;
+  }
+  .info-box--light-green {
+    background-color: #e8f6ec;
+    border-color: #91c9a0;
+  }
+  .info-box--light-red {
+    background-color: #fdeaea;
+    border-color: #e5a1a1;
+  }
+  .info-box--lavender {
+    background-color: #f2ecff;
+    border-color: #bda8ea;
+  }
+  .info-box--light-gray {
+    background-color: #f1f3f5;
+    border-color: #b8c0c8;
+  }
+  .info-box--dark-blue {
+    background-color: #163a5f;
+    border-color: #0c2945;
+    color: #ffffff !important;
+  }
+  .info-box.info-box--dark-blue a {
+    color: #ffffff;
+  }
+  .markdown-colored-text {
+    color: inherit;
   }
   .info-box p {
     margin: 0 0 8px 0;
@@ -1129,6 +1231,7 @@ server <- function(input, output, session) {
         panel_id INTEGER NOT NULL,
         display_order INTEGER NOT NULL,
         markdown_text TEXT NOT NULL,
+        background_style TEXT NOT NULL DEFAULT 'default',
         is_active INTEGER NOT NULL DEFAULT 1,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_by TEXT,
@@ -1136,6 +1239,17 @@ server <- function(input, output, session) {
       )
     "
     )
+
+    announcement_item_columns <- dbGetQuery(
+      con,
+      "PRAGMA table_info(announcement_items)"
+    )$name
+    if (!"background_style" %in% announcement_item_columns) {
+      dbExecute(
+        con,
+        "ALTER TABLE announcement_items ADD COLUMN background_style TEXT NOT NULL DEFAULT 'default'"
+      )
+    }
   }
 
   seed_announcement_defaults <- function(con, updated_by = "system") {
@@ -1220,7 +1334,7 @@ server <- function(input, output, session) {
       FROM announcement_panels
     "
     item_query <- "
-      SELECT id, panel_id, display_order, markdown_text, is_active
+      SELECT id, panel_id, display_order, markdown_text, background_style, is_active
       FROM announcement_items
     "
 
@@ -4790,7 +4904,7 @@ server <- function(input, output, session) {
     }
 
     query <- "
-      SELECT id, panel_id, display_order, markdown_text, is_active
+      SELECT id, panel_id, display_order, markdown_text, background_style, is_active
       FROM announcement_items
       WHERE panel_id = ?
     "
@@ -4831,6 +4945,21 @@ server <- function(input, output, session) {
         "Content is too long (max ",
         max_announcement_chars,
         " characters)."
+      ))
+    }
+    color_markup_remainder <- gsub(
+      "\\[color=#[0-9A-Fa-f]{6}\\][^\\r\\n]*?\\[/color\\]",
+      "",
+      markdown_text,
+      perl = TRUE
+    )
+    if (
+      grepl("[color=", color_markup_remainder, fixed = TRUE) ||
+        grepl("[/color]", color_markup_remainder, fixed = TRUE)
+    ) {
+      return(paste0(
+        "Invalid foreground color syntax. Use ",
+        "[color=#RRGGBB]text[/color] on a single line."
       ))
     }
     NULL
@@ -9250,7 +9379,7 @@ server <- function(input, output, session) {
       ),
       tags$p(
         tags$strong("Markdown-lite syntax:"),
-        " use **bold**, bullet lists (- item), numbered lists (1. item), and links like [@NGS](mailto:ngs@biochem.mpg.de)."
+        " use **bold**, bullet lists (- item), numbered lists (1. item), links like [@NGS](mailto:ngs@biochem.mpg.de), and foreground colors like [color=#C62828]important text[/color]."
       ),
       DTOutput("announcement_items_table_admin"),
       div(
@@ -9311,6 +9440,11 @@ server <- function(input, output, session) {
     display <- data.frame(
       Order = items$display_order,
       Active = ifelse(items$is_active == 1, "Yes", "No"),
+      Background = vapply(
+        items$background_style,
+        announcement_box_background_label,
+        character(1)
+      ),
       Content = preview,
       stringsAsFactors = FALSE
     )
@@ -9498,17 +9632,24 @@ server <- function(input, output, session) {
         )
       ),
       checkboxInput("item_active", "Active", value = TRUE),
+      selectInput(
+        "item_background_style",
+        "Box background",
+        choices = announcement_box_background_choices,
+        selected = "default"
+      ),
       textAreaInput(
         "item_markdown_text",
         "Content (Markdown-lite)",
         value = "",
         rows = 10,
-        placeholder = "Example:\n**QC submission**: Everyday **9:00 - 11:00**\n- Result will be available **13:00-15:00**\n- Ask us for a datashare link"
+        placeholder = "Example:\n**QC submission**: Everyday **9:00 - 11:00**\n[color=#C62828]Important text[/color]\n- Ask us for a datashare link"
       ),
       tags$small(paste0(
         "Maximum length: ",
         max_announcement_chars,
-        " characters."
+        " characters. Foreground color: ",
+        "[color=#RRGGBB]text[/color]."
       ))
     ))
   })
@@ -9548,13 +9689,14 @@ server <- function(input, output, session) {
     dbExecute(
       con,
       "
-      INSERT INTO announcement_items (panel_id, display_order, markdown_text, is_active, updated_by)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO announcement_items (panel_id, display_order, markdown_text, background_style, is_active, updated_by)
+      VALUES (?, ?, ?, ?, ?, ?)
     ",
       params = list(
         panel$id[1],
         as.integer(next_order),
         as.character(input$item_markdown_text),
+        normalize_announcement_box_background(input$item_background_style),
         as.integer(isTRUE(input$item_active)),
         user$username %||% "admin"
       )
@@ -9595,6 +9737,14 @@ server <- function(input, output, session) {
         "Active",
         value = as.logical(item$is_active[1])
       ),
+      selectInput(
+        "item_background_style",
+        "Box background",
+        choices = announcement_box_background_choices,
+        selected = normalize_announcement_box_background(
+          item$background_style[1]
+        )
+      ),
       textAreaInput(
         "item_markdown_text",
         "Content (Markdown-lite)",
@@ -9604,7 +9754,8 @@ server <- function(input, output, session) {
       tags$small(paste0(
         "Maximum length: ",
         max_announcement_chars,
-        " characters."
+        " characters. Foreground color: ",
+        "[color=#RRGGBB]text[/color]."
       ))
     ))
   })
@@ -9634,11 +9785,12 @@ server <- function(input, output, session) {
       con,
       "
       UPDATE announcement_items
-      SET markdown_text = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
+      SET markdown_text = ?, background_style = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
       WHERE id = ?
     ",
       params = list(
         as.character(input$item_markdown_text),
+        normalize_announcement_box_background(input$item_background_style),
         as.integer(isTRUE(input$item_active)),
         user$username %||% "admin",
         as.integer(item_id)
