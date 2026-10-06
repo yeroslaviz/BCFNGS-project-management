@@ -196,7 +196,7 @@ render_inline_markdown <- function(text) {
         paste0(
           '<span class="markdown-colored-text" style="color:',
           color,
-          ';">',
+          ' !important;">',
           render_inline_markdown(colored_text),
           "</span>"
         )
