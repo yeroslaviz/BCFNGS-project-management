@@ -8097,8 +8097,7 @@ server <- function(input, output, session) {
         finalized_sample_sheet_path <- ngs_assign_project_number(
           sample_sheet_upload$datapath[[1]],
           project_code_for_storage,
-          sample_sheet_result$excel_rows,
-          sample_sheet_result$data
+          sample_sheet_result$excel_rows
         )
         sample_sheet_storage <- ngs_store_sample_sheet(
           finalized_sample_sheet_path,

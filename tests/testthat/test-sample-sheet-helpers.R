@@ -9,19 +9,34 @@ sample_rows <- function() {
     Volume = c("20", "10"),
     `Description_Condition (optional)` = c("treated", ""),
     `Concentration (optional)` = c("0.7", ""),
-    SampleIndex = c("Sample01", "Sample02"),
-    DataName = c("_Sample01_sample-a", "_Sample02_sample-b"),
+    SampleIndex = c("", ""),
+    DataName = c("", ""),
     check.names = FALSE,
     stringsAsFactors = FALSE
   )
 }
 
 test_that("the committed workbook matches the current template contract", {
+  template_path <- file.path(
+    repo_prefix,
+    "sequencing-app",
+    "NGS_sampleSheet_template.xlsx"
+  )
   parsed <- ngs_read_sample_sheet(
-    file.path(repo_prefix, "sequencing-app", "NGS_sampleSheet_template.xlsx")
+    template_path
   )
   expect_identical(parsed$headers, NGS_SAMPLE_SHEET_HEADERS)
   expect_equal(nrow(parsed$data), 0L)
+
+  example <- suppressMessages(readxl::read_excel(
+    template_path,
+    sheet = "Example",
+    col_names = FALSE,
+    col_types = "text",
+    .name_repair = "minimal"
+  ))
+  expect_identical(ngs_cell_text(example[[7]][4:7]), rep("", 4L))
+  expect_identical(ngs_cell_text(example[[8]][4:7]), rep("", 4L))
 })
 
 test_that("valid user rows pass with optional fields empty", {
@@ -48,7 +63,7 @@ test_that("required user cells and sample count are checked", {
   expect_match(paste(checked$errors, collapse = " "), "Excel row 5")
 })
 
-test_that("facility-generated values may be blank or unchanged only", {
+test_that("facility-generated values must remain blank", {
   rows <- sample_rows()
   rows$SampleIndex[[1]] <- "custom-index"
   rows$DataName[[2]] <- "custom-name"
@@ -56,11 +71,6 @@ test_that("facility-generated values may be blank or unchanged only", {
   expect_false(checked$valid)
   expect_match(paste(checked$errors, collapse = " "), "SampleIndex is reserved")
   expect_match(paste(checked$errors, collapse = " "), "DataName is reserved")
-
-  rows$SampleIndex <- ""
-  rows$DataName <- ""
-  checked_blank <- ngs_validate_sample_sheet_data(rows, c(4L, 5L), 2L)
-  expect_true(checked_blank$valid)
 })
 
 test_that("assigned project number is written to rows and worksheet name", {
@@ -72,8 +82,7 @@ test_that("assigned project number is written to rows and worksheet name", {
   finalized <- ngs_assign_project_number(
     source_workbook,
     "P1111",
-    c(4L, 5L),
-    sample_rows()
+    4:7
   )
   on.exit(unlink(finalized, force = TRUE), add = TRUE)
 
@@ -86,11 +95,9 @@ test_that("assigned project number is written to rows and worksheet name", {
     col_types = "text",
     .name_repair = "minimal"
   ))
-  expect_identical(assigned[[6]][4:5], c("P1111", "P1111"))
-  expect_identical(
-    assigned[[8]][4:5],
-    c("P1111_Sample01_sample-a", "P1111_Sample02_sample-b")
-  )
+  expect_identical(assigned[[6]][4:7], rep("P1111", 4L))
+  expect_identical(ngs_cell_text(assigned[[7]][4:7]), rep("", 4L))
+  expect_identical(ngs_cell_text(assigned[[8]][4:7]), rep("", 4L))
   expect_identical(
     readxl::excel_sheets(source_workbook),
     c("Example", "project_metadata")

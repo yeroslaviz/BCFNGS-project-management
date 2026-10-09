@@ -119,8 +119,8 @@ ngs_read_sample_sheet <- function(path) {
     data <- raw[4:nrow(raw), seq_along(NGS_SAMPLE_SHEET_HEADERS), drop = FALSE]
     names(data) <- NGS_SAMPLE_SHEET_HEADERS
     data[] <- lapply(data, ngs_cell_text)
-    # SampleIndex/DataName contain facility formulas in unused template rows.
     # Only the user-entry section (A:E) determines whether a sample row exists.
+    # ProjectNumber, SampleIndex, and DataName are completed by the facility.
     row_has_data <- apply(
       data[, NGS_SAMPLE_SHEET_USER_COLUMNS, drop = FALSE],
       1,
@@ -189,34 +189,20 @@ ngs_validate_sample_sheet_data <- function(data, excel_rows, expected_rows) {
     }
   }
 
-  # The current template pre-generates these facility cells. Accept blank cells
-  # or the unchanged generated values, but reject user-entered alternatives.
-  for (i in seq_len(nrow(data))) {
-    expected_index <- sprintf("Sample%02d", excel_rows[[i]] - 3L)
-    sample_index <- ngs_cell_text(data$SampleIndex[[i]])
-    sample_name <- ngs_cell_text(data$SampleName[[i]])
-    data_name <- ngs_cell_text(data$DataName[[i]])
-    allowed_data_names <- unique(c(
-      paste0("_", expected_index, "_"),
-      paste0("_", expected_index, "_", sample_name)
-    ))
-
-    if (nzchar(sample_index) && !identical(sample_index, expected_index)) {
+  for (column_name in setdiff(
+    NGS_SAMPLE_SHEET_FACILITY_COLUMNS,
+    "ProjectNumber"
+  )) {
+    facility_value_used <- which(nzchar(ngs_cell_text(data[[column_name]])))
+    if (length(facility_value_used) > 0) {
       errors <- c(
         errors,
         paste0(
-          "SampleIndex is reserved for the NGS/BCF facility. Restore the template value '",
-          expected_index,
-          "' or leave it blank in Excel row ", excel_rows[[i]], "."
-        )
-      )
-    }
-    if (nzchar(data_name) && !(data_name %in% allowed_data_names)) {
-      errors <- c(
-        errors,
-        paste0(
-          "DataName is reserved for the NGS/BCF facility. Restore its template formula or leave it blank in Excel row ",
-          excel_rows[[i]], "."
+          column_name,
+          " is reserved for the NGS/BCF facility. Leave it blank in Excel row",
+          if (length(facility_value_used) == 1) " " else "s ",
+          paste(excel_rows[facility_value_used], collapse = ", "),
+          "."
         )
       )
     }
@@ -367,41 +353,10 @@ ngs_set_inline_string_cell <- function(sheet_xml, cell_reference, value) {
   ngs_replace_once(sheet_xml, row_tag, new_row, paste("Excel row", row_number))
 }
 
-ngs_set_formula_cached_value <- function(sheet_xml, cell_reference, value) {
-  cell_pattern <- paste0(
-    "(?s)<c\\b[^>]*\\br=\"",
-    ngs_regex_escape(cell_reference),
-    "\"[^>]*?>.*?</c>"
-  )
-  cell_tags <- ngs_xml_tags(sheet_xml, cell_pattern)
-  if (length(cell_tags) == 0L) return(sheet_xml)
-  if (length(cell_tags) != 1L || !grepl("<f(?:\\s|>)", cell_tags[[1]], perl = TRUE)) {
-    stop("Could not update the cached formula result for ", cell_reference, ".")
-  }
-
-  cell_tag <- cell_tags[[1]]
-  updated_cell <- if (grepl("(?s)<v>.*?</v>", cell_tag, perl = TRUE)) {
-    sub(
-      "(?s)<v>.*?</v>",
-      paste0("<v>", ngs_xml_escape(value), "</v>"),
-      cell_tag,
-      perl = TRUE
-    )
-  } else {
-    sub(
-      "</c>$",
-      paste0("<v>", ngs_xml_escape(value), "</v></c>"),
-      cell_tag
-    )
-  }
-  ngs_replace_once(sheet_xml, cell_tag, updated_cell, cell_reference)
-}
-
 ngs_assign_project_number <- function(
   source,
   project_code,
-  excel_rows,
-  sample_data = NULL
+  excel_rows
 ) {
   project_code <- ngs_scalar_text(project_code)
   if (!grepl("^P[0-9]+$", project_code)) {
@@ -410,9 +365,6 @@ ngs_assign_project_number <- function(
   excel_rows <- suppressWarnings(as.integer(excel_rows))
   if (length(excel_rows) == 0L || anyNA(excel_rows) || any(excel_rows < 4L)) {
     stop("Cannot finalize the sample sheet without valid sample-row numbers.")
-  }
-  if (!is.null(sample_data) && nrow(sample_data) != length(excel_rows)) {
-    stop("Sample-sheet rows changed before project-number assignment.")
   }
   if (!file.exists(source)) stop("The uploaded sample sheet could not be found.")
 
@@ -548,19 +500,6 @@ ngs_assign_project_number <- function(
       paste0("F", excel_row),
       project_code
     )
-    if (!is.null(sample_data)) {
-      data_name <- paste(
-        project_code,
-        ngs_cell_text(sample_data$SampleIndex[[i]]),
-        ngs_cell_text(sample_data$SampleName[[i]]),
-        sep = "_"
-      )
-      worksheet_xml <- ngs_set_formula_cached_value(
-        worksheet_xml,
-        paste0("H", excel_row),
-        data_name
-      )
-    }
   }
   ngs_write_binary_text(worksheet_path, worksheet_xml)
 
