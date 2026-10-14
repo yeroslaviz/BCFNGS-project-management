@@ -6012,8 +6012,8 @@ server <- function(input, output, session) {
           project_code,
           ") are now available.\n\n",
           "You can access the NGS data in your personal pool folder:\n\n",
-          "(Windows) \\\\samba-pool-dnaseq\\pool-dnaseq\\\n",
-          "(Mac) smb://samba-pool-dnaseq/pool-dnaseq/\n\n",
+          "(Windows) \\\\samba-pool-ngs-public\\pool-ngs-public\\\n",
+          "(Mac) smb://samba-pool-ngs-public/pool-ngs-public/\n\n",
           "or, via datashare - ask us for a link.\n\n",
           "Best regards,\n",
           "The NGS sequencing facility"
