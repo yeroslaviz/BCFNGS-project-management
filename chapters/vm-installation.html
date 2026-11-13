@@ -241,7 +241,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#install-base-packages" id="toc-install-base-packages" class="nav-link" data-scroll-target="#install-base-packages"><span class="header-section-number">5.6.1</span> 1) Install base packages</a></li>
   <li><a href="#bcf-install-shiny-server" id="toc-bcf-install-shiny-server" class="nav-link" data-scroll-target="#bcf-install-shiny-server"><span class="header-section-number">5.6.2</span> 2) Install Shiny Server</a></li>
   <li><a href="#bcf-java-mail" id="toc-bcf-java-mail" class="nav-link" data-scroll-target="#bcf-java-mail"><span class="header-section-number">5.6.3</span> 2b) Configure Java + mail packages (required for email notifications)</a></li>
-  <li><a href="#bcf-shiny-user-perms" id="toc-bcf-shiny-user-perms" class="nav-link" data-scroll-target="#bcf-shiny-user-perms"><span class="header-section-number">5.6.4</span> 2c) Create <code>shiny</code> user + app-folder permissions</a></li>
+  <li><a href="#bcf-shiny-user-perms" id="toc-bcf-shiny-user-perms" class="nav-link" data-scroll-target="#bcf-shiny-user-perms"><span class="header-section-number">5.6.4</span> 2c) Configure the dedicated NGS runtime identity</a></li>
   <li><a href="#bcf-ldap-deps" id="toc-bcf-ldap-deps" class="nav-link" data-scroll-target="#bcf-ldap-deps"><span class="header-section-number">5.6.5</span> 2d) LDAP packages (Ubuntu + R)</a></li>
   <li><a href="#create-a-self-signed-certificate-test-only" id="toc-create-a-self-signed-certificate-test-only" class="nav-link" data-scroll-target="#create-a-self-signed-certificate-test-only"><span class="header-section-number">5.6.6</span> 3) Create a self-signed certificate (test only)</a></li>
   <li><a href="#clone-repo-and-set-app-folder" id="toc-clone-repo-and-set-app-folder" class="nav-link" data-scroll-target="#clone-repo-and-set-app-folder"><span class="header-section-number">5.6.7</span> 4) Clone repo and set app folder</a></li>
@@ -351,7 +351,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Install Shiny Server from the <code>.deb</code> package (see <a href="#bcf-install-shiny-server">bcf-vm Step 2</a>).</li>
 <li>Install Java + R mail dependencies for email notifications (see <a href="#bcf-java-mail">bcf-vm Step 2b</a>).</li>
 <li>Install LDAP client/build dependencies + <code>ldapr</code> (see <a href="#bcf-ldap-deps">bcf-vm Step 2d</a>).</li>
-<li>Ensure the <code>shiny</code> user exists and app-folder permissions are correct (see <a href="#bcf-shiny-user-perms">bcf-vm Step 2c</a>).</li>
+<li>Ensure <code>ngs-shiny-user</code> and group <code>b_ngs</code> exist and app-folder permissions are correct (see <a href="#bcf-shiny-user-perms">bcf-vm Step 2c</a>).</li>
 <li>Configure Apache vhost, LDAP, and systemd environment (see <a href="#bcf-configure-ldap-systemd">bcf-vm Step 6</a>, <a href="#bcf-configure-apache-vhost">bcf-vm Step 7</a>, and <a href="#ngs-parallel-shiny-vhost">ngs-vm Step 2</a>).</li>
 </ul>
 </section>
@@ -373,7 +373,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="install-base-packages" class="level3" data-number="5.6.1">
 <h3 data-number="5.6.1" class="anchored" data-anchor-id="install-base-packages"><span class="header-section-number">5.6.1</span> 1) Install base packages</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt-get update</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt-get install <span class="at">-y</span> git curl rsync apache2 apache2-utils openssl sqlite3 ldap-utils <span class="dt">\</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt-get install <span class="at">-y</span> git curl rsync zip unzip apache2 apache2-utils openssl sqlite3 ldap-utils util-linux <span class="dt">\</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  build-essential libcurl4-openssl-dev libssl-dev libxml2-dev r-base</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="bcf-install-shiny-server" class="level3" data-number="5.6.2">
@@ -388,69 +388,71 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The app sends emails via <code>mailR</code>, which requires Java / <code>rJava</code>. This is for <strong>email notifications</strong>, not for LDAP auth itself.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt-get install <span class="at">-y</span> default-jdk</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> R CMD javareconf</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'install.packages(c("rJava","mailR"), repos="https://cloud.r-project.org")'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'install.packages(c("rJava","mailR"), repos="https://cloud.r-project.org")'</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'install.packages("readxl", repos="https://cloud.r-project.org")'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Apply the same on <code>ngs-vm</code> and <code>bcf-vm</code>.</p>
 </section>
 <section id="bcf-shiny-user-perms" class="level3" data-number="5.6.4">
-<h3 data-number="5.6.4" class="anchored" data-anchor-id="bcf-shiny-user-perms"><span class="header-section-number">5.6.4</span> 2c) Create <code>shiny</code> user + app-folder permissions</h3>
-<p>Shiny Server runs the app as the <code>shiny</code> service user.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">getent</span> passwd shiny <span class="kw">||</span> <span class="fu">sudo</span> useradd <span class="at">--system</span> <span class="at">--home</span> /var/lib/shiny-server <span class="at">--shell</span> /usr/sbin/nologin shiny</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /srv/shiny-server/sequencing-app</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> shiny:shiny /srv/shiny-server/sequencing-app</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chmod 755 /srv/shiny-server /srv/shiny-server/sequencing-app</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> usermod <span class="at">-a</span> <span class="at">-G</span> shiny <span class="st">"</span><span class="va">$USER</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>If you are configuring a different account, replace <code>"$USER"</code> with that username.</p>
+<h3 data-number="5.6.4" class="anchored" data-anchor-id="bcf-shiny-user-perms"><span class="header-section-number">5.6.4</span> 2c) Configure the dedicated NGS runtime identity</h3>
+<p>Shiny Server runs this app as the centrally provisioned <code>ngs-shiny-user:b_ngs</code> identity. Do not create a second local account and do not add it to the legacy <code>shiny</code> group.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">getent</span> passwd ngs-shiny-user</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">getent</span> group b_ngs</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">id</span> ngs-shiny-user</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Set <code>run_as ngs-shiny-user;</code> in <code>/etc/shiny-server/shiny-server.conf</code>, then prepare the application and persistent fallback directories:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> install <span class="at">-d</span> <span class="at">-o</span> ngs-shiny-user <span class="at">-g</span> b_ngs <span class="at">-m</span> 0755 /srv/shiny-server/sequencing-app</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> install <span class="at">-d</span> <span class="at">-o</span> ngs-shiny-user <span class="at">-g</span> b_ngs <span class="at">-m</span> 0750 /srv/ngs-app-data/uploads_pending_pool</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>IT should grant <code>ngs-shiny-user</code> direct read/write ACL access to the NFS mount <code>/fs/pool/pool-ngs-public</code>. The app can start before that mount is ready; it uses <code>/srv/ngs-app-data/uploads_pending_pool</code> and alerts omicsdesk while the pool is unavailable.</p>
 </section>
 <section id="bcf-ldap-deps" class="level3" data-number="5.6.5">
 <h3 data-number="5.6.5" class="anchored" data-anchor-id="bcf-ldap-deps"><span class="header-section-number">5.6.5</span> 2d) LDAP packages (Ubuntu + R)</h3>
 <p>Install LDAP client tools and build dependencies:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt-get install <span class="at">-y</span> ldap-utils libldap2-dev libsasl2-dev ca-certificates</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt-get install <span class="at">-y</span> ldap-utils libldap2-dev libsasl2-dev ca-certificates</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Configure OpenLDAP client trust in <code>/etc/ldap/ldap.conf</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tee /etc/ldap/ldap.conf <span class="op">&gt;</span>/dev/null <span class="op">&lt;&lt;'EOF'</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="st">BASE            dc=biochem,dc=mpg,dc=de</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="st">URI             ldaps://ldap01.example.internal ldaps://ldap02.example.internal ldaps://ldap03.example.internal</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="st">TLS_REQCERT     hard</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="st">TLS_CACERTDIR   /etc/ssl/certs</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tee /etc/ldap/ldap.conf <span class="op">&gt;</span>/dev/null <span class="op">&lt;&lt;'EOF'</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="st">BASE            dc=biochem,dc=mpg,dc=de</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="st">URI             ldaps://ldap01.example.internal ldaps://ldap02.example.internal ldaps://ldap03.example.internal</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="st">TLS_REQCERT     hard</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="st">TLS_CACERTDIR   /etc/ssl/certs</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Install the R LDAP package:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'install.packages("ldapr", repos="https://cloud.r-project.org")'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'install.packages("ldapr", repos="https://cloud.r-project.org")'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Fallback if CRAN install is unavailable on this VM:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'if (!requireNamespace("remotes", quietly=TRUE)) install.packages("remotes", repos="https://cloud.r-project.org"); remotes::install_github("liamgilbey/ldapr")'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'if (!requireNamespace("remotes", quietly=TRUE)) install.packages("remotes", repos="https://cloud.r-project.org"); remotes::install_github("liamgilbey/ldapr")'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Quick checks:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ldapsearch</span> <span class="at">-x</span> <span class="at">-H</span> ldaps://ldap01.example.internal:636 <span class="at">-b</span> <span class="st">"dc=biochem,dc=mpg,dc=de"</span> <span class="st">"(uid=&lt;user&gt;)"</span> mail</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'library(ldapr); cat("ldapr OK\n")'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ldapsearch</span> <span class="at">-x</span> <span class="at">-H</span> ldaps://ldap01.example.internal:636 <span class="at">-b</span> <span class="st">"dc=biochem,dc=mpg,dc=de"</span> <span class="st">"(uid=&lt;user&gt;)"</span> mail</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> ngs-shiny-user Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'library(ldapr); cat("ldapr OK\n")'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If <code>ldapsearch</code> only works with <code>LDAPTLS_REQCERT=never</code>, your <code>/etc/ldap/ldap.conf</code> trust settings are incomplete or incorrect.</p>
 </section>
 <section id="create-a-self-signed-certificate-test-only" class="level3" data-number="5.6.6">
 <h3 data-number="5.6.6" class="anchored" data-anchor-id="create-a-self-signed-certificate-test-only"><span class="header-section-number">5.6.6</span> 3) Create a self-signed certificate (test only)</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /etc/ssl/localcerts</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> openssl req <span class="at">-x509</span> <span class="at">-nodes</span> <span class="at">-days</span> 365 <span class="dt">\</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-newkey</span> rsa:2048 <span class="dt">\</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-keyout</span> /etc/ssl/localcerts/bcf-vm.key <span class="dt">\</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">-out</span> /etc/ssl/localcerts/bcf-vm.crt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /etc/ssl/localcerts</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> openssl req <span class="at">-x509</span> <span class="at">-nodes</span> <span class="at">-days</span> 365 <span class="dt">\</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-newkey</span> rsa:2048 <span class="dt">\</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-keyout</span> /etc/ssl/localcerts/bcf-vm.key <span class="dt">\</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">-out</span> /etc/ssl/localcerts/bcf-vm.crt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="clone-repo-and-set-app-folder" class="level3" data-number="5.6.7">
 <h3 data-number="5.6.7" class="anchored" data-anchor-id="clone-repo-and-set-app-folder"><span class="header-section-number">5.6.7</span> 4) Clone repo and set app folder</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>user<span class="op">&gt;</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone git@github.com:example-org/example-repo.git</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> rsync <span class="at">-av</span> /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management/sequencing-app/ /srv/shiny-server/sequencing-app/</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> shiny:shiny /srv/shiny-server/sequencing-app</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>user<span class="op">&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone git@github.com:example-org/example-repo.git</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> rsync <span class="at">-av</span> /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management/sequencing-app/ /srv/shiny-server/sequencing-app/</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> ngs-shiny-user:b_ngs /srv/shiny-server/sequencing-app</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="initialize-the-sqlite-db" class="level3" data-number="5.6.8">
 <h3 data-number="5.6.8" class="anchored" data-anchor-id="initialize-the-sqlite-db"><span class="header-section-number">5.6.8</span> 5) Initialize the SQLite DB</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /srv/shiny-server/sequencing-app</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny Rscript setup_database.R</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /srv/shiny-server/sequencing-app</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> ngs-shiny-user Rscript setup_database.R</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="bcf-configure-ldap-systemd" class="level3" data-number="5.6.9">
 <h3 data-number="5.6.9" class="anchored" data-anchor-id="bcf-configure-ldap-systemd"><span class="header-section-number">5.6.9</span> 6) Configure LDAP mode (systemd override)</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl edit shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode ini code-with-copy"><code class="sourceCode ini"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[Service]</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">AUTH_MODE=ldap</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_URI=ldaps://ldap01.example.internal:636,ldaps://ldap02.example.internal:636,ldaps://ldap03.example.internal:636</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">TRUST_PROXY_AUTH_USER_QUERY=1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl daemon-reload</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl edit shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode ini code-with-copy"><code class="sourceCode ini"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[Service]</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">AUTH_MODE=ldap</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_URI=ldaps://ldap01.example.internal:636,ldaps://ldap02.example.internal:636,ldaps://ldap03.example.internal:636</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">TRUST_PROXY_AUTH_USER_QUERY=1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl daemon-reload</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="bcf-app-renviron" class="level3" data-number="5.6.10">
 <h3 data-number="5.6.10" class="anchored" data-anchor-id="bcf-app-renviron"><span class="header-section-number">5.6.10</span> 6b) Ensure app runtime env is loaded (<code>.Renviron</code>)</h3>
@@ -459,16 +461,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><code>/srv/shiny-server/sequencing-app/.Renviron</code></li>
 </ul>
 <p>Create/update this file:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tee /srv/shiny-server/sequencing-app/.Renviron <span class="op">&gt;</span>/dev/null <span class="op">&lt;&lt;'EOF'</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="st">AUTH_MODE=ldap</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="st">LDAP_URI=ldaps://ldap01.example.internal:636,ldaps://ldap02.example.internal:636,ldaps://ldap03.example.internal:636</span></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="st">LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de</span></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="st">TRUST_PROXY_AUTH_USER_QUERY=1</span></span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="st"># LDAP_DEBUG=1   # only while debugging</span></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown shiny:shiny /srv/shiny-server/sequencing-app/.Renviron</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chmod 640 /srv/shiny-server/sequencing-app/.Renviron</span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tee /srv/shiny-server/sequencing-app/.Renviron <span class="op">&gt;</span>/dev/null <span class="op">&lt;&lt;'EOF'</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="st">AUTH_MODE=ldap</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="st">LDAP_URI=ldaps://ldap01.example.internal:636,ldaps://ldap02.example.internal:636,ldaps://ldap03.example.internal:636</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="st">LDAP_BASE_DN=dc=biochem,dc=mpg,dc=de</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="st">TRUST_PROXY_AUTH_USER_QUERY=1</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="st">NGS_UPLOAD_ROOT=/fs/pool/pool-ngs-public</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="st">NGS_LOCAL_UPLOAD_FALLBACK=/srv/ngs-app-data/uploads_pending_pool</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="st">NGS_POOL_ALERT_EMAIL=omicsdesk@biochem.mpg.de</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="st"># LDAP_DEBUG=1   # only while debugging</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown ngs-shiny-user:b_ngs /srv/shiny-server/sequencing-app/.Renviron</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chmod 640 /srv/shiny-server/sequencing-app/.Renviron</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This prevents the app from falling back to local-mode UI when systemd env is present but not visible inside the R worker.</p>
 </section>
 <section id="bcf-configure-apache-vhost" class="level3" data-number="5.6.11">
@@ -478,7 +483,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><code>scripts/bcf.vm.conf</code></li>
 </ul>
 <p>Copy it on VM:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management/scripts/bcf.vm.conf /etc/apache2/sites-available/bcf-vm.conf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management/scripts/bcf.vm.conf /etc/apache2/sites-available/bcf-vm.conf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Template includes:</p>
 <ul>
 <li>HTTP→HTTPS redirect (<code>:80</code> → <code>:443</code>)</li>
@@ -487,10 +492,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Canonical <code>auth_user</code> rewrite and websocket rule</li>
 </ul>
 <p>Enable the site and restart Apache:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod ssl proxy proxy_http proxy_wstunnel headers rewrite ldap authnz_ldap</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite bcf-vm.conf <span class="co"># this creates symlink to sites-enabled</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod ssl proxy proxy_http proxy_wstunnel headers rewrite ldap authnz_ldap</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite bcf-vm.conf <span class="co"># this creates symlink to sites-enabled</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="ngs-vm-parallel-install-next-to-perl-system" class="level2" data-number="5.7">
@@ -506,7 +511,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><code>scripts/ngs-vm-shiny.conf</code></li>
 </ul>
 <p>Copy it on VM:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management/scripts/ngs-vm-shiny.conf /etc/apache2/sites-available/ngs-vm-shiny.conf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management/scripts/ngs-vm-shiny.conf /etc/apache2/sites-available/ngs-vm-shiny.conf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Keep certificate paths unchanged in this file:</p>
 <ul>
 <li><code>SSLCertificateFile /etc/ssl/certs/ngs-cert.pem</code></li>
@@ -514,25 +519,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><code>SSLCertificateChainFile /etc/apache2/certificate/2026_Cert_binary.cer</code></li>
 </ul>
 <p>Enable and reload:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-q</span> <span class="st">'^Listen 8443$'</span> /etc/apache2/ports.conf <span class="kw">||</span> <span class="bu">echo</span> <span class="st">'Listen 8443'</span> <span class="kw">|</span> <span class="fu">sudo</span> tee <span class="at">-a</span> /etc/apache2/ports.conf</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod ssl proxy proxy_http headers rewrite ldap authnz_ldap</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite ngs-vm-shiny.conf</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-q</span> <span class="st">'^Listen 8443$'</span> /etc/apache2/ports.conf <span class="kw">||</span> <span class="bu">echo</span> <span class="st">'Listen 8443'</span> <span class="kw">|</span> <span class="fu">sudo</span> tee <span class="at">-a</span> /etc/apache2/ports.conf</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod ssl proxy proxy_http headers rewrite ldap authnz_ldap</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite ngs-vm-shiny.conf</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="validate-parallel-access" class="level3" data-number="5.7.3">
 <h3 data-number="5.7.3" class="anchored" data-anchor-id="validate-parallel-access"><span class="header-section-number">5.7.3</span> 3) Validate parallel access</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> https://ngs-vm.biochem.mpg.de:8443/</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> <span class="at">-u</span> USER https://ngs-vm.biochem.mpg.de:8443/sequencing-app/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> https://ngs-vm.biochem.mpg.de:8443/</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> <span class="at">-u</span> USER https://ngs-vm.biochem.mpg.de:8443/sequencing-app/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If hostname/port tests fail, validate locally against the vhost:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-kI</span> <span class="at">-H</span> <span class="st">'Host: ngs-vm.biochem.mpg.de'</span> https://127.0.0.10:8443/</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-kI</span> <span class="at">-u</span> USER <span class="at">-H</span> <span class="st">'Host: ngs-vm.biochem.mpg.de'</span> https://127.0.0.10:8443/sequencing-app/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-kI</span> <span class="at">-H</span> <span class="st">'Host: ngs-vm.biochem.mpg.de'</span> https://127.0.0.10:8443/</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-kI</span> <span class="at">-u</span> USER <span class="at">-H</span> <span class="st">'Host: ngs-vm.biochem.mpg.de'</span> https://127.0.0.10:8443/sequencing-app/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If the app returns HTTP 500 with <code>mailR/rJava</code> errors on ngs-vm, apply this runtime fix:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt-get install <span class="at">-y</span> openjdk-17-jdk r-cran-rjava</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">JAVA_HOME</span><span class="op">=</span>/usr/lib/jvm/java-17-openjdk-amd64</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> env JAVA_HOME=<span class="st">"</span><span class="va">$JAVA_HOME</span><span class="st">"</span> /usr/bin/R CMD javareconf</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> env JAVA_HOME=<span class="st">"</span><span class="va">$JAVA_HOME</span><span class="st">"</span> /usr/bin/Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'install.packages("mailR", repos="https://cloud.r-project.org", INSTALL_opts="--no-test-load")'</span></span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt-get install <span class="at">-y</span> openjdk-17-jdk r-cran-rjava</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">JAVA_HOME</span><span class="op">=</span>/usr/lib/jvm/java-17-openjdk-amd64</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> env JAVA_HOME=<span class="st">"</span><span class="va">$JAVA_HOME</span><span class="st">"</span> /usr/bin/R CMD javareconf</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> env JAVA_HOME=<span class="st">"</span><span class="va">$JAVA_HOME</span><span class="st">"</span> /usr/bin/Rscript <span class="at">--vanilla</span> <span class="at">-e</span> <span class="st">'install.packages("mailR", repos="https://cloud.r-project.org", INSTALL_opts="--no-test-load")'</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="switch-between-ldap-and-local-modes-on-vm" class="level3" data-number="5.7.4">
 <h3 data-number="5.7.4" class="anchored" data-anchor-id="switch-between-ldap-and-local-modes-on-vm"><span class="header-section-number">5.7.4</span> 4) Switch between LDAP and local modes on VM</h3>
@@ -542,14 +547,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><code>/srv/shiny-server/sequencing-app/.Renviron</code></li>
 </ul>
 <p>Set LDAP mode:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> sed <span class="at">-i</span> <span class="st">'s/^AUTH_MODE=.*/AUTH_MODE=ldap/'</span> /srv/shiny-server/sequencing-app/.Renviron</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Set local mode:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> sed <span class="at">-i</span> <span class="st">'s/^AUTH_MODE=.*/AUTH_MODE=local/'</span> /srv/shiny-server/sequencing-app/.Renviron</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> sed <span class="at">-i</span> <span class="st">'s/^AUTH_MODE=.*/AUTH_MODE=ldap/'</span> /srv/shiny-server/sequencing-app/.Renviron</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Set local mode:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> sed <span class="at">-i</span> <span class="st">'s/^AUTH_MODE=.*/AUTH_MODE=local/'</span> /srv/shiny-server/sequencing-app/.Renviron</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Verify effective runtime mode from app logs:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="va">LATEST</span><span class="op">=</span><span class="va">$(</span><span class="fu">sudo</span> ls <span class="at">-1t</span> /var/log/shiny-server/sequencing-app-shiny-<span class="pp">*</span>.log <span class="kw">|</span> <span class="fu">head</span> <span class="at">-n1</span><span class="va">)</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-n</span> 80 <span class="st">"</span><span class="va">$LATEST</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="va">LATEST</span><span class="op">=</span><span class="va">$(</span><span class="fu">sudo</span> ls <span class="at">-1t</span> /var/log/shiny-server/sequencing-app-shiny-<span class="pp">*</span>.log <span class="kw">|</span> <span class="fu">head</span> <span class="at">-n1</span><span class="va">)</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> tail <span class="at">-n</span> 80 <span class="st">"</span><span class="va">$LATEST</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="legacy-data-migration-perl-vm-shiny-vm" class="level2" data-number="5.8">
@@ -557,84 +562,84 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Use this workflow to export legacy projects from the perl system on <code>ngs-vm</code> and import into either <code>bcf-vm</code> or <code>ngs-vm</code> (Shiny DB).</p>
 <section id="step-1-export-csv-on-ngs-vm-perl-postgresql" class="level3" data-number="5.8.1">
 <h3 data-number="5.8.1" class="anchored" data-anchor-id="step-1-export-csv-on-ngs-vm-perl-postgresql"><span class="header-section-number">5.8.1</span> Step 1) Export CSV on ngs-vm (perl PostgreSQL)</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="ex">psql</span> <span class="at">-U</span> legacyadmin <span class="at">-h</span> 127.0.0.10 <span class="at">-d</span> mpiseq2_db <span class="at">-c</span> <span class="st">"</span><span class="dt">\</span></span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="dt">\\</span><span class="st">copy (</span><span class="dt">\</span></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT </span><span class="dt">\</span></span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="st">    p.id AS legacy_id, </span><span class="dt">\</span></span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="st">    p.name AS project_name, </span><span class="dt">\</span></span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="st">    m.login AS login, </span><span class="dt">\</span></span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="st">    m.name AS user_full_name, </span><span class="dt">\</span></span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a><span class="st">    l.name AS group_name, </span><span class="dt">\</span></span>
-<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="st">    COALESCE(p.ref_genome_legacy, rg.genome) AS reference_genome, </span><span class="dt">\</span></span>
-<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a><span class="st">    COALESCE(p.sample_type_legacy, st.type) AS sample_type, </span><span class="dt">\</span></span>
-<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a><span class="st">    t.type AS type_label, </span><span class="dt">\</span></span>
-<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a><span class="st">    p.sequencing_length AS sequencing_length, </span><span class="dt">\</span></span>
-<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a><span class="st">    COALESCE(p.budget_group_legacy, bg.budget) AS budget_group, </span><span class="dt">\</span></span>
-<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a><span class="st">    p.sequencing_platform AS sequencing_platform, </span><span class="dt">\</span></span>
-<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a><span class="st">    COALESCE(p.sequencing_kit_legacy, p.sequencing_kit) AS sequencing_kit, </span><span class="dt">\</span></span>
-<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a><span class="st">    p.sequencing_index AS sequencing_index, </span><span class="dt">\</span></span>
-<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a><span class="st">    p.note AS note </span><span class="dt">\</span></span>
-<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM project.project p </span><span class="dt">\</span></span>
-<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN people.member m ON p.user_id = m.id </span><span class="dt">\</span></span>
-<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN people.lab l ON m.lab_id = l.id </span><span class="dt">\</span></span>
-<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN project.ref_genome rg ON p.ref_genome_id = rg.id </span><span class="dt">\</span></span>
-<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN project.sample_type st ON p.sample_type_id = st.id </span><span class="dt">\</span></span>
-<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN project.type t ON p.type_id = t.id </span><span class="dt">\</span></span>
-<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN project.budget_group bg ON p.budget_group_id = bg.id </span><span class="dt">\</span></span>
-<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a><span class="st">  ORDER BY p.id</span><span class="dt">\</span></span>
-<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a><span class="st">) TO '/www/mpiseq2/exports/legacy_projects.csv' CSV HEADER"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="ex">psql</span> <span class="at">-U</span> legacyadmin <span class="at">-h</span> 127.0.0.10 <span class="at">-d</span> mpiseq2_db <span class="at">-c</span> <span class="st">"</span><span class="dt">\</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="dt">\\</span><span class="st">copy (</span><span class="dt">\</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT </span><span class="dt">\</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="st">    p.id AS legacy_id, </span><span class="dt">\</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="st">    p.name AS project_name, </span><span class="dt">\</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="st">    m.login AS login, </span><span class="dt">\</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="st">    m.name AS user_full_name, </span><span class="dt">\</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="st">    l.name AS group_name, </span><span class="dt">\</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="st">    COALESCE(p.ref_genome_legacy, rg.genome) AS reference_genome, </span><span class="dt">\</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="st">    COALESCE(p.sample_type_legacy, st.type) AS sample_type, </span><span class="dt">\</span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a><span class="st">    t.type AS type_label, </span><span class="dt">\</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a><span class="st">    p.sequencing_length AS sequencing_length, </span><span class="dt">\</span></span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a><span class="st">    COALESCE(p.budget_group_legacy, bg.budget) AS budget_group, </span><span class="dt">\</span></span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a><span class="st">    p.sequencing_platform AS sequencing_platform, </span><span class="dt">\</span></span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a><span class="st">    COALESCE(p.sequencing_kit_legacy, p.sequencing_kit) AS sequencing_kit, </span><span class="dt">\</span></span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a><span class="st">    p.sequencing_index AS sequencing_index, </span><span class="dt">\</span></span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a><span class="st">    p.note AS note </span><span class="dt">\</span></span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM project.project p </span><span class="dt">\</span></span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN people.member m ON p.user_id = m.id </span><span class="dt">\</span></span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN people.lab l ON m.lab_id = l.id </span><span class="dt">\</span></span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN project.ref_genome rg ON p.ref_genome_id = rg.id </span><span class="dt">\</span></span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN project.sample_type st ON p.sample_type_id = st.id </span><span class="dt">\</span></span>
+<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN project.type t ON p.type_id = t.id </span><span class="dt">\</span></span>
+<span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN project.budget_group bg ON p.budget_group_id = bg.id </span><span class="dt">\</span></span>
+<span id="cb32-25"><a href="#cb32-25" aria-hidden="true" tabindex="-1"></a><span class="st">  ORDER BY p.id</span><span class="dt">\</span></span>
+<span id="cb32-26"><a href="#cb32-26" aria-hidden="true" tabindex="-1"></a><span class="st">) TO '/www/mpiseq2/exports/legacy_projects.csv' CSV HEADER"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="step-2-normalize-utf-8-recommended" class="level3" data-number="5.8.2">
 <h3 data-number="5.8.2" class="anchored" data-anchor-id="step-2-normalize-utf-8-recommended"><span class="header-section-number">5.8.2</span> Step 2) Normalize UTF-8 (recommended)</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> python3 <span class="at">-</span> <span class="op">&lt;&lt;'PY'</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="st">src = "/www/mpiseq2/exports/legacy_projects.csv"</span></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="st">dst = "/www/mpiseq2/exports/legacy_projects.utf8.csv"</span></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="st">with open(src, "r", encoding="utf-8", errors="ignore") as f, \</span></span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="st">     open(dst, "w", encoding="utf-8") as out:</span></span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="st">    for line in f:</span></span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="st">        if "Ã" in line or "Â" in line:</span></span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="st">            line = line.encode("latin1", errors="ignore").decode("utf-8", errors="ignore")</span></span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="st">        out.write(line)</span></span>
-<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="op">PY</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> python3 <span class="at">-</span> <span class="op">&lt;&lt;'PY'</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="st">src = "/www/mpiseq2/exports/legacy_projects.csv"</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="st">dst = "/www/mpiseq2/exports/legacy_projects.utf8.csv"</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="st">with open(src, "r", encoding="utf-8", errors="ignore") as f, \</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="st">     open(dst, "w", encoding="utf-8") as out:</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a><span class="st">    for line in f:</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="st">        if "Ã" in line or "Â" in line:</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a><span class="st">            line = line.encode("latin1", errors="ignore").decode("utf-8", errors="ignore")</span></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a><span class="st">        out.write(line)</span></span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="op">PY</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="step-3-move-csv-to-the-target-vm" class="level3" data-number="5.8.3">
 <h3 data-number="5.8.3" class="anchored" data-anchor-id="step-3-move-csv-to-the-target-vm"><span class="header-section-number">5.8.3</span> Step 3) Move CSV to the target VM</h3>
 <p>If importing into <code>bcf-vm</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># run on bcf-vm once</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> /home/exampleuser/example-repo/exports/</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="co"># run on ngs-vm (source)</span></span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="fu">scp</span> /www/mpiseq2/exports/legacy_projects.utf8.csv <span class="dt">\</span></span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>  exampleuser@bcf-vm:/home/exampleuser/example-repo/exports/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># run on bcf-vm once</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> /home/exampleuser/example-repo/exports/</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="co"># run on ngs-vm (source)</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="fu">scp</span> /www/mpiseq2/exports/legacy_projects.utf8.csv <span class="dt">\</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>  exampleuser@bcf-vm:/home/exampleuser/example-repo/exports/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If importing into Shiny on <code>ngs-vm</code> (same host as perl system):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="at">-R</span> /www/mpiseq2/exports/ /home/exampleuser/example-repo/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="at">-R</span> /www/mpiseq2/exports/ /home/exampleuser/example-repo/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="step-4-import-into-shiny-sqlite-db" class="level3" data-number="5.8.4">
 <h3 data-number="5.8.4" class="anchored" data-anchor-id="step-4-import-into-shiny-sqlite-db"><span class="header-section-number">5.8.4</span> Step 4) Import into Shiny SQLite DB</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /srv/shiny-server/sequencing-app</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /srv/shiny-server/sequencing-app</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If <code>/home/exampleuser</code> is not traversable by <code>shiny</code> (permission denied), either:</p>
 <ul>
 <li>quick fix:</li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chmod o+x /home/exampleuser</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chmod o+x /home/exampleuser</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li>safer fix (preferred): copy script + CSV to a service-owned path and run from there.</li>
 </ul>
 <p>Then run import:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny python3 /home/exampleuser/example-repo/scripts/import_legacy_projects.py <span class="dt">\</span></span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--db</span> /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--csv</span> /home/exampleuser/example-repo/exports/legacy_projects.utf8.csv</span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> ngs-shiny-user python3 /home/exampleuser/example-repo/scripts/import_legacy_projects.py <span class="dt">\</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--db</span> /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--csv</span> /home/exampleuser/example-repo/exports/legacy_projects.utf8.csv</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="step-5-verify-import" class="level3" data-number="5.8.5">
 <h3 data-number="5.8.5" class="anchored" data-anchor-id="step-5-verify-import"><span class="header-section-number">5.8.5</span> Step 5) Verify import</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="st">"SELECT COUNT(*) FROM projects WHERE status='Legacy project';"</span></span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="st">"SELECT project_id, project_name, responsible_user, status FROM projects WHERE status='Legacy project' ORDER BY project_id LIMIT 5;"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> ngs-shiny-user sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="st">"SELECT COUNT(*) FROM projects WHERE status='Legacy project';"</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> ngs-shiny-user sqlite3 /srv/shiny-server/sequencing-app/sequencing_projects.db <span class="dt">\</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a><span class="st">"SELECT project_id, project_name, responsible_user, status FROM projects WHERE status='Legacy project' ORDER BY project_id LIMIT 5;"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Notes:</p>
 <ul>
 <li>Rebuild is not required for regular imports; new <code>legacy_id</code> rows are inserted, already imported IDs are skipped.</li>
@@ -655,9 +660,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="pre-cutover-safety-backup" class="level3" data-number="5.9.2">
 <h3 data-number="5.9.2" class="anchored" data-anchor-id="pre-cutover-safety-backup"><span class="header-section-number">5.9.2</span> 1) Pre-cutover safety backup</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /root/apache-backup-<span class="va">$(</span><span class="fu">date</span> +%F-%H%M<span class="va">)</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp <span class="at">-a</span> /etc/apache2/sites-available /root/apache-backup-<span class="va">$(</span><span class="fu">date</span> +%F-%H%M<span class="va">)</span>/</span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp <span class="at">-a</span> /etc/apache2/sites-enabled /root/apache-backup-<span class="va">$(</span><span class="fu">date</span> +%F-%H%M<span class="va">)</span>/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> mkdir <span class="at">-p</span> /root/apache-backup-<span class="va">$(</span><span class="fu">date</span> +%F-%H%M<span class="va">)</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp <span class="at">-a</span> /etc/apache2/sites-available /root/apache-backup-<span class="va">$(</span><span class="fu">date</span> +%F-%H%M<span class="va">)</span>/</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp <span class="at">-a</span> /etc/apache2/sites-enabled /root/apache-backup-<span class="va">$(</span><span class="fu">date</span> +%F-%H%M<span class="va">)</span>/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="prepare-vhost-files" class="level3" data-number="5.9.3">
 <h3 data-number="5.9.3" class="anchored" data-anchor-id="prepare-vhost-files"><span class="header-section-number">5.9.3</span> 2) Prepare vhost files</h3>
@@ -666,20 +671,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><code>scripts/ngs-vm-shiny-443.conf</code> -&gt; <code>/etc/apache2/sites-available/ngs-vm-shiny-443.conf</code></li>
 <li><code>scripts/ngs-vm-perl-9443.conf</code> -&gt; <code>/etc/apache2/sites-available/ngs-vm-perl-9443.conf</code></li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management/scripts/ngs-vm-shiny-443.conf /etc/apache2/sites-available/ngs-vm-shiny-443.conf</span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management/scripts/ngs-vm-perl-9443.conf /etc/apache2/sites-available/ngs-vm-perl-9443.conf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management/scripts/ngs-vm-shiny-443.conf /etc/apache2/sites-available/ngs-vm-shiny-443.conf</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management/scripts/ngs-vm-perl-9443.conf /etc/apache2/sites-available/ngs-vm-perl-9443.conf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="enable-the-cutover-routing" class="level3" data-number="5.9.4">
 <h3 data-number="5.9.4" class="anchored" data-anchor-id="enable-the-cutover-routing"><span class="header-section-number">5.9.4</span> 3) Enable the cutover routing</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-q</span> <span class="st">'^Listen 9443$'</span> /etc/apache2/ports.conf <span class="kw">||</span> <span class="bu">echo</span> <span class="st">'Listen 9443'</span> <span class="kw">|</span> <span class="fu">sudo</span> tee <span class="at">-a</span> /etc/apache2/ports.conf</span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod ssl proxy proxy_http proxy_wstunnel rewrite headers ldap authnz_ldap</span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite ngs-vm-shiny-443.conf</span>
-<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite ngs-vm-perl-9443.conf</span>
-<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Disable the old Perl :443 site (name can vary by VM):</span></span>
-<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2dissite 02-testing.conf <span class="kw">||</span> <span class="fu">true</span></span>
-<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2dissite default-ssl.conf <span class="kw">||</span> <span class="fu">true</span></span>
-<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
-<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-q</span> <span class="st">'^Listen 9443$'</span> /etc/apache2/ports.conf <span class="kw">||</span> <span class="bu">echo</span> <span class="st">'Listen 9443'</span> <span class="kw">|</span> <span class="fu">sudo</span> tee <span class="at">-a</span> /etc/apache2/ports.conf</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2enmod ssl proxy proxy_http proxy_wstunnel rewrite headers ldap authnz_ldap</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite ngs-vm-shiny-443.conf</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite ngs-vm-perl-9443.conf</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Disable the old Perl :443 site (name can vary by VM):</span></span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2dissite 02-testing.conf <span class="kw">||</span> <span class="fu">true</span></span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2dissite default-ssl.conf <span class="kw">||</span> <span class="fu">true</span></span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="automated-switchrollback-script-optional" class="level3" data-number="5.9.5">
 <h3 data-number="5.9.5" class="anchored" data-anchor-id="automated-switchrollback-script-optional"><span class="header-section-number">5.9.5</span> 4) Automated switch/rollback script (optional)</h3>
@@ -688,12 +693,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><code>scripts/cutover_ngs_vm_ports.sh</code></li>
 </ul>
 <p>Cutover:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management</span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/cutover_ngs_vm_ports.sh</span> cutover</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/cutover_ngs_vm_ports.sh</span> cutover</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>cutover</code> auto-disables competing <code>:443</code> sites (including <code>default-ssl.conf</code> when present).</p>
 <p>Rollback:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management</span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/cutover_ngs_vm_ports.sh</span> rollback</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>user<span class="op">&gt;</span>/BCFNGS-project-management</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/cutover_ngs_vm_ports.sh</span> rollback</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>rollback</code> re-enables the first available legacy <code>:443</code> site in this order:</p>
 <ol type="1">
 <li><code>PERL_443_SITE</code> (if provided)</li>
@@ -703,11 +708,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="rollback-manual" class="level3" data-number="5.9.6">
 <h3 data-number="5.9.6" class="anchored" data-anchor-id="rollback-manual"><span class="header-section-number">5.9.6</span> Rollback (manual)</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite 02-testing.conf</span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2dissite ngs-vm-shiny-443.conf</span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2dissite ngs-vm-perl-9443.conf</span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2ensite 02-testing.conf</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2dissite ngs-vm-shiny-443.conf</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> a2dissite ngs-vm-perl-9443.conf</span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apache2ctl <span class="at">-t</span></span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart apache2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="db-lifecycle-policy-important" class="level3" data-number="5.9.7">
 <h3 data-number="5.9.7" class="anchored" data-anchor-id="db-lifecycle-policy-important"><span class="header-section-number">5.9.7</span> DB lifecycle policy (important)</h3>
@@ -721,27 +726,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="db-snapshot-rebuild-restore-runbook" class="level3" data-number="5.9.8">
 <h3 data-number="5.9.8" class="anchored" data-anchor-id="db-snapshot-rebuild-restore-runbook"><span class="header-section-number">5.9.8</span> DB snapshot / rebuild / restore runbook</h3>
 <p>Snapshot:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /srv/shiny-server/sequencing-app/sequencing_projects.db /srv/shiny-server/sequencing-app/sequencing_projects.db.bak.<span class="va">$(</span><span class="fu">date</span> +%F-%H%M%S<span class="va">)</span></span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /srv/shiny-server/sequencing-app/sequencing_projects.db /srv/shiny-server/sequencing-app/sequencing_projects.db.bak.<span class="va">$(</span><span class="fu">date</span> +%F-%H%M%S<span class="va">)</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Optional rebuild:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /srv/shiny-server/sequencing-app</span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> shiny Rscript setup_database.R</span>
-<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Restore snapshot:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /srv/shiny-server/sequencing-app/sequencing_projects.db.bak.<span class="op">&lt;</span>timestamp<span class="op">&gt;</span> /srv/shiny-server/sequencing-app/sequencing_projects.db</span>
-<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown shiny:shiny /srv/shiny-server/sequencing-app/sequencing_projects.db</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /srv/shiny-server/sequencing-app</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> <span class="at">-u</span> ngs-shiny-user Rscript setup_database.R</span>
 <span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Restore snapshot:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl stop shiny-server</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> cp /srv/shiny-server/sequencing-app/sequencing_projects.db.bak.<span class="op">&lt;</span>timestamp<span class="op">&gt;</span> /srv/shiny-server/sequencing-app/sequencing_projects.db</span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown ngs-shiny-user:b_ngs /srv/shiny-server/sequencing-app/sequencing_projects.db</span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start shiny-server</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="post-install-verification" class="level2" data-number="5.10">
 <h2 data-number="5.10" class="anchored" data-anchor-id="post-install-verification"><span class="header-section-number">5.10</span> Post-install verification</h2>
 <p>Run these checks after install:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> https://ngs-vm.biochem.mpg.de/</span>
-<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> <span class="at">-u</span> USER https://ngs-vm.biochem.mpg.de/sequencing-app/</span>
-<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> https://ngs-vm.biochem.mpg.de:9443/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> https://ngs-vm.biochem.mpg.de/</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> <span class="at">-u</span> USER https://ngs-vm.biochem.mpg.de/sequencing-app/</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-Ik</span> https://ngs-vm.biochem.mpg.de:9443/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Confirm:</p>
 <ul>
 <li>no-port hostname opens Shiny.</li>
