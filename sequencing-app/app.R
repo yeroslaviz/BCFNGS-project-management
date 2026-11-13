@@ -7353,6 +7353,13 @@ server <- function(input, output, session) {
           "Download Sample Sheet Template",
           class = "sample-sheet-download",
           icon = icon("download")
+        ),
+        downloadButton(
+          "download_project_search_results",
+          "Export Search Results (CSV)",
+          class = "btn-success",
+          icon = icon("file-csv"),
+          title = "Download every project matching the current table search"
         )
       ),
 
@@ -8295,20 +8302,30 @@ server <- function(input, output, session) {
     }
   })
 
-  build_projects_datatable <- function(
-    display_data,
-    include_created_by = FALSE,
-    empty_message = "No projects found. Click 'Create New Project' to get started."
-  ) {
-    if (nrow(display_data) == 0) {
-      return(datatable(
-        data.frame(Message = empty_message),
-        options = list(dom = 't'),
-        rownames = FALSE,
-        colnames = ""
-      ))
-    }
+  project_table_column_labels <- c(
+    project_id = "Project ID",
+    project_name = "Project Name",
+    responsible_user = "Responsible User",
+    created_at = "Created",
+    status = "Status",
+    type_name = "Sample Type",
+    service_type = "Sample Service Type",
+    num_samples = "Samples",
+    sequencing_platform = "Platform",
+    reference_genome = "Reference",
+    depth_description = "Sequencing Depth",
+    cycles_description = "Sequencing Cycles",
+    budget_display = "Budget Holder",
+    kickoff_meeting = "Kick-off Meeting",
+    total_cost = "Total Cost",
+    cost_status = "Cost Status",
+    created_by = "Created By"
+  )
 
+  prepare_projects_display_data <- function(
+    display_data,
+    include_created_by = FALSE
+  ) {
     if ("kickoff_meeting" %in% names(display_data)) {
       display_data$kickoff_meeting <- ifelse(
         display_data$kickoff_meeting == 1,
@@ -8372,27 +8389,28 @@ server <- function(input, output, session) {
     available_columns <- display_columns[
       display_columns %in% names(display_data)
     ]
-    display_data <- display_data[, available_columns, drop = FALSE]
+    display_data[, available_columns, drop = FALSE]
+  }
 
-    column_labels <- c(
-      project_id = "Project ID",
-      project_name = "Project Name",
-      responsible_user = "Responsible User",
-      created_at = "Created",
-      status = "Status",
-      type_name = "Sample Type",
-      service_type = "Sample Service Type",
-      num_samples = "Samples",
-      sequencing_platform = "Platform",
-      reference_genome = "Reference",
-      depth_description = "Sequencing Depth",
-      cycles_description = "Sequencing Cycles",
-      budget_display = "Budget Holder",
-      kickoff_meeting = "Kick-off Meeting",
-      total_cost = "Total Cost",
-      cost_status = "Cost Status",
-      created_by = "Created By"
+  build_projects_datatable <- function(
+    display_data,
+    include_created_by = FALSE,
+    empty_message = "No projects found. Click 'Create New Project' to get started."
+  ) {
+    if (nrow(display_data) == 0) {
+      return(datatable(
+        data.frame(Message = empty_message),
+        options = list(dom = 't'),
+        rownames = FALSE,
+        colnames = ""
+      ))
+    }
+
+    display_data <- prepare_projects_display_data(
+      display_data,
+      include_created_by = include_created_by
     )
+    available_columns <- names(display_data)
 
     column_widths <- c(
       project_id = "80px",
@@ -8448,7 +8466,7 @@ server <- function(input, output, session) {
         order = list(list(order_target, "desc"))
       ),
       rownames = FALSE,
-      colnames = unname(column_labels[available_columns])
+      colnames = unname(project_table_column_labels[available_columns])
     )
 
     if ("status" %in% available_columns) {
@@ -8494,6 +8512,83 @@ server <- function(input, output, session) {
 
     projects_table
   }
+
+  sanitize_project_csv <- function(export_data) {
+    character_columns <- vapply(export_data, is.character, logical(1))
+    export_data[character_columns] <- lapply(
+      export_data[character_columns],
+      function(values) {
+        dangerous <- !is.na(values) & grepl(
+          "^[[:space:]]*[=+@-]",
+          values,
+          perl = TRUE
+        )
+        values[dangerous] <- paste0("'", values[dangerous])
+        values
+      }
+    )
+    export_data
+  }
+
+  output$download_project_search_results <- downloadHandler(
+    filename = function() {
+      paste0(
+        "project_search_results_",
+        format(Sys.time(), "%Y%m%d_%H%M%S"),
+        ".csv"
+      )
+    },
+    content = function(file) {
+      req(user$logged_in, projects_data())
+
+      source_data <- projects_data()
+      filtered_rows <- input$projects_table_rows_all
+      if (is.null(filtered_rows)) {
+        filtered_rows <- seq_len(nrow(source_data))
+      }
+      filtered_rows <- as.integer(filtered_rows)
+      filtered_rows <- filtered_rows[
+        !is.na(filtered_rows) &
+          filtered_rows >= 1L &
+          filtered_rows <= nrow(source_data)
+      ]
+
+      export_data <- source_data[filtered_rows, , drop = FALSE]
+      export_data <- prepare_projects_display_data(
+        export_data,
+        include_created_by = isTRUE(user$is_admin)
+      )
+
+      if ("project_id" %in% names(export_data)) {
+        export_data$project_id <- ifelse(
+          is.na(export_data$project_id),
+          "",
+          paste0("P", export_data$project_id)
+        )
+      }
+
+      names(export_data) <- unname(
+        project_table_column_labels[names(export_data)]
+      )
+      export_data <- sanitize_project_csv(export_data)
+
+      output_connection <- base::file(file, open = "wb")
+      on.exit(close(output_connection), add = TRUE)
+      writeBin(as.raw(c(0xef, 0xbb, 0xbf)), output_connection)
+      write.table(
+        export_data,
+        output_connection,
+        sep = ",",
+        dec = ".",
+        row.names = FALSE,
+        col.names = TRUE,
+        quote = TRUE,
+        qmethod = "double",
+        na = ""
+      )
+    },
+    contentType = "text/csv; charset=utf-8"
+  )
 
   # Projects table with updated columns - MODIFIED FOR PREFIXED PROJECT IDs
   output$projects_table <- renderDT({
