@@ -5,6 +5,8 @@ NGS_SAMPLE_SHEET_HEADERS <- c(
   "Volume",
   "Description_Condition (optional)",
   "Concentration (optional)",
+  "index 2 (mandatory with final library)",
+  "index1 (optional)",
   "ProjectNumber",
   "SampleIndex",
   "DataName"
@@ -15,7 +17,11 @@ NGS_SAMPLE_SHEET_FACILITY_COLUMNS <- c(
   "DataName"
 )
 NGS_SAMPLE_SHEET_REQUIRED_COLUMNS <- c("SampleName", "SampleType", "Volume")
-NGS_SAMPLE_SHEET_USER_COLUMNS <- NGS_SAMPLE_SHEET_HEADERS[1:5]
+NGS_SAMPLE_SHEET_INDEX_COLUMNS <- c(
+  "index 2 (mandatory with final library)",
+  "index1 (optional)"
+)
+NGS_SAMPLE_SHEET_USER_COLUMNS <- NGS_SAMPLE_SHEET_HEADERS[1:7]
 
 ngs_env_flag <- function(name, default = FALSE) {
   value <- trimws(tolower(Sys.getenv(name, if (isTRUE(default)) "1" else "0")))
@@ -96,7 +102,7 @@ ngs_read_sample_sheet <- function(path) {
   if (ncol(raw) > length(NGS_SAMPLE_SHEET_HEADERS)) {
     extra <- raw[, (length(NGS_SAMPLE_SHEET_HEADERS) + 1):ncol(raw), drop = FALSE]
     if (any(nzchar(ngs_cell_text(unlist(extra, use.names = FALSE))))) {
-      stop("The project_metadata sheet contains data outside columns A:H.")
+      stop("The project_metadata sheet contains data outside columns A:J.")
     }
   }
 
@@ -119,7 +125,11 @@ ngs_read_sample_sheet <- function(path) {
     data <- raw[4:nrow(raw), seq_along(NGS_SAMPLE_SHEET_HEADERS), drop = FALSE]
     names(data) <- NGS_SAMPLE_SHEET_HEADERS
     data[] <- lapply(data, ngs_cell_text)
-    # Only the user-entry section (A:E) determines whether a sample row exists.
+    for (column_name in NGS_SAMPLE_SHEET_INDEX_COLUMNS) {
+      empty_placeholder <- tolower(data[[column_name]]) == "(empty)"
+      data[[column_name]][empty_placeholder] <- ""
+    }
+    # Only the user-entry section (A:G) determines whether a sample row exists.
     # ProjectNumber, SampleIndex, and DataName are completed by the facility.
     row_has_data <- apply(
       data[, NGS_SAMPLE_SHEET_USER_COLUMNS, drop = FALSE],
@@ -187,6 +197,29 @@ ngs_validate_sample_sheet_data <- function(data, excel_rows, expected_rows) {
         )
       )
     }
+  }
+
+  normalized_sample_type <- gsub(
+    "[[:space:]]+",
+    "_",
+    tolower(ngs_cell_text(data$SampleType))
+  )
+  final_library_rows <- which(normalized_sample_type == "final_library")
+  missing_i5 <- final_library_rows[
+    !nzchar(ngs_cell_text(
+      data[["index 2 (mandatory with final library)"]][final_library_rows]
+    ))
+  ]
+  if (length(missing_i5) > 0) {
+    errors <- c(
+      errors,
+      paste0(
+        "index 2 (i5) is required for final-library samples. Fill it in for Excel row",
+        if (length(missing_i5) == 1) " " else "s ",
+        paste(excel_rows[missing_i5], collapse = ", "),
+        "."
+      )
+    )
   }
 
   for (column_name in setdiff(
@@ -497,7 +530,7 @@ ngs_assign_project_number <- function(
     excel_row <- excel_rows[[i]]
     worksheet_xml <- ngs_set_inline_string_cell(
       worksheet_xml,
-      paste0("F", excel_row),
+      paste0("H", excel_row),
       project_code
     )
   }

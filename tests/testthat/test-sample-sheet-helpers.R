@@ -9,6 +9,8 @@ sample_rows <- function() {
     Volume = c("20", "10"),
     `Description_Condition (optional)` = c("treated", ""),
     `Concentration (optional)` = c("0.7", ""),
+    `index 2 (mandatory with final library)` = c("", ""),
+    `index1 (optional)` = c("", ""),
     SampleIndex = c("", ""),
     DataName = c("", ""),
     check.names = FALSE,
@@ -73,6 +75,18 @@ test_that("facility-generated values must remain blank", {
   expect_match(paste(checked$errors, collapse = " "), "DataName is reserved")
 })
 
+test_that("i5 is required for final-library samples", {
+  rows <- sample_rows()
+  rows$SampleType[[1]] <- "final_library"
+  checked <- ngs_validate_sample_sheet_data(rows, c(4L, 5L), 2L)
+  expect_false(checked$valid)
+  expect_match(paste(checked$errors, collapse = " "), "index 2 \\(i5\\)")
+
+  rows[["index 2 (mandatory with final library)"]][[1]] <- "ACGTACGT"
+  checked <- ngs_validate_sample_sheet_data(rows, c(4L, 5L), 2L)
+  expect_true(checked$valid)
+})
+
 test_that("assigned project number is written to rows and worksheet name", {
   source_workbook <- file.path(
     repo_prefix,
@@ -95,9 +109,11 @@ test_that("assigned project number is written to rows and worksheet name", {
     col_types = "text",
     .name_repair = "minimal"
   ))
-  expect_identical(assigned[[6]][4:7], rep("P1111", 4L))
+  expect_identical(ngs_cell_text(assigned[[6]][4:7]), rep("", 4L))
   expect_identical(ngs_cell_text(assigned[[7]][4:7]), rep("", 4L))
-  expect_identical(ngs_cell_text(assigned[[8]][4:7]), rep("", 4L))
+  expect_identical(assigned[[8]][4:7], rep("P1111", 4L))
+  expect_identical(ngs_cell_text(assigned[[9]][4:7]), rep("", 4L))
+  expect_identical(ngs_cell_text(assigned[[10]][4:7]), rep("", 4L))
   expect_identical(
     readxl::excel_sheets(source_workbook),
     c("Example", "project_metadata")
