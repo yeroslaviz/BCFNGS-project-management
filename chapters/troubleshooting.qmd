@@ -444,6 +444,27 @@ sudo systemctl restart apache2
 
 ## Sample-sheet storage
 
+### Diagnose upload failures
+
+Administrators can enable **Upload Diagnostics** in **Administer Projects**.
+The panel stores validation and transport failures in the
+`sample_sheet_diagnostics` SQLite table and shows the 100 most recent records.
+Optional omicsdesk alerts apply only to upload transport failures; wrong
+templates are not emailed. Equivalent alerts are limited to one every 30
+minutes.
+
+The application upload limit defaults to 5 MiB. Override it in the deployed
+app environment only when needed:
+
+```ini
+NGS_MAX_UPLOAD_MB=10
+```
+
+Restart Shiny Server after changing the environment. If a worker terminates
+during upload, the browser retains the diagnostic locally and replays it after
+the next Shiny connection. The stored record contains file metadata and error
+context, not workbook contents.
+
 If Shiny reports that the application exited during initialization with
 `The readxl package is required`, install the dependency into the system R
 library and verify it as the application worker:

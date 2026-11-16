@@ -10,6 +10,7 @@ execute:
 
 ### Contents
 
+- [Changes on 16.11.2026](#changes-on-16.11.2026)
 - [Changes on 05.10.2026](#changes-on-05.10.2026)
 - [Changes on 04.10.2026](#changes-on-04.10.2026)
 - [Changes on 17.09.2026](#changes-on-17.09.2026)
@@ -28,6 +29,25 @@ execute:
 - [Changes on 09.02.2026](#changes-on-09.02.2026)
 - [Changes on 06.02.2026](#changes-on-06.02.2026)
 - [Changes on 14.11.2026](#changes-on-14.11.2026)
+
+## Changes on 16.11.2026
+
+1. Added immediate inline validation for completed sample sheets so users see
+   template, worksheet, header, required-cell, and sample-count problems as
+   soon as an upload completes.
+2. Replaced Shiny's misleading upload-size banner with a problem-oriented
+   explanation that shows the selected file size and configured application
+   limit.
+3. Added durable `sample_sheet_diagnostics` records for validation and upload
+   transport errors. Browser-side transport diagnostics are retained locally
+   and replayed after reconnection if the Shiny worker terminates mid-upload.
+4. Added an administrator **Upload Diagnostics** panel for enabling/disabling
+   logging, viewing the 100 most recent records, and optionally emailing
+   omicsdesk about transport failures.
+5. Limited equivalent omicsdesk transport alerts to one every 30 minutes and
+   excluded ordinary wrong-template validation failures from email alerts.
+6. Made the Shiny upload limit explicit at 5 MiB by default, configurable with
+   `NGS_MAX_UPLOAD_MB`.
 
 ## Changes on 05.10.2026
 

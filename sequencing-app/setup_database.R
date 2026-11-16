@@ -3,9 +3,11 @@ library(DBI)
 library(RSQLite)
 library(digest)
 
+source("sample_sheet_helpers.R", local = TRUE)
+
 ##########################
 #
-# latest version - 14112026
+# latest version - 16112026
 #
 ##########################
 
@@ -215,6 +217,17 @@ setup_complete_database <- function() {
       setting_key, setting_value, updated_by
     ) VALUES ('sample_sheet_required', '0', 'database_setup')
   ")
+  dbExecute(con, "
+    INSERT OR IGNORE INTO app_settings (
+      setting_key, setting_value, updated_by
+    ) VALUES ('sample_sheet_diagnostics_enabled', '1', 'database_setup')
+  ")
+  dbExecute(con, "
+    INSERT OR IGNORE INTO app_settings (
+      setting_key, setting_value, updated_by
+    ) VALUES ('sample_sheet_diagnostic_email_enabled', '0', 'database_setup')
+  ")
+  ngs_ensure_upload_diagnostic_schema(con)
 
   # Projects table with all modifications
   dbExecute(con, "

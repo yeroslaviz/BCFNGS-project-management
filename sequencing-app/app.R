@@ -1,4 +1,14 @@
 # app_modified.R
+ngs_max_upload_mb <- suppressWarnings(as.numeric(Sys.getenv(
+  "NGS_MAX_UPLOAD_MB",
+  "5"
+)))
+if (!is.finite(ngs_max_upload_mb) || ngs_max_upload_mb <= 0) {
+  ngs_max_upload_mb <- 5
+}
+ngs_max_upload_bytes <- floor(ngs_max_upload_mb * 1024^2)
+options(shiny.maxRequestSize = ngs_max_upload_bytes)
+
 library(shiny)
 library(shinyjs)
 library(DBI)
@@ -948,6 +958,175 @@ ui <- fluidPage(
   }
   "
     ),
+    tags$script(HTML(paste0(
+      "window.ngsSampleSheetMaxBytes = ",
+      ngs_max_upload_bytes,
+      ";"
+    ))),
+    tags$script(HTML(
+      "
+      (function() {
+        var pendingKey = 'ngsPendingSampleSheetDiagnostic';
+        var lastFile = null;
+        var ackHandlerRegistered = false;
+
+        function readPending() {
+          try {
+            return window.localStorage.getItem(pendingKey);
+          } catch (error) {
+            return null;
+          }
+        }
+
+        function writePending(payload) {
+          try {
+            window.localStorage.setItem(pendingKey, JSON.stringify(payload));
+          } catch (error) {
+            return;
+          }
+        }
+
+        function clearPending() {
+          try {
+            window.localStorage.removeItem(pendingKey);
+          } catch (error) {
+            return;
+          }
+        }
+
+        function formatBytes(bytes) {
+          var value = Number(bytes || 0);
+          if (!isFinite(value) || value < 0) return 'unknown size';
+          if (value < 1024) return value + ' bytes';
+          if (value < 1024 * 1024) return (value / 1024).toFixed(1) + ' KiB';
+          return (value / (1024 * 1024)).toFixed(2) + ' MiB';
+        }
+
+        function newEventKey() {
+          if (window.crypto && window.crypto.randomUUID) {
+            return 'upload-' + window.crypto.randomUUID();
+          }
+          return 'upload-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+        }
+
+        function sendPendingDiagnostic(replayed) {
+          if (!window.Shiny || !Shiny.setInputValue) return;
+          var stored = readPending();
+          if (!stored) return;
+          try {
+            var payload = JSON.parse(stored);
+            payload.replayed = !!replayed;
+            Shiny.setInputValue(
+              'sample_sheet_upload_client_error',
+              payload,
+              {priority: 'event'}
+            );
+          } catch (error) {
+            clearPending();
+          }
+        }
+
+        function registerAckHandler() {
+          if (
+            ackHandlerRegistered ||
+            !window.Shiny ||
+            !Shiny.addCustomMessageHandler
+          ) return;
+          Shiny.addCustomMessageHandler('ngs-upload-diagnostic-ack', function(message) {
+            var stored = readPending();
+            if (!stored) return;
+            try {
+              var payload = JSON.parse(stored);
+              if (payload.event_key === message.event_key) {
+                clearPending();
+              }
+            } catch (error) {
+              clearPending();
+            }
+          });
+          ackHandlerRegistered = true;
+        }
+
+        function showFriendlyUploadError(rawMessage) {
+          var progress = $('#sample_sheet_upload_progress');
+          var bar = progress.find('.progress-bar');
+          if (!bar.length || bar.attr('data-ngs-friendly') === '1') return;
+
+          var maxBytes = Number(window.ngsSampleSheetMaxBytes || 0);
+          var fileSize = lastFile ? Number(lastFile.size || 0) : 0;
+          var actuallyTooLarge = maxBytes > 0 && fileSize > maxBytes;
+          var explanation = actuallyTooLarge
+            ? 'The selected file is ' + formatBytes(fileSize) +
+              '. The application limit is ' + formatBytes(maxBytes) + '.'
+            : 'The upload failed before the workbook could be checked. ' +
+              'The selected file is ' + formatBytes(fileSize) +
+              ', below the ' + formatBytes(maxBytes) +
+              ' application limit. This usually indicates a server, session, ' +
+              'or upload-transport problem rather than the workbook size.';
+
+          bar.attr('data-ngs-friendly', '1').text('Upload failed');
+          $('#sample_sheet_upload_diagnostic').remove();
+          $('<div>', {
+            id: 'sample_sheet_upload_diagnostic',
+            class: 'alert alert-danger',
+            role: 'alert',
+            text: explanation + ' Please retry once. If it happens again, contact omicsdesk.'
+          }).insertAfter(progress);
+
+          var payload = {
+            event_key: newEventKey(),
+            raw_message: String(rawMessage || 'Upload failed'),
+            file_name: lastFile ? String(lastFile.name || '') : '',
+            file_size: fileSize,
+            mime_type: lastFile ? String(lastFile.type || '') : '',
+            max_bytes: maxBytes,
+            online: navigator.onLine,
+            client_url: window.location.pathname,
+            user_agent: navigator.userAgent,
+            occurred_at: new Date().toISOString(),
+            replayed: false
+          };
+          writePending(payload);
+          sendPendingDiagnostic(false);
+        }
+
+        function inspectSampleSheetProgress() {
+          var bar = $('#sample_sheet_upload_progress .progress-bar-danger');
+          if (!bar.length || bar.attr('data-ngs-friendly') === '1') return;
+          var message = $.trim(bar.text());
+          if (message) showFriendlyUploadError(message);
+        }
+
+        $(document).on('change', '#sample_sheet_upload', function(event) {
+          lastFile = event.target.files && event.target.files.length
+            ? event.target.files[0]
+            : null;
+          $('#sample_sheet_upload_diagnostic').remove();
+          $('#sample_sheet_upload_progress .progress-bar')
+            .removeAttr('data-ngs-friendly');
+          setTimeout(inspectSampleSheetProgress, 0);
+        });
+
+        $(document).on('shiny:connected', function() {
+          registerAckHandler();
+          sendPendingDiagnostic(true);
+        });
+
+        $(document).ready(function() {
+          var observer = new MutationObserver(inspectSampleSheetProgress);
+          observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+            attributes: true,
+            attributeFilter: ['class']
+          });
+          registerAckHandler();
+          sendPendingDiagnostic(true);
+        });
+      })();
+      "
+    )),
     tags$script(
       "
       function publishUrlSearch() {
@@ -1395,6 +1574,7 @@ server <- function(input, output, session) {
           "project_status_history",
           "app_settings",
           "project_sample_sheets",
+          "sample_sheet_diagnostics",
           "types",
           "sequencing_platforms",
           "reference_genomes",
@@ -1543,6 +1723,8 @@ server <- function(input, output, session) {
   announcement_items_current <- reactiveVal(data.frame())
   announcement_editing_item_id <- reactiveVal(NULL)
   sample_sheet_settings_refresh <- reactiveVal(0L)
+  sample_sheet_diagnostics_refresh <- reactiveVal(0L)
+  sample_sheet_validation_state <- reactiveVal(NULL)
   max_announcement_chars <- 4000L
 
   # Reactive values for admin management
@@ -3067,6 +3249,23 @@ server <- function(input, output, session) {
     dbExecute(
       con,
       "
+      INSERT OR IGNORE INTO app_settings (
+        setting_key, setting_value, updated_by
+      ) VALUES ('sample_sheet_diagnostics_enabled', '1', 'migration')
+      "
+    )
+    dbExecute(
+      con,
+      "
+      INSERT OR IGNORE INTO app_settings (
+        setting_key, setting_value, updated_by
+      ) VALUES ('sample_sheet_diagnostic_email_enabled', '0', 'migration')
+      "
+    )
+    ngs_ensure_upload_diagnostic_schema(con)
+    dbExecute(
+      con,
+      "
       CREATE TABLE IF NOT EXISTS project_sample_sheets (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         project_row_id INTEGER UNIQUE NOT NULL,
@@ -3124,6 +3323,143 @@ server <- function(input, output, session) {
       params = list(if (isTRUE(required)) "1" else "0", updated_by)
     )
     invisible(required)
+  }
+
+  sample_sheet_diagnostics_settings <- function(con = NULL) {
+    close_connection <- FALSE
+    if (is.null(con)) {
+      con <- dbConnect(RSQLite::SQLite(), "sequencing_projects.db")
+      close_connection <- TRUE
+    }
+    on.exit(if (close_connection) dbDisconnect(con), add = TRUE)
+    ensure_sample_sheet_schema(con)
+    list(
+      enabled = ngs_app_setting_flag(
+        con,
+        "sample_sheet_diagnostics_enabled",
+        default = TRUE
+      ),
+      email_enabled = ngs_app_setting_flag(
+        con,
+        "sample_sheet_diagnostic_email_enabled",
+        default = FALSE
+      )
+    )
+  }
+
+  set_sample_sheet_diagnostics_settings <- function(
+    con,
+    enabled,
+    email_enabled,
+    updated_by
+  ) {
+    ngs_set_app_setting_flag(
+      con,
+      "sample_sheet_diagnostics_enabled",
+      enabled,
+      updated_by
+    )
+    ngs_set_app_setting_flag(
+      con,
+      "sample_sheet_diagnostic_email_enabled",
+      isTRUE(enabled) && isTRUE(email_enabled),
+      updated_by
+    )
+    invisible(NULL)
+  }
+
+  sample_sheet_session_id <- function() {
+    token <- ngs_scalar_text(session$token)
+    if (!nzchar(token)) return("")
+    substr(digest::digest(token, algo = "sha256", serialize = FALSE), 1L, 16L)
+  }
+
+  record_sample_sheet_diagnostic <- function(
+    event_type,
+    severity,
+    message,
+    file_name = "",
+    file_size = NA_real_,
+    mime_type = "",
+    details = "",
+    client_url = "",
+    user_agent = "",
+    event_key = ""
+  ) {
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con), add = TRUE)
+    settings <- sample_sheet_diagnostics_settings(con)
+    event_key <- ngs_scalar_text(event_key)
+    if (!nzchar(event_key)) {
+      event_key <- paste0(
+        "server-",
+        digest::digest(
+          paste(
+            sample_sheet_session_id(),
+            event_type,
+            file_name,
+            file_size,
+            message,
+            format(Sys.time(), "%Y-%m-%d %H:%M:%OS6"),
+            runif(1),
+            sep = "|"
+          ),
+          algo = "sha256",
+          serialize = FALSE
+        )
+      )
+    }
+    if (!isTRUE(settings$enabled)) {
+      return(list(id = NA_integer_, event_key = event_key, enabled = FALSE))
+    }
+    diagnostic_username <- ngs_scalar_text(user$username)
+    if (!nzchar(diagnostic_username)) {
+      request_user_candidates <- c(
+        session$request$HTTP_X_REMOTE_USER,
+        session$request$HTTP_X_FORWARDED_USER,
+        session$request$REMOTE_USER
+      )
+      request_user_candidates <- request_user_candidates[
+        !is.na(request_user_candidates) & nzchar(trimws(request_user_candidates))
+      ]
+      if (length(request_user_candidates) > 0) {
+        diagnostic_username <- trimws(request_user_candidates[[1]])
+      }
+    }
+    diagnostic_id <- ngs_record_upload_diagnostic(
+      con = con,
+      event_key = event_key,
+      event_type = event_type,
+      severity = severity,
+      username = diagnostic_username,
+      file_name = file_name,
+      file_size = file_size,
+      mime_type = mime_type,
+      message = message,
+      details = details,
+      session_id = sample_sheet_session_id(),
+      client_url = client_url,
+      user_agent = user_agent
+    )
+    cat(
+      "SAMPLE SHEET DIAGNOSTIC:",
+      paste0("id=", diagnostic_id),
+      paste0("type=", event_type),
+      paste0("user=", diagnostic_username),
+      paste0("message=", message),
+      "\n",
+      file = stderr()
+    )
+    flush.console()
+    isolate(
+      sample_sheet_diagnostics_refresh(sample_sheet_diagnostics_refresh() + 1L)
+    )
+    list(
+      id = diagnostic_id,
+      event_key = event_key,
+      enabled = TRUE,
+      email_enabled = isTRUE(settings$email_enabled)
+    )
   }
 
   ensure_reference_integrity_guards <- function(con) {
@@ -5749,6 +6085,63 @@ server <- function(input, output, session) {
     )
   }
 
+  send_sample_sheet_upload_alert <- function(diagnostic_id, payload) {
+    recipient <- Sys.getenv(
+      "NGS_UPLOAD_DIAGNOSTIC_EMAIL",
+      Sys.getenv("NGS_POOL_ALERT_EMAIL", "omicsdesk@biochem.mpg.de")
+    )
+    body <- paste(
+      "A sample-sheet upload failed before workbook validation.",
+      paste("Diagnostic ID:", diagnostic_id),
+      paste("Authenticated user:", ngs_scalar_text(user$username)),
+      paste("Browser message:", ngs_scalar_text(payload$raw_message)),
+      paste("File name:", ngs_scalar_text(payload$file_name)),
+      paste("File size (bytes):", ngs_scalar_text(payload$file_size)),
+      paste("MIME type:", ngs_scalar_text(payload$mime_type)),
+      paste("Application limit (bytes):", ngs_scalar_text(payload$max_bytes)),
+      paste("Browser online:", ngs_scalar_text(payload$online)),
+      paste("Client path:", ngs_scalar_text(payload$client_url)),
+      paste("Occurred at:", ngs_scalar_text(payload$occurred_at)),
+      paste("Replayed after reconnect:", ngs_scalar_text(payload$replayed)),
+      paste("User agent:", ngs_scalar_text(payload$user_agent)),
+      "No workbook content or attachment is included in this alert.",
+      sep = "\n"
+    )
+    tryCatch(
+      {
+        send_app_mail(
+          from = "ngs@biochem.mpg.de",
+          to = recipient,
+          encoding = "utf-8",
+          subject = paste0(
+            "Sample-sheet upload transport failure (diagnostic ",
+            diagnostic_id,
+            ")"
+          ),
+          body = body,
+          smtp = list(
+            host.name = "msx.biochem.mpg.de",
+            port = 25,
+            ssl = FALSE,
+            tls = FALSE,
+            authenticate = FALSE
+          ),
+          send = TRUE
+        )
+        list(success = TRUE, message = "Upload diagnostic alert sent")
+      },
+      error = function(e) {
+        cat(
+          "SAMPLE SHEET UPLOAD ALERT ERROR:",
+          conditionMessage(e),
+          "\n",
+          file = stderr()
+        )
+        list(success = FALSE, error = conditionMessage(e))
+      }
+    )
+  }
+
   # Send admin-triggered cost-estimation email notification
   send_project_cost_notification_email <- function(
     project_data,
@@ -7500,6 +7893,13 @@ server <- function(input, output, session) {
         column(
           4,
           wellPanel(
+            h4("Upload Diagnostics"),
+            uiOutput("sample_sheet_diagnostics_admin_ui")
+          )
+        ),
+        column(
+          4,
+          wellPanel(
             h4("Cost Review"),
             uiOutput("cost_review_summary_ui"),
             actionButton(
@@ -7618,6 +8018,272 @@ server <- function(input, output, session) {
     )
   })
 
+  output$sample_sheet_diagnostics_admin_ui <- renderUI({
+    req(user$logged_in, user$is_admin)
+    sample_sheet_diagnostics_refresh()
+    settings <- sample_sheet_diagnostics_settings()
+    tagList(
+      checkboxInput(
+        "admin_sample_sheet_diagnostics_enabled",
+        "Save sample-sheet upload and validation errors",
+        value = settings$enabled
+      ),
+      checkboxInput(
+        "admin_sample_sheet_diagnostic_email_enabled",
+        "Email omicsdesk for upload transport failures",
+        value = settings$email_enabled
+      ),
+      p(
+        paste0(
+          "Emails are not sent for wrong templates or invalid workbook data. ",
+          "Equivalent transport alerts are limited to one every 30 minutes."
+        )
+      ),
+      actionButton(
+        "save_sample_sheet_diagnostics_btn",
+        "Save Diagnostics Settings",
+        class = "btn-success"
+      ),
+      actionButton(
+        "view_sample_sheet_diagnostics_btn",
+        "View Recent Errors",
+        class = "btn-default"
+      )
+    )
+  })
+
+  observeEvent(input$save_sample_sheet_diagnostics_btn, {
+    req(user$logged_in, user$is_admin)
+    enabled <- isTRUE(input$admin_sample_sheet_diagnostics_enabled)
+    email_enabled <- enabled &&
+      isTRUE(input$admin_sample_sheet_diagnostic_email_enabled)
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con), add = TRUE)
+    set_sample_sheet_diagnostics_settings(
+      con,
+      enabled = enabled,
+      email_enabled = email_enabled,
+      updated_by = user$username
+    )
+    sample_sheet_diagnostics_refresh(sample_sheet_diagnostics_refresh() + 1L)
+    showNotification(
+      paste0(
+        "Upload diagnostics are ",
+        if (enabled) "enabled" else "disabled",
+        if (email_enabled) "; omicsdesk alerts are enabled." else "."
+      ),
+      type = "message"
+    )
+  })
+
+  output$sample_sheet_diagnostics_table <- renderDT({
+    req(user$logged_in, user$is_admin)
+    sample_sheet_diagnostics_refresh()
+    con <- get_db_connection()
+    on.exit(dbDisconnect(con), add = TRUE)
+    diagnostics <- dbGetQuery(
+      con,
+      "
+      SELECT
+        id,
+        created_at,
+        event_type,
+        severity,
+        username,
+        file_name,
+        file_size,
+        message,
+        email_status
+      FROM sample_sheet_diagnostics
+      ORDER BY id DESC
+      LIMIT 100
+      "
+    )
+    names(diagnostics) <- c(
+      "ID",
+      "Time",
+      "Type",
+      "Severity",
+      "User",
+      "File",
+      "Bytes",
+      "Message",
+      "Email"
+    )
+    datatable(
+      diagnostics,
+      rownames = FALSE,
+      options = list(
+        pageLength = 10,
+        order = list(list(0, "desc")),
+        scrollX = TRUE
+      )
+    )
+  })
+
+  observeEvent(input$view_sample_sheet_diagnostics_btn, {
+    req(user$logged_in, user$is_admin)
+    sample_sheet_diagnostics_refresh(sample_sheet_diagnostics_refresh() + 1L)
+    showModal(modalDialog(
+      title = "Recent Sample-Sheet Diagnostics",
+      DTOutput("sample_sheet_diagnostics_table"),
+      footer = modalButton("Close"),
+      size = "l",
+      easyClose = TRUE
+    ))
+  })
+
+  observeEvent(input$sample_sheet_upload_client_error, {
+    payload <- input$sample_sheet_upload_client_error
+    if (is.null(payload) || !nzchar(ngs_scalar_text(payload$event_key))) return()
+    recorded <- tryCatch(
+      record_sample_sheet_diagnostic(
+        event_type = "upload_transport",
+        severity = "error",
+        message = ngs_scalar_text(payload$raw_message),
+        file_name = ngs_scalar_text(payload$file_name),
+        file_size = payload$file_size,
+        mime_type = ngs_scalar_text(payload$mime_type),
+        details = paste(
+          paste("Application limit (bytes):", ngs_scalar_text(payload$max_bytes)),
+          paste("Browser online:", ngs_scalar_text(payload$online)),
+          paste("Occurred at:", ngs_scalar_text(payload$occurred_at)),
+          paste("Replayed:", ngs_scalar_text(payload$replayed)),
+          sep = "\n"
+        ),
+        client_url = ngs_scalar_text(payload$client_url),
+        user_agent = ngs_scalar_text(payload$user_agent),
+        event_key = ngs_scalar_text(payload$event_key)
+      ),
+      error = function(e) {
+        cat(
+          "SAMPLE SHEET DIAGNOSTIC WRITE ERROR:",
+          conditionMessage(e),
+          "\n",
+          file = stderr()
+        )
+        NULL
+      }
+    )
+    if (is.null(recorded)) return()
+
+    if (
+      isTRUE(recorded$enabled) &&
+        isTRUE(recorded$email_enabled) &&
+        is.finite(recorded$id)
+    ) {
+      con <- get_db_connection()
+      on.exit(dbDisconnect(con), add = TRUE)
+      alert_due <- ngs_upload_diagnostic_alert_due(
+        con,
+        recorded$id,
+        "upload_transport",
+        ngs_scalar_text(payload$raw_message),
+        window_minutes = 30L
+      )
+      if (alert_due) {
+        email_result <- send_sample_sheet_upload_alert(recorded$id, payload)
+        if (isTRUE(email_result$success)) {
+          ngs_mark_upload_diagnostic_email(con, recorded$id, "sent")
+        } else {
+          ngs_mark_upload_diagnostic_email(
+            con,
+            recorded$id,
+            "failed",
+            email_result$error
+          )
+        }
+      } else {
+        ngs_mark_upload_diagnostic_email(con, recorded$id, "rate_limited")
+      }
+    }
+
+    session$sendCustomMessage(
+      "ngs-upload-diagnostic-ack",
+      list(event_key = recorded$event_key)
+    )
+  }, ignoreInit = TRUE)
+
+  observe({
+    upload <- input$sample_sheet_upload
+    expected_rows <- input$num_samples
+    if (is.null(upload) || nrow(upload) == 0) {
+      sample_sheet_validation_state(NULL)
+      return()
+    }
+    result <- ngs_validate_sample_sheet(
+      upload$datapath[[1]],
+      upload$name[[1]],
+      expected_rows
+    )
+    sample_sheet_validation_state(list(
+      valid = isTRUE(result$valid),
+      errors = result$errors,
+      rows = nrow(result$data %||% data.frame()),
+      file_name = upload$name[[1]],
+      file_size = upload$size[[1]]
+    ))
+    if (!isTRUE(result$valid)) {
+      message_text <- paste(result$errors, collapse = " | ")
+      event_key <- paste0(
+        "validation-",
+        digest::digest(
+          paste(
+            sample_sheet_session_id(),
+            upload$name[[1]],
+            upload$size[[1]],
+            expected_rows,
+            message_text,
+            sep = "|"
+          ),
+          algo = "sha256",
+          serialize = FALSE
+        )
+      )
+      tryCatch(
+        record_sample_sheet_diagnostic(
+          event_type = "workbook_validation",
+          severity = "warning",
+          message = message_text,
+          file_name = upload$name[[1]],
+          file_size = upload$size[[1]],
+          mime_type = upload$type[[1]],
+          details = paste("Expected sample rows:", expected_rows),
+          event_key = event_key
+        ),
+        error = function(e) {
+          cat(
+            "SAMPLE SHEET VALIDATION LOG ERROR:",
+            conditionMessage(e),
+            "\n",
+            file = stderr()
+          )
+        }
+      )
+    }
+  })
+
+  output$sample_sheet_upload_status <- renderUI({
+    state <- sample_sheet_validation_state()
+    if (is.null(state)) return(NULL)
+    if (isTRUE(state$valid)) {
+      return(div(
+        class = "alert alert-success",
+        paste0(
+          "Sample sheet validated successfully: ",
+          state$rows,
+          " sample row",
+          if (state$rows == 1L) "." else "s."
+        )
+      ))
+    }
+    div(
+      class = "alert alert-danger",
+      tags$strong("Sample sheet validation failed."),
+      tags$ul(lapply(state$errors, tags$li))
+    )
+  })
+
   # New project modal with cost calculation
   observeEvent(input$new_project_btn, {
     sample_sheet_required_now <- sample_sheet_upload_required()
@@ -7704,6 +8370,7 @@ server <- function(input, output, session) {
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               )
             ),
+            uiOutput("sample_sheet_upload_status"),
             helpText(
               if (isTRUE(sample_sheet_required_now)) {
                 "A valid completed sample sheet is required to create this project."

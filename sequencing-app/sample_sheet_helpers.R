@@ -37,6 +37,190 @@ ngs_scalar_text <- function(value) {
   trimws(as.character(value[[1]]))
 }
 
+ngs_ensure_upload_diagnostic_schema <- function(con) {
+  DBI::dbExecute(
+    con,
+    "
+    CREATE TABLE IF NOT EXISTS sample_sheet_diagnostics (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_key TEXT UNIQUE NOT NULL,
+      event_type TEXT NOT NULL,
+      severity TEXT NOT NULL,
+      username TEXT,
+      file_name TEXT,
+      file_size INTEGER,
+      mime_type TEXT,
+      message TEXT NOT NULL,
+      details TEXT,
+      session_id TEXT,
+      client_url TEXT,
+      user_agent TEXT,
+      email_status TEXT NOT NULL DEFAULT 'not_requested',
+      email_sent_at DATETIME,
+      email_error TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    "
+  )
+  DBI::dbExecute(
+    con,
+    "
+    CREATE INDEX IF NOT EXISTS idx_sample_sheet_diagnostics_created
+    ON sample_sheet_diagnostics (created_at DESC)
+    "
+  )
+  DBI::dbExecute(
+    con,
+    "
+    CREATE INDEX IF NOT EXISTS idx_sample_sheet_diagnostics_alert
+    ON sample_sheet_diagnostics (event_type, message, email_sent_at)
+    "
+  )
+  invisible(NULL)
+}
+
+ngs_app_setting_flag <- function(con, setting_key, default = FALSE) {
+  value <- DBI::dbGetQuery(
+    con,
+    "SELECT setting_value FROM app_settings WHERE setting_key = ? LIMIT 1",
+    params = list(setting_key)
+  )
+  if (nrow(value) == 0) return(isTRUE(default))
+  ngs_env_flag_value(value$setting_value[[1]])
+}
+
+ngs_set_app_setting_flag <- function(con, setting_key, value, updated_by) {
+  DBI::dbExecute(
+    con,
+    "
+    INSERT INTO app_settings (
+      setting_key, setting_value, updated_at, updated_by
+    ) VALUES (?, ?, CURRENT_TIMESTAMP, ?)
+    ON CONFLICT(setting_key) DO UPDATE SET
+      setting_value = excluded.setting_value,
+      updated_at = CURRENT_TIMESTAMP,
+      updated_by = excluded.updated_by
+    ",
+    params = list(
+      setting_key,
+      if (isTRUE(value)) "1" else "0",
+      ngs_scalar_text(updated_by)
+    )
+  )
+  invisible(isTRUE(value))
+}
+
+ngs_record_upload_diagnostic <- function(
+  con,
+  event_key,
+  event_type,
+  severity,
+  username = "",
+  file_name = "",
+  file_size = NA_real_,
+  mime_type = "",
+  message,
+  details = "",
+  session_id = "",
+  client_url = "",
+  user_agent = ""
+) {
+  ngs_ensure_upload_diagnostic_schema(con)
+  file_size <- if (is.null(file_size) || length(file_size) == 0) {
+    NA_real_
+  } else {
+    suppressWarnings(as.numeric(file_size[[1]]))
+  }
+  if (!is.finite(file_size) || file_size < 0) file_size <- NA_real_
+  DBI::dbExecute(
+    con,
+    "
+    INSERT OR IGNORE INTO sample_sheet_diagnostics (
+      event_key, event_type, severity, username, file_name, file_size,
+      mime_type, message, details, session_id, client_url, user_agent
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ",
+    params = list(
+      ngs_scalar_text(event_key),
+      ngs_scalar_text(event_type),
+      ngs_scalar_text(severity),
+      ngs_scalar_text(username),
+      ngs_scalar_text(file_name),
+      file_size,
+      ngs_scalar_text(mime_type),
+      ngs_scalar_text(message),
+      ngs_scalar_text(details),
+      ngs_scalar_text(session_id),
+      ngs_scalar_text(client_url),
+      ngs_scalar_text(user_agent)
+    )
+  )
+  row <- DBI::dbGetQuery(
+    con,
+    "SELECT id FROM sample_sheet_diagnostics WHERE event_key = ? LIMIT 1",
+    params = list(ngs_scalar_text(event_key))
+  )
+  if (nrow(row) == 0) return(NA_integer_)
+  as.integer(row$id[[1]])
+}
+
+ngs_upload_diagnostic_alert_due <- function(
+  con,
+  diagnostic_id,
+  event_type,
+  message,
+  window_minutes = 30L
+) {
+  window_minutes <- suppressWarnings(as.integer(window_minutes[[1]]))
+  if (is.na(window_minutes) || window_minutes < 1L) window_minutes <- 30L
+  previous <- DBI::dbGetQuery(
+    con,
+    "
+    SELECT id
+    FROM sample_sheet_diagnostics
+    WHERE id <> ?
+      AND event_type = ?
+      AND message = ?
+      AND email_status = 'sent'
+      AND email_sent_at >= datetime('now', ?)
+    LIMIT 1
+    ",
+    params = list(
+      as.integer(diagnostic_id),
+      ngs_scalar_text(event_type),
+      ngs_scalar_text(message),
+      paste0("-", window_minutes, " minutes")
+    )
+  )
+  nrow(previous) == 0
+}
+
+ngs_mark_upload_diagnostic_email <- function(
+  con,
+  diagnostic_id,
+  status,
+  error = ""
+) {
+  sent <- identical(ngs_scalar_text(status), "sent")
+  DBI::dbExecute(
+    con,
+    "
+    UPDATE sample_sheet_diagnostics
+    SET email_status = ?,
+        email_sent_at = CASE WHEN ? THEN CURRENT_TIMESTAMP ELSE email_sent_at END,
+        email_error = ?
+    WHERE id = ?
+    ",
+    params = list(
+      ngs_scalar_text(status),
+      sent,
+      ngs_scalar_text(error),
+      as.integer(diagnostic_id)
+    )
+  )
+  invisible(NULL)
+}
+
 ngs_cell_text <- function(value) {
   value <- as.character(value)
   value[is.na(value)] <- ""

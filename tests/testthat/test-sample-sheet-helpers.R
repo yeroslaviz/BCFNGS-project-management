@@ -87,6 +87,76 @@ test_that("i5 is required for final-library samples", {
   expect_true(checked$valid)
 })
 
+test_that("upload diagnostics are durable, deduplicated, and rate limited", {
+  con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+  on.exit(DBI::dbDisconnect(con), add = TRUE)
+  DBI::dbExecute(
+    con,
+    "
+    CREATE TABLE app_settings (
+      setting_key TEXT PRIMARY KEY,
+      setting_value TEXT NOT NULL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_by TEXT
+    )
+    "
+  )
+  ngs_ensure_upload_diagnostic_schema(con)
+  ngs_set_app_setting_flag(con, "sample_sheet_diagnostics_enabled", TRUE, "admin")
+  expect_true(ngs_app_setting_flag(
+    con,
+    "sample_sheet_diagnostics_enabled",
+    default = FALSE
+  ))
+
+  first_id <- ngs_record_upload_diagnostic(
+    con,
+    event_key = "event-1",
+    event_type = "upload_transport",
+    severity = "error",
+    username = "tester",
+    file_name = "sheet.xlsx",
+    file_size = 13183,
+    mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    message = "Maximum upload size exceeded"
+  )
+  duplicate_id <- ngs_record_upload_diagnostic(
+    con,
+    event_key = "event-1",
+    event_type = "upload_transport",
+    severity = "error",
+    message = "Maximum upload size exceeded"
+  )
+  expect_identical(duplicate_id, first_id)
+  expect_equal(DBI::dbGetQuery(
+    con,
+    "SELECT COUNT(*) AS n FROM sample_sheet_diagnostics"
+  )$n[[1]], 1)
+  expect_true(ngs_upload_diagnostic_alert_due(
+    con,
+    first_id,
+    "upload_transport",
+    "Maximum upload size exceeded",
+    30L
+  ))
+  ngs_mark_upload_diagnostic_email(con, first_id, "sent")
+
+  second_id <- ngs_record_upload_diagnostic(
+    con,
+    event_key = "event-2",
+    event_type = "upload_transport",
+    severity = "error",
+    message = "Maximum upload size exceeded"
+  )
+  expect_false(ngs_upload_diagnostic_alert_due(
+    con,
+    second_id,
+    "upload_transport",
+    "Maximum upload size exceeded",
+    30L
+  ))
+})
+
 test_that("assigned project number is written to rows and worksheet name", {
   source_workbook <- file.path(
     repo_prefix,
